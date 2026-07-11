@@ -2,8 +2,6 @@
 import streamlit as st
 import math
 import os
-import json
-import re  # 🔎 ईमेल फॉरमॅट चेक करण्यासाठी खास लायब्ररी
 
 # पेजची रचना
 st.set_page_config(page_title="PATIL INFRATECH", page_icon="📐", layout="centered")
@@ -33,32 +31,12 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 💾 फाईल डेटाबेस मॅनेजमेंट (टेक्स्ट फाईल्स)
+# 💾 डेटा कायमचा साठवण्यासाठी फाईलचा जुगाड
 LOG_FILE = "user_database.txt"
-AUTH_FILE = "user_auth.json"
 
-# 🔍 ईमेल वैध आहे की नाही हे तपासण्याचे फंक्शन (@, ., आणि com/in/org असणे सक्तीचे)
-def is_valid_email(email):
-    email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-    return re.match(email_regex, email) is not None
-
-# अकाऊंट्स लोड आणि सेव्ह करणे
-def load_accounts():
-    if not os.path.exists(AUTH_FILE):
-        return {}
-    with open(AUTH_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
-
-def save_account(email, password):
-    accounts = load_accounts()
-    accounts[email] = password
-    with open(AUTH_FILE, "w", encoding="utf-8") as f:
-        json.dump(accounts, f, ensure_ascii=False, indent=4)
-
-# रिपोर्ट डेटा सेव्ह आणि रीड करणे
-def save_to_database(name, work_type, comment, email="नॉन-लॉगिन युझर"):
+def save_to_database(name, work_type, comment):
     with open(LOG_FILE, "a", encoding="utf-8") as f:
-        f.write(f"नाव: {name} | ईमेल: {email} | काम: {work_type} | कमेंट: {comment}\n")
+        f.write(f"नाव: {name} | काम: {work_type} | कमेंट: {comment}\n")
 
 def read_database():
     if not os.path.exists(LOG_FILE):
@@ -86,73 +64,22 @@ if 'name_saved' not in st.session_state:
     st.session_state.name_saved = ""
 if 'current_comment' not in st.session_state:
     st.session_state.current_comment = "काही नाही"
-if 'logged_in_email' not in st.session_state:
-    st.session_state.logged_in_email = ""
 
-# 🔐 १. नाव किंवा लॉगिन विचारणे (Compulsory Section)
-if not st.session_state.name_saved and not st.session_state.logged_in_email:
+# 🔐 १. नाव टाकणे सक्तीचे
+if not st.session_state.name_saved:
+    user_name = st.text_input("**ॲप्लिकेशन सुरू करण्यासाठी आपले नाव प्रविष्ट करा (Enter Your Name):**", placeholder="तुमचे नाव इथे टाईप करा...")
     
-    # ऑप्शनल लॉगिन सिस्टीम
-    has_account = st.checkbox("🔐 **मला स्वतःचे खाते (Account) वापरायचे आहे / नवीन बनवायचे आहे**")
-    
-    if has_account:
-        auth_mode = st.radio("निवडा:", ["लॉगिन करा (Login)", "नवीन खाते बनवा (Register)"])
-        user_email = st.text_input("तुमचा ईमेल आयडी (Email as Username):", placeholder="example@gmail.com")
-        user_pass = st.text_input("पासवर्ड (Password):", type="password", placeholder="तुमचा पासवर्ड टाका...")
-        
-        if auth_mode == "नवीन खाते बनवा (Register)":
-            if st.button("🆕 खाते तयार करा", type="primary"):
-                # ईमेल फॉरमॅट आणि पासवर्ड लेंथ चेक
-                if is_valid_email(user_email.strip()):
-                    if len(user_pass) >= 4:
-                        save_account(user_email.strip(), user_pass)
-                        st.success("🎉 खाते यशस्वीरित्या तयार झाले! आता 'लॉगिन करा' निवडून ॲप सुरू करा.")
-                    else:
-                        st.error("❌ पासवर्ड किमान ४ अंकी असावा!")
-                else:
-                    st.error("❌ Email is not valid! (कृपया वैध ईमेल आयडी प्रविष्ट करा ज्यात @, . आणि com/in असावे)")
-        
+    # मोबाईल युझर्ससाठी खास सबमिट बटण
+    if st.button("👉 नाव सबमिट करा (Submit Name)", type="primary"):
+        if user_name.strip():
+            st.session_state.name_saved = user_name.strip()
+            st.rerun()
         else:
-            if st.button("🔓 लॉगिन करा", type="primary"):
-                user_email_clean = user_email.strip()
-                if is_valid_email(user_email_clean):
-                    accounts = load_accounts()
-                    if user_email_clean in accounts and accounts[user_email_clean] == user_pass:
-                        st.session_state.logged_in_email = user_email_clean
-                        st.session_state.name_saved = user_email_clean.split("@")[0].upper() # ईमेलवरून नाव तयार करणे
-                        st.rerun()
-                    else:
-                        st.error("❌ चुकीचा ईमेल किंवा पासवर्ड!")
-                else:
-                    st.error("❌ Email is not valid! (कृपया वैध ईमेल आयडी टाका)")
-                    
-    else:
-        # साधा रस्ता (नॉन-लॉगिन)
-        user_name = st.text_input("**ॲप्लिकेशन सुरू करण्यासाठी आपले नाव प्रविष्ट करा (Enter Your Name):**", placeholder="तुमचे नाव इथे टाईप करा...")
-        if st.button("👉 नाव सबमिट करा (Submit Name)", type="primary"):
-            if user_name.strip():
-                st.session_state.name_saved = user_name.strip()
-                st.rerun()
-            else:
-                st.warning("⚠️ कृपया पुढे जाण्यासाठी तुमचे नाव टाईप करा!")
-                
+            st.warning("⚠️ कृपया पुढे जाण्यासाठी तुमचे नाव टाईप करा!")
     st.stop()
 
-# स्वागत मेसेज
-if st.session_state.logged_in_email:
-    st.success(f"🔓 स्वागत आहे, **{st.session_state.name_saved}** ({st.session_state.logged_in_email})! पाटील इन्फ्राटेक एस्टिमेटर अनलॉक झाला आहे.")
-    
-    # युझरला स्वतःची हिस्टरी दाखवण्यासाठी बटण
-    with st.expander("⏳ माझी पूर्व हिस्टरी (My Calculation History)"):
-        all_logs = read_database()
-        user_logs = [log for log in all_logs if log.get("ईमेल") == st.session_state.logged_in_email]
-        if user_logs:
-            st.table(user_logs)
-        else:
-            st.info("तुमची कोणतीही जुनी हिस्टरी सापडली नाही.")
-else:
-    st.success(f"🔓 स्वागत आहे, **{st.session_state.name_saved}**! पाटील इन्फ्राटेक एस्टिमेटर अनलॉक झाला आहे.")
-
+user_name = st.session_state.name_saved
+st.success(f"🔓 स्वागत आहे, **{user_name}**! पाटील इन्फ्राटेक एस्टिमेटर अनलॉक झाला आहे.")
 st.write("---")
 
 # २. मुख्य काम निवडणे
@@ -182,7 +109,7 @@ if "Concrete Work" in main_choice:
     elif "Column" in component: steel_percentage = 2.5
     else: steel_percentage = 0.0
 
-    st.markdown("#### [A] साहित्याची माहिती आणि दर")
+    st.markdown("#### [A] साहित्याची माहिती आणि दर (बॉक्स रिकामे आहेत)")
     v_col1, v_col2 = st.columns(2)
     with v_col1:
         volume = st.number_input("एकूण काँक्रीट घनफळ भरा (Volume in m³):", min_value=0.0, step=None, value=None, placeholder="0.0")
@@ -192,7 +119,7 @@ if "Concrete Work" in main_choice:
         aggregate_rate = st.number_input("खडीचा दर प्रति m³ (₹):", min_value=0.0, step=None, value=None, placeholder="0.0")
         steel_rate = st.number_input("स्टीलचा दर प्रति किलो (₹/Kg):", min_value=0.0, step=None, value=None, placeholder="0.0") if steel_percentage > 0 else 0.0
 
-    st.markdown("#### [B] लेबर खर्च")
+    st.markdown("#### [B] लेबर खर्च (बॉक्स रिकामे आहेत)")
     l_col1, l_col2, l_col3 = st.columns(3)
     with l_col1:
         mason_qty = st.number_input("मेसन संख्या (Days):", min_value=0.0, step=None, value=None, placeholder="0.0")
@@ -221,8 +148,7 @@ if "Concrete Work" in main_choice:
             st.success("✅ कमेंट सेव्ह झाली!")
 
     if st.button("📊 GENERATE RATE ANALYSIS REPORT", type="primary", key="btn_concrete_report"):
-        email_tag = st.session_state.logged_in_email if st.session_state.logged_in_email else "नॉन-लॉगिन युझर"
-        save_to_database(st.session_state.name_saved, "Concrete Work", st.session_state.current_comment, email_tag)
+        save_to_database(user_name, "Concrete Work", st.session_state.current_comment)
 
         vol_val = volume if volume else 0.0
         c_rate = cement_rate if cement_rate else 0.0
@@ -255,6 +181,7 @@ if "Concrete Work" in main_choice:
         mat_cost = total_cement_cost + total_aggregate_cost + total_sand_cost + total_steel_cost
         lab_cost = (m_qty * m_rate) + (mz_qty * mz_rate) + (b_qty * b_rate)
         
+        # Total (Material + Labour + Scaffolding + Contingency)
         total_base = mat_cost + lab_cost + sc_cost + ct_cost
         w_amt = total_base * (w_pct / 100)
         p_amt = total_base * (p_pct / 100)
@@ -263,6 +190,8 @@ if "Concrete Work" in main_choice:
 
         st.success("🎉 रिपोर्ट यशस्वीरित्या तयार झाला आहे!")
         st.markdown(f"### 📊 RATE ANALYSIS SHEET - CONCRETE WORK")
+        
+        # फोटोमध्ये दिलेल्या फॉरमॅटनुसार टेबल
         st.markdown(f"""
         | Sr. No. | Description | Rate (₹) | Quantity | Unit | Amount (₹) |
         | :---: | :--- | :---: | :---: | :---: | :---: |
@@ -283,7 +212,7 @@ if "Concrete Work" in main_choice:
         | 11 | Contractor Profit ({p_pct}%) | | | @Total | {p_amt:.2f} |
         | | **Grand Total** | | | | **₹ {grand_total:.2f}** |
         """)
-        st.info(f"👉 **Rate per m³:** {grand_total:.2f} / {vol_val} = **₹ {per_m3_rate:.2f} Rs/m³**")
+        st.info(f"👉 **प्रति घनफळ दर (Rate per m³):** {grand_total:.2f} / {vol_val} = **₹ {per_m3_rate:.2f} Rs/m³**")
 
 # ==========================================
 # 🛑 वीटकाम (BRICKWORK MODULE)
@@ -298,7 +227,7 @@ else:
     elif "1:5" in mortar_choice: c_part, s_part = 1, 5
     else: c_part, s_part = 1, 6
 
-    st.markdown("#### [A] साहित्याची माहिती आणि दर")
+    st.markdown("#### [A] साहित्याची माहिती आणि दर (बॉक्स रिकामे आहेत)")
     bm_col1, bm_col2 = st.columns(2)
     with bm_col1:
         volume = st.number_input("वीटकामाचे एकूण घनफळ भरा (Volume in m³):", min_value=0.0, step=None, value=None, placeholder="0.0")
@@ -307,7 +236,7 @@ else:
         cement_rate = st.number_input("सिमेंट दर प्रति बॅग (₹):", min_value=0.0, step=None, value=None, placeholder="0.0")
         sand_rate = st.number_input("वाळूचा दर प्रति m³ (₹):", min_value=0.0, step=None, value=None, placeholder="0.0")
 
-    st.markdown("#### [B] लेबर खर्च")
+    st.markdown("#### [B] लेबर खर्च (बॉक्स रिकामे आहेत)")
     bl_col1, bl_col2, bl_col3 = st.columns(3)
     with bl_col1:
         mason_qty = st.number_input("मेसन संख्या (Brickwork Days):", min_value=0.0, step=None, value=None, placeholder="0.0")
@@ -336,8 +265,7 @@ else:
             st.success("✅ कमेंट सेव्ह झाली!")
 
     if st.button("📊 GENERATE RATE ANALYSIS REPORT", type="primary", key="btn_brick_report"):
-        email_tag = st.session_state.logged_in_email if st.session_state.logged_in_email else "नॉन-लॉगिन युझर"
-        save_to_database(st.session_state.name_saved, "Brickwork", st.session_state.current_comment, email_tag)
+        save_to_database(user_name, "Brickwork", st.session_state.current_comment)
 
         vol_val = volume if volume else 0.0
         b_rate = brick_rate if brick_rate else 0.0
@@ -369,6 +297,7 @@ else:
         mat_cost = total_brick_cost + total_cement_cost + total_sand_cost
         lab_cost = (m_qty * m_rate) + (mz_qty * mz_rate) + (bh_qty * bh_rate)
         
+        # फोटोतल्या कॅल्क्युलेशनप्रमाणे Total काढणे
         total_base = mat_cost + lab_cost + sc_cost + ct_cost
         w_amt = total_base * (w_pct / 100)
         p_amt = total_base * (p_pct / 100)
@@ -377,6 +306,8 @@ else:
 
         st.success("🎉 रिपोर्ट यशस्वीरित्या तयार झाला आहे!")
         st.markdown(f"### 📊 RATE ANALYSIS SHEET - BRICKWORK")
+        
+        # फोटोमध्ये दिलेल्या रचनेनुसार नवीन टेबल फॉरमॅट
         st.markdown(f"""
         | Sr. No. | Description | Rate (₹) | Quantity | Unit | Amount (₹) |
         | :---: | :--- | :---: | :---: | :---: | :---: |
@@ -389,4 +320,36 @@ else:
         | 5 | Mazdoor | {mz_rate:.2f} | {mz_qty} | day | {mz_qty*mz_rate:.2f} |
         | 6 | Bhisti | {bh_rate:.2f} | {bh_qty} | day | {bh_qty*bh_rate:.2f} |
         | | **[C] Other Expenses** | | | | |
-        | 7
+        | 7 | Scaffolding | - | - | L.S. | {sc_cost:.2f} |
+        | 8 | Contingency | - | - | L.S. | {ct_cost:.2f} |
+        | | **Total** | | | | **{total_base:.2f}** |
+        | 9 | Water Charge ({w_pct}%) | | | @Total | {w_amt:.2f} |
+        | 10 | Contractor Profit ({p_pct}%) | | | @Total | {p_amt:.2f} |
+        | | **Grand Total** | | | | **₹ {grand_total:.2f}** |
+        """)
+        st.markdown(f"**{grand_total:.2f} / {vol_val} = {per_m3_rate:.2f} Rs/m³**")
+
+# ==========================================
+# 🔐 ॲडमीन लॉगिन एरिया
+# ==========================================
+st.write("---")
+with st.expander("🛡️ Admin Login Area (फक्त कन्हाईसाठी)"):
+    admin_id = st.text_input("Admin ID:", key="admin_id")
+    admin_pass = st.text_input("Password:", type="password", key="admin_pass")
+    
+    if admin_id == "kanha_1p" and admin_pass == "@Dellg15":
+        st.success("🔓 लॉगिन यशस्वी!")
+        
+        if st.button("🗑️ सर्व डेटा डिलीट करा (Clear All Logs)"):
+            if os.path.exists(LOG_FILE):
+                os.remove(LOG_FILE)
+            st.success("डेटा यशस्वीरित्या डिलीट केला!")
+            st.rerun()
+            
+        logs = read_database()
+        if logs:
+            st.table(logs)
+        else:
+            st.info("अजूनपर्यंत कोणी रिपोर्ट जनरेट केलेला नाही किंवा डेटा रिकामी आहे.")
+    elif admin_id or admin_pass:
+        st.error("❌ चुकीचा ID किंवा पासवर्ड!")
