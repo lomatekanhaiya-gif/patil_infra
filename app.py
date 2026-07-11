@@ -142,7 +142,7 @@ if not st.session_state.name_saved and not st.session_state.logged_in_email:
 else:
     user_authorized = True
 
-# मुख्य युझर इंटरफेस (जेव्हा युझर नावाने किंवा ईमेलने आत जाईल)
+# मुख्य युझर इंटरफेस (जेव्हा युझर लॉगिन होईल)
 if user_authorized:
     if st.session_state.logged_in_email:
         st.success(f"🔓 स्वागत आहे, **{st.session_state.name_saved}** ({st.session_state.logged_in_email})!")
@@ -379,3 +379,5 @@ if user_authorized:
 
             mat_cost = total_brick_cost + total_cement_cost + total_sand_cost
             lab_cost = (m_qty * m_rate) + (mz_qty * mz_rate) + (bh_qty * bh_rate)
+            
+            total_bas
