@@ -1,11 +1,10 @@
-# KANHA_1p - पाटील इन्फ्राテック (Streamlit Web Application)
+# KANHA_1p - पाटील इन्फ्राटेक (Streamlit Web Application)
 import streamlit as st
 import math
 import os
 import json
 import re
 import pandas as pd
-import io
 
 # पेजची रचना
 st.set_page_config(page_title="PATIL INFRATECH", page_icon="📐", layout="centered")
@@ -35,7 +34,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 💾 फाईल डेटाबेस मॅनेजमेंट (टेक्स्ट आणि जेसॉन फाईल्स)
+# 💾 फाईल डेटाबेस मॅनेजमेंट
 LOG_FILE = "user_database.txt"
 AUTH_FILE = "user_auth.json"
 INBOX_FILE = "admin_inbox.json"
@@ -93,49 +92,6 @@ def read_database():
                 logs.append(log_dict)
     return logs
 
-# 📄 एक्सेल डेटा जनरेट करण्याचे फंक्शन (वॉटरमार्कसह)
-def generate_excel(df_data, title):
-    output = io.BytesIO()
-    df = pd.DataFrame(df_data)
-    watermark_rows = [
-        {"Sr. No.": "---", "Description": "🔒 WATERMARK: PATIL INFRATECH (kanha_1p) 🔒", "Rate (₹)": "---", "Quantity": "---", "Unit": "---", "Amount (₹)": "---"},
-        {"Sr. No.": "---", "Description": f"📑 REPORT: {title}", "Rate (₹)": "---", "Quantity": "---", "Unit": "---", "Amount (₹)": "---"}
-    ]
-    df_watermarked = pd.concat([pd.DataFrame(watermark_rows), df], ignore_index=True)
-    with pd.ExcelWriter(output, engine='openpyxl') as writer:
-        df_watermarked.to_excel(writer, index=False, sheet_name="Rate Analysis")
-    return output.getvalue()
-
-# 📄 पीडीएफ डाउनलोड करण्याचे फंक्शन (वॉटरमार्कसह)
-def generate_pdf_html(df_data, title):
-    html = f"""
-    <div style='border: 3px solid #333; padding: 20px; font-family: Arial; position: relative;'>
-        <div style='position: absolute; top: 40%; left: 5%; font-size: 55px; color: rgba(200, 200, 200, 0.2); transform: rotate(-30deg); font-weight: bold; pointer-events: none; user-select: none;'>
-            PATIL INFRATECH (kanha_1p)
-        </div>
-        <h2 style='text-align: center;'>🏗️ PATIL INFRATECH</h2>
-        <h4 style='text-align: center;'>📐 Quantity Surveyor & Cost Estimator</h4>
-        <hr>
-        <h3>📊 REPORT: {title}</h3>
-        <table border='1' style='width:100%; border-collapse: collapse; text-align: left;'>
-            <tr style='background-color: #f2f2f2;'>
-                <th>Sr. No.</th><th>Description</th><th>Rate (₹)</th><th>Quantity</th><th>Unit</th><th>Amount (₹)</th>
-            </tr>
-    """
-    for row in df_data:
-        html += f"""
-        <tr>
-            <td>{row['Sr. No.']}</td><td>{row['Description']}</td><td>{row['Rate (₹)']}</td><td>{row['Quantity']}</td><td>{row['Unit']}</td><td>{row['Amount (₹)']}</td>
-        </tr>
-        """
-    html += """
-        </table>
-        <br>
-        <p style='text-align: center; font-size: 12px; color: gray;'>🔒 Generated via Patil Infratech App</p>
-    </div>
-    """
-    return html
-
 # मुख्य टायटल आणि ब्रँडिंग
 st.title("🏗️ PATIL INFRATECH")
 st.subheader("📐 Quantity Surveyor & Cost Estimator")
@@ -167,7 +123,7 @@ if not st.session_state.name_saved and not st.session_state.logged_in_email:
                         save_account(user_email.strip(), user_pass)
                         st.success("🎉 खाते यशस्वीरित्या तयार झाले! आता 'लॉगिन करा' निवडून ॲप सुरू करा.")
                     else:
-                        st.error("❌ पासवर्ड किमान ४ असावा!")
+                        st.error("❌ पासवर्ड किमान ४ अक्षरी असावा!")
                 else:
                     st.error("❌ Email is not valid! (कृपया वैध ईमेल आयडी प्रविष्ट करा)")
         
@@ -210,9 +166,13 @@ if st.session_state.logged_in_email:
         else:
             st.write("🔔 अजून कोणताही मेसेज आलेला नाही. (वार्षिक सबस्क्रिप्शन ₹५० साठी ॲडमीनशी संपर्क करा)")
 
-    with st.expander("⏳ माझी पूर्व हिस्टरी (My Calculation History)"):
+    # ⏳ युझरला फक्त त्याच्या एस्टिमेशन कॅल्क्युलेशनची हिस्टरी दिसणार (ईमेल-पासवर्ड दिसणार नाही)
+    with st.expander("⏳ माझी पूर्व एस्टिमेशन हिस्टरी (My Calculation History)"):
         all_logs = read_database()
-        user_logs = [log for log in all_logs if log.get("ईमेल") == st.session_state.logged_in_email]
+        user_logs = [
+            {"नाव": log.get("नाव"), "काम": log.get("काम"), "कमेंट": log.get("कमेंट")} 
+            for log in all_logs if log.get("ईमेल") == st.session_state.logged_in_email
+        ]
         if user_logs:
             st.table(user_logs)
         else:
@@ -351,30 +311,6 @@ if "Concrete Work" in main_choice:
         st.markdown(table_markdown)
         st.info(f"👉 **Rate per m³:** {grand_total:.2f} / {vol_val} = **₹ {per_m3_rate:.2f} Rs/m³**")
 
-        st.write("---")
-        st.markdown("### 📥 Download Options")
-        if st.session_state.logged_in_email:
-            report_data = [
-                {"Sr. No.": "1", "Description": "Cement", "Rate (₹)": c_rate, "Quantity": c_bags, "Unit": "bag", "Amount (₹)": total_cement_cost},
-                {"Sr. No.": "2", "Description": "Sand", "Rate (₹)": s_rate, "Quantity": s_m3, "Unit": "m³", "Amount (₹)": total_sand_cost},
-                {"Sr. No.": "3", "Description": "Aggregate", "Rate (₹)": a_rate, "Quantity": a_m3, "Unit": "m³", "Amount (₹)": total_aggregate_cost},
-                {"Sr. No.": "4", "Description": "Steel", "Rate (₹)": st_rate, "Quantity": steel_qty, "Unit": "Kg", "Amount (₹)": total_steel_cost},
-                {"Sr. No.": "5", "Description": "Mason", "Rate (₹)": m_rate, "Quantity": m_qty, "Unit": "day", "Amount (₹)": m_qty*m_rate},
-                {"Sr. No.": "6", "Description": "Mazdoor", "Rate (₹)": mz_rate, "Quantity": mz_qty, "Unit": "day", "Amount (₹)": mz_qty*mz_rate},
-                {"Sr. No.": "7", "Description": "Bar Bender", "Rate (₹)": b_rate, "Quantity": b_qty, "Unit": "day", "Amount (₹)": b_qty*b_rate},
-                {"Sr. No.": "8", "Description": "Scaffolding", "Rate (₹)": "-", "Quantity": "-", "Unit": "L.S.", "Amount (₹)": sc_cost},
-                {"Sr. No.": "9", "Description": "Contingency", "Rate (₹)": "-", "Quantity": "-", "Unit": "L.S.", "Amount (₹)": ct_cost},
-                {"Sr. No.": "10", "Description": f"Water Charge ({w_pct}%)", "Rate (₹)": "-", "Quantity": "-", "Unit": "@Total", "Amount (₹)": w_amt},
-                {"Sr. No.": "11", "Description": f"Contractor Profit ({p_pct}%)", "Rate (₹)": "-", "Quantity": "-", "Unit": "@Total", "Amount (₹)": p_amt},
-                {"Sr. No.": "---", "Description": "GRAND TOTAL", "Rate (₹)": "-", "Quantity": "-", "Unit": "-", "Amount (₹)": grand_total}
-            ]
-            excel_bytes = generate_excel(report_data, "Concrete Work Analysis")
-            st.download_button(label="📥 Download Excel Sheet (With Watermark)", data=excel_bytes, file_name="Concrete_Rate_Analysis.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-            pdf_html = generate_pdf_html(report_data, "Concrete Work Analysis")
-            st.download_button(label="📄 Download PDF Report (With Watermark)", data=pdf_html, file_name="Concrete_Rate_Analysis.html", mime="text/html")
-        else:
-            st.warning("🔒 डाउनलोड पर्याय फक्त लॉगिन असलेल्या युझर्ससाठीच उपलब्ध आहेत! कृपया डाउनलोड करण्यापूर्वी साईन-इन/खाते तयार करा.")
-
 # ==========================================
 # 🛑 वीटकाम (BRICKWORK MODULE)
 # ==========================================
@@ -389,4 +325,81 @@ else:
     else: c_part, s_part = 1, 6
 
     st.markdown("#### [A] साहित्याची माहिती आणि दर")
-    bm_col1, bm_col2
+    bm_col1, bm_col2 = st.columns(2)
+    with bm_col1:
+        volume = st.number_input("वीटकामाचे एकूण घनफळ भरा (Volume in m³):", min_value=0.0, step=None, value=None, placeholder="0.0")
+        brick_rate = st.number_input("विटांचा दर प्रति नग (Rate per 1 Brick in ₹):", min_value=0.0, step=None, value=None, placeholder="0.0")
+    with bm_col2:
+        cement_rate = st.number_input("सिमेंट दर प्रति बॅग (₹):", min_value=0.0, step=None, value=None, placeholder="0.0")
+        sand_rate = st.number_input("वाळूचा दर प्रति m³ (₹):", min_value=0.0, step=None, value=None, placeholder="0.0")
+
+    st.markdown("#### [B] लेबर खर्च")
+    bl_col1, bl_col2, bl_col3 = st.columns(3)
+    with bl_col1:
+        mason_qty = st.number_input("मेसन संख्या (Brickwork Days):", min_value=0.0, step=None, value=None, placeholder="0.0")
+        mason_rate = st.number_input("मेसन प्रतिदिन दर (₹/Day):", min_value=0.0, value=None, placeholder="0.0")
+    with bl_col2:
+        mazdoor_qty = st.number_input("मजदूर संख्या (Brickwork Days):", min_value=0.0, step=None, value=None, placeholder="0.0")
+        mazdoor_rate = st.number_input("मजदूर प्रतिदिन दर (₹/Day):", min_value=0.0, value=None, placeholder="0.0")
+    with bl_col3:
+        bhisti_qty = st.number_input("भिस्ती संख्या (Watering Days):", min_value=0.0, step=None, value=None, placeholder="0.0")
+        bhisti_rate = st.number_input("भिस्ती दर (₹/Day):", min_value=0.0, value=None, placeholder="0.0")
+
+    st.markdown("#### [C] अवांतर खर्च व टक्केवारी")
+    bo_col1, bo_col2 = st.columns(2)
+    with bo_col1:
+        scaffolding_cost = st.number_input("पाळत/स्कॅफोल्डिंग खर्च (₹):", min_value=0.0, value=None, placeholder="0.0")
+        contingency_cost = st.number_input("आकस्मिक खर्च (₹):", min_value=0.0, value=None, placeholder="0.0")
+    with bo_col2:
+        water_pct = st.number_input("वॉटर चार्ज (%):", min_value=0.0, value=None, placeholder="0.0")
+        profit_pct = st.number_input("कंत्राटदार नफा (%):", min_value=0.0, value=None, placeholder="0.0")
+
+    st.write("---")
+    user_comment = st.text_area("💬 **काही विशेष नोंद किंवा कमेंट लिहायची असल्यास इथे लिहा:**", placeholder="तुमची कमेंट लिहा...")
+    if st.button("💬 कमेंट सबमिट करा (Submit Comment)", key="btn_brick_comment"):
+        if user_comment.strip():
+            st.session_state.current_comment = user_comment.strip()
+            st.success("✅ कमेंट सेव्ह झाली!")
+
+    if st.button("📊 GENERATE RATE ANALYSIS REPORT", type="primary", key="btn_brick_report"):
+        email_tag = st.session_state.logged_in_email if st.session_state.logged_in_email else "नॉन-लॉगिन युझर"
+        save_to_database(st.session_state.name_saved, "Brickwork", st.session_state.current_comment, email_tag)
+
+        vol_val = volume if volume else 0.0
+        b_rate = brick_rate if brick_rate else 0.0
+        c_rate = cement_rate if cement_rate else 0.0
+        s_rate = sand_rate if sand_rate else 0.0
+        m_qty = mason_qty if mason_qty else 0.0
+        m_rate = mason_rate if mason_rate else 0.0
+        mz_qty = mazdoor_qty if mazdoor_qty else 0.0
+        mz_rate = mazdoor_rate if mazdoor_rate else 0.0
+        bh_qty = bhisti_qty if bhisti_qty else 0.0
+        bh_rate = bhisti_rate if bhisti_rate else 0.0
+        sc_cost = scaffolding_cost if scaffolding_cost else 0.0
+        ct_cost = contingency_cost if contingency_cost else 0.0
+        w_pct = water_pct if water_pct else 0.0
+        p_pct = profit_pct if profit_pct else 0.0
+
+        total_bricks = math.ceil(vol_val * 500)
+        dry_mortar_vol = vol_val * 0.30
+        total_mortar_parts = c_part + s_part
+        
+        cement_vol = (c_part / total_mortar_parts) * dry_mortar_vol if total_mortar_parts > 0 else 0.0
+        sand_m3 = (s_part / total_mortar_parts) * dry_mortar_vol if total_mortar_parts > 0 else 0.0
+        cement_bags = math.ceil(cement_vol * 28.8)
+
+        total_brick_cost = total_bricks * b_rate
+        total_cement_cost = cement_bags * c_rate
+        total_sand_cost = sand_m3 * s_rate
+
+        mat_cost = total_brick_cost + total_cement_cost + total_sand_cost
+        lab_cost = (m_qty * m_rate) + (mz_qty * mz_rate) + (bh_qty * bh_rate)
+        
+        total_base = mat_cost + lab_cost + sc_cost + ct_cost
+        w_amt = total_base * (w_pct / 100)
+        p_amt = total_base * (p_pct / 100)
+        grand_total = total_base + w_amt + p_amt
+        per_m3_rate = grand_total / vol_val if vol_val > 0 else 0.0
+
+        st.success("🎉 रिपोर्ट यशस्वीरित्या तयार झाला आहे!")
+        st.markdown(f"### 📊 RATE ANALYSIS SHEET - BRICKWORK")
