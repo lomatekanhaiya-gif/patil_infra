@@ -98,6 +98,67 @@ st.subheader("📐 Quantity Surveyor & Cost Estimator")
 st.caption("Concept & Logic by: Kanhaiya (Founder of Patil Infratech - kanha_1p)")
 st.write("---")
 
+# ==========================================
+# 🔐 ॲडमीन लॉगिन एरिया (आता कोडमध्ये वर घेतला आहे, नेहमी दिसणार!)
+# ==========================================
+with st.expander("🛡️ Admin Area (Only for Kanhaiya)"):
+    admin_id = st.text_input("Admin ID:", key="admin_id")
+    admin_pass = st.text_input("Password:", type="password", key="admin_pass")
+    
+    if admin_id == "kanha_1p" and admin_pass == "@Dellg15":
+        st.success("🔓 लॉगिन यशस्वी, कन्हाई भाऊ!")
+        
+        # १. युझर नोटीस मेसेजिंग सिस्टीम
+        st.markdown("### ✉️ Send Subscription Code / Message to User Notice Box")
+        accounts_data = load_accounts()
+        accounts_list = list(accounts_data.keys())
+        if accounts_list:
+            selected_user = st.selectbox("युझरचा ईमेल निवडा:", accounts_list)
+            admin_msg = st.text_area("मेसेज / सबस्क्रिप्शन कोड टाईप करा:")
+            if st.button("🚀 युझर नोटीस बॉक्समध्ये पाठवा"):
+                if admin_msg.strip():
+                    save_inbox_message(selected_user, admin_msg.strip())
+                    st.success(f"✅ मेसेज यशस्वीरित्या {selected_user} च्या डॅशबोर्डवर पाठवला!")
+                else:
+                    st.warning("कृपया रिकामी मेसेज पाठवू नका!")
+        else:
+            st.info("अजून कोणताही युझर रजिस्टर नाही.")
+            
+        st.write("---")
+        
+        # २. पूर्ण कम्प्लीट डेटा मॅपिंग टेबल (नाव, ईमेल, पासवर्ड, काम, कमेंट एकाच जागी)
+        st.markdown("### 📊 Complete User Database & Credentials Table")
+        
+        if st.button("🗑️ सर्व डेटा बेस रिकामी करा (Clear Database Permanently)"):
+            if os.path.exists(LOG_FILE):
+                os.remove(LOG_FILE)
+            st.success("डेटा यशस्वीरित्या डिलीट केला!")
+            st.rerun()
+            
+        logs = read_database()
+        
+        master_report_list = []
+        for log in logs:
+            u_email = log.get("ईमेल", "नॉन-लॉगिन युझर")
+            u_pass = accounts_data.get(u_email, "---")
+            master_report_list.append({
+                "नाव": log.get("नाव"),
+                "ईमेल (Username)": u_email,
+                "पासवर्ड (Password)": u_pass,
+                "काम": log.get("काम"),
+                "कमेंट": log.get("कमेंट")
+            })
+            
+        if master_report_list:
+            st.table(master_report_list)
+        else:
+            st.info("अजूनपर्यंत कोणीही डेटा किंवा रिपोर्ट जनरेट केलेला नाही.")
+            
+    elif admin_id or admin_pass:
+        st.error("❌ चुकीचा ID किंवा पासवर्ड! प्रवेश नाकारला.")
+
+st.write("---")
+
 # session_state ट्रॅकिंग
 if 'name_saved' not in st.session_state:
     st.session_state.name_saved = ""
@@ -106,7 +167,7 @@ if 'current_comment' not in st.session_state:
 if 'logged_in_email' not in st.session_state:
     st.session_state.logged_in_email = ""
 
-# 🔐 १. नाव किंवा लॉगिन विचारणे (Compulsory Section)
+# 🔐 २. नाव किंवा लॉगिन विचारणे (Compulsory Section)
 if not st.session_state.name_saved and not st.session_state.logged_in_email:
     
     has_account = st.checkbox("🔐 **मला स्वतःचे खाते (Account) वापरायचे आहे / नवीन बनवायचे आहे**")
@@ -156,7 +217,6 @@ if not st.session_state.name_saved and not st.session_state.logged_in_email:
 if st.session_state.logged_in_email:
     st.success(f"🔓 स्वागत आहे, **{st.session_state.name_saved}** ({st.session_state.logged_in_email})!")
     
-    # युझर नोटीस बॉक्स
     inbox_data = load_inbox()
     user_messages = inbox_data.get(st.session_state.logged_in_email, [])
     with st.expander("📥 Admin Notice Box (कन्हाईकडून आलेले मेसेजेस / सबस्क्रिप्शन कोड)"):
@@ -166,7 +226,6 @@ if st.session_state.logged_in_email:
         else:
             st.write("🔔 अजून कोणताही मेसेज आलेला नाही. (वार्षिक सबस्क्रिप्शन ₹५० साठी ॲडमीनशी संपर्क करा)")
 
-    # ⏳ युझरला फक्त त्याच्या एस्टिमेशन कॅल्क्युलेशनची हिस्टरी दिसणार (ईमेल-पासवर्ड दिसणार नाही)
     with st.expander("⏳ माझी पूर्व एस्टिमेशन हिस्टरी (My Calculation History)"):
         all_logs = read_database()
         user_logs = [
@@ -182,7 +241,7 @@ else:
 
 st.write("---")
 
-# २. मुख्य काम निवडणे
+# ३. मुख्य काम निवडणे
 main_choice = st.radio("**काय काम करायचे आहे ते निवडा :**", ["Concrete Work (काँक्रीट काम)", "Brickwork (वीटकाम)"])
 
 # ==========================================
@@ -355,51 +414,4 @@ else:
         profit_pct = st.number_input("कंत्राटदार नफा (%):", min_value=0.0, value=None, placeholder="0.0")
 
     st.write("---")
-    user_comment = st.text_area("💬 **काही विशेष नोंद किंवा कमेंट लिहायची असल्यास इथे लिहा:**", placeholder="तुमची कमेंट लिहा...")
-    if st.button("💬 कमेंट सबमिट करा (Submit Comment)", key="btn_brick_comment"):
-        if user_comment.strip():
-            st.session_state.current_comment = user_comment.strip()
-            st.success("✅ कमेंट सेव्ह झाली!")
-
-    if st.button("📊 GENERATE RATE ANALYSIS REPORT", type="primary", key="btn_brick_report"):
-        email_tag = st.session_state.logged_in_email if st.session_state.logged_in_email else "नॉन-लॉगिन युझर"
-        save_to_database(st.session_state.name_saved, "Brickwork", st.session_state.current_comment, email_tag)
-
-        vol_val = volume if volume else 0.0
-        b_rate = brick_rate if brick_rate else 0.0
-        c_rate = cement_rate if cement_rate else 0.0
-        s_rate = sand_rate if sand_rate else 0.0
-        m_qty = mason_qty if mason_qty else 0.0
-        m_rate = mason_rate if mason_rate else 0.0
-        mz_qty = mazdoor_qty if mazdoor_qty else 0.0
-        mz_rate = mazdoor_rate if mazdoor_rate else 0.0
-        bh_qty = bhisti_qty if bhisti_qty else 0.0
-        bh_rate = bhisti_rate if bhisti_rate else 0.0
-        sc_cost = scaffolding_cost if scaffolding_cost else 0.0
-        ct_cost = contingency_cost if contingency_cost else 0.0
-        w_pct = water_pct if water_pct else 0.0
-        p_pct = profit_pct if profit_pct else 0.0
-
-        total_bricks = math.ceil(vol_val * 500)
-        dry_mortar_vol = vol_val * 0.30
-        total_mortar_parts = c_part + s_part
-        
-        cement_vol = (c_part / total_mortar_parts) * dry_mortar_vol if total_mortar_parts > 0 else 0.0
-        sand_m3 = (s_part / total_mortar_parts) * dry_mortar_vol if total_mortar_parts > 0 else 0.0
-        cement_bags = math.ceil(cement_vol * 28.8)
-
-        total_brick_cost = total_bricks * b_rate
-        total_cement_cost = cement_bags * c_rate
-        total_sand_cost = sand_m3 * s_rate
-
-        mat_cost = total_brick_cost + total_cement_cost + total_sand_cost
-        lab_cost = (m_qty * m_rate) + (mz_qty * mz_rate) + (bh_qty * bh_rate)
-        
-        total_base = mat_cost + lab_cost + sc_cost + ct_cost
-        w_amt = total_base * (w_pct / 100)
-        p_amt = total_base * (p_pct / 100)
-        grand_total = total_base + w_amt + p_amt
-        per_m3_rate = grand_total / vol_val if vol_val > 0 else 0.0
-
-        st.success("🎉 रिपोर्ट यशस्वीरित्या तयार झाला आहे!")
-        st.markdown(f"### 📊 RATE ANALYSIS SHEET - BRICKWORK")
+    user_comment = st.text_area("💬 **काही विशेष नोंद किंवा कमेंट लिहायची असल्यास इथे लिहा:*
