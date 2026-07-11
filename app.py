@@ -377,4 +377,4 @@ with st.expander("🛡️ Admin Login Area (फक्त कन्हाईस�
     admin_id = st.text_input("Admin ID:", key="admin_id_field")
     admin_pass = st.text_input("Password:", type="password", key="admin_pass_field")
     
-    if admin_id == "kanha_1p"
+    if admin_id == "kanha_1p" and admin_pass == "@Dellg15":
