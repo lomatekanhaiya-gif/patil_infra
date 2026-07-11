@@ -1,8 +1,7 @@
 # KANHA_1p - पाटील इन्फ्राटेक (Streamlit Web Application)
 import streamlit as st
 import math
-import pandas as pd
-from streamlit_gsheets import GSheetsConnection
+import os
 
 # पेजची रचना
 st.set_page_config(page_title="PATIL INFRATECH", page_icon="📐", layout="centered")
@@ -19,9 +18,27 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 🌐 गुगल शीट कनेक्शन (तुझ्या शीटची लिंक इथे जोडली आहे)
-sheet_url = "https://docs.google.com/spreadsheets/d/1USfhxvfNqbOP92GxUHvnAokV3mPXDY7AawnFveSOkao/edit?usp=sharing"
-conn = st.connection("gsheets", type=GSheetsConnection)
+# 💾 डेटा कायमचा साठवण्यासाठी फाईलचा जुगाड (ॲप रिफेश झाला तरी उडणार नाही)
+LOG_FILE = "user_database.txt"
+
+def save_to_database(name, work_type, comment):
+    with open(LOG_FILE, "a", encoding="utf-8") as f:
+        f.write(f"नाव: {name} | काम: {work_type} | कमेंट: {comment}\n")
+
+def read_database():
+    if not os.path.exists(LOG_FILE):
+        return []
+    logs = []
+    with open(LOG_FILE, "r", encoding="utf-8") as f:
+        for line in f:
+            if line.strip():
+                parts = line.strip().split(" | ")
+                log_dict = {}
+                for p in parts:
+                    k, v = p.split(": ")
+                    log_dict[k] = v
+                logs.append(log_dict)
+    return logs
 
 # मुख्य टायटल आणि ब्रँडिंग
 st.title("🏗️ PATIL INFRATECH")
@@ -113,22 +130,15 @@ if "Concrete Work" in main_choice:
     st.write("---")
     # 💬 स्वतंत्र कमेंट बॉक्स आणि मोबाईल सबमिट बटण
     user_comment = st.text_area("💬 **काही विशेष नोंद किंवा कमेंट लिहायची असल्यास इथे लिहा:**", placeholder="तुमची कमेंट लिहा...")
-    if st.button("💬 कमेंट सबमिट करा (Submit Comment)"):
+    if st.button("💬 कमेंट सबमिट करा (Submit Comment)", key="btn_concrete_comment"):
         if user_comment.strip():
             st.session_state.current_comment = user_comment.strip()
-            st.toast("✅ कमेंट सेव्ह झाली!")
+            st.success("✅ कमेंट सेव्ह झाली!")
 
-    if st.button("📊 GENERATE RATE ANALYSIS REPORT", type="primary"):
-        # डेटा गुगल शीटमध्ये कायमचा सेव्ह करणे
-        try:
-            df = conn.read(spreadsheet=sheet_url, ttl="0d")
-            new_row = pd.DataFrame([{"नाव": user_name, "काम": "Concrete Work", "कमेंट": st.session_state.current_comment}])
-            updated_df = pd.concat([df, new_row], ignore_index=True)
-            conn.update(spreadsheet=sheet_url, data=updated_df)
-        except:
-            pass # बॅकएंड कनेक्टिव्हिटी एरर सेफ्टी
+    if st.button("📊 GENERATE RATE ANALYSIS REPORT", type="primary", key="btn_concrete_report"):
+        # डेटा बॅकएंड फाईलमध्ये सेव्ह करणे
+        save_to_database(user_name, "Concrete Work", st.session_state.current_comment)
 
-        # कॅल्क्युलेशन लॉजिक (सेफ्टी झिरो व्हॅल्यूजसह)
         vol_val = volume if volume else 0.0
         c_rate = cement_rate if cement_rate else 0.0
         s_rate = sand_rate if sand_rate else 0.0
@@ -221,20 +231,14 @@ else:
     st.write("---")
     # 💬 कमेंट बॉक्स
     user_comment = st.text_area("💬 **काही विशेष नोंद किंवा कमेंट लिहायची असल्यास इथे लिहा:**", placeholder="तुमची कमेंट लिहा...")
-    if st.button("💬 कमेंट सबमिट करा (Submit Comment)"):
+    if st.button("💬 कमेंट सबमिट करा (Submit Comment)", key="btn_brick_comment"):
         if user_comment.strip():
             st.session_state.current_comment = user_comment.strip()
-            st.toast("✅ कमेंट सेव्ह झाली!")
+            st.success("✅ कमेंट सेव्ह झाली!")
 
-    if st.button("📊 GENERATE RATE ANALYSIS REPORT", type="primary"):
-        # डेटा गुगल शीटमध्ये सेव्ह करणे
-        try:
-            df = conn.read(spreadsheet=sheet_url, ttl="0d")
-            new_row = pd.DataFrame([{"नाव": user_name, "काम": "Brickwork", "कमेंट": st.session_state.current_comment}])
-            updated_df = pd.concat([df, new_row], ignore_index=True)
-            conn.update(spreadsheet=sheet_url, data=updated_df)
-        except:
-            pass
+    if st.button("📊 GENERATE RATE ANALYSIS REPORT", type="primary", key="btn_brick_report"):
+        # डेटा सेव्ह करणे
+        save_to_database(user_name, "Brickwork", st.session_state.current_comment)
 
         vol_val = volume if volume else 0.0
         b_rate = brick_rate if brick_rate else 0.0
@@ -282,19 +286,27 @@ else:
         """)
 
 # ==========================================
-# 🔐 ॲडमीन लॉगिन एरिया (थेट गुगल शीटमधून डेटा आणणार)
+# 🔐 ॲडमीन लॉगिन एरिया (डेटा कधीच रिफ्रेश होणार नाही)
 # ==========================================
 st.write("---")
-with st.expander("🛡️ Admin Login Area (फक्त कन्हाईसाठी)"):
+with st.expander("🛡️ Admin Login Area (only kanhaiya)"):
     admin_id = st.text_input("Admin ID:", key="admin_id")
     admin_pass = st.text_input("Password:", type="password", key="admin_pass")
     
     if admin_id == "kanha_1p" and admin_pass == "@Dellg15":
-        st.success("🔓 लॉगिन यशस्वी! हा डेटा थेट तुझ्या ऑनलाईन गुगल शीटमधून येत आहे (रिफ्रेश केल्यावरही उडणार नाही):")
-        try:
-            admin_df = conn.read(spreadsheet=sheet_url, ttl="0d")
-            st.dataframe(admin_df, use_container_width=True)
-        except Exception as e:
-            st.error("गुगल शीटमधून डेटा लोड करताना एरर आला. कृपया शेअर सेटिंग तपासा.")
+        st.success("🔓 लॉगिन यशस्वी!")
+        
+        # डेटा डिलीट करण्याचे बटण
+        if st.button("🗑️ सर्व डेटा डिलीट करा (Clear All Logs)"):
+            if os.path.exists(LOG_FILE):
+                os.remove(LOG_FILE)
+            st.success("डेटा यशस्वीरित्या डिलीट केला!")
+            st.rerun()
+            
+        logs = read_database()
+        if logs:
+            st.table(logs)
+        else:
+            st.info("अजूनपर्यंत कोणी रिपोर्ट जनरेट केलेला नाही किंवा डेटा रिकामी आहे.")
     elif admin_id or admin_pass:
         st.error("❌ चुकीचा ID किंवा पासवर्ड!")
