@@ -291,7 +291,7 @@ else:
 # 🔐 ॲडमीन लॉगिन एरिया (ADMIN PANEL)
 # ==========================================
 st.write("---")
-with st.expander("🛡️ Admin Login Area (फक्त कन्हाईसाठी)"):
+with st.expander("🛡️ Admin Login Area (only kanha)"):
     admin_id = st.text_input("Admin ID:", key="admin_id")
     admin_pass = st.text_input("Password:", type="password", key="admin_pass")
     
