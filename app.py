@@ -1,4 +1,4 @@
-# KANHA_1p - पाटील इन्फ्राटेक (Streamlit Web Application)
+# KANHA_1p - पाटील इन्फ्राテック (Streamlit Web Application)
 import streamlit as st
 import math
 import os
@@ -96,25 +96,20 @@ def read_database():
 # 📄 एक्सेल डेटा जनरेट करण्याचे फंक्शन (वॉटरमार्कसह)
 def generate_excel(df_data, title):
     output = io.BytesIO()
-    # डेटाफ्रेम तयार करू
     df = pd.DataFrame(df_data)
-    
-    # वॉटरमार्क आणि ब्रँडिंग रोज ॲड करू
     watermark_rows = [
         {"Sr. No.": "---", "Description": "🔒 WATERMARK: PATIL INFRATECH (kanha_1p) 🔒", "Rate (₹)": "---", "Quantity": "---", "Unit": "---", "Amount (₹)": "---"},
         {"Sr. No.": "---", "Description": f"📑 REPORT: {title}", "Rate (₹)": "---", "Quantity": "---", "Unit": "---", "Amount (₹)": "---"}
     ]
     df_watermarked = pd.concat([pd.DataFrame(watermark_rows), df], ignore_index=True)
-    
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
         df_watermarked.to_excel(writer, index=False, sheet_name="Rate Analysis")
     return output.getvalue()
 
-# 📄 पीडीएफ (HTML आधारित डाउनलोड) जनरेट करण्याचे फंक्शन (वॉटरमार्कसह)
+# 📄 पीडीएफ डाउनलोड करण्याचे फंक्शन (वॉटरमार्कसह)
 def generate_pdf_html(df_data, title):
     html = f"""
     <div style='border: 3px solid #333; padding: 20px; font-family: Arial; position: relative;'>
-        <!-- अंधुक आणि मोठा वॉटरमार्क बॅकग्राउंडला -->
         <div style='position: absolute; top: 40%; left: 5%; font-size: 55px; color: rgba(200, 200, 200, 0.2); transform: rotate(-30deg); font-weight: bold; pointer-events: none; user-select: none;'>
             PATIL INFRATECH (kanha_1p)
         </div>
@@ -136,7 +131,7 @@ def generate_pdf_html(df_data, title):
     html += """
         </table>
         <br>
-        <p style='text-align: center; font-size: 12px; color: gray;'>🔒 Generated via Patil Infratech App - Malicious removal of watermark is strictly prohibited.</p>
+        <p style='text-align: center; font-size: 12px; color: gray;'>🔒 Generated via Patil Infratech App</p>
     </div>
     """
     return html
@@ -172,7 +167,7 @@ if not st.session_state.name_saved and not st.session_state.logged_in_email:
                         save_account(user_email.strip(), user_pass)
                         st.success("🎉 खाते यशस्वीरित्या तयार झाले! आता 'लॉगिन करा' निवडून ॲप सुरू करा.")
                     else:
-                        st.error("❌ पासवर्ड किमान ४ अंकी असावा!")
+                        st.error("❌ पासवर्ड किमान ४ असावा!")
                 else:
                     st.error("❌ Email is not valid! (कृपया वैध ईमेल आयडी प्रविष्ट करा)")
         
@@ -201,20 +196,19 @@ if not st.session_state.name_saved and not st.session_state.logged_in_email:
                 
     st.stop()
 
-# स्वागत मेसेज आणि वैयक्तिक ॲडमीन इनबॉक्स
+# स्वागत मेसेज आणि वैयक्तिक इनबॉक्स
 if st.session_state.logged_in_email:
-    st.success(f"🔓 स्वागत आहे, **{st.session_state.name_saved}** ({st.session_state.logged_in_email})! प्रीमियम फीचर्स अनलॉक झाले आहेत.")
+    st.success(f"🔓 स्वागत आहे, **{st.session_state.name_saved}** ({st.session_state.logged_in_email})!")
     
-    # 📥 युझरचा स्वतःचा इनबॉक्स (फक्त कन्हाईने पाठवलेले मेसेज दिसणार)
+    # युझर नोटीस बॉक्स
     inbox_data = load_inbox()
     user_messages = inbox_data.get(st.session_state.logged_in_email, [])
-    
     with st.expander("📥 Admin Notice Box (कन्हाईकडून आलेले मेसेजेस / सबस्क्रिप्शन कोड)"):
         if user_messages:
             for msg in reversed(user_messages):
                 st.info(f"💬 **Admin Message:** {msg}")
         else:
-            st.write("🔔 अजून कोणताही मेसेज किंवा सबस्क्रिप्शन कोड आलेला नाही. (वार्षिक सबस्क्रिप्शन ₹५० साठी ॲडमीनशी संपर्क करा)")
+            st.write("🔔 अजून कोणताही मेसेज आलेला नाही. (वार्षिक सबस्क्रिप्शन ₹५० साठी ॲडमीनशी संपर्क करा)")
 
     with st.expander("⏳ माझी पूर्व हिस्टरी (My Calculation History)"):
         all_logs = read_database()
@@ -224,7 +218,7 @@ if st.session_state.logged_in_email:
         else:
             st.info("तुमची कोणतीही जुनी हिस्टरी सापडली नाही.")
 else:
-    st.success(f"🔓 स्वागत आहे, **{st.session_state.name_saved}**! पाटील इन्फ्राटेक एस्टिमेटर अनलॉक झाला आहे.")
+    st.success(f"🔓 स्वागत आहे, **{st.session_state.name_saved}**! एस्टिमेटर अनलॉक झाला आहे.")
 
 st.write("---")
 
@@ -357,11 +351,9 @@ if "Concrete Work" in main_choice:
         st.markdown(table_markdown)
         st.info(f"👉 **Rate per m³:** {grand_total:.2f} / {vol_val} = **₹ {per_m3_rate:.2f} Rs/m³**")
 
-        # 📥 डाउनलोड सेक्शन (अट: युझर लॉगिन असणे बंधनकारक आहे)
         st.write("---")
-        st.markdown("### 📥 Download Options (प्रीमियम फीचर्स)")
+        st.markdown("### 📥 Download Options")
         if st.session_state.logged_in_email:
-            # एक्सेल आणि पीडीएफ साठी डेटा स्ट्रक्चर तयार करू
             report_data = [
                 {"Sr. No.": "1", "Description": "Cement", "Rate (₹)": c_rate, "Quantity": c_bags, "Unit": "bag", "Amount (₹)": total_cement_cost},
                 {"Sr. No.": "2", "Description": "Sand", "Rate (₹)": s_rate, "Quantity": s_m3, "Unit": "m³", "Amount (₹)": total_sand_cost},
@@ -376,16 +368,25 @@ if "Concrete Work" in main_choice:
                 {"Sr. No.": "11", "Description": f"Contractor Profit ({p_pct}%)", "Rate (₹)": "-", "Quantity": "-", "Unit": "@Total", "Amount (₹)": p_amt},
                 {"Sr. No.": "---", "Description": "GRAND TOTAL", "Rate (₹)": "-", "Quantity": "-", "Unit": "-", "Amount (₹)": grand_total}
             ]
-            
-            # १. एक्सेल डाउनलोड बटण
             excel_bytes = generate_excel(report_data, "Concrete Work Analysis")
             st.download_button(label="📥 Download Excel Sheet (With Watermark)", data=excel_bytes, file_name="Concrete_Rate_Analysis.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-            
-            # २. पीडीएफ डाउनलोड बटण
             pdf_html = generate_pdf_html(report_data, "Concrete Work Analysis")
             st.download_button(label="📄 Download PDF Report (With Watermark)", data=pdf_html, file_name="Concrete_Rate_Analysis.html", mime="text/html")
         else:
-            st.warning("🔒 डाउनलोड पर्याय फक्त लॉगिन असलेल्या युझर्ससाठीच उपलब्ध आहेत! कृपया डाउनलोड करण्यासाठी डाऊनलोड करण्यापूर्वी साईन-इन/खाते तयार करा.")
+            st.warning("🔒 डाउनलोड पर्याय फक्त लॉगिन असलेल्या युझर्ससाठीच उपलब्ध आहेत! कृपया डाउनलोड करण्यापूर्वी साईन-इन/खाते तयार करा.")
 
 # ==========================================
-# 🛑 वीटका
+# 🛑 वीटकाम (BRICKWORK MODULE)
+# ==========================================
+else:
+    st.subheader("🧱 Brickwork Estimation")
+    b_col1 = st.columns(1)[0]
+    mortar_choice = b_col1.selectbox("मॉर्टर मिक्स गुणोत्तर (Mortar Mix Ratio) निवडा:", ["1:4 (सिमेंट : वाळू)", "1:3 (सिमेंट : वाळू)", "1:5 (सिमेंट : वाळू)", "1:6 (सिमेंट : वाळू)"])
+    
+    if "1:3" in mortar_choice: c_part, s_part = 1, 3
+    elif "1:4" in mortar_choice: c_part, s_part = 1, 4
+    elif "1:5" in mortar_choice: c_part, s_part = 1, 5
+    else: c_part, s_part = 1, 6
+
+    st.markdown("#### [A] साहित्याची माहिती आणि दर")
+    bm_col1, bm_col2
