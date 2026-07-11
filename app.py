@@ -56,7 +56,7 @@ def read_database():
 # मुख्य टायटल आणि ब्रँडिंग
 st.title("🏗️ PATIL INFRATECH")
 st.subheader("📐 Quantity Surveyor & Cost Estimator")
-st.caption("Concept & Logic by: Kanhaiya (Founder of Patil Infratech - kanha_1p)")
+st.caption("Concept & Logic by: Kanhaiya (Founder of Patil Infratech)")
 st.write("---")
 
 # session_state ट्रॅकिंग
@@ -333,7 +333,7 @@ else:
 # 🔐 ॲडमीन लॉगिन एरिया
 # ==========================================
 st.write("---")
-with st.expander("🛡️ Admin Login Area (फक्त कन्हाईसाठी)"):
+with st.expander("🛡️ Admin Login Area (only for kanhaiya)"):
     admin_id = st.text_input("Admin ID:", key="admin_id")
     admin_pass = st.text_input("Password:", type="password", key="admin_pass")
     
