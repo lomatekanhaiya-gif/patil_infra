@@ -47,7 +47,7 @@ if 'current_comment' not in st.session_state:
     st.session_state.current_comment = "काही नाही"
 
 # ==========================================
-# 🔐 लॉगिन आणि साइन-अप सिस्टीम (MOBILE NUMBER BASED)
+# 🔐 लॉगिन आणि साइन-अप सिस्टीम
 # ==========================================
 if not st.session_state.logged_in:
     tab1, tab2 = st.tabs(["🔑 लॉगिन (Login)", "📝 नवीन खाते बनवा (Sign Up)"])
@@ -88,7 +88,7 @@ if not st.session_state.logged_in:
                     "messages": ["पाटील इन्फ्राटेक ॲपमध्ये आपले स्वागत आहे!"],
                     "history": []
                 }
-                st.success("🎉 खाते यशस्वीरित्या तयार झाले! आता लॉगिन टॅबमध्ये जाऊन लॉगिन करा.")
+                st.success("🎉 खाते यशस्वीरित्या तयार झाले! अब लॉगिन टॅबमध्ये जाऊन लॉगिन करा.")
     st.stop()
 
 user_mobile = st.session_state.current_user
@@ -353,7 +353,7 @@ elif menu_choice == "📐 Estimation Work":
 # 🛡️ ॲडमीन लॉगिन एरिया (ALWAYS AT THE BOTTOM)
 # ==========================================
 st.write("---")
-with st.expander("🛡️ Admin Login Area (only kanhaiya)"):
+with st.expander("🛡️ Admin Login Area (फक्त कन्हाईसाठी)"):
     admin_id = st.text_input("Admin ID:", key="admin_id_field")
     admin_pass = st.text_input("Password:", type="password", key="admin_pass_field")
     
@@ -364,13 +364,4 @@ with st.expander("🛡️ Admin Login Area (only kanhaiya)"):
         
         if st.session_state.db_users:
             for u_mobile, u_data in list(st.session_state.db_users.items()):
-                col_u_info,if st.session_state.db_users:
-            for u_mobile, u_data in list(st.session_state.db_users.items()):
-                col_u_info,
-                col_u_del = st.columns([4, 1])
-                col_u_info.code(f"नाव: {u_data['name']} | Mobile: {u_mobile} | Pass: {u_data['password']}")
-                
-                if col_u_del.button("🗑️ डिलीट", key=f"del_user_{u_mobile}"):
-                    del st.session_state.db_users[u_mobile]
-                    st.success(f"युझर {u_mobile} डिलीट केला!")
-                    st.rerun()
+                col_u_info, col_u_del = st.columns
