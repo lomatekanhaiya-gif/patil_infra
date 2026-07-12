@@ -23,30 +23,11 @@ st.markdown("""
 # 📂 कायमस्वरूपी फाईल डेटाबेस मॅनेजमेंट
 DB_FILE = "users_db.json"
 
+DB_FILE = "users_db.json"
+
 def load_db():
-    if os.path.exists(DB_FILE):
-        try:
-            with open(DB_FILE, "r", encoding="utf-8") as f:
-                db = json.load(f)
-                if isinstance(db, dict):
-                    # जुन्या फाईलमध्ये ९ वेळा किंवा १० वेळा ९ असेल तर नाव 'kanha' होईल
-                    if "999999999" in db:
-                        db["999999999"]["id"] = "kanha"
-                    if "9999999999" in db:
-                        db["9999999999"]["id"] = "kanha"
-                        
-                    if "9999999999" not in db:
-                        db["9999999999"] = {
-                            "id": "kanha", 
-                            "password": "patiladmin123",
-                            "comment": "मास्टर ॲडमीन अकाउंट",
-                            "history": []
-                        }
-                    return db
-        except Exception:
-            pass
-            
-    return {
+    # १. आधी मास्टर अकाउंटचा डेटा तयार करू (ज्यामध्ये नाव 'kanha' असेल)
+    db = {
         "9999999999": {
             "id": "kanha", 
             "password": "patiladmin123",
@@ -54,8 +35,21 @@ def load_db():
             "history": []
         }
     }
+    
+    # २. जर फाईल असेल, तर जुना डेटा वाचू आणि चुकीची नावे बदलू
+    if os.path.exists(DB_FILE):
+        try:
+            with open(DB_FILE, "r", encoding="utf-8") as f:
+                old_db = json.load(f)
+                if isinstance(old_db, dict):
+                    # इतर सर्व युझर्सचा डेटा जसाच्या तसा कॉपी करू
+                    for key, val in old_db.items():
+                        if key != "9999999999" and key != "999999999":
+                            db[key] = val
+        except:
             pass
             
+    return db
     return {
         "9999999999": {
             "id": "kanha", 
