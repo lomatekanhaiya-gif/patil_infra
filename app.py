@@ -1,4 +1,4 @@
-# KANHA_1p - पाटील इन्फ्राテック (Streamlit Web Application)
+# KANHA_1p - पाटील इन्फ्राटेक (Streamlit Web Application)
 import streamlit as st
 import math
 
@@ -17,23 +17,76 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# 🔐 युझर डेटाबेस इनिशियलाइज करणे (ॲप चालू असेपर्यंत डेटा साठवण्यासाठी)
+if "user_db" not in st.session_state:
+    st.session_state.user_db = {
+        "9999999999": {"name": "कन्हाई पाटील", "password": "patiladmin123"}
+    }
+
+if "app_user" not in st.session_state:
+    st.session_state.app_user = None  # सुरवातीला कोणीही लॉग इन नाही
+
 # मुख्य टायटल आणि ब्रँडिंग
 st.title("🏗️ PATIL INFRATECH")
 st.subheader("📐 Quantity Surveyor & Cost Estimator")
 st.caption("Concept & Logic by: Kanhaiya (Founder of Patil Infratech - kanha_1p)")
 st.write("---")
 
-# 🔐 १. नाव टाकणे सक्तीचे (Compulsory Name Input)
-user_name = st.text_input("**ॲप्लिकेशन सुरू करण्यासाठी आपले नाव प्रविष्ट करा (Enter Your Name):**", placeholder="तुमचे नाव इथे टाईप करा...")
+# ==========================================
+# 🔑 ऑप्शनल लॉगिन आणि साइन-अप सिस्टीम
+# ==========================================
+if st.session_state.app_user is None:
+    st.markdown("### 🔐 लॉगिन करा किंवा नवीन खाते बनवा (पर्यायी)")
+    tab1, tab2, tab3 = st.tabs(["🔑 लॉगिन (Login)", "📝 नवीन खाते (Sign Up)", "👤 Guest म्हणून पुढे जा"])
+    
+    with tab1:
+        l_mobile = st.text_input("१० अंकी मोबाईल नंबर:", key="l_mob").strip()
+        l_pass = st.text_input("पासवर्ड प्रविष्ट करा:", type="password", key="l_pwd")
+        if st.button("लॉगिन करा", type="primary"):
+            if l_mobile in st.session_state.user_db and st.session_state.user_db[l_mobile]["password"] == l_pass:
+                st.session_state.app_user = st.session_state.user_db[l_mobile]["name"]
+                st.success(f"🔓 लॉगिन यशस्वी! स्वागत आहे {st.session_state.app_user}")
+                st.rerun()
+            else:
+                st.error("❌ चुकीचा मोबाईल नंबर किंवा पासवर्ड!")
+                
+    with tab2:
+        r_name = st.text_input("तुमचे पूर्ण नाव (Full Name):", key="r_nm").strip()
+        r_mobile = st.text_input("१० अंकी मोबाईल नंबर (Mobile No):", key="r_mob").strip()
+        r_pass = st.text_input("नवीन पासवर्ड तयार करा:", type="password", key="r_pwd")
+        if st.button("खाते तयार करा"):
+            if not r_name or not r_mobile or not r_pass:
+                st.warning("⚠️ कृपया सर्व रकाने भरा!")
+            elif len(r_mobile) != 10 or not r_mobile.isdigit():
+                st.error("❌ कृपया वैध १० अंकी मोबाईल नंबर टाका!")
+            elif r_mobile in st.session_state.user_db:
+                st.error("❌ हा मोबाईल नंबर आधीपासूनच रजिस्टर आहे!")
+            else:
+                st.session_state.user_db[r_mobile] = {"name": r_name, "password": r_pass}
+                st.success("🎉 खाते यशस्वीरित्या तयार झाले! आता लॉगिन टॅबमध्ये जाऊन लॉगिन करा.")
+                
+    with tab3:
+        st.info("💡 जर तुम्हाला खाते बनवायचे नसेल, तर तुम्ही थेट नाव टाकून ॲप वापरू शकता.")
+        guest_name = st.text_input("**तुमचे नाव प्रविष्ट करा (Enter Name):**", placeholder="नाव टाईप करा...", key="gst_nm")
+        if st.button("Guest म्हणून पुढे जा 👉", type="secondary"):
+            if guest_name.strip():
+                st.session_state.app_user = guest_name.strip()
+                st.rerun()
+            else:
+                st.warning("⚠️ कृपया पुढे जाण्यासाठी नाव प्रविष्ट करा!")
+                
+    st.stop()  # लॉगिन किंवा नाव निश्चित होईपर्यंत खालील कोड रन होणार नाही
 
-if not user_name.strip():
-    st.warning("⚠️ कृपया पुढे जाण्यासाठी तुमचे नाव टाईप करा. नाव टाकणे सक्तीचे आहे!")
-    st.stop()
+# सध्याचा ॲक्टिव्ह युझर
+current_user = st.session_state.app_user
 
-# 🎯 [तुझ्यासाठी खास] - नाव टाईप करताच ते लॅपटॉपच्या काळ्या स्क्रीनवर (CMD) प्रिंट होईल
-print(f"🔥 [PATIL INFRATECH LOG]: नवीन युझरने ॲप उघडले आहे -> {user_name}")
+# लॉगआउट पर्याय (वरच्या बाजूला छोटा)
+col_u, col_lo = st.columns([5, 1])
+col_u.success(f"🔓 चालू युझर: **{current_user}**")
+if col_lo.button("🚪 Logout"):
+    st.session_state.app_user = None
+    st.rerun()
 
-st.success(f"🔓 स्वागत आहे, **{user_name}**! पाटील इन्फ्राटेक एस्टिमेटर आता अनलॉक झाला आहे.")
 st.write("---")
 
 # २. मुख्य काम निवडणे
@@ -116,7 +169,7 @@ if "Concrete Work" in main_choice:
 
         st.success("🎉 रिपोर्ट यशस्वीरित्या तयार झाला आहे!")
         st.markdown(f"### 📊 RATE ANALYSIS SHEET - CONCRETE WORK")
-        st.info(f"👤 **Prepared For:** {user_name} | **घटक:** {component.split(' ')[0]} | **ग्रेड:** {grade.split(' ')[0]} | **एकूण घनफळ:** {volume} m³")
+        st.info(f"👤 **Prepared For:** {current_user} | **घटक:** {component.split(' ')[0]} | **ग्रेड:** {grade.split(' ')[0]} | **एकूण घनफळ:** {volume} m³")
         
         st.markdown(f"""
         | Description | Quantity | Unit | Rate (₹) | Amount (₹) |
@@ -178,7 +231,7 @@ else:
         scaffolding_cost = st.number_input("पाळत/स्कॅफोल्डिंग खर्च (₹):", min_value=0.0, value=0.0)
         contingency_cost = st.number_input("आकस्मिक खर्च (₹):", min_value=0.0, value=0.0)
     with bo_col2:
-        water_pct = st.number_input("वॉटर चार्ज (%):", min_value=0.0, value=1.0)
+        water_pct = st.number_input("वॉटर充電 charge (%):", min_value=0.0, value=1.0)
         profit_pct = st.number_input("कंत्राटदार नफा (%):", min_value=0.0, value=10.0)
 
     if st.button("📊 GENERATE RATE ANALYSIS REPORT", type="primary"):
@@ -203,7 +256,7 @@ else:
 
         st.success("🎉 रिपोर्ट यशस्वीरित्या तयार झाला आहे!")
         st.markdown(f"### 📊 RATE ANALYSIS SHEET - BRICKWORK")
-        st.info(f"👤 **Prepared For:** {user_name} | **गुणोत्तर:** {mortar_choice.split(' ')[0]} | **एकूण घनफळ:** {volume} m³")
+        st.info(f"👤 **Prepared For:** {current_user} | **गुणोत्तर:** {mortar_choice.split(' ')[0]} | **एकूण घनफळ:** {volume} m³")
         
         st.markdown(f"""
         | Description | Quantity | Unit | Rate (₹) | Amount (₹) |
