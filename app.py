@@ -365,4 +365,4 @@ with st.expander("🛡️ Admin Login Area (फक्त कन्हाईस�
                 col_u_info, col_u_del = st.columns([4, 1])
                 col_u_info.code(f"नाव: {u_data['name']} | Email: {u_email} | Pass: {u_data['password']}")
                 
-                if col_u_del.button("🗑️ डिलीट")
+                if col_u_del.button("🗑️ डिलीट"):
