@@ -38,7 +38,7 @@ if not st.session_state.skip_welcome:
 
         st.markdown("<br><br>", unsafe_allow_html=True)
         # सुंदर हेडिंग
-        st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🏗️ पाटील इन्फ्राटेक मध्ये आपले स्वागत आहे...</h1>", unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🏗️ well come to the patil infratech...</h1>", unsafe_allow_html=True)
         st.markdown("<h3 style='text-align: center; color: #555555;'>तुमचे स्वप्न, आमचे एस्टिमेशन!</h3>", unsafe_allow_html=True)
         
         # घर बनताना दाखवणारे प्रोग्रेस बार अॅनिमेशन
