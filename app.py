@@ -364,4 +364,4 @@ with st.expander("🛡️ Admin Login Area (फक्त कन्हाईस�
         
         if st.session_state.db_users:
             for u_mobile, u_data in list(st.session_state.db_users.items()):
-                col_u_info, col_u_del = st.columns
+                col_u_info, col_u_del = st.columns([4,1])
