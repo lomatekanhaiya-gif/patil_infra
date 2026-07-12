@@ -433,4 +433,4 @@ else:
 | Mason | {mason_qty} | Nos | {mason_rate:.2f} | {mason_qty*mason_rate:.2f} |
 | Mazdoor | {mazdoor_qty} | Nos | {mazdoor_rate:.2f} | {mazdoor_qty*mazdoor_rate:.2f} |
 | **[C] OTHER EXPENSES** | | | | |
-| Scaffolding / Centering | - | L.S. | - | {scaffolding_cos
+| Scaffolding / Centering | - | L.S. | - | {scaffolding_cos}
