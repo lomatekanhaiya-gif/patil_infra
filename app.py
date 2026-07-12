@@ -224,8 +224,8 @@ if not user_mob_key.startswith("GUEST_"):
     admin_msg = current_user_data.get("admin_message", None)
     
     if admin_msg:
-        st.markdown("### 📥 ॲडमीन कडून आलेला मेसेज (Notification)")
-        st.info(f"📢 **कन्हाई पाटील:** {admin_msg}")
+        st.markdown("### 📥 ॲडमीन कडून आलेला मेसेज (inbox)")
+        st.info(f"📢 **kanhaiya:** {admin_msg}")
         st.write("---")
 
 # २. मुख्य काम निवडणे
