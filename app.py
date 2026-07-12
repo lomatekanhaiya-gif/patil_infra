@@ -422,7 +422,7 @@ else:
         st.success("🎉 रिपोर्ट यशस्वीरित्या तयार झाला आहे!")
         st.markdown(f"### 📊 RATE ANALYSIS SHEET - BRICKWORK")
         
-        report_table = f"""
+        report_table = f"
 | Description | Quantity | Unit | Rate (₹) | Amount (₹) |
 | :--- | :--- | :--- | :--- | :--- |
 | **[A] MATERIAL** | | | | |
