@@ -485,7 +485,7 @@ with col_excel:
         file_name="Patil_Infratech_Report.xlsx",
         mime="application/vnd.ms-excel"
     )
-        lab_cost = (mason_qty * mason_rate) + (mazdoor_qty * mazdoor_rate)
+ lab_cost = (mason_qty * mason_rate) + (mazdoor_qty * mazdoor_rate)
         base_total = mat_cost + lab_cost + scaffolding_cost + contingency_cost
         w_amt = base_total * (water_pct / 100)
         p_amt = base_total * (profit_pct / 100)
