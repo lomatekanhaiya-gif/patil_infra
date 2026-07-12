@@ -419,4 +419,4 @@ else:
 | Cement | {cement_bags} | Bags | {cement_rate:.2f} | {total_cement_cost:.2f} |
 | Sand | {sand_m3:.2f} | m³ | {sand_rate:.2f} | {total_sand_cost:.2f} |
 | **[B] LABOUR** | | | | |
-| Mason | {mason_qty} | Nos | {mason_ra}
+| Mason | {mason_qty} | Nos | {mason_ra
