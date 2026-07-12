@@ -29,7 +29,6 @@ def load_db():
             with open(DB_FILE, "r", encoding="utf-8") as f:
                 db = json.load(f)
                 if isinstance(db, dict):
-                    # मास्टर अकाऊंट नसेल तरच ॲड करणे
                     if "9999999999" not in db:
                         db["9999999999"] = {
                             "id": "कन्हाई पाटील", 
@@ -41,7 +40,6 @@ def load_db():
         except Exception:
             pass
             
-    # डीफॉल्ट मास्टर अकाउंट स्ट्रक्चर
     return {
         "9999999999": {
             "id": "कन्हाई पाटील", 
@@ -85,7 +83,6 @@ if st.session_state.app_user_mobile is None:
             if not l_mobile or not l_pass:
                 st.warning("⚠️ कृपया मोबाईल नंबर आणि पासवर्ड दोन्ही भरा!")
             elif l_mobile in user_db:
-                # इथं सुरक्षितपणे पासवर्ड चेक करणे
                 if user_db[l_mobile].get("password") == l_pass:
                     st.session_state.app_user_mobile = l_mobile
                     st.success(f"🔓 लॉगिन यशस्वी! स्वागत आहे {user_db[l_mobile].get('id', 'युझर')}")
@@ -126,7 +123,7 @@ if st.session_state.app_user_mobile is None:
             else:
                 st.warning("⚠️ कृपया पुढे जाण्यासाठी नाव प्रविष्ट करा!")
                 
-    # 🛡️ सुधारित आणि सुरक्षित ॲडमीन पॅनल लॉगिन
+    # 🛡️ सुरक्षित ॲडमीन पॅनल
     st.write("---")
     with st.expander("🛡️ Admin Database Panel (फक्त कन्हाई पाटील यांच्यासाठी)"):
         admin_id = st.text_input("Admin ID:", key="adm_id")
@@ -141,7 +138,6 @@ if st.session_state.app_user_mobile is None:
                 if not isinstance(info, dict):
                     continue
                     
-                # एरर टाळण्यासाठी सुरक्षितपणे .get() पद्धतीचा वापर
                 u_name = info.get("id", "नाव उपलब्ध नाही")
                 u_pass = info.get("password", "पासवर्ड उपलब्ध नाही")
                 u_comm = info.get("comment", "काही नाही")
@@ -174,7 +170,7 @@ if st.session_state.app_user_mobile is None:
             
     st.stop()
 
-# सध्याचा ॲक्टिव्ह युझर डेटा सेट करणे
+# सध्याचा ॲक्टिव्ह युझर
 user_mob_key = st.session_state.app_user_mobile
 user_db = load_db()
 
@@ -313,11 +309,12 @@ if "Concrete Work" in main_choice:
 
         if not user_mob_key.startswith("GUEST_") and user_mob_key in user_db:
             timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            user_db[user_mob_key]["history"].append({
+            new_report = {
                 "timestamp": timestamp,
                 "user_note": st.session_state.current_comment,
                 "report_data": report_table
-            })
+            }
+            user_db[user_mob_key]["history"].append(new_report)
             save_db(user_db)
 
 # ==========================================
@@ -418,7 +415,10 @@ else:
 
         if not user_mob_key.startswith("GUEST_") and user_mob_key in user_db:
             timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            user_db[user_mob_key]["history"].append({
+            new_report = {
                 "timestamp": timestamp,
                 "user_note": st.session_state.current_comment,
                 "report_data": report_table
+            }
+            user_db[user_mob_key]["history"].append(new_report)
+            save_db(user_db)
