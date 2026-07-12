@@ -28,7 +28,15 @@ def load_db():
         try:
             with open(DB_FILE, "r", encoding="utf-8") as f:
                 db = json.load(f)
-                if isinstance(db, dict) and "9999999999" in db:
+                if isinstance(db, dict):
+                    # मास्टर अकाऊंट नसेल तरच ॲड करणे
+                    if "9999999999" not in db:
+                        db["9999999999"] = {
+                            "id": "कन्हाई पाटील", 
+                            "password": "patiladmin123",
+                            "comment": "मास्टर ॲडमीन अकाउंट",
+                            "history": []
+                        }
                     return db
         except Exception:
             pass
@@ -77,9 +85,10 @@ if st.session_state.app_user_mobile is None:
             if not l_mobile or not l_pass:
                 st.warning("⚠️ कृपया मोबाईल नंबर आणि पासवर्ड दोन्ही भरा!")
             elif l_mobile in user_db:
-                if user_db[l_mobile]["password"] == l_pass:
+                # इथं सुरक्षितपणे पासवर्ड चेक करणे
+                if user_db[l_mobile].get("password") == l_pass:
                     st.session_state.app_user_mobile = l_mobile
-                    st.success(f"🔓 लॉगिन यशस्वी! स्वागत आहे {user_db[l_mobile]['id']}")
+                    st.success(f"🔓 लॉगिन यशस्वी! स्वागत आहे {user_db[l_mobile].get('id', 'युझर')}")
                     st.rerun()
                 else:
                     st.error("❌ चुकीचा पासवर्ड! कृपया पुन्हा तपासा.")
@@ -117,7 +126,7 @@ if st.session_state.app_user_mobile is None:
             else:
                 st.warning("⚠️ कृपया पुढे जाण्यासाठी नाव प्रविष्ट करा!")
                 
-    # 🛡️ सुधारित स्टँडर्ड ॲडमीन पॅनल लॉगिन
+    # 🛡️ सुधारित आणि सुरक्षित ॲडमीन पॅनल लॉगिन
     st.write("---")
     with st.expander("🛡️ Admin Database Panel (फक्त कन्हाई पाटील यांच्यासाठी)"):
         admin_id = st.text_input("Admin ID:", key="adm_id")
@@ -129,28 +138,36 @@ if st.session_state.app_user_mobile is None:
             st.markdown("### 📋 युझर डेटाबेस मास्टर लिस्ट (User Database Master List)")
             
             for mob, info in user_db.items():
-                # स्टँडर्ड टेबल फॉरमॅटमध्ये युझरची मूळ माहिती दर्शवणे
+                if not isinstance(info, dict):
+                    continue
+                    
+                # एरर टाळण्यासाठी सुरक्षितपणे .get() पद्धतीचा वापर
+                u_name = info.get("id", "नाव उपलब्ध नाही")
+                u_pass = info.get("password", "पासवर्ड उपलब्ध नाही")
+                u_comm = info.get("comment", "काही नाही")
+                u_hist = info.get("history", [])
+                
                 user_info_table = f"""
 | फील्ड (Field) | माहिती (User Details) |
 | :--- | :--- |
-| **👤 युझरचे नाव (Name)** | {info['id']} |
+| **👤 युझरचे नाव (Name)** | {u_name} |
 | **📱 मोबाईल नंबर (Mobile)** | `{mob}` |
-| **🔑 पासवर्ड (Password)** | `{info['password']}` |
-| **💬 शेवकडची युझर कमेंट** | {info.get('comment', 'काही नाही')} |
+| **🔑 पासवर्ड (Password)** | `{u_pass}` |
+| **💬 शेवकडची युझर कमेंट** | {u_comm} |
 """
                 st.markdown(user_info_table)
                 
-                # युझरचे रिपोर्ट हिस्ट्री पाहण्यासाठी सब-सेक्शन
-                with st.expander(f"📜 {info['id']} चे जनरेट केलेले एस्टिमेशन रिपोर्ट्स ({len(info.get('history', []))})"):
-                    if info.get("history"):
-                        for idx, hist in enumerate(info["history"], 1):
-                            st.markdown(f"🗓️ **रिपोर्ट क्रमांक {idx} | तारीख व वेळ: `{hist['timestamp']}`**")
-                            st.markdown(f"* **या कामाची विशिष्ट कमेंट:** {hist.get('user_note', 'काही नाही')}")
-                            st.markdown(hist["report_data"])
-                            st.write("---")
+                with st.expander(f"📜 {u_name} चे जनरेट केलेले एस्टिमेशन रिपोर्ट्स ({len(u_hist)})"):
+                    if u_hist:
+                        for idx, hist in enumerate(u_hist, 1):
+                            if isinstance(hist, dict):
+                                st.markdown(f"🗓️ **रिपोर्ट क्रमांक {idx} | तारीख व वेळ: `{hist.get('timestamp', 'N/A')}`**")
+                                st.markdown(f"* **या कामाची विशिष्ट कमेंट:** {hist.get('user_note', 'काही नाही')}")
+                                st.markdown(hist.get("report_data", "डेटा उपलब्ध नाही"))
+                                st.write("---")
                     else:
                         st.info("ℹ️ या युझरने अजून एकही रिपोर्ट जनरेट केलेला नाही.")
-                st.markdown("---") # दोन युझर्समध्ये स्पष्ट फरक दिसण्यासाठी लाईन
+                st.markdown("---")
                 
         elif admin_id or admin_pass:
             st.error("❌ चुकीचा Admin ID किंवा Password!")
@@ -165,7 +182,7 @@ if user_mob_key.startswith("GUEST_"):
     current_user_name = user_mob_key.replace("GUEST_", "")
 else:
     if user_mob_key in user_db:
-        current_user_name = user_db[user_mob_key]["id"]
+        current_user_name = user_db[user_mob_key].get("id", "User")
     else:
         current_user_name = "User"
 
@@ -234,7 +251,7 @@ if "Concrete Work" in main_choice:
         scaffolding_cost = st.number_input("स्कॅफोल्डिंग/सेंटरिंग खर्च (₹):", min_value=0.0, value=0.0)
         contingency_cost = st.number_input("आकस्मिक खर्च (Contingencies) (₹):", min_value=0.0, value=0.0)
     with o_col2:
-        water_pct = st.number_input("वॉटर充 टक्केवारी (%):", min_value=0.0, value=1.0)
+        water_pct = st.number_input("वॉटर चार्ज टक्केवारी (%):", min_value=0.0, value=1.0)
         profit_pct = st.number_input("कंत्राटदार नफा टक्केवारी (%):", min_value=0.0, value=10.0)
 
     # 💬 कमेंट पॅनल
@@ -405,5 +422,3 @@ else:
                 "timestamp": timestamp,
                 "user_note": st.session_state.current_comment,
                 "report_data": report_table
-            })
-            save_db(user_db)
