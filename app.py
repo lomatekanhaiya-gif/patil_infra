@@ -165,6 +165,17 @@ if st.session_state.app_user_mobile is None:
                         st.rerun()
                 else:
                     st.caption("🔒 मास्टर ॲडमीन अकाउंट डिलीट करता येणार नाही.")
+                    current_msg = info.get("admin_message", "ॲडमीन कडून सध्या कोणताही मेसेज नाही.")
+                st.caption(f"📩 सध्याचा मेसेज: {current_msg}")
+                new_msg = st.text_input(f"✍️ {u_name} साठी नवीन मेसेज टाईप करा:", key=f"msg_{mob}")
+                if st.button(f"✉️ मेसेज पाठवा ({u_name})", key=f"btn_msg_{mob}"):
+                    if new_msg.strip():
+                        user_db[mob]["admin_message"] = new_msg.strip()
+                        save_db(user_db)
+                        st.success(f"✅ '{u_name}' ला मेसेज यशस्वीरित्या पाठवला!")
+                        st.rerun()
+                    else:
+                        st.warning("⚠️ कृपया आधी मेसेज टाईप करा!")
                 
                 with st.expander(f"📜 {u_name} चे जनरेट केलेले एस्टिमेशन रिपोर्ट्स ({len(u_hist)})"):
                     if u_hist:
@@ -180,19 +191,7 @@ if st.session_state.app_user_mobile is None:
                 
         elif admin_id or admin_pass:
             st.error("❌ चुकीचा Admin ID किंवा Password!")
-            # 💬 युझरला मेसेज पाठवण्यासाठी इनपुट बॉक्स (Admin साठी)
-        current_msg = info.get("admin_message", "ॲडमीन कडून सध्या कोणताही मेसेज नाही.")
-                st.caption(f"📩 सध्याचा मेसेज: {current_msg}")
-                
-                new_msg = st.text_input(f"✍️ {u_name} साठी नवीन मेसेज टाईप करा:", key=f"msg_{mob}")
-                if st.button(f"✉️ मेसेज पाठवा ({u_name})", key=f"btn_msg_{mob}"):
-                    if new_msg.strip():
-                        user_db[mob]["admin_message"] = new_msg.strip()
-                        save_db(user_db)
-                        st.success(f"✅ '{u_name}' ला मेसेज यशस्वीरित्या पाठवला!")
-                        st.rerun()
-                    else:
-                        st.warning("⚠️ कृपया आधी मेसेज टाईप करा!")
+          
     st.stop()
 
 # सध्याचा ॲक्टिव्ह युझर
