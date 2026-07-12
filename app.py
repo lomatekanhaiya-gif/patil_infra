@@ -132,7 +132,7 @@ if st.session_state.app_user_mobile is None:
             st.success("🔓 डेटाबेस अनलॉक झाला!")
             user_db = load_db()
             
-            st.markdown("### 📋 युझर डेटाबेस मास्टर लिस्ट (User Database Master List)")
+            st.markdown("### 📋 युझर डेटाबेस MASTER LIST")
             
             for mob, info in list(user_db.items()):
                 if not isinstance(info, dict):
@@ -371,7 +371,7 @@ else:
         scaffolding_cost = st.number_input("पाळत/स्कॅफोल्डिंग खर्च (₹):", min_value=0.0, value=0.0)
         contingency_cost = st.number_input("आकस्मिक खर्च (₹):", min_value=0.0, value=0.0)
     with bo_col2:
-        water_pct = st.number_input("वॉटर充 Charge (%):", min_value=0.0, value=1.0)
+        water_pct = st.number_input("वॉटर चार्ज (%):", min_value=0.0, value=1.0)
         profit_pct = st.number_input("कंत्राटदार नफा (%):", min_value=0.0, value=10.0)
 
     # 💬 कमेंट पॅनल
@@ -409,7 +409,7 @@ else:
         st.markdown(f"### 📊 RATE ANALYSIS SHEET - BRICKWORK")
         st.info(f"👤 **Prepared For:** {current_user_name} | **गुणोत्तर:** {mortar_choice.split(' ')[0]} | **एकूण घनफळ:** {volume} m³")
         
-        # 💡 ब्रॅकेट्सची चूक इथे दुरुस्त केली आहे
+        # 💡 Mazdoor ची ओळ पूर्णपणे दुरुस्त केली आहे
         report_table = f"""
 | Description | Quantity | Unit | Rate (₹) | Amount (₹) |
 | :--- | :--- | :--- | :--- | :--- |
@@ -419,4 +419,4 @@ else:
 | Sand | {sand_m3:.2f} | m³ | {sand_rate:.2f} | {total_sand_cost:.2f} |
 | **[B] LABOUR** | | | | |
 | Mason | {mason_qty} | Nos | {mason_rate:.2f} | {mason_qty*mason_rate:.2f} |
-| Mazdoor | {mazdoor_qty} | Nos | {mazdoor_rate:.2f} | {maz
+| Mazdoor | {mazdoor_qty} | Nos | {mazdoor_rate:.2f} | {mazdoor_qty*mazdoor_rate:.2f} |
