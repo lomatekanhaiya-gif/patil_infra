@@ -181,7 +181,7 @@ if st.session_state.app_user_mobile is None:
         elif admin_id or admin_pass:
             st.error("❌ चुकीचा Admin ID किंवा Password!")
             # 💬 युझरला मेसेज पाठवण्यासाठी इनपुट बॉक्स (Admin साठी)
-                current_msg = info.get("admin_message", "ॲडमीन कडून सध्या कोणताही मेसेज नाही.")
+        current_msg = info.get("admin_message", "ॲडमीन कडून सध्या कोणताही मेसेज नाही.")
                 st.caption(f"📩 सध्याचा मेसेज: {current_msg}")
                 
                 new_msg = st.text_input(f"✍️ {u_name} साठी नवीन मेसेज टाईप करा:", key=f"msg_{mob}")
