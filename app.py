@@ -1,6 +1,8 @@
 # KANHA_1p - पाटील इन्फ्राटेक (Streamlit Web Application)
 import streamlit as st
 import math
+import json
+import os
 
 # पेजची रचना
 st.set_page_config(page_title="PATIL INFRATECH", page_icon="📐", layout="centered")
@@ -17,11 +19,23 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 🔐 युझर डेटाबेस इनिशियलाइज करणे (ॲप चालू असेपर्यंत डेटा साठवण्यासाठी)
-if "user_db" not in st.session_state:
-    st.session_state.user_db = {
-        "9999999999": {"name": "कन्हाई पाटील", "password": "patiladmin123"}
-    }
+# 📂 कायमस्वरूपी फाईल डेटाबेस मॅनेजमेंट (रिफ्रेश झाल्यावरही डेटा राहण्यासाठी)
+DB_FILE = "users_db.json"
+
+def load_db():
+    if os.path.exists(DB_FILE):
+        with open(DB_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    else:
+        # डीफॉल्ट ॲडमीन खाते
+        return {"9999999999": {"name": "कन्हाई पाटील", "password": "patiladmin123"}}
+
+def save_db(db):
+    with open(DB_FILE, "w", encoding="utf-8") as f:
+        json.dump(db, f, ensure_ascii=False, indent=4)
+
+# सुरवातीला डेटा लोड करणे
+user_db = load_db()
 
 if "app_user" not in st.session_state:
     st.session_state.app_user = None  # सुरवातीला कोणीही लॉग इन नाही
@@ -33,7 +47,7 @@ st.caption("Concept & Logic by: Kanhaiya (Founder of Patil Infratech - kanha_1p)
 st.write("---")
 
 # ==========================================
-# 🔑 ऑप्शनल लॉगिन आणि साइन-अप सिस्टीम
+# 🔑 लॉगिन आणि साइन-अप सिस्टीम (कायमस्वरूपी साठवणूक)
 # ==========================================
 if st.session_state.app_user is None:
     st.markdown("### 🔐 लॉगिन करा किंवा नवीन खाते बनवा (पर्यायी)")
@@ -43,8 +57,8 @@ if st.session_state.app_user is None:
         l_mobile = st.text_input("१० अंकी मोबाईल नंबर:", key="l_mob").strip()
         l_pass = st.text_input("पासवर्ड प्रविष्ट करा:", type="password", key="l_pwd")
         if st.button("लॉगिन करा", type="primary"):
-            if l_mobile in st.session_state.user_db and st.session_state.user_db[l_mobile]["password"] == l_pass:
-                st.session_state.app_user = st.session_state.user_db[l_mobile]["name"]
+            if l_mobile in user_db and user_db[l_mobile]["password"] == l_pass:
+                st.session_state.app_user = user_db[l_mobile]["name"]
                 st.success(f"🔓 लॉगिन यशस्वी! स्वागत आहे {st.session_state.app_user}")
                 st.rerun()
             else:
@@ -59,11 +73,13 @@ if st.session_state.app_user is None:
                 st.warning("⚠️ कृपया सर्व रकाने भरा!")
             elif len(r_mobile) != 10 or not r_mobile.isdigit():
                 st.error("❌ कृपया वैध १० अंकी मोबाईल नंबर टाका!")
-            elif r_mobile in st.session_state.user_db:
+            elif r_mobile in user_db:
                 st.error("❌ हा मोबाईल नंबर आधीपासूनच रजिस्टर आहे!")
             else:
-                st.session_state.user_db[r_mobile] = {"name": r_name, "password": r_pass}
-                st.success("🎉 खाते यशस्वीरित्या तयार झाले! आता लॉगिन टॅबमध्ये जाऊन लॉगिन करा.")
+                # नवीन युझर डेटा फाईलमध्ये सेव्ह करणे
+                user_db[r_mobile] = {"name": r_name, "password": r_pass}
+                save_db(user_db)
+                st.success("🎉 खाते यशस्वीरित्या तयार झाले आणि डेटाबेसमध्ये सेव्ह झाले! आता लॉगिन टॅबमध्ये जाऊन लॉगिन करा.")
                 
     with tab3:
         st.info("💡 जर तुम्हाला खाते बनवायचे नसेल, तर तुम्ही थेट नाव टाकून ॲप वापरू शकता.")
@@ -80,7 +96,7 @@ if st.session_state.app_user is None:
 # सध्याचा ॲक्टिव्ह युझर
 current_user = st.session_state.app_user
 
-# लॉगआउट पर्याय (वरच्या बाजूला छोटा)
+# लॉगआउट पर्याय
 col_u, col_lo = st.columns([5, 1])
 col_u.success(f"🔓 चालू युझर: **{current_user}**")
 if col_lo.button("🚪 Logout"):
@@ -231,7 +247,7 @@ else:
         scaffolding_cost = st.number_input("पाळत/स्कॅफोल्डिंग खर्च (₹):", min_value=0.0, value=0.0)
         contingency_cost = st.number_input("आकस्मिक खर्च (₹):", min_value=0.0, value=0.0)
     with bo_col2:
-        water_pct = st.number_input("वॉटर充電 charge (%):", min_value=0.0, value=1.0)
+        water_pct = st.number_input("वॉटर charge (%):", min_value=0.0, value=1.0)
         profit_pct = st.number_input("कंत्राटदार नफा (%):", min_value=0.0, value=10.0)
 
     if st.button("📊 GENERATE RATE ANALYSIS REPORT", type="primary"):
