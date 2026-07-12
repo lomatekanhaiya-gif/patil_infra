@@ -123,7 +123,7 @@ if st.session_state.app_user_mobile is None:
             else:
                 st.warning("⚠️ कृपया पुढे जाण्यासाठी नाव प्रविष्ट करा!")
                 
-    # 🛡️ सुरक्षित ॲडमीन पॅनल
+    # 🛡️ सुधारित ॲडमीन पॅनल (Delete Option सह)
     st.write("---")
     with st.expander("🛡️ Admin Database Panel (फक्त कन्हाई पाटील यांच्यासाठी)"):
         admin_id = st.text_input("Admin ID:", key="adm_id")
@@ -134,7 +134,8 @@ if st.session_state.app_user_mobile is None:
             
             st.markdown("### 📋 युझर डेटाबेस मास्टर लिस्ट (User Database Master List)")
             
-            for mob, info in user_db.items():
+            # डिक्शनरी लूप करत असताना डेटा डिलीट केल्यास एरर येऊ नये म्हणून list(user_db.items()) वापरले आहे
+            for mob, info in list(user_db.items()):
                 if not isinstance(info, dict):
                     continue
                     
@@ -153,6 +154,7 @@ if st.session_state.app_user_mobile is None:
 """
                 st.markdown(user_info_table)
                 
+                # रिपोर्ट व्ह्यूअर
                 with st.expander(f"📜 {u_name} चे जनरेट केलेले एस्टिमेशन रिपोर्ट्स ({len(u_hist)})"):
                     if u_hist:
                         for idx, hist in enumerate(u_hist, 1):
@@ -163,6 +165,22 @@ if st.session_state.app_user_mobile is None:
                                 st.write("---")
                     else:
                         st.info("ℹ️ या युझरने अजून एकही रिपोर्ट जनरेट केलेला नाही.")
+                
+                # 🗑️ डिलीट सिस्टीम (मास्टर ॲडमीन नंबर सोडून इतर सर्वांसाठी)
+                if mob != "9999999999":
+                    col_del1, col_del2 = st.columns([2, 1])
+                    with col_del1:
+                        confirm_delete = st.checkbox(f"⚠️ मला {u_name} (`{mob}`) चे खाते कायमचे डिलीट करायचे आहे.", key=f"chk_{mob}")
+                    with col_del2:
+                        if st.button(f"🗑️ डिलीट करा", key=f"btn_{mob}", type="secondary"):
+                            if confirm_delete:
+                                del user_db[mob]
+                                save_db(user_db)
+                                st.success(f"❌ {u_name} चा सर्व डेटाबेस यशस्वीरित्या डिलीट केला आहे!")
+                                st.rerun()
+                            else:
+                                st.warning("👉 आधी डाव्या बाजूच्या चेकबॉक्सवर टिक (✓) करा!")
+                                
                 st.markdown("---")
                 
         elif admin_id or admin_pass:
@@ -401,24 +419,4 @@ else:
 | Cement | {cement_bags} | Bags | {cement_rate:.2f} | {total_cement_cost:.2f} |
 | Sand | {sand_m3:.2f} | m³ | {sand_rate:.2f} | {total_sand_cost:.2f} |
 | **[B] LABOUR** | | | | |
-| Mason | {mason_qty} | Nos | {mason_rate:.2f} | {mason_qty*mason_rate:.2f} |
-| Mazdoor | {mazdoor_qty} | Nos | {mazdoor_rate:.2f} | {mazdoor_qty*mazdoor_rate:.2f} |
-| **[C] OTHER EXPENSES** | | | | |
-| Scaffolding / Centering | - | L.S. | - | {scaffolding_cost:.2f} |
-| Contingencies | - | L.S. | - | {contingency_cost:.2f} |
-| **TOTAL (A + B + C)** | | | | **{base_total:.2f}** |
-| Water Charge ({water_pct}%) | | | | {w_amt:.2f} |
-| Contractor Profit ({profit_pct}%) | | | | {p_amt:.2f} |
-| **GRAND TOTAL** | | | | **₹ {grand_total:.2f}/-** |
-"""
-        st.markdown(report_table)
-
-        if not user_mob_key.startswith("GUEST_") and user_mob_key in user_db:
-            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            new_report = {
-                "timestamp": timestamp,
-                "user_note": st.session_state.current_comment,
-                "report_data": report_table
-            }
-            user_db[user_mob_key]["history"].append(new_report)
-            save_db(user_db)
+| Mason | {mason_qty} | Nos | {mason_ra
