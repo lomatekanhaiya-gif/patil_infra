@@ -1,8 +1,9 @@
-# KANHA_1p - पाटील इन्फ्राटेक (Streamlit Web Application)
+# KANHA_1p - पाटील इन्फ्राテック (Streamlit Web Application)
 import streamlit as st
 import math
 import json
 import os
+import datetime
 
 # पेजची रचना
 st.set_page_config(page_title="PATIL INFRATECH", page_icon="📐", layout="centered")
@@ -27,7 +28,15 @@ def load_db():
         with open(DB_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
     else:
-        return {"9999999999": {"name": "कन्हाई पाटील", "password": "patiladmin123"}}
+        # डीफॉल्ट ॲडमीन युझर स्ट्रक्चर
+        return {
+            "9999999999": {
+                "id": "कन्हाई पाटील", 
+                "password": "patiladmin123",
+                "comment": "मास्टर ॲडमीन अकाउंट",
+                "history": []
+            }
+        }
 
 def save_db(db):
     with open(DB_FILE, "w", encoding="utf-8") as f:
@@ -35,8 +44,11 @@ def save_db(db):
 
 user_db = load_db()
 
-if "app_user" not in st.session_state:
-    st.session_state.app_user = None
+# सेशन स्टेट इनिशियलायझेशन
+if "app_user_mobile" not in st.session_state:
+    st.session_state.app_user_mobile = None
+if "current_comment" not in st.session_state:
+    st.session_state.current_comment = "काही नाही"
 
 # मुख्य टायटल
 st.title("🏗️ PATIL INFRATECH")
@@ -47,7 +59,7 @@ st.write("---")
 # ==========================================
 # 🔑 लॉगिन आणि साइन-अप सिस्टीम
 # ==========================================
-if st.session_state.app_user is None:
+if st.session_state.app_user_mobile is None:
     st.markdown("### 🔐 लॉगिन करा किंवा नवीन खाते बनवा (पर्यायी)")
     tab1, tab2, tab3 = st.tabs(["🔑 लॉगिन (Login)", "📝 नवीन खाते (Sign Up)", "👤 Guest म्हणून पुढे जा"])
     
@@ -56,8 +68,8 @@ if st.session_state.app_user is None:
         l_pass = st.text_input("पासवर्ड प्रविष्ट करा:", type="password", key="l_pwd")
         if st.button("लॉगिन करा", type="primary"):
             if l_mobile in user_db and user_db[l_mobile]["password"] == l_pass:
-                st.session_state.app_user = user_db[l_mobile]["name"]
-                st.success(f"🔓 लॉगिन यशस्वी! स्वागत आहे {st.session_state.app_user}")
+                st.session_state.app_user_mobile = l_mobile
+                st.success(f"🔓 लॉगिन यशस्वी! स्वागत आहे {user_db[l_mobile]['id']}")
                 st.rerun()
             else:
                 st.error("❌ चुकीचा मोबाईल नंबर किंवा पासवर्ड!")
@@ -74,7 +86,13 @@ if st.session_state.app_user is None:
             elif r_mobile in user_db:
                 st.error("❌ हा मोबाईल नंबर आधीपासूनच रजिस्टर आहे!")
             else:
-                user_db[r_mobile] = {"name": r_name, "password": r_pass}
+                # स्टेंडर्ड फॉरमॅटमध्ये डेटा साठवणे
+                user_db[r_mobile] = {
+                    "id": r_name, 
+                    "password": r_pass,
+                    "comment": "काही नाही",
+                    "history": []
+                }
                 save_db(user_db)
                 st.success("🎉 खाते यशस्वीरित्या तयार झाले! आता लॉगिन टॅबमध्ये जाऊन लॉगिन करा.")
                 
@@ -82,7 +100,8 @@ if st.session_state.app_user is None:
         guest_name = st.text_input("**तुमचे नाव प्रविष्ट करा (Enter Name):**", placeholder="नाव टाईप करा...", key="gst_nm")
         if st.button("Guest म्हणून पुढे जा 👉", type="secondary"):
             if guest_name.strip():
-                st.session_state.app_user = guest_name.strip()
+                # गेस्ट युझरसाठी तात्पुरता मोबाईल की 'GUEST'
+                st.session_state.app_user_mobile = "GUEST_" + guest_name.strip()
                 st.rerun()
             else:
                 st.warning("⚠️ कृपया पुढे जाण्यासाठी नाव प्रविष्ट करा!")
@@ -94,20 +113,41 @@ if st.session_state.app_user is None:
         admin_pass = st.text_input("Password:", type="password", key="adm_pass")
         if admin_id == "kanha_1p" and admin_pass == "@Dellg15":
             st.success("🔓 डेटाबेस अनलॉक झाला!")
-            st.write(user_db)  # संपूर्ण डेटा स्क्रीनवर दाखवण्यासाठी
+            
+            # प्रत्येक युझरचा डेटा स्वच्छ फॉरमॅटमध्ये दाखवणे
+            for mob, info in user_db.items():
+                st.markdown(f"### 📱 मोबाईल नंबर: `{mob}`")
+                st.markdown(f"* **ID (नाव):** {info['id']}\n* **Password:** `{info['password']}`\n* **शेवटची युझर कमेंट:** {info.get('comment', 'काही नाही')}")
+                
+                # रिपोर्ट हिस्टरी expander मध्ये दाखवणे
+                with st.expander(f"📜 {info['id']} चे फायनल रिपोर्ट्स पाहण्यासाठी क्लिक करा"):
+                    if info.get("history"):
+                        for idx, hist in enumerate(info["history"], 1):
+                            st.markdown(f"📅 **रिपोर्ट {idx} ({hist['timestamp']}):**")
+                            st.markdown(f"* **या कामाची कमेंट:** {hist.get('user_note', 'काही नाही')}")
+                            st.markdown(hist["report_data"])
+                            st.write("---")
+                    else:
+                        st.info("या युझरने अजून एकही रिपोर्ट जनरेट केलेला नाही.")
+                st.write("---")
         elif admin_id or admin_pass:
             st.error("❌ चुकीचा Admin ID किंवा Password!")
             
     st.stop()
 
-# सध्याचा ॲक्टिव्ह युझर
-current_user = st.session_state.app_user
+# सध्याचा ॲक्टिव्ह युझर डेटा सेट करणे
+user_mob_key = st.session_state.app_user_mobile
+if user_mob_key.startswith("GUEST_"):
+    current_user_name = user_mob_key.replace("GUEST_", "")
+else:
+    current_user_name = user_db[user_mob_key]["id"]
 
 # लॉगआउट पर्याय
 col_u, col_lo = st.columns([5, 1])
-col_u.success(f"🔓 चालू युझर: **{current_user}**")
+col_u.success(f"🔓 चालू युझर: **{current_user_name}** ({'Guest' if user_mob_key.startswith('GUEST_') else user_mob_key})")
 if col_lo.button("🚪 Logout"):
-    st.session_state.app_user = None
+    st.session_state.app_user_mobile = None
+    st.session_state.current_comment = "काही नाही"
     st.rerun()
 
 st.write("---")
@@ -170,6 +210,17 @@ if "Concrete Work" in main_choice:
         water_pct = st.number_input("वॉटर चार्ज टक्केवारी (%):", min_value=0.0, value=1.0)
         profit_pct = st.number_input("कंत्राटदार नफा टक्केवारी (%):", min_value=0.0, value=10.0)
 
+    # 💬 कमेंट पॅनल
+    st.markdown("#### 💬 कमेंट पॅनल (Comment Panel)")
+    user_note = st.text_area("या एस्टिमेशन संदर्भात काही नोट किंवा कमेंट लिहायची असल्यास इथे लिहा:", placeholder="उदा. साईट A वरील स्लॅबचे काम...")
+    if st.button("💬 कमेंट सबमिट करा"):
+        if user_note.strip():
+            st.session_state.current_comment = user_note.strip()
+            if not user_mob_key.startswith("GUEST_"):
+                user_db[user_mob_key]["comment"] = user_note.strip()
+                save_db(user_db)
+            st.success("✅ कमेंट तात्पुरती सेव्ह झाली! रिपोर्ट जनरेट केल्यावर ती हिस्टरीमध्ये जमा होईल.")
+
     if st.button("📊 GENERATE RATE ANALYSIS REPORT", type="primary"):
         dry_volume = volume * 1.54
         total_parts = cement_ratio + sand_ratio + aggregate_ratio
@@ -192,28 +243,39 @@ if "Concrete Work" in main_choice:
 
         st.success("🎉 रिपोर्ट यशस्वीरित्या तयार झाला आहे!")
         st.markdown(f"### 📊 RATE ANALYSIS SHEET - CONCRETE WORK")
-        st.info(f"👤 **Prepared For:** {current_user} | **घटक:** {component.split(' ')[0]} | **ग्रेड:** {grade.split(' ')[0]} | **एकूण घनफळ:** {volume} m³")
+        st.info(f"👤 **Prepared For:** {current_user_name} | **घटक:** {component.split(' ')[0]} | **ग्रेड:** {grade.split(' ')[0]} | **एकूण घनफळ:** {volume} m³")
         
-        st.markdown(f"""
-        | Description | Quantity | Unit | Rate (₹) | Amount (₹) |
-        | :--- | :--- | :--- | :--- | :--- |
-        | **[A] MATERIAL** | | | | |
-        | Cement | {c_bags} | Bags | {cement_rate:.2f} | {total_cement_cost:.2f} |
-        | Sand | {s_m3:.2f} | m³ | {sand_rate:.2f} | {total_sand_cost:.2f} |
-        | Aggregate | {a_m3:.2f} | m³ | {aggregate_rate:.2f} | {total_aggregate_cost:.2f} |
-        | Steel | {steel_qty:.2f} | Kg | {steel_rate:.2f} | {total_steel_cost:.2f} |
-        | **[B] LABOUR** | | | | |
-        | Mason | {mason_qty} | Nos | {mason_rate:.2f} | {mason_qty*mason_rate:.2f} |
-        | Mazdoor | {mazdoor_qty} | Nos | {mazdoor_rate:.2f} | {mazdoor_qty*mazdoor_rate:.2f} |
-        | Bar Bender | {bb_qty} | Nos | {bb_rate:.2f} | {bb_qty*bb_rate:.2f} |
-        | **[C] OTHER EXPENSES** | | | | |
-        | Scaffolding / Centering | - | L.S. | - | {scaffolding_cost:.2f} |
-        | Contingencies | - | L.S. | - | {contingency_cost:.2f} |
-        | **TOTAL (A + B + C)** | | | | **{base_total:.2f}** |
-        | Water Charge ({water_pct}%) | | | | {w_amt:.2f} |
-        | Contractor Profit ({profit_pct}%) | | | | {p_amt:.2f} |
-        | **GRAND TOTAL** | | | | **₹ {grand_total:.2f}/-** |
-        """)
+        report_table = f"""
+| Description | Quantity | Unit | Rate (₹) | Amount (₹) |
+| :--- | :--- | :--- | :--- | :--- |
+| **[A] MATERIAL** | | | | |
+| Cement | {c_bags} | Bags | {cement_rate:.2f} | {total_cement_cost:.2f} |
+| Sand | {s_m3:.2f} | m³ | {sand_rate:.2f} | {total_sand_cost:.2f} |
+| Aggregate | {a_m3:.2f} | m³ | {aggregate_rate:.2f} | {total_aggregate_cost:.2f} |
+| Steel | {steel_qty:.2f} | Kg | {steel_rate:.2f} | {total_steel_cost:.2f} |
+| **[B] LABOUR** | | | | |
+| Mason | {mason_qty} | Nos | {mason_rate:.2f} | {mason_qty*mason_rate:.2f} |
+| Mazdoor | {mazdoor_qty} | Nos | {mazdoor_rate:.2f} | {mazdoor_qty*mazdoor_rate:.2f} |
+| Bar Bender | {bb_qty} | Nos | {bb_rate:.2f} | {bb_qty*bb_rate:.2f} |
+| **[C] OTHER EXPENSES** | | | | |
+| Scaffolding / Centering | - | L.S. | - | {scaffolding_cost:.2f} |
+| Contingencies | - | L.S. | - | {contingency_cost:.2f} |
+| **TOTAL (A + B + C)** | | | | **{base_total:.2f}** |
+| Water Charge ({water_pct}%) | | | | {w_amt:.2f} |
+| Contractor Profit ({profit_pct}%) | | | | {p_amt:.2f} |
+| **GRAND TOTAL** | | | | **₹ {grand_total:.2f}/-** |
+"""
+        st.markdown(report_table)
+
+        # रजिस्टर्ड युझर असेल तर फायनल रिपोर्ट हिस्टरीमध्ये सेव्ह करणे
+        if not user_mob_key.startswith("GUEST_"):
+            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            user_db[user_mob_key]["history"].append({
+                "timestamp": timestamp,
+                "user_note": st.session_state.current_comment,
+                "report_data": report_table
+            })
+            save_db(user_db)
 
 # ==========================================
 # 🛑 वीटकाम (BRICKWORK MODULE)
@@ -257,6 +319,17 @@ else:
         water_pct = st.number_input("वॉटर charge (%):", min_value=0.0, value=1.0)
         profit_pct = st.number_input("कंत्राटदार नफा (%):", min_value=0.0, value=10.0)
 
+    # 💬 कमेंट पॅनल
+    st.markdown("#### 💬 कमेंट पॅनल (Comment Panel)")
+    user_note = st.text_area("या एस्टिमेशन संदर्भात काही नोट किंवा कमेंट लिहायची असल्यास इथे लिहा:", placeholder="उदा. नवीन वीटकामाचे कंत्राट...")
+    if st.button("💬 कमेंट सबमिट करा"):
+        if user_note.strip():
+            st.session_state.current_comment = user_note.strip()
+            if not user_mob_key.startswith("GUEST_"):
+                user_db[user_mob_key]["comment"] = user_note.strip()
+                save_db(user_db)
+            st.success("✅ कमेंट तात्पुरती सेव्ह झाली! रिपोर्ट जनरेट केल्यावर ती हिस्टरीमध्ये जमा होईल.")
+
     if st.button("📊 GENERATE RATE ANALYSIS REPORT", type="primary"):
         total_bricks = math.ceil(volume * 500)
         dry_mortar_vol = volume * 0.30
@@ -279,9 +352,9 @@ else:
 
         st.success("🎉 रिपोर्ट यशस्वीरित्या तयार झाला आहे!")
         st.markdown(f"### 📊 RATE ANALYSIS SHEET - BRICKWORK")
-        st.info(f"👤 **Prepared For:** {current_user} | **गुणोत्तर:** {mortar_choice.split(' ')[0]} | **एकूण घनफळ:** {volume} m³")
+        st.info(f"👤 **Prepared For:** {current_user_name} | **गुणोत्तर:** {mortar_choice.split(' ')[0]} | **एकूण घनफळ:** {volume} m³")
         
-        st.markdown(f"""
+        report_table = f"""
         | Description | Quantity | Unit | Rate (₹) | Amount (₹) |
         | :--- | :--- | :--- | :--- | :--- |
         | **[A] MATERIAL** | | | | |
@@ -298,4 +371,15 @@ else:
         | Water Charge ({water_pct}%) | | | | {w_amt:.2f} |
         | Contractor Profit ({profit_pct}%) | | | | {p_amt:.2f} |
         | **GRAND TOTAL** | | | | **₹ {grand_total:.2f}/-** |
-        """)
+        """
+        st.markdown(report_table)
+
+        # रजिस्टर्ड युझर असेल तर फायनल रिपोर्ट हिस्टरीमध्ये सेव्ह करणे
+        if not user_mob_key.startswith("GUEST_"):
+            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            user_db[user_mob_key]["history"].append({
+                "timestamp": timestamp,
+                "user_note": st.session_state.current_comment,
+                "report_data": report_table
+            })
+            save_db(user_db)
