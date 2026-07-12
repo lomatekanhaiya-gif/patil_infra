@@ -437,17 +437,16 @@ import io
 st.markdown("---")
 st.subheader("📥 फायनल रिपोर्ट डाउनलोड करा (पाटील इन्फ्राटेक स्पेशल)")
 
-# १. युझरने वर जे काँक्रीट किंवा वीटकामाचे कॅल्क्युलेशन केले आहे, तो डेटा डायनॅमिकली गोळा करू
 # जर वर रिपोर्ट जनरेट झाला असेल तरच बटण काम करतील
 if 'grand_total' in locals():
     
-    # एक्सलसाठी डेटा तयार करणे (काँक्रीट किंवा वीटकामाच्या हिशोबाने)
+    # एक्सल/CSV साठी डेटा तयार करणे
     if "Concrete Work" in main_choice:
         report_data = {
-            "साहित्य / लेबर (Description)": ["Cement", "Sand", "Aggregate", "Steel", "GRAND TOTAL"],
-            "प्रमाण (Quantity)": [c_bags, f"{s_m3:.2f}", f"{a_m3:.2f}", f"{steel_qty:.2f}", ""],
-            "एकक (Unit)": ["Bags", "m³", "m³", "Kg", ""],
-            "एकूण खर्च (Amount ₹)": [f"{total_cement_cost:.2f}", f"{total_sand_cost:.2f}", f"{total_aggregate_cost:.2f}", f"{total_steel_cost:.2f}", f"{grand_total:.2f}"]
+            "Description": ["Cement", "Sand", "Aggregate", "Steel", "GRAND TOTAL"],
+            "Quantity": [c_bags, f"{s_m3:.2f}", f"{a_m3:.2f}", f"{steel_qty:.2f}", ""],
+            "Unit": ["Bags", "m³", "m³", "Kg", ""],
+            "Amount (INR)": [total_cement_cost, total_sand_cost, total_aggregate_cost, total_steel_cost, grand_total]
         }
         
         pdf_text = f"""
@@ -469,10 +468,10 @@ if 'grand_total' in locals():
     else:
         # वीटकामाचा डेटा
         report_data = {
-            "साहित्य / लेबर (Description)": ["Bricks", "Cement", "Sand", "GRAND TOTAL"],
-            "प्रमाण (Quantity)": [total_bricks, cement_bags, f"{sand_m3:.2f}", ""],
-            "एकक (Unit)": ["Nos", "Bags", "m³", ""],
-            "एकूण खर्च (Amount ₹)": [f"{total_brick_cost:.2f}", f"{total_cement_cost:.2f}", f"{total_sand_cost:.2f}", f"{grand_total:.2f}"]
+            "Description": ["Bricks", "Cement", "Sand", "GRAND TOTAL"],
+            "Quantity": [total_bricks, cement_bags, f"{sand_m3:.2f}", ""],
+            "Unit": ["Nos", "Bags", "m³", ""],
+            "Amount (INR)": [total_brick_cost, total_cement_cost, total_sand_cost, grand_total]
         }
         
         pdf_text = f"""
@@ -494,32 +493,30 @@ if 'grand_total' in locals():
     # डेटा फ्रेम तयार करणे
     df = pd.DataFrame(report_data)
 
-    # २. EXCEL डाउनलोड करण्यासाठी सुरक्षित लॉजिक (openpyxl नसेल तरी चालेल)
-    buffer_excel = io.BytesIO()
-    df.to_excel(buffer_excel, index=False, sheet_name='Estimation_Report')
-    excel_bytes = buffer_excel.getvalue()
+    # 🛠️ बदल: तोडगा - Excel ऐवजी थेट CSV बाइट्स तयार करणे (ज्याला openpyxl लागत नाही)
+    csv_bytes = df.to_csv(index=False).encode('utf-8')
         
-    # ३. PDF/TEXT डाउनलोड करण्यासाठी लॉजिक
+    # PDF/TEXT डाउनलोड करण्यासाठी लॉजिक
     buffer_pdf = io.BytesIO(pdf_text.encode('utf-8'))
 
-    # ४. स्क्रीनवर डाऊनलोड बटन्स दाखवणे (दोन कॉलम्स मध्ये)
+    # ४. स्क्रीनवर डाऊनलोड बटन्स दाखवणे
     col_pdf, col_excel = st.columns(2)
 
     with col_pdf:
         st.download_button(
             label="📄 PDF/Text रिपोर्ट डाउनलोड करा",
             data=buffer_pdf,
-            file_name=f"Patil_Infratech_Report_{current_user_name}.txt", # .txt मध्ये मराठी फॉन्ट सुरक्षित राहतात
+            file_name=f"Patil_Infratech_Report_{current_user_name}.txt",
             mime="text/plain",
             key="final_dl_txt"
         )
 
     with col_excel:
         st.download_button(
-            label="📊 Excel शीट डाउनलोड करा",
-            data=excel_bytes,
-            file_name=f"Patil_Infratech_Report_{current_user_name}.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            label="📊 Excel (CSV) शीट डाउनलोड करा",
+            data=csv_bytes,
+            file_name=f"Patil_Infratech_Report_{current_user_name}.csv", # .csv फाईल थेट MS Excel मध्ये उघडते
+            mime="text/csv",
             key="final_dl_excel"
         )
 else:
