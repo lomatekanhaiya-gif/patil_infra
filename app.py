@@ -1,4 +1,4 @@
-# KANHA_1p - पाटील इन्फ्राテック (Streamlit Web Application)
+# KANHA_1p - पाटील इन्फ्राटेक (Streamlit Web Application)
 import streamlit as st
 import math
 import json
@@ -25,24 +25,40 @@ DB_FILE = "users_db.json"
 
 def load_db():
     if os.path.exists(DB_FILE):
-        with open(DB_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    else:
-        # डीफॉल्ट ॲडमीन युझर स्ट्रक्चर
-        return {
-            "9999999999": {
-                "id": "कन्हाई पाटील", 
-                "password": "patiladmin123",
-                "comment": "मास्टर ॲडमीन अकाउंट",
-                "history": []
-            }
+        try:
+            with open(DB_FILE, "r", encoding="utf-8") as f:
+                db = json.load(f)
+                # जर फाईल रिकामी असेल किंवा त्यात डीफॉल्ट ॲडमीन नसेल तर री-सेट करा
+                if not db or "9999999999" not in db:
+                    db = {
+                        "9999999999": {
+                            "id": "कन्हाई पाटील", 
+                            "password": "patiladmin123",
+                            "comment": "मास्टर ॲडमीन अकाउंट",
+                            "history": []
+                        }
+                    }
+                return db
+        except Exception:
+            pass
+    
+    # डीफॉल्ट स्ट्रक्चर जर फाईल नसेल किंवा करप्ट असेल तर
+    return {
+        "9999999999": {
+            "id": "कन्हाई पाटील", 
+            "password": "patiladmin123",
+            "comment": "मास्टर ॲडमीन अकाउंट",
+            "history": []
         }
+    }
 
 def save_db(db):
     with open(DB_FILE, "w", encoding="utf-8") as f:
         json.dump(db, f, ensure_ascii=False, indent=4)
 
+# सुरवातीला सुरक्षितपणे डेटा लोड करणे
 user_db = load_db()
+save_db(user_db) # फाईल पहिल्यांदाच तयार होत असल्यास राईट होईल
 
 # सेशन स्टेट इनिशियलायझेशन
 if "app_user_mobile" not in st.session_state:
@@ -67,12 +83,18 @@ if st.session_state.app_user_mobile is None:
         l_mobile = st.text_input("१० अंकी मोबाईल नंबर:", key="l_mob").strip()
         l_pass = st.text_input("पासवर्ड प्रविष्ट करा:", type="password", key="l_pwd")
         if st.button("लॉगिन करा", type="primary"):
-            if l_mobile in user_db and user_db[l_mobile]["password"] == l_pass:
-                st.session_state.app_user_mobile = l_mobile
-                st.success(f"🔓 लॉगिन यशस्वी! स्वागत आहे {user_db[l_mobile]['id']}")
-                st.rerun()
+            if not l_mobile:
+                st.warning("⚠️ कृपया मोबाईल नंबर प्रविष्ट करा!")
+            # 💡 इथला मुख्य बदल: आधी नंबर डेटाबेसमध्ये आहे की नाही ते चेक केले (KeyError येणार नाही)
+            elif l_mobile in user_db:
+                if user_db[l_mobile]["password"] == l_pass:
+                    st.session_state.app_user_mobile = l_mobile
+                    st.success(f"🔓 लॉगिन यशस्वी! स्वागत आहे {user_db[l_mobile]['id']}")
+                    st.rerun()
+                else:
+                    st.error("❌ चुकीचा पासवर्ड! कृपया पुन्हा तपासा.")
             else:
-                st.error("❌ चुकीचा मोबाईल नंबर किंवा पासवर्ड!")
+                st.error("❌ हा मोबाईल नंबर रजिस्टर नाही! कृपया 'नवीन खाते' टॅबमध्ये जाऊन रजिस्ट्रेशन करा.")
                 
     with tab2:
         r_name = st.text_input("तुमचे पूर्ण नाव (Full Name):", key="r_nm").strip()
@@ -100,13 +122,12 @@ if st.session_state.app_user_mobile is None:
         guest_name = st.text_input("**तुमचे नाव प्रविष्ट करा (Enter Name):**", placeholder="नाव टाईप करा...", key="gst_nm")
         if st.button("Guest म्हणून पुढे जा 👉", type="secondary"):
             if guest_name.strip():
-                # गेस्ट युझरसाठी तात्पुरता मोबाईल की 'GUEST'
                 st.session_state.app_user_mobile = "GUEST_" + guest_name.strip()
                 st.rerun()
             else:
                 st.warning("⚠️ कृपया पुढे जाण्यासाठी नाव प्रविष्ट करा!")
                 
-    # 🛡️ ॲडमीन पॅनल लॉगिन (लॉगिन नसतानाही खाली ॲडमीन पाहू शकतील)
+    # 🛡️ ॲडमीन पॅनल लॉगिन
     st.write("---")
     with st.expander("🛡️ Admin Database Panel (फक्त कन्हाई पाटील यांच्यासाठी)"):
         admin_id = st.text_input("Admin ID:", key="adm_id")
@@ -114,12 +135,10 @@ if st.session_state.app_user_mobile is None:
         if admin_id == "kanha_1p" and admin_pass == "@Dellg15":
             st.success("🔓 डेटाबेस अनलॉक झाला!")
             
-            # प्रत्येक युझरचा डेटा स्वच्छ फॉरमॅटमध्ये दाखवणे
             for mob, info in user_db.items():
                 st.markdown(f"### 📱 मोबाईल नंबर: `{mob}`")
                 st.markdown(f"* **ID (नाव):** {info['id']}\n* **Password:** `{info['password']}`\n* **शेवटची युझर कमेंट:** {info.get('comment', 'काही नाही')}")
                 
-                # रिपोर्ट हिस्टरी expander मध्ये दाखवणे
                 with st.expander(f"📜 {info['id']} चे फायनल रिपोर्ट्स पाहण्यासाठी क्लिक करा"):
                     if info.get("history"):
                         for idx, hist in enumerate(info["history"], 1):
@@ -142,7 +161,7 @@ if user_mob_key.startswith("GUEST_"):
 else:
     current_user_name = user_db[user_mob_key]["id"]
 
-# लॉगआउट पर्याय
+# लॉगアウト पर्याय
 col_u, col_lo = st.columns([5, 1])
 col_u.success(f"🔓 चालू युझर: **{current_user_name}** ({'Guest' if user_mob_key.startswith('GUEST_') else user_mob_key})")
 if col_lo.button("🚪 Logout"):
@@ -212,14 +231,14 @@ if "Concrete Work" in main_choice:
 
     # 💬 कमेंट पॅनल
     st.markdown("#### 💬 कमेंट पॅनल (Comment Panel)")
-    user_note = st.text_area("या एस्टिमेशन संदर्भात काही नोट किंवा कमेंट लिहायची असल्यास इथे लिहा:", placeholder="उदा. साईट A वरील स्लॅबचे काम...")
+    user_note = st.text_area("या एस्टिमेशन संदर्भात काही नोट किंवा कमेंट लिहायची असल्यास इथे लिहा:", placeholder="उदा. स्लॅब क्र. १ चे काँक्रीट काम...")
     if st.button("💬 कमेंट सबमिट करा"):
         if user_note.strip():
             st.session_state.current_comment = user_note.strip()
             if not user_mob_key.startswith("GUEST_"):
                 user_db[user_mob_key]["comment"] = user_note.strip()
                 save_db(user_db)
-            st.success("✅ कमेंट तात्पुरती सेव्ह झाली! रिपोर्ट जनरेट केल्यावर ती हिस्टरीमध्ये जमा होईल.")
+            st.success("✅ कमेंट सेव्ह झाली!")
 
     if st.button("📊 GENERATE RATE ANALYSIS REPORT", type="primary"):
         dry_volume = volume * 1.54
@@ -316,19 +335,19 @@ else:
         scaffolding_cost = st.number_input("पाळत/स्कॅफोल्डिंग खर्च (₹):", min_value=0.0, value=0.0)
         contingency_cost = st.number_input("आकस्मिक खर्च (₹):", min_value=0.0, value=0.0)
     with bo_col2:
-        water_pct = st.number_input("वॉटर charge (%):", min_value=0.0, value=1.0)
+        water_pct = st.number_input("वॉटर चार्ज (%):", min_value=0.0, value=1.0)
         profit_pct = st.number_input("कंत्राटदार नफा (%):", min_value=0.0, value=10.0)
 
     # 💬 कमेंट पॅनल
     st.markdown("#### 💬 कमेंट पॅनल (Comment Panel)")
-    user_note = st.text_area("या एस्टिमेशन संदर्भात काही नोट किंवा कमेंट लिहायची असल्यास इथे लिहा:", placeholder="उदा. नवीन वीटकामाचे कंत्राट...")
+    user_note = st.text_area("या एस्टिमेशन संदर्भात काही नोट किंवा कमेंट लिहायची असल्यास इथे लिहा:", placeholder="उदा. ग्राउंड फ्लोअर वीटकाम...")
     if st.button("💬 कमेंट सबमिट करा"):
         if user_note.strip():
             st.session_state.current_comment = user_note.strip()
             if not user_mob_key.startswith("GUEST_"):
                 user_db[user_mob_key]["comment"] = user_note.strip()
                 save_db(user_db)
-            st.success("✅ कमेंट तात्पुरती सेव्ह झाली! रिपोर्ट जनरेट केल्यावर ती हिस्टरीमध्ये जमा होईल.")
+            st.success("✅ कमेंट सेव्ह झाली!")
 
     if st.button("📊 GENERATE RATE ANALYSIS REPORT", type="primary"):
         total_bricks = math.ceil(volume * 500)
@@ -355,23 +374,23 @@ else:
         st.info(f"👤 **Prepared For:** {current_user_name} | **गुणोत्तर:** {mortar_choice.split(' ')[0]} | **एकूण घनफळ:** {volume} m³")
         
         report_table = f"""
-        | Description | Quantity | Unit | Rate (₹) | Amount (₹) |
-        | :--- | :--- | :--- | :--- | :--- |
-        | **[A] MATERIAL** | | | | |
-        | Bricks | {total_bricks} | Nos | {(brick_rate/1000):.2f} | {total_brick_cost:.2f} |
-        | Cement | {cement_bags} | Bags | {cement_rate:.2f} | {total_cement_cost:.2f} |
-        | Sand | {sand_m3:.2f} | m³ | {sand_rate:.2f} | {total_sand_cost:.2f} |
-        | **[B] LABOUR** | | | | |
-        | Mason | {mason_qty} | Nos | {mason_rate:.2f} | {mason_qty*mason_rate:.2f} |
-        | Mazdoor | {mazdoor_qty} | Nos | {mazdoor_rate:.2f} | {mazdoor_qty*mazdoor_rate:.2f} |
-        | **[C] OTHER EXPENSES** | | | | |
-        | Scaffolding / Centering | - | L.S. | - | {scaffolding_cost:.2f} |
-        | Contingencies | - | L.S. | - | {contingency_cost:.2f} |
-        | **TOTAL (A + B + C)** | | | | **{base_total:.2f}** |
-        | Water Charge ({water_pct}%) | | | | {w_amt:.2f} |
-        | Contractor Profit ({profit_pct}%) | | | | {p_amt:.2f} |
-        | **GRAND TOTAL** | | | | **₹ {grand_total:.2f}/-** |
-        """
+| Description | Quantity | Unit | Rate (₹) | Amount (₹) |
+| :--- | :--- | :--- | :--- | :--- |
+| **[A] MATERIAL** | | | | |
+| Bricks | {total_bricks} | Nos | {(brick_rate/1000):.2f} | {total_brick_cost:.2f} |
+| Cement | {cement_bags} | Bags | {cement_rate:.2f} | {total_cement_cost:.2f} |
+| Sand | {sand_m3:.2f} | m³ | {sand_rate:.2f} | {total_sand_cost:.2f} |
+| **[B] LABOUR** | | | | |
+| Mason | {mason_qty} | Nos | {mason_rate:.2f} | {mason_qty*mason_rate:.2f} |
+| Mazdoor | {mazdoor_qty} | Nos | {mazdoor_rate:.2f} | {mazdoor_qty*mazdoor_rate:.2f} |
+| **[C] OTHER EXPENSES** | | | | |
+| Scaffolding / Centering | - | L.S. | - | {scaffolding_cost:.2f} |
+| Contingencies | - | L.S. | - | {contingency_cost:.2f} |
+| **TOTAL (A + B + C)** | | | | **{base_total:.2f}** |
+| Water Charge ({water_pct}%) | | | | {w_amt:.2f} |
+| Contractor Profit ({profit_pct}%) | | | | {p_amt:.2f} |
+| **GRAND TOTAL** | | | | **₹ {grand_total:.2f}/-** |
+"""
         st.markdown(report_table)
 
         # रजिस्टर्ड युझर असेल तर फायनल रिपोर्ट हिस्टरीमध्ये सेव्ह करणे
