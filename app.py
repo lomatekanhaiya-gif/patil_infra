@@ -59,6 +59,8 @@ user_db = load_db()
 # सेशन स्टेट इनिशियलायझेशन
 if "app_user_mobile" not in st.session_state:
     st.session_state.app_user_mobile = None
+if "current_comment" not in st.session_state:
+    st.session_state.current_comment = "काही नाही"
 
 # मुख्य टायटल
 st.title("🏗️ PATIL INFRATECH")
@@ -126,15 +128,13 @@ if st.session_state.app_user_mobile is None:
     with st.expander("🛡️ Admin Database Panel (फक्त कन्हाई पाटील यांच्यासाठी)"):
         admin_id = st.text_input("Admin ID:", key="adm_id")
         admin_pass = st.text_input("Password:", type="password", key="adm_pass")
-        
         if admin_id == "kanha_1p" and admin_pass == "@Dellg15":
             st.success("🔓 डेटाबेस अनलॉक झाला!")
             user_db = load_db()
             
-            st.markdown("### 📋 युझर डेटाबेस मास्टर लिस्ट")
+            st.markdown("### 📋 युझर डेटाबेस मास्टर लिस्ट (User Database Master List)")
             
-            for mob in list(user_db.keys()):
-                info = user_db[mob]
+            for mob, info in user_db.items():
                 if not isinstance(info, dict):
                     continue
                     
@@ -149,26 +149,9 @@ if st.session_state.app_user_mobile is None:
 | **👤 युझरचे नाव (Name)** | {u_name} |
 | **📱 मोबाईल नंबर (Mobile)** | `{mob}` |
 | **🔑 पासवर्ड (Password)** | `{u_pass}` |
-| **💬 शेवटची युझर कमेंट** | {u_comm} |
+| **💬 शेवकडची युझर कमेंट** | {u_comm} |
 """
                 st.markdown(user_info_table)
-                
-                # 🗑️ ॲडमीन डिलीट ऑप्शन्स
-                adm_col1, adm_col2 = st.columns(2)
-                if adm_col1.button(f"🗑️ Delete Account ({u_name})", key=f"del_acc_{mob}"):
-                    if mob == "9999999999":
-                        st.error("❌ मास्टर ॲडमीन खाते डिलीट करता येणार नाही!")
-                    else:
-                        del user_db[mob]
-                        save_db(user_db)
-                        st.success(f"✅ {u_name} चे खाते डिलीट केले!")
-                        st.rerun()
-                        
-                if adm_col2.button(f"🧹 Clear History ({u_name})", key=f"clr_hist_{mob}"):
-                    user_db[mob]["history"] = []
-                    save_db(user_db)
-                    st.success(f"✅ {u_name} ची संपूर्ण हिस्ट्री साफ केली!")
-                    st.rerun()
                 
                 with st.expander(f"📜 {u_name} चे जनरेट केलेले एस्टिमेशन रिपोर्ट्स ({len(u_hist)})"):
                     if u_hist:
@@ -199,36 +182,13 @@ else:
     else:
         current_user_name = "User"
 
-# लॉगआऊट आणि युझर हिस्ट्री डिलीट मॅनेजमेंट
-col_u, col_lo = st.columns([4, 2])
+# लॉगआऊट पर्याय
+col_u, col_lo = st.columns([5, 1])
 col_u.success(f"🔓 चालू युझर: **{current_user_name}** ({'Guest' if user_mob_key.startswith('GUEST_') else user_mob_key})")
-
-with col_lo:
-    sub_col1, sub_col2 = st.columns(2)
-    if sub_col1.button("🚪 Logout"):
-        st.session_state.app_user_mobile = None
-        st.rerun()
-        
-    if not user_mob_key.startswith("GUEST_"):
-        if sub_col2.button("🧹 Clear My History"):
-            user_db[user_mob_key]["history"] = []
-            user_db[user_mob_key]["comment"] = "काही नाही"
-            save_db(user_db)
-            st.toast("✅ तुमची हिस्ट्री साफ केली आहे!", icon="🧹")
-            st.rerun()
-
-st.write("---")
-
-# जुनी हिस्ट्री पाहण्यासाठी युझर डॅशबोर्ड
-if not user_mob_key.startswith("GUEST_") and user_mob_key in user_db:
-    my_history = user_db[user_mob_key].get("history", [])
-    if my_history:
-        with st.expander(f"📜 तुमचे जुने रिपोर्ट्स तपासा ({len(my_history)})"):
-            for idx, hist in enumerate(reversed(my_history), 1):
-                st.markdown(f"🗓️ **रिपोर्ट तारीख व वेळ: `{hist.get('timestamp', 'N/A')}`**")
-                st.markdown(f"* **कमेंट:** {hist.get('user_note', 'काही नाही')}")
-                st.markdown(hist.get("report_data", "डेटा उपलब्ध नाही"))
-                st.write("---")
+if col_lo.button("🚪 Logout"):
+    st.session_state.app_user_mobile = None
+    st.session_state.current_comment = "काही नाही"
+    st.rerun()
 
 st.write("---")
 
@@ -292,7 +252,14 @@ if "Concrete Work" in main_choice:
 
     # 💬 कमेंट पॅनल
     st.markdown("#### 💬 कमेंट पॅनल (Comment Panel)")
-    user_note = st.text_area("या एस्टिमेशन संदर्भात काही नोट किंवा कमेंट लिहायची असल्यास इथे लिहा:", placeholder="उदा. स्लॅब क्र. १ चे काँक्रीट काम...", key="concrete_note")
+    user_note = st.text_area("या एस्टिमेशन संदर्भात काही नोट किंवा कमेंट लिहायची असल्यास इथे लिहा:", placeholder="उदा. स्लॅब क्र. १ चे काँक्रीट काम...")
+    if st.button("💬 कमेंट सबमिट करा"):
+        if user_note.strip():
+            st.session_state.current_comment = user_note.strip()
+            if not user_mob_key.startswith("GUEST_") and user_mob_key in user_db:
+                user_db[user_mob_key]["comment"] = user_note.strip()
+                save_db(user_db)
+            st.success("✅ कमेंट सेव्ह झाली!")
 
     if st.button("📊 GENERATE RATE ANALYSIS REPORT", type="primary"):
         dry_volume = volume * 1.54
@@ -342,12 +309,9 @@ if "Concrete Work" in main_choice:
 
         if not user_mob_key.startswith("GUEST_") and user_mob_key in user_db:
             timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            note_to_save = user_note.strip() if user_note.strip() else "काही नाही"
-            
-            user_db[user_mob_key]["comment"] = note_to_save
             new_report = {
                 "timestamp": timestamp,
-                "user_note": note_to_save,
+                "user_note": st.session_state.current_comment,
                 "report_data": report_table
             }
             user_db[user_mob_key]["history"].append(new_report)
@@ -396,7 +360,14 @@ else:
 
     # 💬 कमेंट पॅनल
     st.markdown("#### 💬 कमेंट पॅनल (Comment Panel)")
-    user_note = st.text_area("या एस्टिमेशन संदर्भात काही नोट किंवा कमेंट लिहायची असल्यास इथे लिहा:", placeholder="उदा. ग्राउंड फ्लोअर वीटकाम...", key="brick_note")
+    user_note = st.text_area("या एस्टिमेशन संदर्भात काही नोट किंवा कमेंट लिहायची असल्यास इथे लिहा:", placeholder="उदा. ग्राउंड फ्लोअर वीटकाम...")
+    if st.button("💬 कमेंट सबमिट करा"):
+        if user_note.strip():
+            st.session_state.current_comment = user_note.strip()
+            if not user_mob_key.startswith("GUEST_") and user_mob_key in user_db:
+                user_db[user_mob_key]["comment"] = user_note.strip()
+                save_db(user_db)
+            st.success("✅ कमेंट सेव्ह झाली!")
 
     if st.button("📊 GENERATE RATE ANALYSIS REPORT", type="primary"):
         total_bricks = math.ceil(volume * 500)
@@ -428,4 +399,26 @@ else:
 | **[A] MATERIAL** | | | | |
 | Bricks | {total_bricks} | Nos | {(brick_rate/1000):.2f} | {total_brick_cost:.2f} |
 | Cement | {cement_bags} | Bags | {cement_rate:.2f} | {total_cement_cost:.2f} |
-| Sand | {sand_m3:.2f} | m³
+| Sand | {sand_m3:.2f} | m³ | {sand_rate:.2f} | {total_sand_cost:.2f} |
+| **[B] LABOUR** | | | | |
+| Mason | {mason_qty} | Nos | {mason_rate:.2f} | {mason_qty*mason_rate:.2f} |
+| Mazdoor | {mazdoor_qty} | Nos | {mazdoor_rate:.2f} | {mazdoor_qty*mazdoor_rate:.2f} |
+| **[C] OTHER EXPENSES** | | | | |
+| Scaffolding / Centering | - | L.S. | - | {scaffolding_cost:.2f} |
+| Contingencies | - | L.S. | - | {contingency_cost:.2f} |
+| **TOTAL (A + B + C)** | | | | **{base_total:.2f}** |
+| Water Charge ({water_pct}%) | | | | {w_amt:.2f} |
+| Contractor Profit ({profit_pct}%) | | | | {p_amt:.2f} |
+| **GRAND TOTAL** | | | | **₹ {grand_total:.2f}/-** |
+"""
+        st.markdown(report_table)
+
+        if not user_mob_key.startswith("GUEST_") and user_mob_key in user_db:
+            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            new_report = {
+                "timestamp": timestamp,
+                "user_note": st.session_state.current_comment,
+                "report_data": report_table
+            }
+            user_db[user_mob_key]["history"].append(new_report)
+            save_db(user_db)
