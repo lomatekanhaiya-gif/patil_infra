@@ -216,6 +216,18 @@ if col_lo.button("🚪 Logout"):
     st.rerun()
 
 st.write("---")
+# ==========================================
+# 📥 USER INBOX PANEL (ॲडमीन मेसेज)
+# ==========================================
+if not user_mob_key.startswith("GUEST_"):
+    # चालू युझरचा डेटाबेस मधून लेटेस्ट मेसेज आणणे
+    current_user_data = user_db.get(user_mob_key, {})
+    admin_msg = current_user_data.get("admin_message", None)
+    
+    if admin_msg:
+        st.markdown("### 📥 ॲडमीन कडून आलेला मेसेज (Notification)")
+        st.info(f"📢 **कन्हाई पाटील:** {admin_msg}")
+        st.write("---")
 
 # २. मुख्य काम निवडणे
 main_choice = st.radio("**काय काम करायचे आहे ते निवडा :**", ["Concrete Work (काँक्रीट काम)", "Brickwork (वीटकाम)"])
