@@ -88,7 +88,7 @@ if not st.session_state.logged_in:
                     "messages": ["पाटील इन्फ्राटेक ॲपमध्ये आपले स्वागत आहे!"],
                     "history": []
                 }
-                st.success("🎉 खाते यशस्वीरित्या तयार झाले! अब लॉगिन टॅबमध्ये जाऊन लॉगिन करा.")
+                st.success("🎉 खाते यशस्वीरित्या तयार झाले! आता लॉगिन टॅबमध्ये जाऊन लॉगिन करा.")
     st.stop()
 
 user_mobile = st.session_state.current_user
@@ -342,7 +342,7 @@ elif menu_choice == "📐 Estimation Work":
 | | **Rate per m³** | | | | **₹ {per_m3_rate:.2f}** |
 """
             now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-            history_entry = {"काम": "Brickwork", "कमेंट": st.session_state.current_comment, "तारीख": now_str, "टेबल_डेटा": table_md}
+            history_entry = {"काम": "Brickwork", "कメント": st.session_state.current_comment, "तारीख": now_str, "टेबल_डेटा": table_md}
             st.session_state.db_users[user_mobile]["history"].append(history_entry)
             st.session_state.global_logs.append({"नाव": user_name, "मोबाईल": user_mobile, "काम": "Brickwork", "कमेंट": st.session_state.current_comment, "तारीख": now_str})
 
