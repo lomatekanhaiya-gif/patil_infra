@@ -9,35 +9,42 @@ import io
 import streamlit as st
 import time
 
-# १. अॅनिमेशन आणि सुरुवातीच्या सुंदर लूकसाठी एक रिकामी जागा (Placeholder) तयार करणे
+# १. ॲनिमेशन आणि सुंदर लूकसाठी रिकामी जागा तयार करणे
 welcome_placeholder = st.empty()
 
-# २. ही स्क्रीन ५ सेकंदांसाठी दाखवणे
+# २. ५ सेकंदांचे व्हिज्युअल ॲनिमेशन दाखवणे
 with welcome_placeholder.container():
-    st.markdown("<br><br>", unsafe_allow_html=True)
-    # सुंदर हेडिंग
-    st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🏗️ पाटील इन्फ्राटेक मध्ये आपले स्वागत आहे...</h1>", unsafe_allow_html=True)
-    st.markdown("<h3 style='text-align: center; color: #555555;'>तुमचे स्वप्न, आमचे एस्टिमेशन!</h3>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; color: #FF4B4B; font-family: sans-serif;'>🏗️ पाटील इन्फ्राटेक</h1>", unsafe_allow_html=True)
     
-    # घर बनताना दाखवणारे ५ सेकंदांचे प्रोग्रेस बार अॅनिमेशन
-    progress_bar = st.progress(0)
+    st.markdown("""
+        <style>
+        .stage-box { text-align: center; font-size: 24px; font-weight: bold; color: #333; margin-top: 20px; }
+        .house-container { display: flex; flex-direction: column-reverse; align-items: center; justify-content: center; height: 200px; margin-top: 30px; }
+        .block { width: 120px; text-align: center; font-size: 40px; transition: all 0.5s ease; }
+        </style>
+        <div class='house-container' id='house'>
+    """, unsafe_allow_html=True)
+    
+    house_animation = st.empty()
     status_text = st.empty()
     
-    # ५ सेकंदांचे टप्पे (घर बनण्याची प्रोसेस)
-    construction_stages = [
-        "🧱 पाया खोदण्याचे काम सुरू आहे...",
-        "🏗️ खांब आणि कॉलम उभे राहत आहेत...",
-        "🧱 विटांचे बांधकाम (Brickwork) प्रगतीपथावर आहे...",
-        "🏠 छताचे (Slab) काम पूर्ण होत आहे...",
-        "✨ फिनिशिंग आणि रंगकाम पूर्ण झाले! घर तयार आहे! 🎉"
+    stages = [
+        {"text": "🧱 पाया खोदण्याचे काम पूर्ण झाले...", "html": "<div class='block'>🟫🟫🟫</div>"},
+        {"text": "🏗️ खांब आणि कॉलम उभे राहिले...", "html": "<div class='block'>🧱🧱🧱</div><div class='block'>🟫🟫🟫</div>"},
+        {"text": "🧱 विटांचे बांधकाम पूर्ण झाले...", "html": "<div class='block'>🏢</div><div class='block'>🧱🧱🧱</div><div class='block'>🟫🟫🟫</div>"},
+        {"text": "🏠 छताचे (Slab) काम पूर्ण झाले...", "html": "<div class='block'>🏠</div><div class='block'>🏢</div><div class='block'>🧱🧱🧱</div><div class='block'>🟫🟫🟫</div>"},
+        {"text": "✨ फिनिशिंग झाले! घर तयार आहे! 🎉", "html": "<div class='block'>🏡🌳</div><div class='block'>✨✨</div>"}
     ]
     
     for i in range(5):
-        status_text.markdown(f"<p style='text-align: center; font-size: 20px; font-weight: bold;'>{construction_stages[i]}</p>", unsafe_allow_html=True)
-        progress_bar.progress((i + 1) * 20)
-        time.sleep(1)  # प्रत्येक स्टेज १ सेकंद चालेल (एकूण ५ सेकंद)
+        house_animation.markdown(f"<div class='house-container'>{stages[i]['html']}</div>", unsafe_allow_html=True)
+        status_text.markdown(f"<p class='stage-box'>{stages[i]['text']}</p>", unsafe_allow_html=True)
+        time.sleep(1)
 
-# ३. ५ सेकंद पूर्ण झाल्यावर ही स्क्रीन गायब करणे आणि मूळ लॉगिन पेज सुरू करणे
+    st.markdown("</div>", unsafe_allow_html=True)
+    time.sleep(0.5)
+
+# ३. ५ सेकंद संपल्यावर ॲनिमेशन गायब होऊन लॉगिन पेज सुरू होणार
 welcome_placeholder.empty()
 
 # --- याच्या खाली तुमचा मूळ लॉगिन आणि ॲपचा कोड जसाच्या तसा सुरू राहील ---
