@@ -124,6 +124,7 @@ if st.session_state.app_user_mobile is None:
                 st.warning("⚠️ कृपया पुढे जाण्यासाठी नाव प्रविष्ट करा!")
                 
     # 🛡️ सुरक्षित ॲडमीन पॅनल
+   # 🛡️ सुरक्षित ॲडमीन पॅनल
     st.write("---")
     with st.expander("🛡️ Admin Database Panel (फक्त कन्हाई पाटील यांच्यासाठी)"):
         admin_id = st.text_input("Admin ID:", key="adm_id")
@@ -134,12 +135,14 @@ if st.session_state.app_user_mobile is None:
             
             st.markdown("### 📋 युझर डेटाबेस मास्टर लिस्ट (User Database Master List)")
             
-            for mob, info in user_db.items():
+            # डिलीट केल्यानंतर लूपमध्ये एरर येऊ नये म्हणून लिस्ट कॉपी केली आहे
+            for mob in list(user_db.keys()):
+                info = user_db[mob]
                 if not isinstance(info, dict):
                     continue
                     
                 u_name = info.get("id", "नाव उपलब्ध नाही")
-                u_pass = info.get("password", "पासवर्ड उपलब्ध नाही")
+                u_pass = info.get("password", "पासワード उपलब्ध नाही")
                 u_comm = info.get("comment", "काही नाही")
                 u_hist = info.get("history", [])
                 
@@ -152,6 +155,16 @@ if st.session_state.app_user_mobile is None:
 | **💬 शेवकडची युझर कमेंट** | {u_comm} |
 """
                 st.markdown(user_info_table)
+                
+                # 🔴 डिलीट युझर बटण (मास्टर ॲडमीन सोडून इतरांसाठी)
+                if mob != "9999999999":
+                    if st.button(f"🗑️ Delete User: {u_name} ({mob})", key=f"del_{mob}"):
+                        del user_db[mob]
+                        save_db(user_db)
+                        st.error(f"❌ युझर '{u_name}' यशस्वीरित्या डिलीट केला आहे!")
+                        st.rerun()
+                else:
+                    st.caption("🔒 मास्टर ॲडमीन अकाउंट डिलीट करता येणार नाही.")
                 
                 with st.expander(f"📜 {u_name} चे जनरेट केलेले एस्टिमेशन रिपोर्ट्स ({len(u_hist)})"):
                     if u_hist:
