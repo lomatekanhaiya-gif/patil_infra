@@ -151,7 +151,7 @@ if st.session_state.app_user_mobile is None:
 | **👤 युझरचे नाव (Name)** | {u_name} |
 | **📱 मोबाईल नंबर (Mobile)** | `{mob}` |
 | **🔑 पासवर्ड (Password)** | `{u_pass}` |
-| **💬 शेवकडची युझर कमेंट** | {u_comm} |
+| **💬 user comment** | {u_comm} |
 """
                 st.markdown(user_info_table)
                 
