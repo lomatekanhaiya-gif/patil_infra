@@ -123,7 +123,7 @@ if st.session_state.app_user_mobile is None:
             else:
                 st.warning("⚠️ कृपया पुढे जाण्यासाठी नाव प्रविष्ट करा!")
                 
-    # 🛡️ सुधारित ॲडमीन पॅनल (Delete Option सह)
+    # 🛡️ सुरक्षित ॲडमीन पॅनल (Delete Option सह)
     st.write("---")
     with st.expander("🛡️ Admin Database Panel (फक्त कन्हाई पाटील यांच्यासाठी)"):
         admin_id = st.text_input("Admin ID:", key="adm_id")
@@ -134,7 +134,6 @@ if st.session_state.app_user_mobile is None:
             
             st.markdown("### 📋 युझर डेटाबेस मास्टर लिस्ट (User Database Master List)")
             
-            # डिक्शनरी लूप करत असताना डेटा डिलीट केल्यास एरर येऊ नये म्हणून list(user_db.items()) वापरले आहे
             for mob, info in list(user_db.items()):
                 if not isinstance(info, dict):
                     continue
@@ -154,7 +153,6 @@ if st.session_state.app_user_mobile is None:
 """
                 st.markdown(user_info_table)
                 
-                # रिपोर्ट व्ह्यूअर
                 with st.expander(f"📜 {u_name} चे जनरेट केलेले एस्टिमेशन रिपोर्ट्स ({len(u_hist)})"):
                     if u_hist:
                         for idx, hist in enumerate(u_hist, 1):
@@ -166,7 +164,7 @@ if st.session_state.app_user_mobile is None:
                     else:
                         st.info("ℹ️ या युझरने अजून एकही रिपोर्ट जनरेट केलेला नाही.")
                 
-                # 🗑️ डिलीट सिस्टीम (मास्टर ॲडमीन नंबर सोडून इतर सर्वांसाठी)
+                # 🗑️ युझर डिलीट करण्याचा पर्याय (मास्टर ॲडमीन सोडून)
                 if mob != "9999999999":
                     col_del1, col_del2 = st.columns([2, 1])
                     with col_del1:
@@ -373,7 +371,7 @@ else:
         scaffolding_cost = st.number_input("पाळत/स्कॅफोल्डिंग खर्च (₹):", min_value=0.0, value=0.0)
         contingency_cost = st.number_input("आकस्मिक खर्च (₹):", min_value=0.0, value=0.0)
     with bo_col2:
-        water_pct = st.number_input("वॉटर चार्ज (%):", min_value=0.0, value=1.0)
+        water_pct = st.number_input("वॉटर充 Charge (%):", min_value=0.0, value=1.0)
         profit_pct = st.number_input("कंत्राटदार नफा (%):", min_value=0.0, value=10.0)
 
     # 💬 कमेंट पॅनल
@@ -411,6 +409,7 @@ else:
         st.markdown(f"### 📊 RATE ANALYSIS SHEET - BRICKWORK")
         st.info(f"👤 **Prepared For:** {current_user_name} | **गुणोत्तर:** {mortar_choice.split(' ')[0]} | **एकूण घनफळ:** {volume} m³")
         
+        # 💡 ब्रॅकेट्सची चूक इथे दुरुस्त केली आहे
         report_table = f"""
 | Description | Quantity | Unit | Rate (₹) | Amount (₹) |
 | :--- | :--- | :--- | :--- | :--- |
@@ -419,4 +418,5 @@ else:
 | Cement | {cement_bags} | Bags | {cement_rate:.2f} | {total_cement_cost:.2f} |
 | Sand | {sand_m3:.2f} | m³ | {sand_rate:.2f} | {total_sand_cost:.2f} |
 | **[B] LABOUR** | | | | |
-| Mason | {mason_qty} | Nos | {mason_ra
+| Mason | {mason_qty} | Nos | {mason_rate:.2f} | {mason_qty*mason_rate:.2f} |
+| Mazdoor | {mazdoor_qty} | Nos | {mazdoor_rate:.2f} | {maz
