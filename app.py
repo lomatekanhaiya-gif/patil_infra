@@ -19,7 +19,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 📂 कायमस्वरूपी फाईल डेटाबेस मॅनेजमेंट (रिफ्रेश झाल्यावरही डेटा राहण्यासाठी)
+# 📂 कायमस्वरूपी फाईल डेटाबेस मॅनेजमेंट
 DB_FILE = "users_db.json"
 
 def load_db():
@@ -27,27 +27,25 @@ def load_db():
         with open(DB_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
     else:
-        # डीफॉल्ट ॲडमीन खाते
         return {"9999999999": {"name": "कन्हाई पाटील", "password": "patiladmin123"}}
 
 def save_db(db):
     with open(DB_FILE, "w", encoding="utf-8") as f:
         json.dump(db, f, ensure_ascii=False, indent=4)
 
-# सुरवातीला डेटा लोड करणे
 user_db = load_db()
 
 if "app_user" not in st.session_state:
-    st.session_state.app_user = None  # सुरवातीला कोणीही लॉग इन नाही
+    st.session_state.app_user = None
 
-# मुख्य टायटल आणि ब्रँडिंग
+# मुख्य टायटल
 st.title("🏗️ PATIL INFRATECH")
 st.subheader("📐 Quantity Surveyor & Cost Estimator")
 st.caption("Concept & Logic by: Kanhaiya (Founder of Patil Infratech - kanha_1p)")
 st.write("---")
 
 # ==========================================
-# 🔑 लॉगिन आणि साइन-अप सिस्टीम (कायमस्वरूपी साठवणूक)
+# 🔑 लॉगिन आणि साइन-अप सिस्टीम
 # ==========================================
 if st.session_state.app_user is None:
     st.markdown("### 🔐 लॉगिन करा किंवा नवीन खाते बनवा (पर्यायी)")
@@ -76,13 +74,11 @@ if st.session_state.app_user is None:
             elif r_mobile in user_db:
                 st.error("❌ हा मोबाईल नंबर आधीपासूनच रजिस्टर आहे!")
             else:
-                # नवीन युझर डेटा फाईलमध्ये सेव्ह करणे
                 user_db[r_mobile] = {"name": r_name, "password": r_pass}
                 save_db(user_db)
-                st.success("🎉 खाते यशस्वीरित्या तयार झाले आणि डेटाबेसमध्ये सेव्ह झाले! आता लॉगिन टॅबमध्ये जाऊन लॉगिन करा.")
+                st.success("🎉 खाते यशस्वीरित्या तयार झाले! आता लॉगिन टॅबमध्ये जाऊन लॉगिन करा.")
                 
     with tab3:
-        st.info("💡 जर तुम्हाला खाते बनवायचे नसेल, तर तुम्ही थेट नाव टाकून ॲप वापरू शकता.")
         guest_name = st.text_input("**तुमचे नाव प्रविष्ट करा (Enter Name):**", placeholder="नाव टाईप करा...", key="gst_nm")
         if st.button("Guest म्हणून पुढे जा 👉", type="secondary"):
             if guest_name.strip():
@@ -91,7 +87,18 @@ if st.session_state.app_user is None:
             else:
                 st.warning("⚠️ कृपया पुढे जाण्यासाठी नाव प्रविष्ट करा!")
                 
-    st.stop()  # लॉगिन किंवा नाव निश्चित होईपर्यंत खालील कोड रन होणार नाही
+    # 🛡️ ॲडमीन पॅनल लॉगिन (लॉगिन नसतानाही खाली ॲडमीन पाहू शकतील)
+    st.write("---")
+    with st.expander("🛡️ Admin Database Panel (फक्त कन्हाई पाटील यांच्यासाठी)"):
+        admin_id = st.text_input("Admin ID:", key="adm_id")
+        admin_pass = st.text_input("Password:", type="password", key="adm_pass")
+        if admin_id == "kanha_1p" and admin_pass == "@Dellg15":
+            st.success("🔓 डेटाबेस अनलॉक झाला!")
+            st.write(user_db)  # संपूर्ण डेटा स्क्रीनवर दाखवण्यासाठी
+        elif admin_id or admin_pass:
+            st.error("❌ चुकीचा Admin ID किंवा Password!")
+            
+    st.stop()
 
 # सध्याचा ॲक्टिव्ह युझर
 current_user = st.session_state.app_user
