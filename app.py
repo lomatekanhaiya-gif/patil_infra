@@ -31,7 +31,7 @@ def load_db():
                 if isinstance(db, dict):
                     if "9999999999" not in db:
                         db["9999999999"] = {
-                            "id": "कन्हाई पाटील", 
+                            "id": "kanhaiya", 
                             "password": "patiladmin123",
                             "comment": "मास्टर ॲडमीन अकाउंट",
                             "history": []
@@ -42,7 +42,7 @@ def load_db():
             
     return {
         "9999999999": {
-            "id": "कन्हाई पाटील", 
+            "id": "kanhaiya", 
             "password": "patiladmin123",
             "comment": "मास्टर ॲडमीन अकाउंट",
             "history": []
@@ -124,7 +124,6 @@ if st.session_state.app_user_mobile is None:
                 st.warning("⚠️ कृपया पुढे जाण्यासाठी नाव प्रविष्ट करा!")
                 
     # 🛡️ सुरक्षित ॲडमीन पॅनल
-   # 🛡️ सुरक्षित ॲडमीन पॅनल
     st.write("---")
     with st.expander("🛡️ Admin Database Panel (only kanhaiya)"):
         admin_id = st.text_input("Admin ID:", key="adm_id")
@@ -133,7 +132,7 @@ if st.session_state.app_user_mobile is None:
             st.success("🔓 डेटाबेस अनलॉक झाला!")
             user_db = load_db()
             
-            st.markdown("### 📋 युझर डेटाबेस मास्टर लिस्ट (User Database Master List)")
+            st.markdown("### 📋 युझर डेटाबेस MASTER LIST (User Database Master List)")
             
             # डिलीट केल्यानंतर लूपमध्ये एरर येऊ नये म्हणून लिस्ट कॉपी केली आहे
             for mob in list(user_db.keys()):
@@ -142,7 +141,7 @@ if st.session_state.app_user_mobile is None:
                     continue
                     
                 u_name = info.get("id", "नाव उपलब्ध नाही")
-                u_pass = info.get("password", "पासワード उपलब्ध नाही")
+                u_pass = info.get("password", "पासवर्ड उपलब्ध नाही")
                 u_comm = info.get("comment", "काही नाही")
                 u_hist = info.get("history", [])
                 
@@ -165,7 +164,8 @@ if st.session_state.app_user_mobile is None:
                         st.rerun()
                 else:
                     st.caption("🔒 मास्टर ॲडमीन अकाउंट डिलीट करता येणार नाही.")
-                    current_msg = info.get("admin_message", "ॲडमीन कडून सध्या कोणताही मेसेज नाही.")
+                
+                current_msg = info.get("admin_message", "ॲडमीन कडून सध्या कोणताही मेसेज नाही.")
                 st.caption(f"📩 सध्याचा मेसेज: {current_msg}")
                 new_msg = st.text_input(f"✍️ {u_name} साठी नवीन मेसेज टाईप करा:", key=f"msg_{mob}")
                 if st.button(f"✉️ मेसेज पाठवा ({u_name})", key=f"btn_msg_{mob}"):
@@ -424,37 +424,3 @@ else:
         w_amt = base_total * (water_pct / 100)
         p_amt = base_total * (profit_pct / 100)
         grand_total = base_total + w_amt + p_amt
-
-        st.success("🎉 रिपोर्ट यशस्वीरित्या तयार झाला आहे!")
-        st.markdown(f"### 📊 RATE ANALYSIS SHEET - BRICKWORK")
-        st.info(f"👤 **Prepared For:** {current_user_name} | **गुणोत्तर:** {mortar_choice.split(' ')[0]} | **एकूण घनफळ:** {volume} m³")
-        
-        report_table = f"""
-| Description | Quantity | Unit | Rate (₹) | Amount (₹) |
-| :--- | :--- | :--- | :--- | :--- |
-| **[A] MATERIAL** | | | | |
-| Bricks | {total_bricks} | Nos | {(brick_rate/1000):.2f} | {total_brick_cost:.2f} |
-| Cement | {cement_bags} | Bags | {cement_rate:.2f} | {total_cement_cost:.2f} |
-| Sand | {sand_m3:.2f} | m³ | {sand_rate:.2f} | {total_sand_cost:.2f} |
-| **[B] LABOUR** | | | | |
-| Mason | {mason_qty} | Nos | {mason_rate:.2f} | {mason_qty*mason_rate:.2f} |
-| Mazdoor | {mazdoor_qty} | Nos | {mazdoor_rate:.2f} | {mazdoor_qty*mazdoor_rate:.2f} |
-| **[C] OTHER EXPENSES** | | | | |
-| Scaffolding / Centering | - | L.S. | - | {scaffolding_cost:.2f} |
-| Contingencies | - | L.S. | - | {contingency_cost:.2f} |
-| **TOTAL (A + B + C)** | | | | **{base_total:.2f}** |
-| Water Charge ({water_pct}%) | | | | {w_amt:.2f} |
-| Contractor Profit ({profit_pct}%) | | | | {p_amt:.2f} |
-| **GRAND TOTAL** | | | | **₹ {grand_total:.2f}/-** |
-"""
-        st.markdown(report_table)
-
-        if not user_mob_key.startswith("GUEST_") and user_mob_key in user_db:
-            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            new_report = {
-                "timestamp": timestamp,
-                "user_note": st.session_state.current_comment,
-                "report_data": report_table
-            }
-            user_db[user_mob_key]["history"].append(new_report)
-            save_db(user_db)
