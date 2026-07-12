@@ -9,43 +9,61 @@ import io
 import streamlit as st
 import time
 
-# १. ॲनिमेशन आणि सुंदर लूकसाठी रिकामी जागा तयार करणे
+# --- १. अॅनिमेशन आणि सुरुवातीच्या सुंदर लूकसाठी रिकामी जागा तयार करणे ---
 welcome_placeholder = st.empty()
 
-# २. ५ सेकंदांचे व्हिज्युअल ॲनिमेशन दाखवणे
-with welcome_placeholder.container():
-    st.markdown("<h1 style='text-align: center; color: #FF4B4B; font-family: sans-serif;'>🏗️ पाटील इन्फ्राटेक</h1>", unsafe_allow_html=True)
-    
-    st.markdown("""
-        <style>
-        .stage-box { text-align: center; font-size: 24px; font-weight: bold; color: #333; margin-top: 20px; }
-        .house-container { display: flex; flex-direction: column-reverse; align-items: center; justify-content: center; height: 200px; margin-top: 30px; }
-        .block { width: 120px; text-align: center; font-size: 40px; transition: all 0.5s ease; }
-        </style>
-        <div class='house-container' id='house'>
-    """, unsafe_allow_html=True)
-    
-    house_animation = st.empty()
-    status_text = st.empty()
-    
-    stages = [
-        {"text": "🧱 पाया खोदण्याचे काम पूर्ण झाले...", "html": "<div class='block'>🟫🟫🟫</div>"},
-        {"text": "🏗️ खांब आणि कॉलम उभे राहिले...", "html": "<div class='block'>🧱🧱🧱</div><div class='block'>🟫🟫🟫</div>"},
-        {"text": "🧱 विटांचे बांधकाम पूर्ण झाले...", "html": "<div class='block'>🏢</div><div class='block'>🧱🧱🧱</div><div class='block'>🟫🟫🟫</div>"},
-        {"text": "🏠 छताचे (Slab) काम पूर्ण झाले...", "html": "<div class='block'>🏠</div><div class='block'>🏢</div><div class='block'>🧱🧱🧱</div><div class='block'>🟫🟫🟫</div>"},
-        {"text": "✨ फिनिशिंग झाले! घर तयार आहे! 🎉", "html": "<div class='block'>🏡🌳</div><div class='block'>✨✨</div>"}
-    ]
-    
-    for i in range(5):
-        house_animation.markdown(f"<div class='house-container'>{stages[i]['html']}</div>", unsafe_allow_html=True)
-        status_text.markdown(f"<p class='stage-box'>{stages[i]['text']}</p>", unsafe_allow_html=True)
-        time.sleep(1)
+# जर युझरने स्कीप बटण दाबले असेल, तर थेट लॉगिन सुरू होईल
+if 'skip_welcome' not in st.session_state:
+    st.session_state.skip_welcome = False
 
-    st.markdown("</div>", unsafe_allow_html=True)
-    time.sleep(0.5)
+if not st.session_state.skip_welcome:
+    with welcome_placeholder.container():
+        # संपूर्ण स्क्रीनवर क्लिक करण्यासाठी अदृश्य (Transparent) बटण बनवणारे CSS
+        st.markdown("""
+            <style>
+            div.stButton > button {
+                position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+                background-color: transparent !important; border: none !important;
+                color: transparent !important; z-index: 99999; cursor: pointer;
+            }
+            div.stButton > button:hover { background-color: transparent !important; border: none !important; }
+            div.stButton > button:active { background-color: transparent !important; border: none !important; }
+            </style>
+        """, unsafe_allow_html=True)
+        
+        # स्क्रीनवर कुठेही टच/क्लिक केल्यास हे बटण ट्रिगर होईल
+        if st.button("Skip", key="invisible_skip_btn"):
+            st.session_state.skip_welcome = True
+            st.rerun()
 
-# ३. ५ सेकंद संपल्यावर ॲनिमेशन गायब होऊन लॉगिन पेज सुरू होणार
-welcome_placeholder.empty()
+        st.markdown("<br><br>", unsafe_allow_html=True)
+        # सुंदर हेडिंग
+        st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🏗️ पाटील इन्फ्राटेक मध्ये आपले स्वागत आहे...</h1>", unsafe_allow_html=True)
+        st.markdown("<h3 style='text-align: center; color: #555555;'>तुमचे स्वप्न, आमचे एस्टिमेशन!</h3>", unsafe_allow_html=True)
+        
+        # घर बनताना दाखवणारे प्रोग्रेस बार अॅनिमेशन
+        progress_bar = st.progress(0)
+        status_text = st.empty()
+        
+        # एकूण १० सेकंदांचे टप्पे (प्रत्येक स्टेज २ सेकंद चालेल - ५ * २ = १० सेकंद)
+        construction_stages = [
+            "🧱 पाया खोदण्याचे काम सुरू आहे...",
+            "🏗️ खांब आणि कॉलम उभे राहत आहेत...",
+            "🧱 विटांचे बांधकाम (Brickwork) प्रगतीपथावर आहे...",
+            "🏠 छताचे (Slab) काम पूर्ण होत आहे...",
+            "✨ फिनिशिंग आणि रंगकाम पूर्ण झाले! घर तयार आहे! 🎉"
+        ]
+        
+        for i in range(5):
+            status_text.markdown(f"<p style='text-align: center; font-size: 20px; font-weight: bold;'>{construction_stages[i]}</p>", unsafe_allow_html=True)
+            progress_bar.progress((i + 1) * 20)
+            time.sleep(2)  # ५ टप्पे * २ सेकंद = एकूण १० सेकंद
+
+    # १० सेकंद पूर्ण झाल्यावर स्क्रीन क्लिअर करणे
+    welcome_placeholder.empty()
+    st.session_state.skip_welcome = True
+
+# --- याच्या खाली तुमचा मूळ लॉगिन आणि ॲपचा कोड जसाच्या तसा सुरू राहील ---
 
 # --- याच्या खाली तुमचा मूळ लॉगिन आणि ॲपचा कोड जसाच्या तसा सुरू राहील ---
 # पेजची रचना
