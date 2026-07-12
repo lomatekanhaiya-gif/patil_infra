@@ -126,6 +126,9 @@ if st.session_state.app_user_mobile is None:
     # 🛡️ सुरक्षित ॲडमीन पॅनल
     st.write("---")
     with st.expander("🛡️ Admin Database Panel (फक्त कन्हाई पाटील यांच्यासाठी)"):
+       # 🛡️ सुरक्षित ॲडमीन पॅनल
+    st.write("---")
+    with st.expander("🛡️ Admin Database Panel (फक्त कन्हाई पाटील यांच्यासाठी)"):
         admin_id = st.text_input("Admin ID:", key="adm_id")
         admin_pass = st.text_input("Password:", type="password", key="adm_pass")
         if admin_id == "kanha_1p" and admin_pass == "@Dellg15":
@@ -134,7 +137,11 @@ if st.session_state.app_user_mobile is None:
             
             st.markdown("### 📋 युझर डेटाबेस मास्टर लिस्ट (User Database Master List)")
             
-            for mob, info in user_db.items():
+            # डिलीट ऑपरेशन्स ट्रॅक करण्यासाठी लिस्ट
+            users_to_delete = []
+            reports_to_delete = []
+
+            for mob, info in list(user_db.items()):
                 if not isinstance(info, dict):
                     continue
                     
@@ -153,20 +160,57 @@ if st.session_state.app_user_mobile is None:
 """
                 st.markdown(user_info_table)
                 
-                with st.expander(f"📜 {u_name} चे जनरेट केलेले एस्टिमेशन रिपोर्ट्स ({len(u_hist)})"):
-                    if u_hist:
-                        for idx, hist in enumerate(u_hist, 1):
-                            if isinstance(hist, dict):
-                                st.markdown(f"🗓️ **रिपोर्ट क्रमांक {idx} | तारीख व वेळ: `{hist.get('timestamp', 'N/A')}`**")
-                                st.markdown(f"* **या कामाची विशिष्ट कमेंट:** {hist.get('user_note', 'काही नाही')}")
-                                st.markdown(hist.get("report_data", "डेटा उपलब्ध नाही"))
-                                st.write("---")
-                    else:
-                        st.info("ℹ️ या युझरने अजून एकही रिपोर्ट जनरेट केलेला नाही.")
+                # मॅनेजमेंटसाठी दोन कॉलम्स
+                adm_col1, adm_col2 = st.columns([3, 2])
+                
+                with adm_col1:
+                    with st.expander(f"📜 {u_name} चे रिपोर्ट्स ({len(u_hist)})"):
+                        if u_hist:
+                            for idx, hist in enumerate(u_hist, 1):
+                                if isinstance(hist, dict):
+                                    st.markdown(f"🗓️ **रिपोर्ट क्रमांक {idx} | तारीख: `{hist.get('timestamp', 'N/A')}`**")
+                                    st.markdown(f"* **कमेंट:** {hist.get('user_note', 'काही नाही')}")
+                                    st.markdown(hist.get("report_data", "डेटा उपलब्ध नाही"))
+                                    
+                                    # विशिष्ट रिपोर्ट डिलीट बटण
+                                    if st.button(f"🗑️ रिपोर्ट {idx} डिलीट करा", key=f"del_rep_{mob}_{idx}"):
+                                        reports_to_delete.append((mob, idx-1))
+                                    st.write("---")
+                        else:
+                            st.info("ℹ️ या युझरने अजून एकही रिपोर्ट जनरेट केलेला नाही.")
+                
+                with adm_col2:
+                    # संपूर्ण अकाउंट डिलीट बटण (मास्टर अकाउंट सोडून)
+                    if mob != "9999999999":
+                        if st.button(f"❌ संपूर्ण अकाउंट डिलीट करा", key=f"del_user_{mob}", type="secondary"):
+                            users_to_delete.append(mob)
+                
                 st.markdown("---")
+                
+            # --- प्रत्यक्ष डिलीट करण्याचे लॉजिक ---
+            # १) विशिष्ट रिपोर्ट डिलीट करणे
+            if reports_to_delete:
+                for mob, r_idx in reports_to_delete:
+                    if mob in user_db and len(user_db[mob]["history"]) > r_idx:
+                        user_db[mob]["history"].pop(r_idx)
+                        save_db(user_db)
+                        st.success("✅ रिपोर्ट यशस्वीरित्या डिलीट केला!")
+                        st.rerun()
+
+            # २) संपूर्ण अकाउंट डिलीट करणे
+            if users_to_delete:
+                for mob in users_to_delete:
+                    if mob in user_db:
+                        deleted_name = user_db[mob]['id']
+                        del user_db[mob]
+                        save_db(user_db)
+                        st.success(f"💥 {deleted_name} चे अकाउंट डिलीट केले!")
+                        st.rerun()
                 
         elif admin_id or admin_pass:
             st.error("❌ चुकीचा Admin ID किंवा Password!")
+            
+    st.stop()
             
     st.stop()
 
