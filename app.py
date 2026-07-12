@@ -29,10 +29,13 @@ def load_db():
             with open(DB_FILE, "r", encoding="utf-8") as f:
                 db = json.load(f)
                 if isinstance(db, dict):
-                    # 🎯 ही लाईन जुन्या फाईलमधील नाव बदलून इंग्रजीत 'kanha' करेल
+                    # जुन्या फाईलमध्ये ९ वेळा किंवा १० वेळा ९ असेल तर नाव 'kanha' होईल
+                    if "999999999" in db:
+                        db["999999999"]["id"] = "kanha"
                     if "9999999999" in db:
                         db["9999999999"]["id"] = "kanha"
-                    else:
+                        
+                    if "9999999999" not in db:
                         db["9999999999"] = {
                             "id": "kanha", 
                             "password": "patiladmin123",
@@ -51,7 +54,6 @@ def load_db():
             "history": []
         }
     }
-        except Exception:
             pass
             
     return {
