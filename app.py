@@ -4,6 +4,8 @@ import math
 import json
 import os
 import datetime
+import pandas as pd
+import io
 
 # पेजची रचना
 st.set_page_config(page_title="PATIL INFRATECH", page_icon="📐", layout="centered")
@@ -23,10 +25,7 @@ st.markdown("""
 # 📂 कायमस्वरूपी फाईल डेटाबेस मॅनेजमेंट
 DB_FILE = "users_db.json"
 
-DB_FILE = "users_db.json"
-
 def load_db():
-    # १. आधी मास्टर अकाउंटचा डेटा तयार करू (ज्यामध्ये नाव 'kanha' असेल)
     db = {
         "9999999999": {
             "id": "kanha", 
@@ -35,29 +34,17 @@ def load_db():
             "history": []
         }
     }
-    
-    # २. जर फाईल असेल, तर जुना डेटा वाचू आणि चुकीची नावे बदलू
     if os.path.exists(DB_FILE):
         try:
             with open(DB_FILE, "r", encoding="utf-8") as f:
                 old_db = json.load(f)
                 if isinstance(old_db, dict):
-                    # इतर सर्व युझर्सचा डेटा जसाच्या तसा कॉपी करू
                     for key, val in old_db.items():
                         if key != "9999999999" and key != "999999999":
                             db[key] = val
         except:
             pass
-            
     return db
-    return {
-        "9999999999": {
-            "id": "kanha", 
-            "password": "patiladmin123",
-            "comment": "मास्टर ॲडमीन अकाउंट",
-            "history": []
-        }
-    }
 
 def save_db(db):
     with open(DB_FILE, "w", encoding="utf-8") as f:
@@ -142,9 +129,8 @@ if st.session_state.app_user_mobile is None:
             st.success("🔓 डेटाबेस अनलॉक झाला!")
             user_db = load_db()
             
-            st.markdown("### 📋 युझर डेटाबेस MASTER LIST (User Database Master List)")
+            st.markdown("### 📋 युझर डेटाबेस MASTER LIST")
             
-            # डिलीट केल्यानंतर लूपमध्ये एरर येऊ नये म्हणून लिस्ट कॉपी केली आहे
             for mob in list(user_db.keys()):
                 info = user_db[mob]
                 if not isinstance(info, dict):
@@ -161,11 +147,10 @@ if st.session_state.app_user_mobile is None:
 | **👤 युझरचे नाव (Name)** | {u_name} |
 | **📱 मोबाईल नंबर (Mobile)** | `{mob}` |
 | **🔑 पासवर्ड (Password)** | `{u_pass}` |
-| **💬 user comment** | {u_comm} |
+| **💬 शेवकडची युझर कमेंट** | {u_comm} |
 """
                 st.markdown(user_info_table)
                 
-                # 🔴 डिलीट युझर बटण (मास्टर ॲडमीन सोडून इतरांसाठी)
                 if mob != "9999999999":
                     if st.button(f"🗑️ Delete User: {u_name} ({mob})", key=f"del_{mob}"):
                         del user_db[mob]
@@ -225,17 +210,13 @@ if col_lo.button("🚪 Logout"):
     st.rerun()
 
 st.write("---")
-# ==========================================
-# 📥 USER INBOX PANEL (ॲडमीन मेसेज)
-# ==========================================
+
 if not user_mob_key.startswith("GUEST_"):
-    # चालू युझरचा डेटाबेस मधून लेटेस्ट मेसेज आणणे
     current_user_data = user_db.get(user_mob_key, {})
     admin_msg = current_user_data.get("admin_message", None)
-    
     if admin_msg:
         st.markdown("### 📥 ॲडमीन कडून आलेला मेसेज (inbox)")
-        st.info(f"📢 **kanhaiya:** {admin_msg}")
+        st.info(f"📢 **kanha:** {admin_msg}")
         st.write("---")
 
 # २. मुख्य काम निवडणे
@@ -293,10 +274,9 @@ if "Concrete Work" in main_choice:
         scaffolding_cost = st.number_input("स्कॅफोल्डिंग/सेंटरिंग खर्च (₹):", min_value=0.0, value=0.0)
         contingency_cost = st.number_input("आकस्मिक खर्च (Contingencies) (₹):", min_value=0.0, value=0.0)
     with o_col2:
-        water_pct = st.number_input("वॉटर चार्ज टक्केवारी (%):", min_value=0.0, value=1.0)
+        water_pct = st.number_input("वॉटर चार्ज टक्केवारी (%):", min_value=0.0, value=1.0) # 👈 दुरुस्त केले
         profit_pct = st.number_input("कंत्राटदार नफा टक्केवारी (%):", min_value=0.0, value=10.0)
 
-    # 💬 कमेंट पॅनल
     st.markdown("#### 💬 कमेंट पॅनल (Comment Panel)")
     user_note = st.text_area("या एस्टिमेशन संदर्भात काही नोट किंवा कमेंट लिहायची असल्यास इथे लिहा:", placeholder="उदा. स्लॅब क्र. १ चे काँक्रीट काम...")
     if st.button("💬 कमेंट सबमिट करा"):
@@ -352,6 +332,18 @@ if "Concrete Work" in main_choice:
 | **GRAND TOTAL** | | | | **₹ {grand_total:.2f}/-** |
 """
         st.markdown(report_table)
+        
+        st.session_state.active_report = {
+            "type": "Concrete",
+            "grand_total": grand_total,
+            "data": {
+                "Description": ["Cement", "Sand", "Aggregate", "Steel", "GRAND TOTAL"],
+                "Quantity": [c_bags, round(s_m3, 2), round(a_m3, 2), round(steel_qty, 2), ""],
+                "Unit": ["Bags", "m³", "m³", "Kg", ""],
+                "Amount (INR)": [total_cement_cost, total_sand_cost, total_aggregate_cost, total_steel_cost, grand_total]
+            },
+            "txt": f"PATIL INFRATECH - ESTIMATION REPORT\nसंकल्पना आणि लॉजिक: kanha (पाटील इन्फ्राटेक)\nयुझर: {current_user_name}\nतारीख: {datetime.date.today()}\n----------------------------------------\n* सिमेंट: {c_bags} Bags\n* वाळू: {s_m3:.2f} m3\n* खडी: {a_m3:.2f} m3\n* स्टील: {steel_qty:.2f} Kg\n----------------------------------------\nGRAND TOTAL: INR {grand_total:.2f}/-"
+        }
 
         if not user_mob_key.startswith("GUEST_") and user_mob_key in user_db:
             timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -404,7 +396,6 @@ else:
         water_pct = st.number_input("वॉटर चार्ज (%):", min_value=0.0, value=1.0)
         profit_pct = st.number_input("कंत्राटदार नफा (%):", min_value=0.0, value=10.0)
 
-    # 💬 कमेंट पॅनल
     st.markdown("#### 💬 कमेंट पॅनल (Comment Panel)")
     user_note = st.text_area("या एस्टिमेशन संदर्भात काही नोट किंवा कमेंट लिहायची असल्यास इथे लिहा:", placeholder="उदा. ग्राउंड फ्लोअर वीटकाम...")
     if st.button("💬 कमेंट सबमिट करा"):
@@ -428,9 +419,4 @@ else:
         total_cement_cost = cement_bags * cement_rate
         total_sand_cost = sand_m3 * sand_rate
 
-        mat_cost = total_brick_cost + total_cement_cost + total_sand_cost
-        lab_cost = (mason_qty * mason_rate) + (mazdoor_qty * mazdoor_rate)
-        base_total = mat_cost + lab_cost + scaffolding_cost + contingency_cost
-        w_amt = base_total * (water_pct / 100)
-        p_amt = base_total * (profit_pct / 100)
-        grand_total = base_total + w_amt + p_amt
+        mat_cost = to
