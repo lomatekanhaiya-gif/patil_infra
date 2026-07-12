@@ -22,12 +22,11 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 🔐 सर्व्हरवर फाईल क्रॅश होऊ नये म्हणून session_state मध्ये डेटाबेस साठवणे
+# 🔐 युझर डेटाबेस साठवणे (मोबाईल नंबर की म्हणून वापरला आहे)
 if "db_users" not in st.session_state:
-    # इथे तू तुझे डिफॉल्ट युझर्स आधीच लिहून ठेवू शकतोस, जे कधीच डिलीट होणार नाहीत!
     st.session_state.db_users = {
-        "admin@patil.com": {"name": "कन्हाई पाटील", "password": "patiladmin123", "messages": [], "history": []},
-        "user@patil.com": {"name": "डेमो युझर", "password": "password125", "messages": ["पाटील इन्फ्राटेक ॲपमध्ये आपले स्वागत आहे!"], "history": []}
+        "9999999999": {"name": "कन्हाई पाटील", "password": "patiladmin123", "messages": [], "history": []},
+        "8888888888": {"name": "डेमो युझर", "password": "password125", "messages": ["पाटील इन्फ्राटेक ॲपमध्ये आपले स्वागत आहे!"], "history": []}
     }
 
 if "global_logs" not in st.session_state:
@@ -48,39 +47,42 @@ if 'current_comment' not in st.session_state:
     st.session_state.current_comment = "काही नाही"
 
 # ==========================================
-# 🔐 लॉगिन आणि साइन-अप सिस्टीम
+# 🔐 लॉगिन आणि साइन-अप सिस्टीम (MOBILE NUMBER BASED)
 # ==========================================
 if not st.session_state.logged_in:
     tab1, tab2 = st.tabs(["🔑 लॉगिन (Login)", "📝 नवीन खाते बनवा (Sign Up)"])
     
     with tab1:
         st.markdown("### आपले खाते लॉगिन करा")
-        login_email = st.text_input("इमेल आयडी (Email):", key="login_email_input").strip().lower()
+        login_mobile = st.text_input("१० अंकी मोबाईल नंबर (Mobile No):", key="login_mobile_input").strip()
         login_pass = st.text_input("पासवर्ड (Password):", type="password", key="login_pass_input")
         
         if st.button("लॉगिन करा", type="primary", key="login_btn"):
-            if login_email in st.session_state.db_users and st.session_state.db_users[login_email]["password"] == login_pass:
+            if not login_mobile.isdigit() or len(login_mobile) != 10:
+                st.error("❌ कृपया योग्य १० अंकी मोबाईल नंबर प्रविष्ट करा!")
+            elif login_mobile in st.session_state.db_users and st.session_state.db_users[login_mobile]["password"] == login_pass:
                 st.session_state.logged_in = True
-                st.session_state.current_user = login_email
+                st.session_state.current_user = login_mobile
                 st.success("🔓 लॉगिन यशस्वी!")
                 st.rerun()
             else:
-                st.error("❌ चुकीचा इमेल किंवा पासवर्ड! कृपया पुन्हा तपासा.")
+                st.error("❌ चुकीचा मोबाईल नंबर किंवा पासवर्ड! कृपया पुन्हा तपासा.")
                 
     with tab2:
         st.markdown("### नवीन रजिस्ट्रेशन")
         reg_name = st.text_input("तुमचे पूर्ण नाव (Full Name):").strip()
-        reg_email = st.text_input("इमेल आयडी (Email ID):").strip().lower()
+        reg_mobile = st.text_input("१० अंकी मोबाईल नंबर (Mobile No):").strip()
         reg_pass = st.text_input("नवीन पासवर्ड तयार करा:", type="password")
         
         if st.button("खाते तयार करा", key="signup_btn"):
-            if not reg_name or not reg_email or not reg_pass:
+            if not reg_name or not reg_mobile or not reg_pass:
                 st.warning("⚠️ कृपया सर्व रकाने भरा!")
-            elif reg_email in st.session_state.db_users:
-                st.error("❌ हा इमेल आधीपासूनच रजिस्टर आहे!")
+            elif not reg_mobile.isdigit() or len(reg_mobile) != 10:
+                st.error("❌ मोबाईल नंबर फक्त १० अंकी संख्या असावा!")
+            elif reg_mobile in st.session_state.db_users:
+                st.error("❌ हा मोबाईल नंबर आधीपासूनच रजिस्टर आहे!")
             else:
-                # इथला डेटा आता सर्व्हरवर सुरक्षित राहील
-                st.session_state.db_users[reg_email] = {
+                st.session_state.db_users[reg_mobile] = {
                     "name": reg_name,
                     "password": reg_pass,
                     "messages": ["पाटील इन्फ्राटेक ॲपमध्ये आपले स्वागत आहे!"],
@@ -89,12 +91,12 @@ if not st.session_state.logged_in:
                 st.success("🎉 खाते यशस्वीरित्या तयार झाले! आता लॉगिन टॅबमध्ये जाऊन लॉगिन करा.")
     st.stop()
 
-user_email = st.session_state.current_user
-user_name = st.session_state.db_users[user_email]["name"]
+user_mobile = st.session_state.current_user
+user_name = st.session_state.db_users[user_mobile]["name"]
 
 # लॉगआउट बटण
 col_user, col_logout = st.columns([4, 1])
-col_user.success(f"🔓 स्वागत आहे, **{user_name}**")
+col_user.success(f"🔓 स्वागत आहे, **{user_name}** ({user_mobile})")
 if col_logout.button("🚪 Logout"):
     st.session_state.logged_in = False
     st.session_state.current_user = ""
@@ -107,7 +109,7 @@ menu_choice = st.sidebar.radio("📋 मुख्य मेनू", ["📐 Estim
 # ==========================================
 if menu_choice == "✉️ माझी इनबॉक्स (Inbox)":
     st.header("✉️ तुमचा वैयक्तिक इनबॉक्स")
-    user_msgs = st.session_state.db_users[user_email].get("messages", [])
+    user_msgs = st.session_state.db_users[user_mobile].get("messages", [])
     if user_msgs:
         for i, msg in enumerate(reversed(user_msgs), 1):
             st.info(f"📩 **मेसेज {i}:** {msg}")
@@ -119,7 +121,7 @@ if menu_choice == "✉️ माझी इनबॉक्स (Inbox)":
 # ==========================================
 elif menu_choice == "📜 माझी हिस्टरी (History)":
     st.header("📜 तुमची मागील कामे (History)")
-    user_history = st.session_state.db_users[user_email].get("history", [])
+    user_history = st.session_state.db_users[user_mobile].get("history", [])
     if user_history:
         for idx, item in enumerate(reversed(user_history), 1):
             with st.expander(f"📋 काम {idx}: {item['काम']} ({item['तारीख']})"):
@@ -241,8 +243,8 @@ elif menu_choice == "📐 Estimation Work":
 """
             now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
             history_entry = {"काम": "Concrete Work", "कमेंट": st.session_state.current_comment, "तारीख": now_str, "टेबल_डेटा": table_md}
-            st.session_state.db_users[user_email]["history"].append(history_entry)
-            st.session_state.global_logs.append({"नाव": user_name, "इमेल": user_email, "काम": "Concrete Work", "कमेंट": st.session_state.current_comment, "तारीख": now_str})
+            st.session_state.db_users[user_mobile]["history"].append(history_entry)
+            st.session_state.global_logs.append({"नाव": user_name, "मोबाईल": user_mobile, "काम": "Concrete Work", "कमेंट": st.session_state.current_comment, "तारीख": now_str})
 
             st.success("🎉 रिपोर्ट तयार झाला!")
             st.markdown(table_md)
@@ -341,8 +343,8 @@ elif menu_choice == "📐 Estimation Work":
 """
             now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
             history_entry = {"काम": "Brickwork", "कमेंट": st.session_state.current_comment, "तारीख": now_str, "टेबल_डेटा": table_md}
-            st.session_state.db_users[user_email]["history"].append(history_entry)
-            st.session_state.global_logs.append({"नाव": user_name, "इमेल": user_email, "काम": "Brickwork", "कमेंट": st.session_state.current_comment, "तारीख": now_str})
+            st.session_state.db_users[user_mobile]["history"].append(history_entry)
+            st.session_state.global_logs.append({"नाव": user_name, "मोबाईल": user_mobile, "काम": "Brickwork", "कमेंट": st.session_state.current_comment, "तारीख": now_str})
 
             st.success("🎉 रिपोर्ट तयार झाला!")
             st.markdown(table_md)
@@ -351,7 +353,7 @@ elif menu_choice == "📐 Estimation Work":
 # 🛡️ ॲडमीन लॉगिन एरिया (ALWAYS AT THE BOTTOM)
 # ==========================================
 st.write("---")
-with st.expander("🛡️ Admin Login Area (फक्त कन्हाईसाठी)"):
+with st.expander("🛡️ Admin Login Area (only kanhaiya)"):
     admin_id = st.text_input("Admin ID:", key="admin_id_field")
     admin_pass = st.text_input("Password:", type="password", key="admin_pass_field")
     
@@ -361,8 +363,5 @@ with st.expander("🛡️ Admin Login Area (फक्त कन्हाईस�
         st.markdown("### 🔑 सर्व युझर खाती (User Accounts)")
         
         if st.session_state.db_users:
-            for u_email, u_data in list(st.session_state.db_users.items()):
-                col_u_info, col_u_del = st.columns([4, 1])
-                col_u_info.code(f"नाव: {u_data['name']} | Email: {u_email} | Pass: {u_data['password']}")
-                
-                if col_u_del.button("🗑️ डिलीट"):
+            for u_mobile, u_data in list(st.session_state.db_users.items()):
+                col_u_info,
