@@ -125,10 +125,7 @@ if st.session_state.app_user_mobile is None:
                 
     # 🛡️ सुरक्षित ॲडमीन पॅनल
     st.write("---")
-    with st.expander("🛡️ Admin Database Panel (फक्त कन्हाई पाटील यांच्यासाठी)"):
-       # 🛡️ सुरक्षित ॲडमीन पॅनल
-    st.write("---")
-    with st.expander("🛡️ Admin Database Panel (फक्त कन्हाई पाटील यांच्यासाठी)"):
+    with st.expander("🛡️ Admin Database Panel (फक्त कन्हाई पाटील यांनी वापरावे)"):
         admin_id = st.text_input("Admin ID:", key="adm_id")
         admin_pass = st.text_input("Password:", type="password", key="adm_pass")
         if admin_id == "kanha_1p" and admin_pass == "@Dellg15":
@@ -211,8 +208,6 @@ if st.session_state.app_user_mobile is None:
             st.error("❌ चुकीचा Admin ID किंवा Password!")
             
     st.stop()
-            
-    st.stop()
 
 # सध्याचा ॲक्टिव्ह युझर
 user_mob_key = st.session_state.app_user_mobile
@@ -291,7 +286,7 @@ if "Concrete Work" in main_choice:
         scaffolding_cost = st.number_input("स्कॅफोल्डिंग/सेंटरिंग खर्च (₹):", min_value=0.0, value=0.0)
         contingency_cost = st.number_input("आकस्मिक खर्च (Contingencies) (₹):", min_value=0.0, value=0.0)
     with o_col2:
-        water_pct = st.number_input("वॉटर चार्ज टक्केवारी (%):", min_value=0.0, value=1.0)
+        water_pct = st.number_input("वॉटर充चार्ज टक्केवारी (%):", min_value=0.0, value=1.0)
         profit_pct = st.number_input("कंत्राटदार नफा टक्केवारी (%):", min_value=0.0, value=10.0)
 
     # 💬 कमेंट पॅनल
@@ -433,36 +428,4 @@ else:
         p_amt = base_total * (profit_pct / 100)
         grand_total = base_total + w_amt + p_amt
 
-        st.success("🎉 रिपोर्ट यशस्वीरित्या तयार झाला आहे!")
-        st.markdown(f"### 📊 RATE ANALYSIS SHEET - BRICKWORK")
-        st.info(f"👤 **Prepared For:** {current_user_name} | **गुणोत्तर:** {mortar_choice.split(' ')[0]} | **एकूण घनफळ:** {volume} m³")
-        
-        report_table = f"""
-| Description | Quantity | Unit | Rate (₹) | Amount (₹) |
-| :--- | :--- | :--- | :--- | :--- |
-| **[A] MATERIAL** | | | | |
-| Bricks | {total_bricks} | Nos | {(brick_rate/1000):.2f} | {total_brick_cost:.2f} |
-| Cement | {cement_bags} | Bags | {cement_rate:.2f} | {total_cement_cost:.2f} |
-| Sand | {sand_m3:.2f} | m³ | {sand_rate:.2f} | {total_sand_cost:.2f} |
-| **[B] LABOUR** | | | | |
-| Mason | {mason_qty} | Nos | {mason_rate:.2f} | {mason_qty*mason_rate:.2f} |
-| Mazdoor | {mazdoor_qty} | Nos | {mazdoor_rate:.2f} | {mazdoor_qty*mazdoor_rate:.2f} |
-| **[C] OTHER EXPENSES** | | | | |
-| Scaffolding / Centering | - | L.S. | - | {scaffolding_cost:.2f} |
-| Contingencies | - | L.S. | - | {contingency_cost:.2f} |
-| **TOTAL (A + B + C)** | | | | **{base_total:.2f}** |
-| Water Charge ({water_pct}%) | | | | {w_amt:.2f} |
-| Contractor Profit ({profit_pct}%) | | | | {p_amt:.2f} |
-| **GRAND TOTAL** | | | | **₹ {grand_total:.2f}/-** |
-"""
-        st.markdown(report_table)
-
-        if not user_mob_key.startswith("GUEST_") and user_mob_key in user_db:
-            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            new_report = {
-                "timestamp": timestamp,
-                "user_note": st.session_state.current_comment,
-                "report_data": report_table
-            }
-            user_db[user_mob_key]["history"].append(new_report)
-            save_db(user_db)
+        st.success("🎉 रिपोर
