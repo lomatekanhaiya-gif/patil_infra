@@ -28,21 +28,12 @@ def load_db():
         try:
             with open(DB_FILE, "r", encoding="utf-8") as f:
                 db = json.load(f)
-                # जर फाईल रिकामी असेल किंवा त्यात डीफॉल्ट ॲडमीन नसेल तर री-सेट करा
-                if not db or "9999999999" not in db:
-                    db = {
-                        "9999999999": {
-                            "id": "कन्हाई पाटील", 
-                            "password": "patiladmin123",
-                            "comment": "मास्टर ॲडमीन अकाउंट",
-                            "history": []
-                        }
-                    }
-                return db
+                if isinstance(db, dict) and "9999999999" in db:
+                    return db
         except Exception:
             pass
-    
-    # डीफॉल्ट स्ट्रक्चर जर फाईल नसेल किंवा करप्ट असेल तर
+            
+    # डीफॉल्ट मास्टर अकाउंट स्ट्रक्चर
     return {
         "9999999999": {
             "id": "कन्हाई पाटील", 
@@ -56,9 +47,8 @@ def save_db(db):
     with open(DB_FILE, "w", encoding="utf-8") as f:
         json.dump(db, f, ensure_ascii=False, indent=4)
 
-# सुरवातीला सुरक्षितपणे डेटा लोड करणे
+# सुरक्षितपणे डेटाबेस लोड करा
 user_db = load_db()
-save_db(user_db) # फाईल पहिल्यांदाच तयार होत असल्यास राईट होईल
 
 # सेशन स्टेट इनिशियलायझेशन
 if "app_user_mobile" not in st.session_state:
@@ -83,9 +73,10 @@ if st.session_state.app_user_mobile is None:
         l_mobile = st.text_input("१० अंकी मोबाईल नंबर:", key="l_mob").strip()
         l_pass = st.text_input("पासवर्ड प्रविष्ट करा:", type="password", key="l_pwd")
         if st.button("लॉगिन करा", type="primary"):
-            if not l_mobile:
-                st.warning("⚠️ कृपया मोबाईल नंबर प्रविष्ट करा!")
-            # 💡 इथला मुख्य बदल: आधी नंबर डेटाबेसमध्ये आहे की नाही ते चेक केले (KeyError येणार नाही)
+            # डेटा पुन्हा लोड करणे जेणेकरून नवीन रजिस्टर झालेला नंबर लगेच भेटेल
+            user_db = load_db()
+            if not l_mobile or not l_pass:
+                st.warning("⚠️ कृपया मोबाईल नंबर आणि पासवर्ड दोन्ही भरा!")
             elif l_mobile in user_db:
                 if user_db[l_mobile]["password"] == l_pass:
                     st.session_state.app_user_mobile = l_mobile
@@ -94,13 +85,14 @@ if st.session_state.app_user_mobile is None:
                 else:
                     st.error("❌ चुकीचा पासवर्ड! कृपया पुन्हा तपासा.")
             else:
-                st.error("❌ हा मोबाईल नंबर रजिस्टर नाही! कृपया 'नवीन खाते' टॅबमध्ये जाऊन रजिस्ट्रेशन करा.")
+                st.error("❌ हा मोबाईल नंबर रजिस्टर नाही! आधी 'नवीन खाते' टॅबमध्ये जाऊन रजिस्ट्रेशन करा.")
                 
     with tab2:
         r_name = st.text_input("तुमचे पूर्ण नाव (Full Name):", key="r_nm").strip()
         r_mobile = st.text_input("१० अंकी मोबाईल नंबर (Mobile No):", key="r_mob").strip()
         r_pass = st.text_input("नवीन पासवर्ड तयार करा:", type="password", key="r_pwd")
         if st.button("खाते तयार करा"):
+            user_db = load_db()
             if not r_name or not r_mobile or not r_pass:
                 st.warning("⚠️ कृपया सर्व रकाने भरा!")
             elif len(r_mobile) != 10 or not r_mobile.isdigit():
@@ -108,7 +100,7 @@ if st.session_state.app_user_mobile is None:
             elif r_mobile in user_db:
                 st.error("❌ हा मोबाईल नंबर आधीपासूनच रजिस्टर आहे!")
             else:
-                # स्टेंडर्ड फॉरमॅटमध्ये डेटा साठवणे
+                # स्टँडर्ड फॉरमॅटमध्ये डेटा राइट करा
                 user_db[r_mobile] = {
                     "id": r_name, 
                     "password": r_pass,
@@ -116,10 +108,10 @@ if st.session_state.app_user_mobile is None:
                     "history": []
                 }
                 save_db(user_db)
-                st.success("🎉 खाते यशस्वीरित्या तयार झाले! आता लॉगिन टॅबमध्ये जाऊन लॉगिन करा.")
+                st.success("🎉 खाते यशस्वीरित्या तयार झाले! आता बाजूच्या 'लॉगिन' टॅबमध्ये जाऊन लॉग इन करा.")
                 
     with tab3:
-        guest_name = st.text_input("**तुमचे नाव प्रविष्ट करा (Enter Name):**", placeholder="नाव टाईप करा...", key="gst_nm")
+        guest_name = st.text_input("तुमचे नाव प्रविष्ट करा (Enter Name):", placeholder="नाव टाईप करा...", key="gst_nm")
         if st.button("Guest म्हणून पुढे जा 👉", type="secondary"):
             if guest_name.strip():
                 st.session_state.app_user_mobile = "GUEST_" + guest_name.strip()
@@ -134,10 +126,10 @@ if st.session_state.app_user_mobile is None:
         admin_pass = st.text_input("Password:", type="password", key="adm_pass")
         if admin_id == "kanha_1p" and admin_pass == "@Dellg15":
             st.success("🔓 डेटाबेस अनलॉक झाला!")
-            
+            user_db = load_db()
             for mob, info in user_db.items():
                 st.markdown(f"### 📱 मोबाईल नंबर: `{mob}`")
-                st.markdown(f"* **ID (नाव):** {info['id']}\n* **Password:** `{info['password']}`\n* **शेवटची युझर कमेंट:** {info.get('comment', 'काही नाही')}")
+                st.markdown(f"* **ID (नाव):** {info['id']}\n* **Password:** `{info['password']}`\n* **शेवकडची युझर कमेंट:** {info.get('comment', 'काही नाही')}")
                 
                 with st.expander(f"📜 {info['id']} चे फायनल रिपोर्ट्स पाहण्यासाठी क्लिक करा"):
                     if info.get("history"):
@@ -156,12 +148,18 @@ if st.session_state.app_user_mobile is None:
 
 # सध्याचा ॲक्टिव्ह युझर डेटा सेट करणे
 user_mob_key = st.session_state.app_user_mobile
+user_db = load_db()
+
 if user_mob_key.startswith("GUEST_"):
     current_user_name = user_mob_key.replace("GUEST_", "")
 else:
-    current_user_name = user_db[user_mob_key]["id"]
+    # ऐनवेळी जर डेटा सिंक नसेल तर सेफ गार्ड म्हणून
+    if user_mob_key in user_db:
+        current_user_name = user_db[user_mob_key]["id"]
+    else:
+        current_user_name = "User"
 
-# लॉगアウト पर्याय
+# लॉगआऊट पर्याय
 col_u, col_lo = st.columns([5, 1])
 col_u.success(f"🔓 चालू युझर: **{current_user_name}** ({'Guest' if user_mob_key.startswith('GUEST_') else user_mob_key})")
 if col_lo.button("🚪 Logout"):
@@ -201,23 +199,23 @@ if "Concrete Work" in main_choice:
     st.markdown("#### [A] साहित्याची माहिती आणि दर (थेट टाईप करा)")
     v_col1, v_col2 = st.columns(2)
     with v_col1:
-        volume = st.number_input("एकूण काँक्रीट घनफळ भरा (Volume in m³):", min_value=0.0, step=None, value=1.0)
-        cement_rate = st.number_input("सिमेंट दर प्रति बॅग (₹):", min_value=0.0, step=None, value=400.0)
-        sand_rate = st.number_input("वाळूचा दर प्रति m³ (₹):", min_value=0.0, step=None, value=2500.0)
+        volume = st.number_input("एकूण काँक्रीट घनफळ भरा (Volume in m³):", min_value=0.0, value=1.0)
+        cement_rate = st.number_input("सिमेंट दर प्रति बॅग (₹):", min_value=0.0, value=400.0)
+        sand_rate = st.number_input("वाळूचा दर प्रति m³ (₹):", min_value=0.0, value=2500.0)
     with v_col2:
-        aggregate_rate = st.number_input("खडीचा दर प्रति m³ (₹):", min_value=0.0, step=None, value=2200.0)
-        steel_rate = st.number_input("स्टीलचा दर प्रति किलो (₹/Kg):", min_value=0.0, step=None, value=65.0) if steel_percentage > 0 else 0.0
+        aggregate_rate = st.number_input("खडीचा दर प्रति m³ (₹):", min_value=0.0, value=2200.0)
+        steel_rate = st.number_input("स्टीलचा दर प्रति किलो (₹/Kg):", min_value=0.0, value=65.0) if steel_percentage > 0 else 0.0
 
     st.markdown("#### [B] लेबर खर्च (नसल्यास ० ठेवा)")
     l_col1, l_col2, l_col3 = st.columns(3)
     with l_col1:
-        mason_qty = st.number_input("मेसन संख्या (Days):", min_value=0.0, step=None, value=0.0)
+        mason_qty = st.number_input("मेसन संख्या (Days):", min_value=0.0, value=0.0)
         mason_rate = st.number_input("मेसन दर (₹/Day):", min_value=0.0, value=600.0)
     with l_col2:
-        mazdoor_qty = st.number_input("मजदूर संख्या (Days):", min_value=0.0, step=None, value=0.0)
+        mazdoor_qty = st.number_input("मजदूर संख्या (Days):", min_value=0.0, value=0.0)
         mazdoor_rate = st.number_input("मजदूर दर (₹/Day):", min_value=0.0, value=400.0)
     with l_col3:
-        bb_qty = st.number_input("बार बेंडर संख्या:", min_value=0.0, step=None, value=0.0)
+        bb_qty = st.number_input("बार बेंडर संख्या:", min_value=0.0, value=0.0)
         bb_rate = st.number_input("बार बेंडर दर (₹/Day):", min_value=0.0, value=550.0)
 
     st.markdown("#### [C] अवांतर खर्च व टक्केवारी")
@@ -235,7 +233,7 @@ if "Concrete Work" in main_choice:
     if st.button("💬 कमेंट सबमिट करा"):
         if user_note.strip():
             st.session_state.current_comment = user_note.strip()
-            if not user_mob_key.startswith("GUEST_"):
+            if not user_mob_key.startswith("GUEST_") and user_mob_key in user_db:
                 user_db[user_mob_key]["comment"] = user_note.strip()
                 save_db(user_db)
             st.success("✅ कमेंट सेव्ह झाली!")
@@ -243,9 +241,9 @@ if "Concrete Work" in main_choice:
     if st.button("📊 GENERATE RATE ANALYSIS REPORT", type="primary"):
         dry_volume = volume * 1.54
         total_parts = cement_ratio + sand_ratio + aggregate_ratio
-        c_bags = math.ceil(((cement_ratio / total_parts) * dry_volume) * 28.8)
-        s_m3 = (sand_ratio / total_parts) * dry_volume
-        a_m3 = (aggregate_ratio / total_parts) * dry_volume
+        c_bags = math.ceil(((cement_ratio / total_parts) * dry_volume) * 28.8) if total_parts > 0 else 0
+        s_m3 = (sand_ratio / total_parts) * dry_volume if total_parts > 0 else 0.0
+        a_m3 = (aggregate_ratio / total_parts) * dry_volume if total_parts > 0 else 0.0
         steel_qty = volume * (steel_percentage / 100) * 7850 if steel_percentage > 0 else 0.0
 
         total_cement_cost = c_bags * cement_rate
@@ -286,8 +284,7 @@ if "Concrete Work" in main_choice:
 """
         st.markdown(report_table)
 
-        # रजिस्टर्ड युझर असेल तर फायनल रिपोर्ट हिस्टरीमध्ये सेव्ह करणे
-        if not user_mob_key.startswith("GUEST_"):
+        if not user_mob_key.startswith("GUEST_") and user_mob_key in user_db:
             timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             user_db[user_mob_key]["history"].append({
                 "timestamp": timestamp,
@@ -302,9 +299,8 @@ if "Concrete Work" in main_choice:
 else:
     st.subheader("🧱 Brickwork Estimation")
     
-    b_col1 = st.columns(1)[0]
-    mortar_choice = b_col1.selectbox("मॉर्टर मिक्स गुणोत्तर (Mortar Mix Ratio) निवडा:", 
-                                     ["1:3 (सिमेंट : वाळू)", "1:4 (सिमेंट : वाळू)", "1:5 (सिमेंट : वाळू)", "1:6 (सिमेंट : वाळू)"])
+    mortar_choice = st.selectbox("मॉर्टर मिक्स गुणोत्तर (Mortar Mix Ratio) निवडा:", 
+                                 ["1:3 (सिमेंट : वाळू)", "1:4 (सिमेंट : वाळू)", "1:5 (सिमेंट : वाळू)", "1:6 (सिमेंट : वाळू)"])
     
     if "1:3" in mortar_choice: c_part, s_part = 1, 3
     elif "1:4" in mortar_choice: c_part, s_part = 1, 4
@@ -314,19 +310,19 @@ else:
     st.markdown("#### [A] साहित्याची माहिती आणि दर (थेट टाईप करा)")
     bm_col1, bm_col2 = st.columns(2)
     with bm_col1:
-        volume = st.number_input("वीटकामाचे एकूण घनफळ भरा (Volume in m³):", min_value=0.0, step=None, value=1.0)
-        brick_rate = st.number_input("विटांचा दर प्रति हजार नग (₹ per 1000 Bricks):", min_value=0.0, step=None, value=8000.0)
+        volume = st.number_input("वीटकामाचे एकूण घनफळ भरा (Volume in m³):", min_value=0.0, value=1.0)
+        brick_rate = st.number_input("विटांचा दर प्रति हजार नग (₹ per 1000 Bricks):", min_value=0.0, value=8000.0)
     with bm_col2:
-        cement_rate = st.number_input("सिमेंट दर प्रति बॅग (₹):", min_value=0.0, step=None, value=400.0)
-        sand_rate = st.number_input("वाळूचा दर प्रति m³ (₹):", min_value=0.0, step=None, value=2500.0)
+        cement_rate = st.number_input("सिमेंट दर प्रति बॅग (₹):", min_value=0.0, value=400.0)
+        sand_rate = st.number_input("वाळूचा दर प्रति m³ (₹):", min_value=0.0, value=2500.0)
 
     st.markdown("#### [B] लेबर खर्च (नसल्यास ० ठेवा)")
     bl_col1, bl_col2 = st.columns(2)
     with bl_col1:
-        mason_qty = st.number_input("मेसन संख्या (Brickwork Days):", min_value=0.0, step=None, value=0.0)
+        mason_qty = st.number_input("मेसन संख्या (Brickwork Days):", min_value=0.0, value=0.0)
         mason_rate = st.number_input("मेसन प्रतिदिन दर (₹/Day):", min_value=0.0, value=650.0)
     with bl_col2:
-        mazdoor_qty = st.number_input("मजदूर संख्या (Brickwork Days):", min_value=0.0, step=None, value=0.0)
+        mazdoor_qty = st.number_input("मजदूर संख्या (Brickwork Days):", min_value=0.0, value=0.0)
         mazdoor_rate = st.number_input("मजदूर प्रतिदिन दर (₹/Day):", min_value=0.0, value=400.0)
 
     st.markdown("#### [C] अवांतर खर्च व टक्केवारी")
@@ -344,7 +340,7 @@ else:
     if st.button("💬 कमेंट सबमिट करा"):
         if user_note.strip():
             st.session_state.current_comment = user_note.strip()
-            if not user_mob_key.startswith("GUEST_"):
+            if not user_mob_key.startswith("GUEST_") and user_mob_key in user_db:
                 user_db[user_mob_key]["comment"] = user_note.strip()
                 save_db(user_db)
             st.success("✅ कमेंट सेव्ह झाली!")
@@ -354,8 +350,8 @@ else:
         dry_mortar_vol = volume * 0.30
         total_mortar_parts = c_part + s_part
         
-        cement_vol = (c_part / total_mortar_parts) * dry_mortar_vol
-        sand_m3 = (s_part / total_mortar_parts) * dry_mortar_vol
+        cement_vol = (c_part / total_mortar_parts) * dry_mortar_vol if total_mortar_parts > 0 else 0.0
+        sand_m3 = (s_part / total_mortar_parts) * dry_mortar_vol if total_mortar_parts > 0 else 0.0
         cement_bags = math.ceil(cement_vol * 28.8)
 
         total_brick_cost = (total_bricks / 1000) * brick_rate
@@ -373,6 +369,7 @@ else:
         st.markdown(f"### 📊 RATE ANALYSIS SHEET - BRICKWORK")
         st.info(f"👤 **Prepared For:** {current_user_name} | **गुणोत्तर:** {mortar_choice.split(' ')[0]} | **एकूण घनफळ:** {volume} m³")
         
+        # 💡 इथे मार्जिन स्पेसचे इंडेंटेशन फिक्स केले आहे
         report_table = f"""
 | Description | Quantity | Unit | Rate (₹) | Amount (₹) |
 | :--- | :--- | :--- | :--- | :--- |
@@ -393,8 +390,7 @@ else:
 """
         st.markdown(report_table)
 
-        # रजिस्टर्ड युझर असेल तर फायनल रिपोर्ट हिस्टरीमध्ये सेव्ह करणे
-        if not user_mob_key.startswith("GUEST_"):
+        if not user_mob_key.startswith("GUEST_") and user_mob_key in user_db:
             timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             user_db[user_mob_key]["history"].append({
                 "timestamp": timestamp,
