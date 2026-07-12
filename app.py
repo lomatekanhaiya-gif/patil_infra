@@ -418,15 +418,4 @@ else:
         total_brick_cost = (total_bricks / 1000) * brick_rate
         total_cement_cost = cement_bags * cement_rate
         total_sand_cost = sand_m3 * sand_rate
-        st.markdown("""
-    <style>
-    .main {
-        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    }
-    h1 {
-        color: #FF4B4B; /* तुमच्या ब्रँडचा रंग */
-    }
-    </style>
-""", unsafe_allow_index=True)
-
-        mat_cost = to
+     
