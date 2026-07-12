@@ -6,7 +6,41 @@ import os
 import datetime
 import pandas as pd
 import io
+import streamlit as st
+import time
 
+# १. अॅनिमेशन आणि सुरुवातीच्या सुंदर लूकसाठी एक रिकामी जागा (Placeholder) तयार करणे
+welcome_placeholder = st.empty()
+
+# २. ही स्क्रीन ५ सेकंदांसाठी दाखवणे
+with welcome_placeholder.container():
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    # सुंदर हेडिंग
+    st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🏗️ पाटील इन्फ्राटेक मध्ये आपले स्वागत आहे...</h1>", unsafe_allow_html=True)
+    st.markdown("<h3 style='text-align: center; color: #555555;'>तुमचे स्वप्न, आमचे एस्टिमेशन!</h3>", unsafe_allow_html=True)
+    
+    # घर बनताना दाखवणारे ५ सेकंदांचे प्रोग्रेस बार अॅनिमेशन
+    progress_bar = st.progress(0)
+    status_text = st.empty()
+    
+    # ५ सेकंदांचे टप्पे (घर बनण्याची प्रोसेस)
+    construction_stages = [
+        "🧱 पाया खोदण्याचे काम सुरू आहे...",
+        "🏗️ खांब आणि कॉलम उभे राहत आहेत...",
+        "🧱 विटांचे बांधकाम (Brickwork) प्रगतीपथावर आहे...",
+        "🏠 छताचे (Slab) काम पूर्ण होत आहे...",
+        "✨ फिनिशिंग आणि रंगकाम पूर्ण झाले! घर तयार आहे! 🎉"
+    ]
+    
+    for i in range(5):
+        status_text.markdown(f"<p style='text-align: center; font-size: 20px; font-weight: bold;'>{construction_stages[i]}</p>", unsafe_allow_html=True)
+        progress_bar.progress((i + 1) * 20)
+        time.sleep(1)  # प्रत्येक स्टेज १ सेकंद चालेल (एकूण ५ सेकंद)
+
+# ३. ५ सेकंद पूर्ण झाल्यावर ही स्क्रीन गायब करणे आणि मूळ लॉगिन पेज सुरू करणे
+welcome_placeholder.empty()
+
+# --- याच्या खाली तुमचा मूळ लॉगिन आणि ॲपचा कोड जसाच्या तसा सुरू राहील ---
 # पेजची रचना
 st.set_page_config(page_title="PATIL INFRATECH", page_icon="📐", layout="centered")
 
