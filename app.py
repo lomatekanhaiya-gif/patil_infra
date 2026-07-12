@@ -364,4 +364,12 @@ with st.expander("🛡️ Admin Login Area (only kanhaiya)"):
         
         if st.session_state.db_users:
             for u_mobile, u_data in list(st.session_state.db_users.items()):
-                col_u_info,
+                col_u_info,if st.session_state.db_users:
+            for u_mobile, u_data in list(st.session_state.db_users.items()):
+                col_u_info, col_u_del = st.columns([4, 1])
+                col_u_info.code(f"नाव: {u_data['name']} | Mobile: {u_mobile} | Pass: {u_data['password']}")
+                
+                if col_u_del.button("🗑️ डिलीट", key=f"del_user_{u_mobile}"):
+                    del st.session_state.db_users[u_mobile]
+                    st.success(f"युझर {u_mobile} डिलीट केला!")
+                    st.rerun()
