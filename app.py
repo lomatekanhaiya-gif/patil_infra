@@ -138,7 +138,7 @@ if "current_comment" not in st.session_state:
 # मुख्य टायटल
 st.title("🏗️ PATIL INFRATECH")
 st.subheader("📐 Quantity Surveyor & Cost Estimator")
-st.caption("Concept & Logic by: Kanhaiya (Founder of Patil Infratech - kanha_1p)")
+st.caption("Concept & Logic by: Kanhaiya (Founder of Patil Infratech - )")
 st.write("---")
 
 # ==========================================
