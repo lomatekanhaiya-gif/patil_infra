@@ -437,56 +437,90 @@ import io
 st.markdown("---")
 st.subheader("📥 फायनल रिपोर्ट डाउनलोड करा (पाटील इन्फ्राटेक स्पेशल)")
 
-# १. आधी सर्व डेटा एका डिक्शनरी/टेबल स्वरूपात गोळा करू (हा डेटा तुमच्या गरजेनुसार बदलू शकता)
-report_data = {
-    "घटक (Component)": ["सिमेंट (Cement)", "वाळू (Sand)", "खडी (Aggregate)"],
-    "एकूण प्रमाण (Quantity)": ["५० बॅग्स", "१.५ ब्रास", "३ ब्रास"],  # इथे तुमचे व्हेरिएबल्स टाका
-    "अंदाजे खर्च (Cost INR)": ["२२,५००/-", "९,०००/-", "१२,०००/-"]
-}
-
-# डेटा फ्रेम तयार करणे
-df = pd.DataFrame(report_data)
-
-# २. EXCEL डाउनलोड करण्यासाठी लॉजिक
-buffer_excel = io.BytesIO()
-with pd.ExcelWriter(buffer_excel, engine='xlsxwriter') as writer:
-    df.to_excel(writer, index=False, sheet_name='Estimation_Report')
+# १. युझरने वर जे काँक्रीट किंवा वीटकामाचे कॅल्क्युलेशन केले आहे, तो डेटा डायनॅमिकली गोळा करू
+# जर वर रिपोर्ट जनरेट झाला असेल तरच बटण काम करतील
+if 'grand_total' in locals():
     
-# ३. PDF डाउनलोड करण्यासाठी सोपे HTML टू PDF लॉजिक
-# (Streamlit मध्ये फाईल डाउनलोड करण्यासाठी आपण साध्या text फाईलचे नाव .pdf ठेवूनही सोपा रिपोर्ट देऊ शकतो)
-pdf_text = f"""
+    # एक्सलसाठी डेटा तयार करणे (काँक्रीट किंवा वीटकामाच्या हिशोबाने)
+    if "Concrete Work" in main_choice:
+        report_data = {
+            "साहित्य / लेबर (Description)": ["Cement", "Sand", "Aggregate", "Steel", "GRAND TOTAL"],
+            "प्रमाण (Quantity)": [c_bags, f"{s_m3:.2f}", f"{a_m3:.2f}", f"{steel_qty:.2f}", ""],
+            "एकक (Unit)": ["Bags", "m³", "m³", "Kg", ""],
+            "एकूण खर्च (Amount ₹)": [f"{total_cement_cost:.2f}", f"{total_sand_cost:.2f}", f"{total_aggregate_cost:.2f}", f"{total_steel_cost:.2f}", f"{grand_total:.2f}"]
+        }
+        
+        pdf_text = f"""
 ==================================================
         PATIL INFRATECH - ESTIMATION REPORT        
 ==================================================
-संकल्पना आणि लॉजिक: कन्हैया (पाटील इन्फ्राटेक)
-
-* सिमेंट: ५० बॅग्स
-* वाळू (Sand): १.५ ब्रास
-* खडी (Aggregate): ३ ब्रास
+संकल्पना आणि लॉजिक: kanha (पाटील इन्फ्राटेक)
+युझर: {current_user_name}
+तारीख: {datetime.date.today()}
+--------------------------------------------------
+* सिमेंट (Cement): {c_bags} Bags
+* वाळू (Sand): {s_m3:.2f} m³
+* खडी (Aggregate): {a_m3:.2f} m³
+* स्टील (Steel): {steel_qty:.2f} Kg
+--------------------------------------------------
+एकूण खर्च (GRAND TOTAL): ₹ {grand_total:.2f}/-
 ==================================================
 """
-buffer_pdf = io.BytesIO(pdf_text.encode())
+    else:
+        # वीटकामाचा डेटा
+        report_data = {
+            "साहित्य / लेबर (Description)": ["Bricks", "Cement", "Sand", "GRAND TOTAL"],
+            "प्रमाण (Quantity)": [total_bricks, cement_bags, f"{sand_m3:.2f}", ""],
+            "एकक (Unit)": ["Nos", "Bags", "m³", ""],
+            "एकूण खर्च (Amount ₹)": [f"{total_brick_cost:.2f}", f"{total_cement_cost:.2f}", f"{total_sand_cost:.2f}", f"{grand_total:.2f}"]
+        }
+        
+        pdf_text = f"""
+==================================================
+        PATIL INFRATECH - ESTIMATION REPORT        
+==================================================
+संकल्पना आणि लॉजिक: kanha (पाटील इन्फ्राटेक)
+युझर: {current_user_name}
+तारीख: {datetime.date.today()}
+--------------------------------------------------
+* विटा (Bricks): {total_bricks} Nos
+* सिमेंट (Cement): {cement_bags} Bags
+* वाळू (Sand): {sand_m3:.2f} m³
+--------------------------------------------------
+एकूण खर्च (GRAND TOTAL): ₹ {grand_total:.2f}/-
+==================================================
+"""
 
-# ४. स्क्रीनवर डाऊनलोड बटन्स दाखवणे (दोन कॉलम्स मध्ये)
-col_pdf, col_excel = st.columns(2)
+    # डेटा फ्रेम तयार करणे
+    df = pd.DataFrame(report_data)
 
-with col_pdf:
-    st.download_button(
-        label="📄 PDF रिपोर्ट डाउनलोड करा",
-        data=buffer_pdf,
-        file_name="Patil_Infratech_Report.pdf",
-        mime="application/pdf"
-    )
+    # २. EXCEL डाउनलोड करण्यासाठी सुरक्षित लॉजिक (openpyxl नसेल तरी चालेल)
+    buffer_excel = io.BytesIO()
+    df.to_excel(buffer_excel, index=False, sheet_name='Estimation_Report')
+    excel_bytes = buffer_excel.getvalue()
+        
+    # ३. PDF/TEXT डाउनलोड करण्यासाठी लॉजिक
+    buffer_pdf = io.BytesIO(pdf_text.encode('utf-8'))
 
-with col_excel:
-    st.download_button(
-        label="📊 Excel शीट डाउनलोड करा",
-        data=buffer_excel.getvalue(),
-        file_name="Patil_Infratech_Report.xlsx",
-        mime="application/vnd.ms-excel"
-    )
- lab_cost = (mason_qty * mason_rate) + (mazdoor_qty * mazdoor_rate)
-base_total = mat_cost + lab_cost + scaffolding_cost + contingency_cost
-w_amt = base_total * (water_pct / 100)
-p_amt = base_total * (profit_pct / 100)
-grand_total = base_total + w_amt + p_amt
+    # ४. स्क्रीनवर डाऊनलोड बटन्स दाखवणे (दोन कॉलम्स मध्ये)
+    col_pdf, col_excel = st.columns(2)
+
+    with col_pdf:
+        st.download_button(
+            label="📄 PDF/Text रिपोर्ट डाउनलोड करा",
+            data=buffer_pdf,
+            file_name=f"Patil_Infratech_Report_{current_user_name}.txt", # .txt मध्ये मराठी फॉन्ट सुरक्षित राहतात
+            mime="text/plain",
+            key="final_dl_txt"
+        )
+
+    with col_excel:
+        st.download_button(
+            label="📊 Excel शीट डाउनलोड करा",
+            data=excel_bytes,
+            file_name=f"Patil_Infratech_Report_{current_user_name}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            key="final_dl_excel"
+        )
+else:
+    st.info("ℹ️ डाउनलोड बटण सक्रिय करण्यासाठी आधी वरील '📊 GENERATE RATE ANALYSIS REPORT' बटणावर क्लिक करा.")
