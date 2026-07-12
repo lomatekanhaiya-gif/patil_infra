@@ -63,7 +63,24 @@ if not st.session_state.skip_welcome:
     welcome_placeholder.empty()
     st.session_state.skip_welcome = True
 
-# --- याच्या खाली तुमचा मूळ लॉगिन आणि ॲपचा कोड जसाच्या तसा सुरू राहील ---
+# तुमच्या कोडमध्ये जिथे <style> टॅग सुरू होतोय, तिथे हा भाग जोडा:
+st.markdown("""
+    <style>
+    /* १. Streamlit चा टॉप हेडर (GitHub, Share इ. सर्व गायब करणे) */
+    header[data-testid="stHeader"] {
+        visibility: hidden;
+        height: 0%;
+    }
+    
+    /* २. खालचा "Made with Streamlit" चा फुटरही काढून टाकणे */
+    footer {
+        visibility: hidden;
+    }
+    
+    /* बाकीचे जुने CSS स्टाईल्स खाली तसेच राहू द्या... */
+    .stage-box { text-align: center; ... }
+    </style>
+""", unsafe_allow_html=True)
 
 # --- याच्या खाली तुमचा मूळ लॉगिन आणि ॲपचा कोड जसाच्या तसा सुरू राहील ---
 # पेजची रचना
