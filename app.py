@@ -342,7 +342,7 @@ elif menu_choice == "📐 Estimation Work":
 | | **Rate per m³** | | | | **₹ {per_m3_rate:.2f}** |
 """
             now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-            history_entry = {"काम": "Brickwork", "कメント": st.session_state.current_comment, "तारीख": now_str, "टेबल_डेटा": table_md}
+            history_entry = {"काम": "Brickwork", "कमेंट": st.session_state.current_comment, "तारीख": now_str, "टेबल_डेटा": table_md}
             st.session_state.db_users[user_mobile]["history"].append(history_entry)
             st.session_state.global_logs.append({"नाव": user_name, "मोबाईल": user_mobile, "काम": "Brickwork", "कमेंट": st.session_state.current_comment, "तारीख": now_str})
 
@@ -350,7 +350,7 @@ elif menu_choice == "📐 Estimation Work":
             st.markdown(table_md)
 
 # ==========================================
-# 🛡️ ॲडमीन लॉगिन एरिया (ALWAYS AT THE BOTTOM)
+# 🛡️ ॲडमीन लॉगिनエリア (ALWAYS AT THE BOTTOM)
 # ==========================================
 st.write("---")
 with st.expander("🛡️ Admin Login Area (फक्त कन्हाईसाठी)"):
@@ -360,8 +360,8 @@ with st.expander("🛡️ Admin Login Area (फक्त कन्हाईस�
     if admin_id == "kanha_1p" and admin_pass == "@Dellg15":
         st.success("🔓 ॲडमीन पॅनल अनलॉक झाले!")
         
-        st.markdown("### 🔑 सर्व युझर खाती (User Accounts)")
+        st.markdown("### 🔑 सर्व युझर खाती व त्यांचा डेटा (All User Data)")
         
         if st.session_state.db_users:
             for u_mobile, u_data in list(st.session_state.db_users.items()):
-                col_u_info, col_u_del = st.columns([4,1])
+                with st.container():
