@@ -429,6 +429,62 @@ else:
         total_sand_cost = sand_m3 * sand_rate
 
         mat_cost = total_brick_cost + total_cement_cost + total_sand_cost
+        import streamlit as st
+import pandas as pd
+import io
+
+# --- मूळ कोड न बदलता शेवटी हा भाग जोडा ---
+st.markdown("---")
+st.subheader("📥 फायनल रिपोर्ट डाउनलोड करा (पाटील इन्फ्राटेक स्पेशल)")
+
+# १. आधी सर्व डेटा एका डिक्शनरी/टेबल स्वरूपात गोळा करू (हा डेटा तुमच्या गरजेनुसार बदलू शकता)
+report_data = {
+    "घटक (Component)": ["सिमेंट (Cement)", "वाळू (Sand)", "खडी (Aggregate)"],
+    "एकूण प्रमाण (Quantity)": ["५० बॅग्स", "१.५ ब्रास", "३ ब्रास"],  # इथे तुमचे व्हेरिएबल्स टाका
+    "अंदाजे खर्च (Cost INR)": ["२२,५००/-", "९,०००/-", "१२,०००/-"]
+}
+
+# डेटा फ्रेम तयार करणे
+df = pd.DataFrame(report_data)
+
+# २. EXCEL डाउनलोड करण्यासाठी लॉजिक
+buffer_excel = io.BytesIO()
+with pd.ExcelWriter(buffer_excel, engine='xlsxwriter') as writer:
+    df.to_excel(writer, index=False, sheet_name='Estimation_Report')
+    
+# ३. PDF डाउनलोड करण्यासाठी सोपे HTML टू PDF लॉजिक
+# (Streamlit मध्ये फाईल डाउनलोड करण्यासाठी आपण साध्या text फाईलचे नाव .pdf ठेवूनही सोपा रिपोर्ट देऊ शकतो)
+pdf_text = f"""
+==================================================
+        PATIL INFRATECH - ESTIMATION REPORT        
+==================================================
+संकल्पना आणि लॉजिक: कन्हैया (पाटील इन्फ्राटेक)
+
+* सिमेंट: ५० बॅग्स
+* वाळू (Sand): १.५ ब्रास
+* खडी (Aggregate): ३ ब्रास
+==================================================
+"""
+buffer_pdf = io.BytesIO(pdf_text.encode())
+
+# ४. स्क्रीनवर डाऊनलोड बटन्स दाखवणे (दोन कॉलम्स मध्ये)
+col_pdf, col_excel = st.columns(2)
+
+with col_pdf:
+    st.download_button(
+        label="📄 PDF रिपोर्ट डाउनलोड करा",
+        data=buffer_pdf,
+        file_name="Patil_Infratech_Report.pdf",
+        mime="application/pdf"
+    )
+
+with col_excel:
+    st.download_button(
+        label="📊 Excel शीट डाउनलोड करा",
+        data=buffer_excel.getvalue(),
+        file_name="Patil_Infratech_Report.xlsx",
+        mime="application/vnd.ms-excel"
+    )
         lab_cost = (mason_qty * mason_rate) + (mazdoor_qty * mazdoor_rate)
         base_total = mat_cost + lab_cost + scaffolding_cost + contingency_cost
         w_amt = base_total * (water_pct / 100)
