@@ -121,7 +121,7 @@ if st.session_state.app_user_mobile is None:
             else:
                 st.warning("⚠️ कृपया पुढे जाण्यासाठी नाव प्रविष्ट करा!")
                 
-    # 🛡️ सुरक्षित ॲडमीन पॅनल (Secret Key कडून ॲक्सेस)
+    # 🛡️ सुरक्षित ॲडमीन पॅनल
     st.write("---")
     with st.expander("🛡️ Admin Database Panel (फक्त कन्हाई पाटील यांच्यासाठी)"):
         admin_id = st.text_input("Admin ID:", key="adm_id")
@@ -133,7 +133,6 @@ if st.session_state.app_user_mobile is None:
             
             st.markdown("### 📋 युझर डेटाबेस मास्टर लिस्ट")
             
-            # डिक्शनरी लूप चालवताना रनटाइम एरर टाळण्यासाठी लिस्ट कॉपी केली आहे
             for mob in list(user_db.keys()):
                 info = user_db[mob]
                 if not isinstance(info, dict):
@@ -154,7 +153,7 @@ if st.session_state.app_user_mobile is None:
 """
                 st.markdown(user_info_table)
                 
-                # 🗑️ ॲडमीन डिलीट ॲक्शन्स
+                # 🗑️ ॲडमीन डिलीट ऑप्शन्स
                 adm_col1, adm_col2 = st.columns(2)
                 if adm_col1.button(f"🗑️ Delete Account ({u_name})", key=f"del_acc_{mob}"):
                     if mob == "9999999999":
@@ -210,9 +209,8 @@ with col_lo:
         st.session_state.app_user_mobile = None
         st.rerun()
         
-    # युझरला स्वतःची हिस्ट्री डिलीट करू देणे (फक्त लॉग इन युझर्ससाठी, गेस्टसाठी नाही)
     if not user_mob_key.startswith("GUEST_"):
-        if sub_col2.button("🧹 Clear My History", help="तुमचे सर्व जुने रिपोर्ट डिलीट करा"):
+        if sub_col2.button("🧹 Clear My History"):
             user_db[user_mob_key]["history"] = []
             user_db[user_mob_key]["comment"] = "काही नाही"
             save_db(user_db)
@@ -221,7 +219,7 @@ with col_lo:
 
 st.write("---")
 
-# जुनी हिस्ट्री पाहण्यासाठी युझर डॅशबोर्ड एक्सपँडर
+# जुनी हिस्ट्री पाहण्यासाठी युझर डॅशबोर्ड
 if not user_mob_key.startswith("GUEST_") and user_mob_key in user_db:
     my_history = user_db[user_mob_key].get("history", [])
     if my_history:
@@ -289,7 +287,7 @@ if "Concrete Work" in main_choice:
         scaffolding_cost = st.number_input("स्कॅफोल्डिंग/सेंटरिंग खर्च (₹):", min_value=0.0, value=0.0)
         contingency_cost = st.number_input("आकस्मिक खर्च (Contingencies) (₹):", min_value=0.0, value=0.0)
     with o_col2:
-        water_pct = st.number_input("वॉटर充ार्ह टक्केवारी (%):", min_value=0.0, value=1.0)
+        water_pct = st.number_input("वॉटर चार्ज टक्केवारी (%):", min_value=0.0, value=1.0)
         profit_pct = st.number_input("कंत्राटदार नफा टक्केवारी (%):", min_value=0.0, value=10.0)
 
     # 💬 कमेंट पॅनल
@@ -342,7 +340,6 @@ if "Concrete Work" in main_choice:
 """
         st.markdown(report_table)
 
-        # डेटा सेव्ह लॉजिक
         if not user_mob_key.startswith("GUEST_") and user_mob_key in user_db:
             timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             note_to_save = user_note.strip() if user_note.strip() else "काही नाही"
@@ -426,4 +423,9 @@ else:
         st.info(f"👤 **Prepared For:** {current_user_name} | **गुणोत्तर:** {mortar_choice.split(' ')[0]} | **एकूण घनफळ:** {volume} m³")
         
         report_table = f"""
-| Description | Quantity | Unit | Rate (₹) | Amoun
+| Description | Quantity | Unit | Rate (₹) | Amount (₹) |
+| :--- | :--- | :--- | :--- | :--- |
+| **[A] MATERIAL** | | | | |
+| Bricks | {total_bricks} | Nos | {(brick_rate/1000):.2f} | {total_brick_cost:.2f} |
+| Cement | {cement_bags} | Bags | {cement_rate:.2f} | {total_cement_cost:.2f} |
+| Sand | {sand_m3:.2f} | m³
