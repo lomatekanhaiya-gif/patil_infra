@@ -486,7 +486,7 @@ with col_excel:
         mime="application/vnd.ms-excel"
     )
  lab_cost = (mason_qty * mason_rate) + (mazdoor_qty * mazdoor_rate)
-        base_total = mat_cost + lab_cost + scaffolding_cost + contingency_cost
-        w_amt = base_total * (water_pct / 100)
-        p_amt = base_total * (profit_pct / 100)
-        grand_total = base_total + w_amt + p_amt
+base_total = mat_cost + lab_cost + scaffolding_cost + contingency_cost
+w_amt = base_total * (water_pct / 100)
+p_amt = base_total * (profit_pct / 100)
+grand_total = base_total + w_amt + p_amt
