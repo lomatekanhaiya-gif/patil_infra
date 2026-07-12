@@ -31,7 +31,7 @@ def load_db():
                 if isinstance(db, dict):
                     if "9999999999" not in db:
                         db["9999999999"] = {
-                            "id": "kanhaiya", 
+                            "id": "kanha", 
                             "password": "patiladmin123",
                             "comment": "मास्टर ॲडमीन अकाउंट",
                             "history": []
@@ -42,7 +42,7 @@ def load_db():
             
     return {
         "9999999999": {
-            "id": "kanhaiya", 
+            "id": "kanha", 
             "password": "patiladmin123",
             "comment": "मास्टर ॲडमीन अकाउंट",
             "history": []
