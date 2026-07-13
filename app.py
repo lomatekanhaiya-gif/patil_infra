@@ -345,7 +345,7 @@ if "Concrete Work" in main_choice:
         profit_pct = st.number_input("कंत्राटदार नफा टक्केवारी (%):", min_value=0.0, value=10.0, key="cc_prof_p")
 
     st.markdown("#### 💬 कमेंट पॅनल (Comment Panel)")
-    user_note = st.text_area("या एस्टिमेशन संदर्भात काही नोट किंवा कमेंट लिहायची असल्यास इथे लिहा:", placeholder="उदा. स्लॅब क्र. १ चे काँक्रीट काम...", key="cc_note")
+    user_note = st.text_area("कृपया आपला मौल्यवान फीडबॅक अवश्य द्या🙏ा:", placeholder="अँप मध्ये नवीन फिचर्स हवे असतील तर नक्की कळवा", key="cc_note")
     if st.button("💬 कमेंट सबमिट करा", key="cc_comm_btn"):
         if user_note.strip():
             st.session_state.current_comment = user_note.strip()
@@ -452,7 +452,7 @@ else:
         profit_pct = st.number_input("कंत्राटदार नफा (%):", min_value=0.0, value=10.0, key="bw_pp")
 
     st.markdown("#### 💬 कमेंट पॅनल (Comment Panel)")
-    user_note = st.text_area("या एस्टिमेशन संदर्भात काही नोट किंवा कमेंट लिहायची असल्यास इथे लिहा:", placeholder="उदा. ग्राउंड फ्लोअर वीटकाम...", key="bw_note")
+    user_note = st.text_area("कृपया आपला मौल्यवान फीडबॅक अवश्य द्या🙏:", placeholder="अँप मध्ये नवीन फिचर्स हवे असतील तर नक्की कळवा", key="bw_note")
     if st.button("💬 कमेंट सबमिट करा", key="bw_comment_btn"):
         if user_note.strip():
             st.session_state.current_comment = user_note.strip()
