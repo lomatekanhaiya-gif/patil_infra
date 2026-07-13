@@ -137,19 +137,19 @@ if "current_comment" not in st.session_state:
 # युझरचे रेट्स सेशनमध्ये टिकवून ठेवण्यासाठी इनिशियलायझेशन
 if "rate_volume" not in st.session_state: st.session_state.rate_volume = 1.0
 if "rate_cement" not in st.session_state: st.session_state.rate_cement = 400.0
-if "rate_sand" not in st.session_state: st.session_state.rate_sand = 2500.0
-if "rate_aggregate" not in st.session_state: st.session_state.rate_aggregate = 2200.0
+if "rate_sand" not in st.session_state: st.session_state.rate_sand = 1000
+if "rate_aggregate" not in st.session_state: st.session_state.rate_aggregate = 1500
 if "rate_steel" not in st.session_state: st.session_state.rate_steel = 65.0
 if "rate_mason_qty" not in st.session_state: st.session_state.rate_mason_qty = 0.0
-if "rate_mason" not in st.session_state: st.session_state.rate_mason = 600.0
+if "rate_mason" not in st.session_state: st.session_state.rate_mason = 1000
 if "rate_mazdoor_qty" not in st.session_state: st.session_state.rate_mazdoor_qty = 0.0
-if "rate_mazdoor" not in st.session_state: st.session_state.rate_mazdoor = 400.0
+if "rate_mazdoor" not in st.session_state: st.session_state.rate_mazdoor = 700
 if "rate_bb_qty" not in st.session_state: st.session_state.rate_bb_qty = 0.0
 if "rate_bb" not in st.session_state: st.session_state.rate_bb = 550.0
 if "rate_scaffolding" not in st.session_state: st.session_state.rate_scaffolding = 0.0
 if "rate_contingency" not in st.session_state: st.session_state.rate_contingency = 0.0
-if "rate_water_pct" not in st.session_state: st.session_state.rate_water_pct = 1.0
-if "rate_profit_pct" not in st.session_state: st.session_state.rate_profit_pct = 10.0
+if "rate_water_pct" not in st.session_state: st.session_state.rate_water_pct = 1.5
+if "rate_profit_pct" not in st.session_state: st.session_state.rate_profit_pct = 10
 
 # वीटकामासाठी वेगळे रेट्स टिकवून ठेवणे
 if "bw_volume" not in st.session_state: st.session_state.bw_volume = 1.0
@@ -157,12 +157,12 @@ if "bw_brick_rate" not in st.session_state: st.session_state.bw_brick_rate = 800
 if "bw_cement_rate" not in st.session_state: st.session_state.bw_cement_rate = 400.0
 if "bw_sand_rate" not in st.session_state: st.session_state.bw_sand_rate = 2500.0
 if "bw_mason_qty" not in st.session_state: st.session_state.bw_mason_qty = 0.0
-if "bw_mason_rate" not in st.session_state: st.session_state.bw_mason_rate = 650.0
+if "bw_mason_rate" not in st.session_state: st.session_state.bw_mason_rate = 1000
 if "bw_mazdoor_qty" not in st.session_state: st.session_state.bw_mazdoor_qty = 0.0
-if "bw_mazdoor_rate" not in st.session_state: st.session_state.bw_mazdoor_rate = 400.0
+if "bw_mazdoor_rate" not in st.session_state: st.session_state.bw_mazdoor_rate = 700
 if "bw_scaffolding_cost" not in st.session_state: st.session_state.bw_scaffolding_cost = 0.0
 if "bw_contingency_cost" not in st.session_state: st.session_state.bw_contingency_cost = 0.0
-if "bw_water_pct" not in st.session_state: st.session_state.bw_water_pct = 1.0
+if "bw_water_pct" not in st.session_state: st.session_state.bw_water_pct = 1.5
 if "bw_profit_pct" not in st.session_state: st.session_state.bw_profit_pct = 10.0
 
 # मुख्य टायटल
@@ -213,7 +213,7 @@ if st.session_state.app_user_mobile is None:
                     "id": r_name, 
                     "password": r_pass,
                     "comment": "काही नाही",
-                    "admin_message": f"well come {r_name} mi kanhaiya aaple patil infratech madhe hardik svogat",
+                    "admin_message": f"well come {r_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये स्वागत आहे🥳",
                     "history": []
                 }
                 save_db(user_db)
@@ -401,7 +401,7 @@ if "Concrete Work" in main_choice:
         st.session_state.rate_profit_pct = profit_pct
 
     st.markdown("#### 💬 कमेंट पॅनल (Comment Panel)")
-    user_note = st.text_area("या एस्टिमेशन संदर्भात काही नोट किंवा कमेंट लिहायची असल्यास इथे लिहा:", placeholder="उदा. स्लॅब क्र. १ चे काँक्रीट काम...")
+    user_note = st.text_area("कृपया आपला मौल्यवान फीडबॅक अवश्य द्या🙏ा:", placeholder="अँप मध्ये नवीन फिचर्स हवे असतील तर नक्की कळवा")
     if st.button("💬 कमेंट सबमिट करा"):
         if user_note.strip():
             st.session_state.current_comment = user_note.strip()
