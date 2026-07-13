@@ -423,7 +423,7 @@ if "Concrete Work" in main_choice:
             save_db(user_db)
 
 # ==========================================
-# 🛑 वीटकाम (BRICKWORK MODULE) - पूर्ण आणि दुरुस्त केलेला कोड
+# 🛑 वीटकाम (BRICKWORK MODULE)
 # ==========================================
 else:
     st.subheader("🧱 Brickwork Estimation")
@@ -439,37 +439,33 @@ else:
     st.markdown("#### [A] साहित्याची माहिती आणि दर (थेट टाईप करा)")
     bm_col1, bm_col2 = st.columns(2)
     with bm_col1:
-        # saved_rates मधून जुनी व्हॅल्यू लोड होईल, नसल्यास default 16.712 राहील
-        volume = st.number_input("वीटकामाचे एकूण घनफळ भरा (Volume in m³):", min_value=0.0, value=float(saved_rates.get("b_vol", 16.712)), step=0.001, key="bw_volume_input")
-        brick_rate = st.number_input("विटांचा दर प्रति नग (₹ per Brick):", min_value=0.0, value=float(saved_rates.get("b_brick_rate", 8.0)), step=1.0, key="bw_brick_rate_input")
+        volume = st.number_input("वीटकामाचे एकूण घनफळ भरा (Volume in m³):", min_value=0.0, value=1.0, key="bw_vol")
+        brick_rate = st.number_input("विटांचा दर प्रति हजार नग (₹ per 1000 Bricks):", min_value=0.0, value=8000.0, key="bw_br")
     with bm_col2:
-        cement_rate = st.number_input("सिमेंट दर प्रति बॅग (₹):", min_value=0.0, value=float(saved_rates.get("b_cement_rate", 350.0)), step=1.0, key="bw_cement_rate_input")
-        sand_rate = st.number_input("वाळूचा दर प्रति m³ (₹):", min_value=0.0, value=float(saved_rates.get("b_sand_rate", 1500.0)), step=1.0, key="bw_sand_rate_input")
+        cement_rate = st.number_input("सिमेंट दर प्रति बॅग (₹):", min_value=0.0, value=400.0, key="bw_cr")
+        sand_rate = st.number_input("वाळूचा दर प्रति m³ (₹):", min_value=0.0, value=2500.0, key="bw_sr")
 
     st.markdown("#### [B] लेबर खर्च (नसल्यास ० ठेवा)")
-    bl_col1, bl_col2, bl_col3 = st.columns(3)
+    bl_col1, bl_col2 = st.columns(2)
     with bl_col1:
-        mason_qty = st.number_input("मेसन संख्या (Brickwork Days):", min_value=0.0, value=float(saved_rates.get("b_mason_qty", 4.0)), step=1.0, key="bw_mason_qty_input")
-        mason_rate = st.number_input("मेसन प्रतिदिन दर (₹/Day):", min_value=0.0, value=float(saved_rates.get("b_mason_rate", 1000.0)), step=1.0, key="bw_mason_rate_input")
+        mason_qty = st.number_input("मेसन संख्या (Brickwork Days):", min_value=0.0, value=0.0, key="bw_mq")
+        mason_rate = st.number_input("मेसन प्रतिदिन दर (₹/Day):", min_value=0.0, value=650.0, key="bw_mr")
     with bl_col2:
-        mazdoor_qty = st.number_input("मजदूर संख्या (Brickwork Days):", min_value=0.0, value=float(saved_rates.get("b_mazdoor_qty", 8.0)), step=1.0, key="bw_mazdoor_qty_input")
-        mazdoor_rate = st.number_input("मजदूर प्रतिदिन दर (₹/Day):", min_value=0.0, value=float(saved_rates.get("b_mazdoor_rate", 700.0)), step=1.0, key="bw_mazdoor_rate_input")
-    with bl_col3:
-        bhisti_qty = st.number_input("भिस्ती संख्या (Watering Days):", min_value=0.0, value=float(saved_rates.get("b_bhisti_qty", 0.0)), step=1.0, key="bw_bhisti_qty_input")
-        bhisti_rate = st.number_input("भिस्ती दर (₹/Day):", min_value=0.0, value=float(saved_rates.get("b_bhisti_rate", 0.0)), step=1.0, key="bw_bhisti_rate_input")
+        mazdoor_qty = st.number_input("मजदूर संख्या (Brickwork Days):", min_value=0.0, value=0.0, key="bw_mzq")
+        mazdoor_rate = st.number_input("मजदूर प्रतिदिन दर (₹/Day):", min_value=0.0, value=400.0, key="bw_mzr")
 
     st.markdown("#### [C] अवांतर खर्च व टक्केवारी")
     bo_col1, bo_col2 = st.columns(2)
     with bo_col1:
-        scaffolding_cost = st.number_input("पाळत/स्कॅफोल्डिंग खर्च (₹):", min_value=0.0, value=float(saved_rates.get("b_scaf_cost", 500.0)), step=1.0, key="bw_scaf_input")
-        contingency_cost = st.number_input("आकस्मिक खर्च (₹):", min_value=0.0, value=float(saved_rates.get("b_cont_cost", 500.0)), step=1.0, key="bw_cont_input")
+        scaffolding_cost = st.number_input("पाळत/स्कॅफोल्डिंग खर्च (₹):", min_value=0.0, value=0.0, key="bw_sc")
+        contingency_cost = st.number_input("आकस्मिक खर्च (₹):", min_value=0.0, value=0.0, key="bw_cc")
     with bo_col2:
-        water_pct = st.number_input("वॉटर चार्ज (%):", min_value=0.0, value=float(saved_rates.get("b_water_pct", 1.5)), step=0.1, key="bw_water_pct_input")
-        profit_pct = st.number_input("कंत्राटदार नफा (%):", min_value=0.0, value=float(saved_rates.get("b_profit_pct", 10.0)), step=0.1, key="bw_profit_pct_input")
+        water_pct = st.number_input("वॉटर充ज (%):", min_value=0.0, value=1.0, key="bw_wp")
+        profit_pct = st.number_input("कंत्राटदार नफा (%):", min_value=0.0, value=10.0, key="bw_pp")
 
     st.markdown("#### 💬 कमेंट पॅनल (Comment Panel)")
-    user_note = st.text_area("या एस्टिमेशन संदर्भात काही नोट किंवा कमेंट लिहायची असल्यास इथे लिहा:", placeholder="उदा. ग्राउंड फ्लोअर वीटकाम...", key="bw_comm_text")
-    if st.button("💬 कमेंट सबमिट करा", key="bw_comment_submit_btn"):
+    user_note = st.text_area("या एस्टिमेशन संदर्भात काही नोट किंवा कमेंट लिहायची असल्यास इथे लिहा:", placeholder="उदा. ग्राउंड फ्लोअर वीटकाम...", key="bw_note")
+    if st.button("💬 कमेंट सबमिट करा", key="bw_comment_btn"):
         if user_note.strip():
             st.session_state.current_comment = user_note.strip()
             if not user_mob_key.startswith("GUEST_") and user_mob_key in user_db:
@@ -477,20 +473,8 @@ else:
                 save_db(user_db)
             st.success("✅ कमेंट सेव्ह झाली!")
 
-    if st.button("📊 GENERATE RATE ANALYSIS REPORT", type="primary", key="bw_generate_report_btn"):
-        # 💾 इनपुट व्हॅल्यूज युझरच्या प्रोफाईलमध्ये लॉक (सेव्ह) करणे
-        if not user_mob_key.startswith("GUEST_") and user_mob_key in user_db:
-            if "saved_rates" not in user_db[user_mob_key]:
-                user_db[user_mob_key]["saved_rates"] = {}
-            user_db[user_mob_key]["saved_rates"].update({
-                "b_vol": volume, "b_brick_rate": brick_rate, "b_cement_rate": cement_rate, "b_sand_rate": sand_rate,
-                "b_mason_qty": mason_qty, "b_mason_rate": mason_rate, "b_mazdoor_qty": mazdoor_qty, "b_mazdoor_rate": mazdoor_rate,
-                "b_bhisti_qty": bhisti_qty, "b_bhisti_rate": bhisti_rate, "b_scaf_cost": scaffolding_cost, "b_cont_cost": contingency_cost,
-                "b_water_pct": water_pct, "b_profit_pct": profit_pct
-            })
-            save_db(user_db)
-
-        # वीटकाम कॅल्क्युलेशन
+    # --- इथे दुरुस्ती केली आहे (रिपोर्ट जनरेट होण्यासाठी) ---
+    if st.button("📊 GENERATE RATE ANALYSIS REPORT", type="primary", key="bw_report_btn"):
         total_bricks = math.ceil(volume * 500)
         dry_mortar_vol = volume * 0.30
         total_mortar_parts = c_part + s_part
@@ -499,44 +483,56 @@ else:
         sand_m3 = (s_part / total_mortar_parts) * dry_mortar_vol if total_mortar_parts > 0 else 0.0
         cement_bags = math.ceil(cement_vol * 28.8)
 
-        total_brick_cost = total_bricks * brick_rate
+        total_brick_cost = (total_bricks / 1000) * brick_rate
         total_cement_cost = cement_bags * cement_rate
         total_sand_cost = sand_m3 * sand_rate
 
+        # खर्च मोजणे
         mat_cost = total_brick_cost + total_cement_cost + total_sand_cost
-        lab_cost = (mason_qty * mason_rate) + (mazdoor_qty * mazdoor_rate) + (bhisti_qty * bhisti_rate)
-        
+        lab_cost = (mason_qty * mason_rate) + (mazdoor_qty * mazdoor_rate)
         base_total = mat_cost + lab_cost + scaffolding_cost + contingency_cost
+        
         w_amt = base_total * (water_pct / 100)
         p_amt = base_total * (profit_pct / 100)
         grand_total = base_total + w_amt + p_amt
-        per_m3_rate = grand_total / volume if volume > 0 else 0.0
 
-        st.success("🎉 रिपोर्ट यशस्वीरित्या तयार झाला आहे!")
+        # यश संदेश आणि टेबल दाखवणे
+        st.success("🎉 वीटकाम रिपोर्ट यशस्वीरित्या तयार झाला आहे!")
         st.markdown(f"### 📊 RATE ANALYSIS SHEET - BRICKWORK")
-        st.info(f"👤 **Prepared For:** {current_user_name} | **एकूण घनफळ:** {volume} m³")
+        st.info(f"👤 **Prepared For:** {current_user_name} | **गुणोत्तर:** {mortar_choice.split(' ')[0]} | **एकूण घनफळ:** {volume} m³")
         
         report_table = f"""
 | Description | Quantity | Unit | Rate (₹) | Amount (₹) |
 | :--- | :--- | :--- | :--- | :--- |
 | **[A] MATERIAL** | | | | |
-| Bricks | {total_bricks} | Nos | {brick_rate:.2f} | {total_brick_cost:.2f} |
+| Bricks | {total_bricks} | Nos | {(brick_rate/1000):.2f} / नग | {total_brick_cost:.2f} |
 | Cement | {cement_bags} | Bags | {cement_rate:.2f} | {total_cement_cost:.2f} |
 | Sand | {sand_m3:.2f} | m³ | {sand_rate:.2f} | {total_sand_cost:.2f} |
 | **[B] LABOUR** | | | | |
 | Mason | {mason_qty} | Nos | {mason_rate:.2f} | {mason_qty*mason_rate:.2f} |
 | Mazdoor | {mazdoor_qty} | Nos | {mazdoor_rate:.2f} | {mazdoor_qty*mazdoor_rate:.2f} |
-| Bhisti | {bhisti_qty} | Nos | {bhisti_rate:.2f} | {bhisti_qty*bhisti_rate:.2f} |
 | **[C] OTHER EXPENSES** | | | | |
-| Scaffolding | - | L.S. | - | {scaffolding_cost:.2f} |
-| Contingency | - | L.S. | - | {contingency_cost:.2f} |
+| Scaffolding / Centering | - | L.S. | - | {scaffolding_cost:.2f} |
+| Contingencies | - | L.S. | - | {contingency_cost:.2f} |
 | **TOTAL (A + B + C)** | | | | **{base_total:.2f}** |
 | Water Charge ({water_pct}%) | | | | {w_amt:.2f} |
 | Contractor Profit ({profit_pct}%) | | | | {p_amt:.2f} |
 | **GRAND TOTAL** | | | | **₹ {grand_total:.2f}/-** |
 """
         st.markdown(report_table)
-        st.info(f"👉 **प्रति घनफळ दर (Rate per m³):** {grand_total:.2f} / {volume} = **₹ {per_m3_rate:.2f} Rs/m³**")
+        
+        # सेशन आणि डेटाबेस हिस्ट्री अपडेट करणे
+        st.session_state.active_report = {
+            "type": "Brickwork",
+            "grand_total": grand_total,
+            "data": {
+                "Description": ["Bricks", "Cement", "Sand", "GRAND TOTAL"],
+                "Quantity": [total_bricks, cement_bags, round(sand_m3, 2), ""],
+                "Unit": ["Nos", "Bags", "m³", ""],
+                "Amount (INR)": [total_brick_cost, total_cement_cost, total_sand_cost, grand_total]
+            },
+            "txt": f"PATIL INFRATECH - BRICKWORK REPORT\nयुझर: {current_user_name}\nतारीख: {datetime.date.today()}\n----------------------------------------\n* विटा: {total_bricks} Nos\n* सिमेंट: {cement_bags} Bags\n* वाळू: {sand_m3:.2f} m3\n----------------------------------------\nGRAND TOTAL: INR {grand_total:.2f}/-"
+        }
 
         if not user_mob_key.startswith("GUEST_") and user_mob_key in user_db:
             timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -547,3 +543,4 @@ else:
             }
             user_db[user_mob_key]["history"].append(new_report)
             save_db(user_db)
+     
