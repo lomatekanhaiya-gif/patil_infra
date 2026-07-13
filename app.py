@@ -6,6 +6,7 @@ import os
 import datetime
 import pandas as pd
 import io
+import streamlit as st
 import time
 
 # --- १. अॅनिमेशन आणि सुरुवातीच्या सुंदर लूकसाठी रिकामी जागा तयार करणे ---
@@ -65,7 +66,7 @@ if not st.session_state.skip_welcome:
 # तुमच्या कोडमध्ये जिथे <style> टॅग सुरू होतोय, तिथे हा भाग जोडा:
 st.markdown("""
     <style>
-    /* १. Streamlit चा湯प हेडर (GitHub, Share इ. सर्व गायब करणे) */
+    /* १. Streamlit चा टॉप हेडर (GitHub, Share इ. सर्व गायब करणे) */
     header[data-testid="stHeader"] {
         visibility: hidden;
         height: 0%;
@@ -128,42 +129,11 @@ def save_db(db):
 # सुरक्षितपणे डेटाबेस लोड करा
 user_db = load_db()
 
-# सेशन स्टेट इनिशियलायझेशन (दर कायम ठेवण्यासाठी)
+# सेशन स्टेट इनिशियलायझेशन
 if "app_user_mobile" not in st.session_state:
     st.session_state.app_user_mobile = None
 if "current_comment" not in st.session_state:
     st.session_state.current_comment = "काही नाही"
-
-# युझरचे रेट्स सेशनमध्ये टिकवून ठेवण्यासाठी इनिशियलायझेशन
-if "rate_volume" not in st.session_state: st.session_state.rate_volume = 1.0
-if "rate_cement" not in st.session_state: st.session_state.rate_cement = 400.0
-if "rate_sand" not in st.session_state: st.session_state.rate_sand = 1000
-if "rate_aggregate" not in st.session_state: st.session_state.rate_aggregate = 1500
-if "rate_steel" not in st.session_state: st.session_state.rate_steel = 65.0
-if "rate_mason_qty" not in st.session_state: st.session_state.rate_mason_qty = 0.0
-if "rate_mason" not in st.session_state: st.session_state.rate_mason = 1000
-if "rate_mazdoor_qty" not in st.session_state: st.session_state.rate_mazdoor_qty = 0.0
-if "rate_mazdoor" not in st.session_state: st.session_state.rate_mazdoor = 700
-if "rate_bb_qty" not in st.session_state: st.session_state.rate_bb_qty = 0.0
-if "rate_bb" not in st.session_state: st.session_state.rate_bb = 550.0
-if "rate_scaffolding" not in st.session_state: st.session_state.rate_scaffolding = 0.0
-if "rate_contingency" not in st.session_state: st.session_state.rate_contingency = 0.0
-if "rate_water_pct" not in st.session_state: st.session_state.rate_water_pct = 1.5
-if "rate_profit_pct" not in st.session_state: st.session_state.rate_profit_pct = 10
-
-# वीटकामासाठी वेगळे रेट्स टिकवून ठेवणे
-if "bw_volume" not in st.session_state: st.session_state.bw_volume = 1.0
-if "bw_brick_rate" not in st.session_state: st.session_state.bw_brick_rate = 8000.0
-if "bw_cement_rate" not in st.session_state: st.session_state.bw_cement_rate = 400.0
-if "bw_sand_rate" not in st.session_state: st.session_state.bw_sand_rate = 2500.0
-if "bw_mason_qty" not in st.session_state: st.session_state.bw_mason_qty = 0.0
-if "bw_mason_rate" not in st.session_state: st.session_state.bw_mason_rate = 1000
-if "bw_mazdoor_qty" not in st.session_state: st.session_state.bw_mazdoor_qty = 0.0
-if "bw_mazdoor_rate" not in st.session_state: st.session_state.bw_mazdoor_rate = 700
-if "bw_scaffolding_cost" not in st.session_state: st.session_state.bw_scaffolding_cost = 0.0
-if "bw_contingency_cost" not in st.session_state: st.session_state.bw_contingency_cost = 0.0
-if "bw_water_pct" not in st.session_state: st.session_state.bw_water_pct = 1.5
-if "bw_profit_pct" not in st.session_state: st.session_state.bw_profit_pct = 10.0
 
 # मुख्य टायटल
 st.title("🏗️ PATIL INFRATECH")
@@ -208,12 +178,10 @@ if st.session_state.app_user_mobile is None:
             elif r_mobile in user_db:
                 st.error("❌ हा मोबाईल नंबर आधीपासूनच रजिस्टर आहे!")
             else:
-                # साइन-अप करताना ॲडमीन मेसेज आपोआप ॲड करणे
                 user_db[r_mobile] = {
                     "id": r_name, 
                     "password": r_pass,
                     "comment": "काही नाही",
-                    "admin_message": f"well come {r_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये स्वागत आहे🥳",
                     "history": []
                 }
                 save_db(user_db)
@@ -357,51 +325,36 @@ if "Concrete Work" in main_choice:
     st.markdown("#### [A] साहित्याची माहिती आणि दर (थेट टाईप करा)")
     v_col1, v_col2 = st.columns(2)
     with v_col1:
-        volume = st.number_input("एकूण काँक्रीट घनफळ भरा (Volume in m³):", min_value=0.0, value=st.session_state.rate_volume, key="cc_vol_input")
-        st.session_state.rate_volume = volume
-        cement_rate = st.number_input("सिमेंट दर प्रति बॅग (₹):", min_value=0.0, value=st.session_state.rate_cement, key="cc_cem_input")
-        st.session_state.rate_cement = cement_rate
-        sand_rate = st.number_input("वाळूचा दर प्रति m³ (₹):", min_value=0.0, value=st.session_state.rate_sand, key="cc_snd_input")
-        st.session_state.rate_sand = sand_rate
+        volume = st.number_input("एकूण काँक्रीट घनफळ भरा (Volume in m³):", min_value=0.0, value=1.0)
+        cement_rate = st.number_input("सिमेंट दर प्रति बॅग (₹):", min_value=0.0, value=400.0)
+        sand_rate = st.number_input("वाळूचा दर प्रति m³ (₹):", min_value=0.0, value=2500.0)
     with v_col2:
-        aggregate_rate = st.number_input("खडीचा दर प्रति m³ (₹):", min_value=0.0, value=st.session_state.rate_aggregate, key="cc_agg_input")
-        st.session_state.rate_aggregate = aggregate_rate
-        steel_rate = st.number_input("स्टीलचा दर प्रति किलो (₹/Kg):", min_value=0.0, value=st.session_state.rate_steel, key="cc_stl_input") if steel_percentage > 0 else 0.0
-        if steel_percentage > 0: st.session_state.rate_steel = steel_rate
+        aggregate_rate = st.number_input("खडीचा दर प्रति m³ (₹):", min_value=0.0, value=2200.0)
+        steel_rate = st.number_input("स्टीलचा दर प्रति किलो (₹/Kg):", min_value=0.0, value=65.0) if steel_percentage > 0 else 0.0
 
     st.markdown("#### [B] लेबर खर्च (नसल्यास ० ठेवा)")
     l_col1, l_col2, l_col3 = st.columns(3)
     with l_col1:
-        mason_qty = st.number_input("मेसन संख्या (Days):", min_value=0.0, value=st.session_state.rate_mason_qty, key="cc_mas_qty_input")
-        st.session_state.rate_mason_qty = mason_qty
-        mason_rate = st.number_input("मेसन दर (₹/Day):", min_value=0.0, value=st.session_state.rate_mason, key="cc_mas_rt_input")
-        st.session_state.rate_mason = mason_rate
+        mason_qty = st.number_input("मेसन संख्या (Days):", min_value=0.0, value=0.0)
+        mason_rate = st.number_input("मेसन दर (₹/Day):", min_value=0.0, value=600.0)
     with l_col2:
-        mazdoor_qty = st.number_input("मजदूर संख्या (Days):", min_value=0.0, value=st.session_state.rate_mazdoor_qty, key="cc_maz_qty_input")
-        st.session_state.rate_mazdoor_qty = mazdoor_qty
-        mazdoor_rate = st.number_input("मजदूर दर (₹/Day):", min_value=0.0, value=st.session_state.rate_mazdoor, key="cc_maz_rt_input")
-        st.session_state.rate_mazdoor = mazdoor_rate
+        mazdoor_qty = st.number_input("मजदूर संख्या (Days):", min_value=0.0, value=0.0)
+        mazdoor_rate = st.number_input("मजदूर दर (₹/Day):", min_value=0.0, value=400.0)
     with l_col3:
-        bb_qty = st.number_input("बार बेंडर संख्या:", min_value=0.0, value=st.session_state.rate_bb_qty, key="cc_bb_qty_input")
-        st.session_state.rate_bb_qty = bb_qty
-        bb_rate = st.number_input("बार बेंडर दर (₹/Day):", min_value=0.0, value=st.session_state.rate_bb, key="cc_bb_rt_input")
-        st.session_state.rate_bb = bb_rate
+        bb_qty = st.number_input("बार बेंडर संख्या:", min_value=0.0, value=0.0)
+        bb_rate = st.number_input("बार बेंडर दर (₹/Day):", min_value=0.0, value=550.0)
 
     st.markdown("#### [C] अवांतर खर्च व टक्केवारी")
     o_col1, o_col2 = st.columns(2)
     with o_col1:
-        scaffolding_cost = st.number_input("स्कॅफोल्डिंग/सेंटरिंग खर्च (₹):", min_value=0.0, value=st.session_state.rate_scaffolding, key="cc_scaf_input")
-        st.session_state.rate_scaffolding = scaffolding_cost
-        contingency_cost = st.number_input("आकस्मिक खर्च (Contingencies) (₹):", min_value=0.0, value=st.session_state.rate_contingency, key="cc_cont_input")
-        st.session_state.rate_contingency = contingency_cost
+        scaffolding_cost = st.number_input("स्कॅफोल्डिंग/सेंटरिंग खर्च (₹):", min_value=0.0, value=0.0)
+        contingency_cost = st.number_input("आकस्मिक खर्च (Contingencies) (₹):", min_value=0.0, value=0.0)
     with o_col2:
-        water_pct = st.number_input("वॉटर चार्ज टक्केवारी (%):", min_value=0.0, value=st.session_state.rate_water_pct, key="cc_wat_input")
-        st.session_state.rate_water_pct = water_pct
-        profit_pct = st.number_input("कंत्राटदार नफा टक्केवारी (%):", min_value=0.0, value=st.session_state.rate_profit_pct, key="cc_prof_input")
-        st.session_state.rate_profit_pct = profit_pct
+        water_pct = st.number_input("वॉटर चार्ज टक्केवारी (%):", min_value=0.0, value=1.0) # 👈 दुरुस्त केले
+        profit_pct = st.number_input("कंत्राटदार नफा टक्केवारी (%):", min_value=0.0, value=10.0)
 
     st.markdown("#### 💬 कमेंट पॅनल (Comment Panel)")
-    user_note = st.text_area("कृपया आपला मौल्यवान फीडबॅक अवश्य द्या🙏ा:", placeholder="अँप मध्ये नवीन फिचर्स हवे असतील तर नक्की कळवा")
+    user_note = st.text_area("या एस्टिमेशन संदर्भात काही नोट किंवा कमेंट लिहायची असल्यास इथे लिहा:", placeholder="उदा. स्लॅब क्र. १ चे काँक्रीट काम...")
     if st.button("💬 कमेंट सबमिट करा"):
         if user_note.strip():
             st.session_state.current_comment = user_note.strip()
@@ -495,41 +448,29 @@ else:
     st.markdown("#### [A] साहित्याची माहिती आणि दर (थेट टाईप करा)")
     bm_col1, bm_col2 = st.columns(2)
     with bm_col1:
-        volume = st.number_input("वीटकामाचे एकूण घनफळ भरा (Volume in m³):", min_value=0.0, value=st.session_state.bw_volume, key="bw_vol")
-        st.session_state.bw_volume = volume
-        brick_rate = st.number_input("विटांचा दर प्रति हजार नग (₹ per 1000 Bricks):", min_value=0.0, value=st.session_state.bw_brick_rate, key="bw_br")
-        st.session_state.bw_brick_rate = brick_rate
+        volume = st.number_input("वीटकामाचे एकूण घनफळ भरा (Volume in m³):", min_value=0.0, value=1.0, key="bw_vol")
+        brick_rate = st.number_input("विटांचा दर प्रति हजार नग (₹ per 1000 Bricks):", min_value=0.0, value=8000.0, key="bw_br")
     with bm_col2:
-        cement_rate = st.number_input("सिमेंट दर प्रति बॅग (₹):", min_value=0.0, value=st.session_state.bw_cement_rate, key="bw_cr")
-        st.session_state.bw_cement_rate = cement_rate
-        sand_rate = st.number_input("वाळूचा दर प्रति m³ (₹):", min_value=0.0, value=st.session_state.bw_sand_rate, key="bw_sr")
-        st.session_state.bw_sand_rate = sand_rate
+        cement_rate = st.number_input("सिमेंट दर प्रति बॅग (₹):", min_value=0.0, value=400.0, key="bw_cr")
+        sand_rate = st.number_input("वाळूचा दर प्रति m³ (₹):", min_value=0.0, value=2500.0, key="bw_sr")
 
     st.markdown("#### [B] लेबर खर्च (नसल्यास ० ठेवा)")
     bl_col1, bl_col2 = st.columns(2)
     with bl_col1:
-        mason_qty = st.number_input("मेसन संख्या (Brickwork Days):", min_value=0.0, value=st.session_state.bw_mason_qty, key="bw_mq")
-        st.session_state.bw_mason_qty = mason_qty
-        mason_rate = st.number_input("मेसन प्रतिदिन दर (₹/Day):", min_value=0.0, value=st.session_state.bw_mason_rate, key="bw_mr")
-        st.session_state.bw_mason_rate = mason_rate
+        mason_qty = st.number_input("मेसन संख्या (Brickwork Days):", min_value=0.0, value=0.0, key="bw_mq")
+        mason_rate = st.number_input("मेसन प्रतिदिन दर (₹/Day):", min_value=0.0, value=650.0, key="bw_mr")
     with bl_col2:
-        mazdoor_qty = st.number_input("मजदूर संख्या (Brickwork Days):", min_value=0.0, value=st.session_state.bw_mazdoor_qty, key="bw_mzq")
-        st.session_state.bw_mazdoor_qty = mazdoor_qty
-        mazdoor_rate = st.number_input("मजदूर प्रतिदिन दर (₹/Day):", min_value=0.0, value=st.session_state.bw_mazdoor_rate, key="bw_mzr")
-        st.session_state.bw_mazdoor_rate = mazdoor_rate
+        mazdoor_qty = st.number_input("मजदूर संख्या (Brickwork Days):", min_value=0.0, value=0.0, key="bw_mzq")
+        mazdoor_rate = st.number_input("मजदूर प्रतिदिन दर (₹/Day):", min_value=0.0, value=400.0, key="bw_mzr")
 
     st.markdown("#### [C] अवांतर खर्च व टक्केवारी")
     bo_col1, bo_col2 = st.columns(2)
     with bo_col1:
-        scaffolding_cost = st.number_input("पाळत/स्कॅफोल्डिंग खर्च (₹):", min_value=0.0, value=st.session_state.bw_scaffolding_cost, key="bw_sc")
-        st.session_state.bw_scaffolding_cost = scaffolding_cost
-        contingency_cost = st.number_input("आकस्मिक खर्च (₹):", min_value=0.0, value=st.session_state.bw_contingency_cost, key="bw_cc")
-        st.session_state.bw_contingency_cost = contingency_cost
+        scaffolding_cost = st.number_input("पाळत/स्कॅफोल्डिंग खर्च (₹):", min_value=0.0, value=0.0, key="bw_sc")
+        contingency_cost = st.number_input("आकस्मिक खर्च (₹):", min_value=0.0, value=0.0, key="bw_cc")
     with bo_col2:
-        water_pct = st.number_input("वॉटर चार्ज (%):", min_value=0.0, value=st.session_state.bw_water_pct, key="bw_wp")
-        st.session_state.bw_water_pct = water_pct
-        profit_pct = st.number_input("कंत्राटदार नफा (%):", min_value=0.0, value=st.session_state.bw_profit_pct, key="bw_pp")
-        st.session_state.bw_profit_pct = profit_pct
+        water_pct = st.number_input("वॉटर充ज (%):", min_value=0.0, value=1.0, key="bw_wp")
+        profit_pct = st.number_input("कंत्राटदार नफा (%):", min_value=0.0, value=10.0, key="bw_pp")
 
     st.markdown("#### 💬 कमेंट पॅनल (Comment Panel)")
     user_note = st.text_area("या एस्टिमेशन संदर्भात काही नोट किंवा कमेंट लिहायची असल्यास इथे लिहा:", placeholder="उदा. ग्राउंड फ्लोअर वीटकाम...", key="bw_note")
@@ -541,6 +482,7 @@ else:
                 save_db(user_db)
             st.success("✅ कमेंट सेव्ह झाली!")
 
+    # --- इथे दुरुस्ती केली आहे (रिपोर्ट जनरेट होण्यासाठी) ---
     if st.button("📊 GENERATE RATE ANALYSIS REPORT", type="primary", key="bw_report_btn"):
         total_bricks = math.ceil(volume * 500)
         dry_mortar_vol = volume * 0.30
@@ -610,3 +552,4 @@ else:
             }
             user_db[user_mob_key]["history"].append(new_report)
             save_db(user_db)
+     
