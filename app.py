@@ -42,7 +42,6 @@ if not st.session_state.skip_welcome:
         # सुंदर हेडिंग
         st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🏗️ WELCOME TO THE PATIL INFRATECH...</h1>", unsafe_allow_html=True)
         st.markdown("<h3 style='text-align: center; color: #555555;'>तुमचे स्वप्न, आमचे एस्टिमेशन!</h3>", unsafe_allow_html=True)
-        st.caption("Concept & Logic by: Kanhaiya (Founder of Patil Infratech)")
         
         # घर बनताना दाखवणारे प्रोग्रेस बार अॅनिमेशन
         progress_bar = st.progress(0)
@@ -55,6 +54,7 @@ if not st.session_state.skip_welcome:
             "🧱 विटांचे बांधकाम (Brickwork) प्रगतीपथावर आहे...",
             "🏠 छताचे (Slab) काम पूर्ण होत आहे...",
             "✨ फिनिशिंग आणि रंगकाम पूर्ण झाले! घर तयार आहे! 🎉"
+            st.caption("Concept & Logic by: Kanhaiya (Founder of Patil Infratech)")
         ]
         
         for i in range(5):
