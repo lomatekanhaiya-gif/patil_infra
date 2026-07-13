@@ -54,8 +54,8 @@ if not st.session_state.skip_welcome:
             "🧱 विटांचे बांधकाम (Brickwork) प्रगतीपथावर आहे...",
             "🏠 छताचे (Slab) काम पूर्ण होत आहे...",
             "✨ फिनिशिंग आणि रंगकाम पूर्ण झाले! घर तयार आहे! 🎉"
-            st.caption("Concept & Logic by: Kanhaiya (Founder of Patil Infratech)")
         ]
+        st.caption("Concept & Logic by: Kanhaiya (Founder of Patil Infratech)")
         
         for i in range(5):
             status_text.markdown(f"<p style='text-align: center; font-size: 20px; font-weight: bold;'>{construction_stages[i]}</p>", unsafe_allow_html=True)
