@@ -231,7 +231,7 @@ if st.button("💾 Save Master Market Rates", type="primary", key="save_master_r
     st.success("✅ आजचे मास्टर मार्केट दर डेटाबेसमध्ये यशस्वीरित्या अपडेट झाले!")
 
             
-            st.markdown("### 📋 युझर डेटाबेस MASTER LIST")
+    st.markdown("### 📋 युझर डेटाबेस MASTER LIST")
             
             for mob in list(user_db.keys()):
                 info = user_db[mob]
