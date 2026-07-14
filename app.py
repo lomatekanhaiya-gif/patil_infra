@@ -419,4 +419,4 @@ if "Concrete Work" in main_choice:
         total_steel_cost = steel_qty * steel_rate
 
         mat_cost = total_cement_cost + total_aggregate_cost + total_sand_cost + total_steel_cost
-        lab_cost = (mason_qty
+        lab_cost = (mason_qty)
