@@ -273,7 +273,7 @@ m_rates = user_db.get("MASTER_MARKET_RATES", {"cement": 400.0, "sand": 2500.0, "
 adm_cem = st.number_input("cement (par bag ₹):", min_value=0.0, value=float(m_rates["cement"]), step=1.0)
 adm_snd = st.number_input("sand (par m³ ₹):", min_value=0.0, value=float(m_rates["sand"]), step=1.0)
 adm_brk = st.number_input("brick (nos ₹):", min_value=0.0, value=float(m_rates["bricks"]), step=0.1)
-adm_agg = st.number_input("aggregate (par m³ ₹):", min_value=0.0, value=float(m_rates["aggregate"]), step=1.0
+adm_agg = st.number_input("aggregate (par m³ ₹):", min_value=0.0, value=float(m_rates["aggregate"]), step=1.0)
 adm_ste = st.number_input("steel दर (per kg ₹):", min_value=0.0, value=float(m_rates["steel"]), step=1.0)
             
             if st.button("💾 Save Master Market Rates", type="primary"):
