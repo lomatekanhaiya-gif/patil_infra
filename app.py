@@ -8,6 +8,14 @@ import pandas as pd
 import io
 import time
 
+import streamlit as st
+
+st.markdown("""
+    <style>
+    header {visibility: hidden;}
+    </style>
+    """, unsafe_allow_html=True)
+
 # 🚨 Streamlit चा नियम: set_page_config नेहमी सर्वात आधी असावे!
 st.set_page_config(page_title="PATIL INFRATECH", page_icon="📐", layout="centered")
 
