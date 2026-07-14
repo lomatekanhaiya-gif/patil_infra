@@ -207,19 +207,6 @@ if st.session_state.app_user_mobile is None:
         if admin_id == "kanha_1p" and admin_pass == "@Dellg15":
             st.success("🔓 डेटाबेस अनलॉक झाला!")
             user_db = load_db()
-
-# 📈 ॲडमीन मास्टर मार्केट रेट्स अपडेट विभाग
-            st.markdown("### 📈 Update Master Market Rates (Today's Live Rates)")
-            m_rates = user_db.get("MASTER_MARKET_RATES", {"cement": 400.0, "sand": 2500.0, "bricks": 8.0, "aggregate": 2200.0})
-            adm_cem = st.number_input("मास्टर सिमेंट दर (प्रति बॅग ₹):", min_value=0.0, value=float(m_rates["cement"]), step=1.0)
-            adm_snd = st.number_input("मास्टर वाळू दर (प्रति m³ ₹):", min_value=0.0, value=float(m_rates["sand"]), step=1.0)
-            adm_brk = st.number_input("मास्टर विटा दर (प्रति नग ₹):", min_value=0.0, value=float(m_rates["bricks"]), step=0.1)
-            adm_agg = st.number_input("मास्टर खडी दर (प्रति m³ ₹):", min_value=0.0, value=float(m_rates["aggregate"]), step=1.0)
-            
-            if st.button("💾 Save Master Market Rates", type="primary"):
-                user_db["MASTER_MARKET_RATES"] = {"cement": adm_cem, "sand": adm_snd, "bricks": adm_brk, "aggregate": adm_agg}
-                save_db(user_db)
-                st.success("✅ आजचे मास्टर मार्केट दर डेटाबेसमध्ये यशस्वीरित्या अपडेट झाले!")
             
             st.markdown("### 📋 युझर डेटाबेस MASTER LIST")
             
@@ -302,21 +289,6 @@ if col_lo.button("🚪 Logout"):
     st.rerun()
 
 st.write("---")
-
-# सध्याचा ॲक्टिव्ह युझर आणि त्याचे सेव्ह केलेले दर लोड करणे
-user_mob_key = st.session_state.app_user_mobile
-user_db = load_db()
-
-if user_mob_key.startswith("GUEST_"):
-    current_user_name = user_mob_key.replace("GUEST_", "")
-    saved_rates = {}
-else:
-    if user_mob_key in user_db:
-        current_user_name = user_db[user_mob_key].get("id", "User")
-        saved_rates = user_db[user_mob_key].get("saved_rates", {})
-    else:
-        current_user_name = "User"
-        saved_rates = {}
 
 if not user_mob_key.startswith("GUEST_"):
     current_user_data = user_db.get(user_mob_key, {})
