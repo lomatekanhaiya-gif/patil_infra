@@ -270,16 +270,24 @@ if st.session_state.app_user_mobile is None:
 # 📈 ॲडमीन मास्टर मार्केट रेट्स अपडेट विभाग
 st.markdown("### 📈 Update Master Market Rates (Today's Live Rates)")
 m_rates = user_db.get("MASTER_MARKET_RATES", {"cement": 400.0, "sand": 2500.0, "bricks": 8.0, "aggregate": 2200.0, "steel": 60.0})
-adm_cem = st.number_input("cement (par bag ₹):", min_value=0.0, value=float(m_rates["cement"]), step=1.0)
-adm_snd = st.number_input("sand (par m³ ₹):", min_value=0.0, value=float(m_rates["sand"]), step=1.0)
-adm_brk = st.number_input("brick (nos ₹):", min_value=0.0, value=float(m_rates["bricks"]), step=0.1)
-adm_agg = st.number_input("aggregate (par m³ ₹):", min_value=0.0, value=float(m_rates["aggregate"]), step=1.0)
-adm_ste = st.number_input("steel दर (per kg ₹):", min_value=0.0, value=float(m_rates["steel"]), step=1.0)
+
+# जर जुन्या डेटाबेसमध्ये स्टील नसेल तर सुरक्षित राहण्यासाठी .get() वापरला आहे
+adm_cem = st.number_input("cement (par bag ₹):", min_value=0.0, value=float(m_rates.get("cement", 400.0)), step=1.0, key="adm_cem_inp_new")
+adm_snd = st.number_input("sand (par m³ ₹):", min_value=0.0, value=float(m_rates.get("sand", 2500.0)), step=1.0, key="adm_snd_inp_new")
+adm_brk = st.number_input("brick (nos ₹):", min_value=0.0, value=float(m_rates.get("bricks", 8.0)), step=0.1, key="adm_brk_inp_new")
+adm_agg = st.number_input("aggregate (par m³ ₹):", min_value=0.0, value=float(m_rates.get("aggregate", 2200.0)), step=1.0, key="adm_agg_inp_new")
+adm_ste = st.number_input("steel दर (per kg ₹):", min_value=0.0, value=float(m_rates.get("steel", 60.0)), step=1.0, key="adm_ste_inp_new")
             
-if st.button("💾 Save Master Market Rates", type="primary"):
-                user_db["MASTER_MARKET_RATES"] = {"cement": adm_cem, "sand": adm_snd, "bricks": adm_brk, "aggregate": adm_agg "steel": adm_ste}
-                save_db(user_db)
-                st.success("✅ आजचे मास्टर मार्केट दर डेटाबेसमध्ये यशस्वीरित्या अपडेट झाले!")
+if st.button("💾 Save Master Market Rates", type="primary", key="save_master_rates_btn_new"):
+    user_db["MASTER_MARKET_RATES"] = {
+        "cement": adm_cem,
+        "sand": adm_snd,
+        "bricks": adm_brk,
+        "aggregate": adm_agg,  # 👈 इथे कॉमा (,) नव्हता, तो लावला!
+        "steel": adm_ste
+    }
+    save_db(user_db)
+    st.success("✅ आजचे मास्टर मार्केट दर डेटाबेसमध्ये यशस्वीरित्या अपडेट झाले!")
 
 # सध्याचा ॲक्टिव्ह युझर
 user_mob_key = st.session_state.app_user_mobile
