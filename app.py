@@ -333,9 +333,6 @@ with st.sidebar:
     st.write(f"⏳ **वाळू (Sand):** ₹{master_rates['sand']:.2f} /m³")
     st.write(f"🪨 **खडी (Aggregate):** ₹{master_rates['aggregate']:.2f} /m³")
     st.write("---")
-    if st.button("⚡ Apply Today's Market Rates", type="primary", key="apply_market_rates_sidebar_btn"):
-        st.session_state.applied_market_rates = True
-        st.success("✅ ॲडमीन मास्टर बाजार दर यशस्वीरित्या लागू केले गेले! कॅल्क्युलेशन तपासून घ्या.")
 
 if not user_mob_key.startswith("GUEST_"):
     current_user_data = user_db.get(user_mob_key, {})
