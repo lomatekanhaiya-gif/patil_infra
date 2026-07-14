@@ -408,4 +408,4 @@ if "Concrete Work" in main_choice:
         water_pct = st.number_input("वॉटर चार्ज टक्केवारी (%):", min_value=0.0, value=float(saved_rates.get("c_wat_pct", 1.0)), step=0.1, key="cc_wat_p")
         profit_pct = st.number_input("कंत्राटदार नफा टक्केवारी (%):", min_value=0.0, value=float(saved_rates.get("c_prof_pct", 10.0)), step=0.1, key="cc_prof_p")
 
-    st.markdown("#### 💬 कमेंट पॅनल (Comment
+    st.markdown("#### 💬 कमेंट पॅनल (Comment)")
