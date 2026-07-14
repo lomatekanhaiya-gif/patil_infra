@@ -206,37 +206,37 @@ if st.session_state.app_user_mobile is None:
         admin_pass = st.text_input("Password:", type="password", key="adm_pass")
         if admin_id == "kanha_1p" and admin_pass == "@Dellg15":
             st.success("🔓 डेटाबेस अनलॉक झाला!")
-            user_db = load_db
-
-            # 📈 ॲडमीन मास्टर मार्केट रेट्स अपडेट विभाग
-st.markdown("### 📈 Update Master Market Rates (Today's Live Rates)")
-m_rates = user_db.get("MASTER_MARKET_RATES", {"cement": 400.0, "sand": 2500.0, "bricks": 8.0, "aggregate": 2200.0, "steel": 60.0})
-
-# जर जुन्या डेटाबेसमध्ये स्टील नसेल तर सुरक्षित राहण्यासाठी .get() वापरला आहे
-adm_cem = st.number_input("cement (par bag ₹):", min_value=0.0, value=float(m_rates.get("cement", 400.0)), step=1.0, key="adm_cem_inp_new")
-adm_snd = st.number_input("sand (par m³ ₹):", min_value=0.0, value=float(m_rates.get("sand", 2500.0)), step=1.0, key="adm_snd_inp_new")
-adm_brk = st.number_input("brick (nos ₹):", min_value=0.0, value=float(m_rates.get("bricks", 8.0)), step=0.1, key="adm_brk_inp_new")
-adm_agg = st.number_input("aggregate (par m³ ₹):", min_value=0.0, value=float(m_rates.get("aggregate", 2200.0)), step=1.0, key="adm_agg_inp_new")
-adm_ste = st.number_input("steel दर (per kg ₹):", min_value=0.0, value=float(m_rates.get("steel", 60.0)), step=1.0, key="adm_ste_inp_new")
+            user_db = load_db()
             
-if st.button("💾 Save Master Market Rates", type="primary", key="save_master_rates_btn_new"):
-    user_db["MASTER_MARKET_RATES"] = {
-        "cement": adm_cem,
-        "sand": adm_snd,
-        "bricks": adm_brk,
-        "aggregate": adm_agg,  # 👈 इथे कॉमा (,) नव्हता, तो लावला!
-        "steel": adm_ste
-    }
-    save_db(user_db)
-    st.success("✅ आजचे मास्टर मार्केट दर डेटाबेसमध्ये यशस्वीरित्या अपडेट झाले!")
-
+            # 📈 ॲडमीन मास्टर मार्केट रेट्स अपडेट विभाग (स्टील लॉजिक आणि परफेक्ट स्पेसिंग)
+            st.markdown("### 📈 Update Master Market Rates (Today's Live Rates)")
+            m_rates = user_db.get("MASTER_MARKET_RATES", {"cement": 400.0, "sand": 2500.0, "bricks": 8.0, "aggregate": 2200.0, "steel": 60.0})
             
-    st.markdown("### 📋 युझर डेटाबेस MASTER LIST")
+            adm_cem = st.number_input("cement (par bag ₹):", min_value=0.0, value=float(m_rates.get("cement", 400.0)), step=1.0, key="adm_cem_inp_fixed")
+            adm_snd = st.number_input("sand (par m³ ₹):", min_value=0.0, value=float(m_rates.get("sand", 2500.0)), step=1.0, key="adm_snd_inp_fixed")
+            adm_brk = st.number_input("brick (nos ₹):", min_value=0.0, value=float(m_rates.get("bricks", 8.0)), step=0.1, key="adm_brk_inp_fixed")
+            adm_agg = st.number_input("aggregate (par m³ ₹):", min_value=0.0, value=float(m_rates.get("aggregate", 2200.0)), step=1.0, key="adm_agg_inp_fixed")
+            adm_ste = st.number_input("steel दर (per kg ₹):", min_value=0.0, value=float(m_rates.get("steel", 60.0)), step=1.0, key="adm_ste_inp_fixed")
             
+            if st.button("💾 Save Master Market Rates", type="primary", key="save_master_rates_fixed"):
+                user_db["MASTER_MARKET_RATES"] = {
+                    "cement": adm_cem,
+                    "sand": adm_snd,
+                    "bricks": adm_brk,
+                    "aggregate": adm_agg,
+                    "steel": adm_ste
+                }
+                save_db(user_db)
+                st.success("✅ आजचे मास्टर मार्केट दर (स्टीलसहित) डेटाबेसमध्ये यशस्वीरित्या अपडेट झाले!")
+            
+            st.markdown("---")
+            st.markdown("### 📋 युझर डेटाबेस MASTER LIST")
+            
+            # 🛑 लाईन २३६ - ज्याची स्पेसिंग आता १००% अचूक केली आहे!
             for mob in list(user_db.keys()):
+                if mob in ["9999999999", "MASTER_MARKET_RATES"]: continue
                 info = user_db[mob]
-                if not isinstance(info, dict):
-                    continue
+                if not isinstance(info, dict): continue
                     
                 u_name = info.get("id", "नाव उपलब्ध नाही")
                 u_pass = info.get("password", "पासवर्ड उपलब्ध नाही")
@@ -253,14 +253,11 @@ if st.button("💾 Save Master Market Rates", type="primary", key="save_master_r
 """
                 st.markdown(user_info_table)
                 
-                if mob != "9999999999":
-                    if st.button(f"🗑️ Delete User: {u_name} ({mob})", key=f"del_{mob}"):
-                        del user_db[mob]
-                        save_db(user_db)
-                        st.error(f"❌ युझर '{u_name}' यशस्वीरित्या डिलीट केला आहे!")
-                        st.rerun()
-                else:
-                    st.caption("🔒 मास्टर ॲडमीन अकाउंट डिलीट करता येणार नाही.")
+                if st.button(f"🗑️ Delete User: {u_name} ({mob})", key=f"del_{mob}"):
+                    del user_db[mob]
+                    save_db(user_db)
+                    st.error(f"❌ युझर '{u_name}' यशस्वीरित्या डिलीट केला आहे!")
+                    st.rerun()
                 
                 current_msg = info.get("admin_message", "ॲडमीन कडून सध्या कोणताही मेसेज नाही.")
                 st.caption(f"📩 सध्याचा मेसेज: {current_msg}")
