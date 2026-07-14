@@ -276,7 +276,7 @@ adm_brk = st.number_input("brick (nos ₹):", min_value=0.0, value=float(m_rates
 adm_agg = st.number_input("aggregate (par m³ ₹):", min_value=0.0, value=float(m_rates["aggregate"]), step=1.0)
 adm_ste = st.number_input("steel दर (per kg ₹):", min_value=0.0, value=float(m_rates["steel"]), step=1.0)
             
-            if st.button("💾 Save Master Market Rates", type="primary"):
+if st.button("💾 Save Master Market Rates", type="primary"):
                 user_db["MASTER_MARKET_RATES"] = {"cement": adm_cem, "sand": adm_snd, "bricks": adm_brk, "aggregate": adm_agg "steel": adm_ste}
                 save_db(user_db)
                 st.success("✅ आजचे मास्टर मार्केट दर डेटाबेसमध्ये यशस्वीरित्या अपडेट झाले!")
