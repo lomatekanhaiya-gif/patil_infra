@@ -318,6 +318,15 @@ if col_lo.button("🚪 Logout"):
 
 st.write("---")
 
+# 📉 [नवीन] ॲडमीनने अपडेट केलेले लाईव्ह रेट्स युझरला दिसण्यासाठी लहान जागेत स्टेटस बार
+master_rates = user_db.get("MASTER_MARKET_RATES", {"cement": 400.0, "sand": 2500.0, "bricks": 8.0, "aggregate": 2200.0, "steel": 60.0})
+st.markdown(
+    f"<div style='background-color:#f1f3f6; padding: 8px; border-radius: 5px; text-align: center; font-size: 13px; font-weight: bold; color: #333; margin-bottom: 15px; border-left: 5px solid #FF4B4B;'>"
+    f"📢 आजचे मार्केट दर 🏷️ सिमेंट: ₹{master_rates['cement']}/बॅग | वाळू: ₹{master_rates['sand']}/m³ | खडी: ₹{master_rates['aggregate']}/m³ | स्टील: ₹{master_rates['steel']}/Kg | वीट: ₹{master_rates['bricks']}/नग"
+    f"</div>", 
+    unsafe_allow_html=True
+)
+
 if not user_mob_key.startswith("GUEST_"):
     current_user_data = user_db.get(user_mob_key, {})
     admin_msg = current_user_data.get("admin_message", None)
