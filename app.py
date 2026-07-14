@@ -322,7 +322,7 @@ st.write("---")
 master_rates = user_db.get("MASTER_MARKET_RATES", {"cement": 400.0, "sand": 2500.0, "bricks": 8.0, "aggregate": 2200.0, "steel": 60.0})
 st.markdown(
     f"<div style='background-color:#f1f3f6; padding: 8px; border-radius: 5px; text-align: center; font-size: 13px; font-weight: bold; color: #333; margin-bottom: 15px; border-left: 5px solid #FF4B4B;'>"
-    f"📢 आजचे मार्केट दर 🏷️ सिमेंट: ₹{master_rates['cement']}/बॅग | वाळू: ₹{master_rates['sand']}/m³ | खडी: ₹{master_rates['aggregate']}/m³ | स्टील: ₹{master_rates['steel']}/Kg | वीट: ₹{master_rates['bricks']}/नग"
+    f"📢 आजचे मार्केट दर 🏷️ cement: ₹{master_rates['cement']}/bag | sand: ₹{master_rates['sand']}/m³ | aggregate: ₹{master_rates['aggregate']}/m³ | steel: ₹{master_rates['steel']}/Kg | brick: ₹{master_rates['bricks']}/nos"
     f"</div>", 
     unsafe_allow_html=True
 )
