@@ -12,30 +12,42 @@ import time
 st.set_page_config(page_title="PATIL INFRATECH", page_icon="🏗️", layout="centered")
 
 # ==========================================
+# 🖼️ CUSTOM APP LOGO URL (ImgBB Direct Link)
+# ==========================================
+APP_LOGO_URL = "https://i.ibb.co/KzB8JjxD/logo.png"
+
+# ==========================================
 # 🎨 STREAMLIT LOGO & BRANDING HIDE + TOUCH GLOW CSS
 # ==========================================
-st.markdown("""
+st.markdown(f"""
+    <head>
+        <!-- Custom Android / Chrome App Icon -->
+        <link rel="icon" type="image/png" sizes="192x192" href="{APP_LOGO_URL}">
+        
+        <!-- Custom iPhone / iPad Home Screen Icon -->
+        <link rel="apple-touch-icon" sizes="180x180" href="{APP_LOGO_URL}">
+    </head>
     <style>
     /* 🛑 Streamlit Branding / Logo / Header Complete Removal */
-    [data-testid="stHeader"] { display: none !important; }
-    footer { display: none !important; visibility: hidden !important; }
-    #MainMenu { visibility: hidden !important; }
-    div[data-testid="stStatusWidget"] { visibility: hidden !important; }
-    .stDeployButton { display: none !important; }
+    [data-testid="stHeader"] {{ display: none !important; }}
+    footer {{ display: none !important; visibility: hidden !important; }}
+    #MainMenu {{ visibility: hidden !important; }}
+    div[data-testid="stStatusWidget"] {{ visibility: hidden !important; }}
+    .stDeployButton {{ display: none !important; }}
     
     /* Number Input +/- Hide */
-    button[title="Increment"], button[title="Decrement"] { display: none !important; }
-    div[data-testid="stNumberInputStepUp"], div[data-testid="stNumberInputStepDown"] { display: none !important; }
+    button[title="Increment"], button[title="Decrement"] {{ display: none !important; }}
+    div[data-testid="stNumberInputStepUp"], div[data-testid="stNumberInputStepDown"] {{ display: none !important; }}
 
     /* Modern Dark Background */
-    .stApp {
+    .stApp {{
         background: linear-gradient(135deg, #0b0f19 0%, #111827 100%);
         color: #f3f4f6;
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    }
+    }}
 
     /* Card Styling with Touch-Glow Effect */
-    div.css-1r6slb0, div.stForm, div[data-testid="stExpander"] {
+    div.css-1r6slb0, div.stForm, div[data-testid="stExpander"] {{
         background: rgba(17, 24, 39, 0.8) !important;
         backdrop-filter: blur(16px);
         border: 1px solid rgba(255, 255, 255, 0.08) !important;
@@ -43,28 +55,28 @@ st.markdown("""
         padding: 18px !important;
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
         transition: all 0.3s ease-in-out;
-    }
+    }}
 
     /* 🌟 Mobile Touch Glow Effects for Inputs & Focus */
-    input:focus, select:focus, textarea:focus, div[data-baseweb="select"]:focus-within {
+    input:focus, select:focus, textarea:focus, div[data-baseweb="select"]:focus-within {{
         border-color: #3b82f6 !important;
         box-shadow: 0 0 15px rgba(59, 130, 246, 0.6) !important;
         outline: none !important;
         transition: all 0.2s ease-in-out;
-    }
+    }}
 
     /* Input Fields Styling */
-    input, select, textarea {
+    input, select, textarea {{
         border-radius: 12px !important;
         background-color: #1f2937 !important;
         color: #ffffff !important;
         border: 1px solid #374151 !important;
         padding: 12px !important;
         font-size: 16px !important;
-    }
+    }}
 
     /* Primary Action Buttons */
-    div.stButton > button[kind="primary"] {
+    div.stButton > button[kind="primary"] {{
         background: linear-gradient(90deg, #ef4444 0%, #f87171 100%) !important;
         color: white !important;
         font-weight: 700 !important;
@@ -74,14 +86,14 @@ st.markdown("""
         box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4);
         transition: all 0.2s ease-in-out;
         width: 100%;
-    }
-    div.stButton > button[kind="primary"]:active, div.stButton > button[kind="primary"]:focus {
+    }}
+    div.stButton > button[kind="primary"]:active, div.stButton > button[kind="primary"]:focus {{
         transform: scale(0.98);
         box-shadow: 0 0 25px rgba(239, 68, 68, 0.8) !important;
-    }
+    }}
 
     /* Mobile Header Banner */
-    .main-header {
+    .main-header {{
         background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
         padding: 22px 15px;
         border-radius: 20px;
@@ -89,31 +101,38 @@ st.markdown("""
         box-shadow: 0 10px 30px rgba(37, 99, 235, 0.35);
         margin-bottom: 20px;
         border: 1px solid rgba(255, 255, 255, 0.15);
-    }
+    }}
     </style>
 """, unsafe_allow_html=True)
 
-# 📲 PWA Manifest JavaScript
-pwa_manifest_script = """
+# 📲 PWA Manifest Script With Custom App Logo
+pwa_manifest_script = f"""
 <script>
-    const manifestData = {
+    const manifestData = {{
         "short_name": "Patil Infra",
         "name": "PATIL INFRATECH",
         "icons": [
-            {
-                "src": "https://cdn-icons-png.flaticon.com/512/4342/4342785.png",
+            {{
+                "src": "{APP_LOGO_URL}",
                 "type": "image/png",
-                "sizes": "192x192"
-            }
+                "sizes": "192x192",
+                "purpose": "any maskable"
+            }},
+            {{
+                "src": "{APP_LOGO_URL}",
+                "type": "image/png",
+                "sizes": "512x512",
+                "purpose": "any maskable"
+            }}
         ],
         "start_url": "/",
         "background_color": "#0b0f19",
         "theme_color": "#ef4444",
         "display": "standalone"
-    };
+    }};
 
     const stringManifest = JSON.stringify(manifestData);
-    const blob = new Blob([stringManifest], {type: 'application/json'});
+    const blob = new Blob([stringManifest], {{type: 'application/json'}});
     const manifestURL = URL.createObjectURL(blob);
 
     let link = document.createElement('link');
