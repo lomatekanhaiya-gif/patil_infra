@@ -8,27 +8,82 @@ import pandas as pd
 import io
 import time
 
-import streamlit as st
+# 🚨 Streamlit चा नियम: set_page_config नेहमी सर्वात आधी असावे!
+st.set_page_config(page_title="PATIL INFRATECH", page_icon="🏗️", layout="centered")
 
+# ==========================================
+# 🎨 NEXT-LEVEL MODERN CUSTOM STYLING (CSS)
+# ==========================================
 st.markdown("""
     <style>
-    header {visibility: hidden;}
+    /* Streamlit Header/Footer Hide */
+    header[data-testid="stHeader"] { visibility: hidden; height: 0%; }
+    footer { visibility: hidden; }
+    
+    /* Number Input +/- Hide */
+    button[title="Increment"], button[title="Decrement"] { display: none !important; }
+    div[data-testid="stNumberInputStepUp"], div[data-testid="stNumberInputStepDown"] { display: none !important; }
+
+    /* App Background Gradient */
+    .stApp {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        color: #f8fafc;
+        font-family: 'Inter', sans-serif;
+    }
+
+    /* Glassmorphism Cards */
+    div.css-1r6slb0, div.stForm, div[data-testid="stExpander"] {
+        background: rgba(30, 41, 59, 0.7) !important;
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 16px !important;
+        padding: 15px !important;
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    }
+
+    /* Primary Buttons */
+    div.stButton > button[kind="primary"] {
+        background: linear-gradient(90deg, #ff4b4b 0%, #ff7676 100%) !important;
+        color: white !important;
+        font-weight: bold !important;
+        border-radius: 12px !important;
+        border: none !important;
+        box-shadow: 0 4px 15px rgba(255, 75, 75, 0.4);
+        transition: all 0.3s ease;
+    }
+    div.stButton > button[kind="primary"]:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(255, 75, 75, 0.6);
+    }
+
+    /* Custom Input Fields */
+    input, select, textarea {
+        border-radius: 8px !important;
+        background-color: #0f172a !important;
+        color: white !important;
+        border: 1px solid #334155 !important;
+    }
+
+    /* Header Banner */
+    .main-header {
+        background: linear-gradient(90deg, #1e3a8a 0%, #3b82f6 100%);
+        padding: 20px;
+        border-radius: 16px;
+        text-align: center;
+        box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+        margin-bottom: 20px;
+    }
     </style>
-    """, unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
-# 🚨 Streamlit चा नियम: set_page_config नेहमी सर्वात आधी असावे!
-st.set_page_config(page_title="PATIL INFRATECH", page_icon="📐", layout="centered")
-
-# --- १. अॅनिमेशन आणि सुरुवातीच्या सुंदर लूकसाठी रिकामी जागा तयार करणे ---
+# --- १. वेलकम स्क्रीन ॲनिमेशन ---
 welcome_placeholder = st.empty()
 
-# जर युझरने स्कीप बटण दाबले असेल, तर थेट लॉगिन सुरू होईल
 if 'skip_welcome' not in st.session_state:
     st.session_state.skip_welcome = False
 
 if not st.session_state.skip_welcome:
     with welcome_placeholder.container():
-        # संपूर्ण स्क्रीनवर क्लिक करण्यासाठी अदृश्य (Transparent) बटण बनवणारे CSS
         st.markdown("""
             <style>
             div.stButton > button {
@@ -36,26 +91,20 @@ if not st.session_state.skip_welcome:
                 background-color: transparent !important; border: none !important;
                 color: transparent !important; z-index: 99999; cursor: pointer;
             }
-            div.stButton > button:hover { background-color: transparent !important; border: none !important; }
-            div.stButton > button:active { background-color: transparent !important; border: none !important; }
             </style>
         """, unsafe_allow_html=True)
         
-        # स्क्रीनवर कुठेही टच/क्लिक केल्यास हे बटण ट्रिगर होईल
         if st.button("Skip", key="invisible_skip_btn"):
             st.session_state.skip_welcome = True
             st.rerun()
 
         st.markdown("<br><br>", unsafe_allow_html=True)
-        # सुंदर हेडिंग
-        st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🏗️ WELCOME TO THE PATIL INFRATECH...</h1>", unsafe_allow_html=True)
-        st.markdown("<h3 style='text-align: center; color: #555555;'>तुमचे स्वप्न, आमचे एस्टिमेशन!</h3>", unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🏗️ WELCOME TO PATIL INFRATECH...</h1>", unsafe_allow_html=True)
+        st.markdown("<h3 style='text-align: center; color: #cbd5e1;'>तुमचे स्वप्न, आमचे एस्टिमेशन!</h3>", unsafe_allow_html=True)
         
-        # घर बनताना दाखवणारे प्रोग्रेस बार अॅनिमेशन
         progress_bar = st.progress(0)
         status_text = st.empty()
         
-        # एकूण १० सेकंदांचे टप्पे
         construction_stages = [
             "🧱 पाया खोदण्याचे काम सुरू आहे...",
             "🏗️ खांब आणि कॉलम उभे राहत आहेत...",
@@ -66,37 +115,14 @@ if not st.session_state.skip_welcome:
         st.caption("Concept & Logic by: Kanhaiya (Founder of Patil Infratech)")
         
         for i in range(5):
-            status_text.markdown(f"<p style='text-align: center; font-size: 20px; font-weight: bold;'>{construction_stages[i]}</p>", unsafe_allow_html=True)
+            status_text.markdown(f"<p style='text-align: center; font-size: 20px; font-weight: bold; color: #f8fafc;'>{construction_stages[i]}</p>", unsafe_allow_html=True)
             progress_bar.progress((i + 1) * 20)
-            time.sleep(2)  # ५ टप्पे * २ सेकंद = एकूण १० सेकंद
+            time.sleep(1.5)
 
-    # १० सेकंद पूर्ण झाल्यावर स्क्रीन क्लिअर करणे
     welcome_placeholder.empty()
     st.session_state.skip_welcome = True
 
-# CSS जुगाड: टॉप हेडर, फुटर आणि नंबर इनपुट मधील +/- बटणे लपवण्यासाठी
-st.markdown("""
-    <style>
-    /* Streamlit चा टॉप हेडर गायब करणे */
-    header[data-testid="stHeader"] {
-        visibility: hidden;
-        height: 0%;
-    }
-    /* खालचा फुटर काढून टाकणे */
-    footer {
-        visibility: hidden;
-    }
-    /* number input मधील + आणि - बटणे लपवण्यासाठी */
-    button[title="Increment"], button[title="Decrement"] {
-        display: none !important;
-    }
-    div[data-testid="stNumberInputStepUp"], div[data-testid="stNumberInputStepDown"] {
-        display: none !important;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-# 📂 कायमस्वरूपी फाईल डेटाबेस मॅनेजमेंट
+# 📂 फाईल डेटाबेस मॅनेजमेंट
 DB_FILE = "users_db.json"
 
 def load_db():
@@ -125,98 +151,61 @@ def save_db(db):
     with open(DB_FILE, "w", encoding="utf-8") as f:
         json.dump(db, f, ensure_ascii=False, indent=4)
 
-# डेटाबेस लोड करा
 user_db = load_db()
 
 # सेशन स्टेट इनिशियलायझेशन
-if "app_user_mobile" not in st.session_state:
-    st.session_state.app_user_mobile = None
+if "app_user_name" not in st.session_state:
+    st.session_state.app_user_name = None
 if "current_comment" not in st.session_state:
     st.session_state.current_comment = "काही नाही"
 if "active_report" not in st.session_state:
     st.session_state.active_report = None
 
-# मुख्य टायटल
-st.title("🏗️ PATIL INFRATECH")
-st.subheader("📐 Quantity Surveyor & Cost Estimator")
-st.caption("Concept & Logic by: Kanhaiya (Founder of Patil Infratech)")
-st.write("---")
+# मुख्य टायटल बॅनर
+st.markdown("""
+    <div class="main-header">
+        <h1 style='color: white; margin:0;'>🏗️ PATIL INFRATECH</h1>
+        <p style='color: #e2e8f0; margin:5px 0 0 0;'>📐 Quantity Surveyor & Cost Estimator</p>
+        <small style='color: #94a3b8;'>Concept & Logic by: Kanhaiya (Founder of Patil Infratech)</small>
+    </div>
+""", unsafe_allow_html=True)
 
 # ==========================================
-# 🔑 लॉगिन आणि साइन-अप सिस्टीम
+# 👤 युझर नाव प्रविष्ट करणे (Login/Pass काढला आहे)
 # ==========================================
-if st.session_state.app_user_mobile is None:
-    st.markdown("### 🔐 लॉगिन करा किंवा नवीन खाते बनवा (पर्यायी)")
-    tab1, tab2, tab3 = st.tabs(["🔑 लॉगिन (Login)", "📝 नवीन खाते (Sign Up)", "👤 Guest म्हणून पुढे जा"])
+if st.session_state.app_user_name is None:
+    st.markdown("### 👤 ॲपमध्ये प्रवेश करण्यासाठी नाव प्रविष्ट करा")
     
-    with tab1:
-        l_mobile = st.text_input("१० अंकी मोबाईल नंबर:", key="l_mob").strip()
-        l_pass = st.text_input("पासवर्ड प्रविष्ट करा:", type="password", key="l_pwd")
-        if st.button("लॉगिन करा", type="primary"):
+    u_input = st.text_input("तुमचे नाव (Your Name):", placeholder="उदा. कन्हैया पाटील", key="entry_user_name").strip()
+    
+    if st.button("ॲप उघडा (Enter App) 👉", type="primary"):
+        if u_input:
+            st.session_state.app_user_name = u_input
             user_db = load_db()
-            if not l_mobile or not l_pass:
-                st.warning("⚠️ कृपया मोबाईल नंबर आणि पासवर्ड दोन्ही भरा!")
-            elif l_mobile in user_db:
-                if user_db[l_mobile].get("password") == l_pass:
-                    st.session_state.app_user_mobile = l_mobile
-                    
-                    # 🔄 लॉगिन करताना मेसेज अपडेट करणे (नवीन कडक मेसेज 🥳)
-                    u_name = user_db[l_mobile].get("id", "युझर")
-                    new_welcome_msg = f"Wellcome {u_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये हार्दिक स्वागत🥳"
-                    user_db[l_mobile]["admin_message"] = new_welcome_msg
-                    save_db(user_db)
-                    
-                    st.success(f"🔓 लॉगिन यशस्वी! स्वागत आहे {u_name}")
-                    st.rerun()
-                else:
-                    st.error("❌ चुकीचा पासवर्ड! कृपया पुन्हा तपासा.")
-            else:
-                st.error("❌ हा मोबाईल नंबर रजिस्टर नाही! आधी 'नवीन खाते' टॅबमध्ये जाऊन रजिस्ट्रेशन करा.")
-                
-    with tab2:
-        r_name = st.text_input("तुमचे पूर्ण नाव (Full Name):", key="r_nm").strip()
-        r_mobile = st.text_input("१० अंकी मोबाईल नंबर (Mobile No):", key="r_mob").strip()
-        r_pass = st.text_input("नवीन पासवर्ड तयार करा:", type="password", key="r_pwd")
-        if st.button("खाते तयार करा"):
-            user_db = load_db()
-            if not r_name or not r_mobile or not r_pass:
-                st.warning("⚠️ कृपया सर्व रकाने भरा!")
-            elif len(r_mobile) != 10 or not r_mobile.isdigit():
-                st.error("❌ कृपया वैध १० अंकी मोबाईल नंबर टाका!")
-            elif r_mobile in user_db:
-                st.error("❌ हा मोबाईल नंबर आधीपासूनच रजिस्टर आहे!")
-            else:
-                # 🔄 साईन अप करतानाच नवीन ऑटोमॅटिक मेसेज सेट करणे 🥳
-                new_welcome_msg = f"Wellcome {r_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये हार्दिक स्वागत🥳"
-                user_db[r_mobile] = {
-                    "id": r_name, 
-                    "password": r_pass,
+            
+            # युझर रेकॉर्ड चेक आणि क्रिएट करणे
+            if u_input not in user_db:
+                new_welcome_msg = f"Welcome {u_input} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये हार्दिक स्वागत🥳"
+                user_db[u_input] = {
+                    "id": u_input,
                     "comment": "काही नाही",
                     "admin_message": new_welcome_msg,
                     "history": []
                 }
                 save_db(user_db)
-                st.success("🎉 खाते यशस्वीरित्या तयार झाले! अब बाजूच्या 'लॉगिन' टॅबमध्ये जाऊन लॉग इन करा.")
-                
-    with tab3:
-        guest_name = st.text_input("तुमचे नाव प्रविष्ट करा (Enter Name):", placeholder="नाव टाईप करा...", key="gst_nm")
-        if st.button("Guest म्हणून पुढे जा 👉", type="secondary"):
-            if guest_name.strip():
-                st.session_state.app_user_mobile = "GUEST_" + guest_name.strip()
-                st.rerun()
-            else:
-                st.warning("⚠️ कृपया पुढे जाण्यासाठी नाव प्रविष्ट करा!")
-                
-    # 🛡️ सुरक्षित ॲडमीन पॅनल
+            st.rerun()
+        else:
+            st.warning("⚠️ कृपया ॲप वापरण्यासाठी आधी तुमचे नाव टाका!")
+
     st.write("---")
-    with st.expander("🛡️ Admin Database Panel (only kanhaiya)"):
+    # 🛡️ सुरक्षित ॲडमीन पॅनल
+    with st.expander("🛡️ Admin Database Panel (Only Kanhaiya)"):
         admin_id = st.text_input("Admin ID:", key="adm_id")
         admin_pass = st.text_input("Password:", type="password", key="adm_pass")
         if admin_id == "kanha_1p" and admin_pass == "@Dellg15":
             st.success("🔓 डेटाबेस अनलॉक झाला!")
             user_db = load_db()
             
-            # 📈 ॲडमीन मास्टर मार्केट रेट्स अपडेट विभाग (स्टील लॉजिक आणि परफेक्ट स्पेसिंग)
             st.markdown("### 📈 Update Master Market Rates (Today's Live Rates)")
             m_rates = user_db.get("MASTER_MARKET_RATES", {"cement": 400.0, "sand": 2500.0, "bricks": 8.0, "aggregate": 2200.0, "steel": 60.0})
             
@@ -228,11 +217,7 @@ if st.session_state.app_user_mobile is None:
             
             if st.button("💾 Save Master Market Rates", type="primary", key="save_master_rates_fixed"):
                 user_db["MASTER_MARKET_RATES"] = {
-                    "cement": adm_cem,
-                    "sand": adm_snd,
-                    "bricks": adm_brk,
-                    "aggregate": adm_agg,
-                    "steel": adm_ste
+                    "cement": adm_cem, "sand": adm_snd, "bricks": adm_brk, "aggregate": adm_agg, "steel": adm_ste
                 }
                 save_db(user_db)
                 st.success("✅ आजचे मास्टर मार्केट दर (स्टीलसहित) डेटाबेसमध्ये यशस्वीरित्या अपडेट झाले!")
@@ -240,14 +225,12 @@ if st.session_state.app_user_mobile is None:
             st.markdown("---")
             st.markdown("### 📋 युझर डेटाबेस MASTER LIST")
             
-            # 🛑 लाईन २३६ - ज्याची स्पेसिंग आता १००% अचूक केली आहे!
             for mob in list(user_db.keys()):
                 if mob in ["9999999999", "MASTER_MARKET_RATES"]: continue
                 info = user_db[mob]
                 if not isinstance(info, dict): continue
                     
-                u_name = info.get("id", "नाव उपलब्ध नाही")
-                u_pass = info.get("password", "पासवर्ड उपलब्ध नाही")
+                u_name = info.get("id", mob)
                 u_comm = info.get("comment", "काही नाही")
                 u_hist = info.get("history", [])
                 
@@ -255,13 +238,11 @@ if st.session_state.app_user_mobile is None:
 | फील्ड (Field) | माहिती (User Details) |
 | :--- | :--- |
 | **👤 युझरचे नाव (Name)** | {u_name} |
-| **📱 मोबाईल नंबर (Mobile)** | `{mob}` |
-| **🔑 पासवर्ड (Password)** | `{u_pass}` |
-| **💬 शेवकडची युझर कमेंट** | {u_comm} |
+| **💬 शेवटची युझर कमेंट** | {u_comm} |
 """
                 st.markdown(user_info_table)
                 
-                if st.button(f"🗑️ Delete User: {u_name} ({mob})", key=f"del_{mob}"):
+                if st.button(f"🗑️ Delete User: {u_name}", key=f"del_{mob}"):
                     del user_db[mob]
                     save_db(user_db)
                     st.error(f"❌ युझर '{u_name}' यशस्वीरित्या डिलीट केला आहे!")
@@ -276,8 +257,6 @@ if st.session_state.app_user_mobile is None:
                         save_db(user_db)
                         st.success(f"✅ '{u_name}' ला मेसेज यशस्वीरित्या पाठवला!")
                         st.rerun()
-                    else:
-                        st.warning("⚠️ कृपया आधी मेसेज टाईप करा!")
                 
                 with st.expander(f"📜 {u_name} चे जनरेट केलेले एस्टिमेशन रिपोर्ट्स ({len(u_hist)})"):
                     if u_hist:
@@ -296,50 +275,39 @@ if st.session_state.app_user_mobile is None:
     st.stop()
 
 # सध्याचा ॲक्टिव्ह युझर
-user_mob_key = st.session_state.app_user_mobile
+current_user_name = st.session_state.app_user_name
 user_db = load_db()
 
-if user_mob_key.startswith("GUEST_"):
-    current_user_name = user_mob_key.replace("GUEST_", "")
-else:
-    if user_mob_key in user_db:
-        current_user_name = user_db[user_mob_key].get("id", "User")
-    else:
-        current_user_name = "User"
-
-# लॉगआऊट पर्याय
-col_u, col_lo = st.columns([5, 1])
-col_u.success(f"🔓 चालू युझर: **{current_user_name}** ({'Guest' if user_mob_key.startswith('GUEST_') else user_mob_key})")
-if col_lo.button("🚪 Logout"):
-    st.session_state.app_user_mobile = None
+# युझर हेडर व चेंज बटण
+col_u, col_lo = st.columns([4, 1.5])
+col_u.success(f"👤 युझर: **{current_user_name}**")
+if col_lo.button("🔄 नाव बदला"):
+    st.session_state.app_user_name = None
     st.session_state.current_comment = "काही नाही"
     st.session_state.active_report = None
     st.rerun()
 
-st.write("---")
-
-# 📉 [नवीन] ॲडमीनने अपडेट केलेले लाईव्ह रेट्स युझरला दिसण्यासाठी लहान जागेत स्टेटस बार
+# 📉 मास्टर मार्केट रेट्स बार
 master_rates = user_db.get("MASTER_MARKET_RATES", {"cement": 400.0, "sand": 2500.0, "bricks": 8.0, "aggregate": 2200.0, "steel": 60.0})
 st.markdown(
-    f"<div style='background-color:#f1f3f6; padding: 8px; border-radius: 5px; text-align: center; font-size: 13px; font-weight: bold; color: #333; margin-bottom: 15px; border-left: 5px solid #FF4B4B;'>"
+    f"<div style='background: linear-gradient(90deg, #1e293b 0%, #0f172a 100%); padding: 10px; border-radius: 10px; text-align: center; font-size: 13px; font-weight: bold; color: #f8fafc; margin-bottom: 15px; border-left: 5px solid #FF4B4B; border: 1px solid rgba(255,255,255,0.1);'>"
     f"📢 आजचे मार्केट दर 🏷️ cement: ₹{master_rates['cement']}/bag | sand: ₹{master_rates['sand']}/m³ | aggregate: ₹{master_rates['aggregate']}/m³ | steel: ₹{master_rates['steel']}/Kg | brick: ₹{master_rates['bricks']}/nos"
     f"</div>", 
     unsafe_allow_html=True
 )
 
-if not user_mob_key.startswith("GUEST_"):
-    current_user_data = user_db.get(user_mob_key, {})
-    admin_msg = current_user_data.get("admin_message", None)
-    if admin_msg:
-        st.markdown("### 📥 ॲडमीन कडून आलेला मेसेज (inbox)")
-        st.info(f"📢 **kanha:** {admin_msg}")
-        st.write("---")
+current_user_data = user_db.get(current_user_name, {})
+admin_msg = current_user_data.get("admin_message", None)
+if admin_msg:
+    st.markdown("### 📥 ॲडमीन कडून आलेला मेसेज (Inbox)")
+    st.info(f"📢 **kanha:** {admin_msg}")
+    st.write("---")
 
 # २. मुख्य काम निवडणे
 main_choice = st.radio("**काय काम करायचे आहे ते निवडा :**", ["Concrete Work (काँक्रीट काम)", "Brickwork (वीटकाम)"])
 
 # ==========================================
-# 🛑 काँक्रीट काम (CONCRETE WORK MODULE)
+# 🛑 काँक्रीट काम (CONCRETE WORK MODULE) - UNTOUCHED LOGIC
 # ==========================================
 if "Concrete Work" in main_choice:
     st.subheader("🧱 Concrete Work Estimation")
@@ -398,8 +366,9 @@ if "Concrete Work" in main_choice:
     if st.button("💬 कमेंट सबमिट करा", key="cc_comm_btn"):
         if user_note.strip():
             st.session_state.current_comment = user_note.strip()
-            if not user_mob_key.startswith("GUEST_") and user_mob_key in user_db:
-                user_db[user_mob_key]["comment"] = user_note.strip()
+            user_db = load_db()
+            if current_user_name in user_db:
+                user_db[current_user_name]["comment"] = user_note.strip()
                 save_db(user_db)
             st.success("✅ कमेंट सेव्ह झाली!")
 
@@ -449,18 +418,19 @@ if "Concrete Work" in main_choice:
 """
         st.markdown(report_table)
         
-        if not user_mob_key.startswith("GUEST_") and user_mob_key in user_db:
+        user_db = load_db()
+        if current_user_name in user_db:
             timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             new_report = {
                 "timestamp": timestamp,
                 "user_note": st.session_state.current_comment,
                 "report_data": report_table
             }
-            user_db[user_mob_key]["history"].append(new_report)
+            user_db[current_user_name]["history"].append(new_report)
             save_db(user_db)
 
 # ==========================================
-# 🛑 वीटकाम (BRICKWORK MODULE)
+# 🛑 वीटकाम (BRICKWORK MODULE) - UNTOUCHED LOGIC
 # ==========================================
 else:
     st.subheader("🧱 Brickwork Estimation")
@@ -497,7 +467,7 @@ else:
         scaffolding_cost = st.number_input("पाळत/स्कॅफोल्डिंग खर्च (₹):", min_value=0.0, value=0.0, key="bw_sc")
         contingency_cost = st.number_input("आकस्मिक खर्च (₹):", min_value=0.0, value=0.0, key="bw_cc")
     with bo_col2:
-        water_pct = st.number_input("वॉटर充ज (%):", min_value=0.0, value=1.0, key="bw_wp")
+        water_pct = st.number_input("वॉटर चार्ज (%):", min_value=0.0, value=1.0, key="bw_wp")
         profit_pct = st.number_input("कंत्राटदार नफा (%):", min_value=0.0, value=10.0, key="bw_pp")
 
     st.markdown("#### 💬 कमेंट पॅनल (Comment Panel)")
@@ -505,12 +475,12 @@ else:
     if st.button("💬 कमेंट सबमिट करा", key="bw_comment_btn"):
         if user_note.strip():
             st.session_state.current_comment = user_note.strip()
-            if not user_mob_key.startswith("GUEST_") and user_mob_key in user_db:
-                user_db[user_mob_key]["comment"] = user_note.strip()
+            user_db = load_db()
+            if current_user_name in user_db:
+                user_db[current_user_name]["comment"] = user_note.strip()
                 save_db(user_db)
             st.success("✅ कमेंट सेव्ह झाली!")
 
-    # --- इथे दुरुस्ती केली आहे (रिपोर्ट जनरेट होण्यासाठी) ---
     if st.button("📊 GENERATE RATE ANALYSIS REPORT", type="primary", key="bw_report_btn"):
         total_bricks = math.ceil(volume * 500)
         dry_mortar_vol = volume * 0.30
@@ -524,7 +494,6 @@ else:
         total_cement_cost = cement_bags * cement_rate
         total_sand_cost = sand_m3 * sand_rate
 
-        # खर्च मोजणे
         mat_cost = total_brick_cost + total_cement_cost + total_sand_cost
         lab_cost = (mason_qty * mason_rate) + (mazdoor_qty * mazdoor_rate)
         base_total = mat_cost + lab_cost + scaffolding_cost + contingency_cost
@@ -533,7 +502,6 @@ else:
         p_amt = base_total * (profit_pct / 100)
         grand_total = base_total + w_amt + p_amt
 
-        # यश संदेश आणि टेबल दाखवणे
         st.success("🎉 वीटकाम रिपोर्ट यशस्वीरित्या तयार झाला आहे!")
         st.markdown(f"### 📊 RATE ANALYSIS SHEET - BRICKWORK")
         st.info(f"👤 **Prepared For:** {current_user_name} | **गुणोत्तर:** {mortar_choice.split(' ')[0]} | **एकूण घनफळ:** {volume} m³")
@@ -558,7 +526,6 @@ else:
 """
         st.markdown(report_table)
         
-        # सेशन आणि डेटाबेस हिस्ट्री अपडेट करणे
         st.session_state.active_report = {
             "type": "Brickwork",
             "grand_total": grand_total,
@@ -571,12 +538,13 @@ else:
             "txt": f"PATIL INFRATECH - BRICKWORK REPORT\nयुझर: {current_user_name}\nतारीख: {datetime.date.today()}\n----------------------------------------\n* विटा: {total_bricks} Nos\n* सिमेंट: {cement_bags} Bags\n* वाळू: {sand_m3:.2f} m3\n----------------------------------------\nGRAND TOTAL: INR {grand_total:.2f}/-"
         }
 
-        if not user_mob_key.startswith("GUEST_") and user_mob_key in user_db:
+        user_db = load_db()
+        if current_user_name in user_db:
             timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             new_report = {
                 "timestamp": timestamp,
                 "user_note": st.session_state.current_comment,
                 "report_data": report_table
             }
-            user_db[user_mob_key]["history"].append(new_report)
+            user_db[current_user_name]["history"].append(new_report)
             save_db(user_db)
