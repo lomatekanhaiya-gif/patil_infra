@@ -12,47 +12,16 @@ import time
 st.set_page_config(page_title="PATIL INFRATECH", page_icon="🏗️", layout="centered")
 
 # ==========================================
-# 📲 PWA AUTO-INJECTOR (कोणत्याही extra file ची गरज नाही!)
-# ==========================================
-pwa_manifest_script = """
-<script>
-    // Manifest Data directly embedded as Data URI
-    const manifestData = {
-        "short_name": "Patil Infra",
-        "name": "PATIL INFRATECH",
-        "icons": [
-            {
-                "src": "https://cdn-icons-png.flaticon.com/512/4342/4342785.png",
-                "type": "image/png",
-                "sizes": "192x192"
-            }
-        ],
-        "start_url": "/",
-        "background_color": "#0b0f19",
-        "theme_color": "#ef4444",
-        "display": "standalone"
-    };
-
-    const stringManifest = JSON.stringify(manifestData);
-    const blob = new Blob([stringManifest], {type: 'application/json'});
-    const manifestURL = URL.createObjectURL(blob);
-
-    let link = document.createElement('link');
-    link.rel = 'manifest';
-    link.href = manifestURL;
-    document.getElementsByTagName('head')[0].appendChild(link);
-</script>
-"""
-st.markdown(pwa_manifest_script, unsafe_allow_html=True)
-
-# ==========================================
-# 🎨 ULTRA-MOBILE & TOUCH-GLOW CUSTOM STYLING (CSS)
+# 🎨 STREAMLIT LOGO & BRANDING HIDE + TOUCH GLOW CSS
 # ==========================================
 st.markdown("""
     <style>
-    /* Streamlit Header/Footer Hide */
-    header[data-testid="stHeader"] { visibility: hidden; height: 0%; }
-    footer { visibility: hidden; }
+    /* 🛑 Streamlit Branding / Logo / Header Complete Removal */
+    [data-testid="stHeader"] { display: none !important; }
+    footer { display: none !important; visibility: hidden !important; }
+    #MainMenu { visibility: hidden !important; }
+    div[data-testid="stStatusWidget"] { visibility: hidden !important; }
+    .stDeployButton { display: none !important; }
     
     /* Number Input +/- Hide */
     button[title="Increment"], button[title="Decrement"] { display: none !important; }
@@ -123,6 +92,37 @@ st.markdown("""
     }
     </style>
 """, unsafe_allow_html=True)
+
+# 📲 PWA Manifest JavaScript
+pwa_manifest_script = """
+<script>
+    const manifestData = {
+        "short_name": "Patil Infra",
+        "name": "PATIL INFRATECH",
+        "icons": [
+            {
+                "src": "https://cdn-icons-png.flaticon.com/512/4342/4342785.png",
+                "type": "image/png",
+                "sizes": "192x192"
+            }
+        ],
+        "start_url": "/",
+        "background_color": "#0b0f19",
+        "theme_color": "#ef4444",
+        "display": "standalone"
+    };
+
+    const stringManifest = JSON.stringify(manifestData);
+    const blob = new Blob([stringManifest], {type: 'application/json'});
+    const manifestURL = URL.createObjectURL(blob);
+
+    let link = document.createElement('link');
+    link.rel = 'manifest';
+    link.href = manifestURL;
+    document.getElementsByTagName('head')[0].appendChild(link);
+</script>
+"""
+st.markdown(pwa_manifest_script, unsafe_allow_html=True)
 
 # --- १. वेलकम स्क्रीन ॲनिमेशन ---
 welcome_placeholder = st.empty()
@@ -218,7 +218,7 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# 📲 PWA Banner (मोबाईलवर होम स्क्रीनवर ॲप जोडण्यासाठी मार्गदर्शक)
+# 📲 PWA Banner
 st.markdown("""
     <div style='background: linear-gradient(90deg, #1e293b, #0f172a); padding: 10px; border-radius: 12px; text-align: center; border: 1px solid #3b82f6; margin-bottom: 15px;'>
         <p style='color: #93c5fd; margin:0; font-size: 13px; font-weight: bold;'>
