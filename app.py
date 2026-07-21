@@ -205,7 +205,7 @@ st.markdown("""
 if st.session_state.app_user_name is None:
     st.markdown("### 👤 ॲपमध्ये प्रवेश करण्यासाठी नाव प्रविष्ट करा")
     
-    u_input = st.text_input("तुमचे नाव (Your Name):", placeholder="उदा. कन्हैया पाटील", key="entry_user_name").strip()
+    u_input = st.text_input("तुमचे नाव (Your Name):", placeholder="NAME", key="entry_user_name").strip()
     
     if st.button("ॲप उघडा (Enter App) 👉", type="primary"):
         if u_input:
