@@ -11,58 +11,39 @@ import time
 # 🚨 Streamlit चा नियम: set_page_config नेहमी सर्वात आधी असावे!
 st.set_page_config(page_title="PATIL INFRATECH", page_icon="🏗️", layout="centered")
 
-import streamlit as st
-
-# 🚨 Page Config
-st.set_page_config(page_title="PATIL INFRATECH", page_icon="🏗️", layout="centered")
-
 # ==========================================
-# 📲 PWA INSTALLATION INJECTOR (Mobile Add to Home Screen)
+# 📲 PWA AUTO-INJECTOR (कोणत्याही extra file ची गरज नाही!)
 # ==========================================
-pwa_code = """
+pwa_manifest_script = """
 <script>
-    // Manifest Link Injecting
+    // Manifest Data directly embedded as Data URI
+    const manifestData = {
+        "short_name": "Patil Infra",
+        "name": "PATIL INFRATECH",
+        "icons": [
+            {
+                "src": "https://cdn-icons-png.flaticon.com/512/4342/4342785.png",
+                "type": "image/png",
+                "sizes": "192x192"
+            }
+        ],
+        "start_url": "/",
+        "background_color": "#0b0f19",
+        "theme_color": "#ef4444",
+        "display": "standalone"
+    };
+
+    const stringManifest = JSON.stringify(manifestData);
+    const blob = new Blob([stringManifest], {type: 'application/json'});
+    const manifestURL = URL.createObjectURL(blob);
+
     let link = document.createElement('link');
     link.rel = 'manifest';
-    link.href = '/manifest.json';
+    link.href = manifestURL;
     document.getElementsByTagName('head')[0].appendChild(link);
-
-    // Prompt logic
-    let deferredPrompt;
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-        const installBtn = document.getElementById('pwa-install-btn');
-        if(installBtn) {
-            installBtn.style.display = 'block';
-        }
-    });
-
-    function installPWA() {
-        if (deferredPrompt) {
-            deferredPrompt.prompt();
-            deferredPrompt.userChoice.then((choiceResult) => {
-                if (choiceResult.outcome === 'accepted') {
-                    console.log('User accepted PWA install');
-                }
-                deferredPrompt = null;
-            });
-        }
-    }
 </script>
-
-<div style="background: linear-gradient(90deg, #1e293b, #0f172a); padding: 12px; border-radius: 12px; text-align: center; border: 1px solid #3b82f6; margin-bottom: 15px;">
-    <p style="color: #ffffff; margin: 0 0 8px 0; font-size: 14px; font-weight: bold;">
-        📱 PATIL INFRATECH ॲप मोबाईल स्क्रीनवर इन्स्टॉल करा!
-    </p>
-    <button id="pwa-install-btn" onclick="installPWA()" style="background: #2563eb; color: white; border: none; padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; box-shadow: 0 0 10px rgba(37,99,235,0.5);">
-        📥 Add to Home Screen (इन्स्टॉल करा)
-    </button>
-</div>
 """
-
-# ॲपमध्ये PWA चा पॉप-अप बार दाखवणे
-st.components.v1.html(pwa_code, height=100)
+st.markdown(pwa_manifest_script, unsafe_allow_html=True)
 
 # ==========================================
 # 🎨 ULTRA-MOBILE & TOUCH-GLOW CUSTOM STYLING (CSS)
@@ -110,10 +91,10 @@ st.markdown("""
         color: #ffffff !important;
         border: 1px solid #374151 !important;
         padding: 12px !important;
-        font-size: 16px !important; /* Prevents auto-zoom on mobile Safari/Chrome */
+        font-size: 16px !important;
     }
 
-    /* Primary Action Buttons (Glow on Touch/Click) */
+    /* Primary Action Buttons */
     div.stButton > button[kind="primary"] {
         background: linear-gradient(90deg, #ef4444 0%, #f87171 100%) !important;
         color: white !important;
@@ -130,16 +111,6 @@ st.markdown("""
         box-shadow: 0 0 25px rgba(239, 68, 68, 0.8) !important;
     }
 
-    /* Secondary Buttons Touch Glow */
-    div.stButton > button {
-        border-radius: 12px !important;
-        transition: all 0.2s ease-in-out;
-    }
-    div.stButton > button:active {
-        transform: scale(0.96);
-        box-shadow: 0 0 15px rgba(59, 130, 246, 0.5) !important;
-    }
-
     /* Mobile Header Banner */
     .main-header {
         background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
@@ -149,11 +120,6 @@ st.markdown("""
         box-shadow: 0 10px 30px rgba(37, 99, 235, 0.35);
         margin-bottom: 20px;
         border: 1px solid rgba(255, 255, 255, 0.15);
-    }
-
-    /* Radio Buttons Touch Improvement */
-    div[data-testid="stMarkdownContainer"] p {
-        font-size: 15px;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -252,6 +218,15 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
+# 📲 PWA Banner (मोबाईलवर होम स्क्रीनवर ॲप जोडण्यासाठी मार्गदर्शक)
+st.markdown("""
+    <div style='background: linear-gradient(90deg, #1e293b, #0f172a); padding: 10px; border-radius: 12px; text-align: center; border: 1px solid #3b82f6; margin-bottom: 15px;'>
+        <p style='color: #93c5fd; margin:0; font-size: 13px; font-weight: bold;'>
+            📱 ॲप मोबाईलवर इन्स्टॉल करण्यासाठी: Chrome मेनू (⋮) वर क्लिक करून <b>'Add to Home screen'</b> निवडा!
+        </p>
+    </div>
+""", unsafe_allow_html=True)
+
 # ==========================================
 # 👤 युझर नाव प्रविष्ट करणे
 # ==========================================
@@ -316,7 +291,7 @@ if st.session_state.app_user_name is None:
                 u_hist = info.get("history", [])
                 
                 user_info_table = f"""
-|DateField | माहिती (User Details) |
+| Field | माहिती (User Details) |
 | :--- | :--- |
 | **👤 युझरचे नाव (Name)** | {u_name} |
 | **💬 शेवटची युझर कमेंट** | {u_comm} |
@@ -439,7 +414,7 @@ if "Concrete Work" in main_choice:
         scaffolding_cost = st.number_input("स्कॅफोल्डिंग/सेंटरिंग खर्च (₹):", min_value=0.0, value=0.0, key="cc_scaf")
         contingency_cost = st.number_input("आकस्मिक खर्च (Contingencies) (₹):", min_value=0.0, value=0.0, key="cc_cont")
     with o_col2:
-        water_pct = st.number_input("वॉटर चार्ज टक्केवारी (%):", min_value=0.0, value=1.0, key="cc_wat_p")
+        water_pct = st.number_input("वॉटर charge टक्केवारी (%):", min_value=0.0, value=1.0, key="cc_wat_p")
         profit_pct = st.number_input("कंत्राटदार नफा टक्केवारी (%):", min_value=0.0, value=10.0, key="cc_prof_p")
 
     st.markdown("#### 💬 कमेंट पॅनल (Comment Panel)")
@@ -548,7 +523,7 @@ else:
         scaffolding_cost = st.number_input("पाळत/स्कॅफोल्डिंग खर्च (₹):", min_value=0.0, value=0.0, key="bw_sc")
         contingency_cost = st.number_input("आकस्मिक खर्च (₹):", min_value=0.0, value=0.0, key="bw_cc")
     with bo_col2:
-        water_pct = st.number_input("वॉटर चार्ज (%):", min_value=0.0, value=1.0, key="bw_wp")
+        water_pct = st.number_input("वॉटर charge (%):", min_value=0.0, value=1.0, key="bw_wp")
         profit_pct = st.number_input("कंत्राटदार नफा (%):", min_value=0.0, value=10.0, key="bw_pp")
 
     st.markdown("#### 💬 कमेंट पॅनल (Comment Panel)")
