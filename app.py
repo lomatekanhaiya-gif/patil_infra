@@ -12,42 +12,27 @@ import time
 st.set_page_config(page_title="PATIL INFRATECH", page_icon="🏗️", layout="centered")
 
 # ==========================================
-# 🖼️ CUSTOM APP LOGO URL (ImgBB Direct Link)
+# 🎨 ULTRA-MOBILE & TOUCH-GLOW CUSTOM STYLING (CSS)
 # ==========================================
-APP_LOGO_URL = "https://i.ibb.co/KzB8JjxD/logo.png"
-
-# ==========================================
-# 🎨 STREAMLIT LOGO & BRANDING HIDE + TOUCH GLOW CSS
-# ==========================================
-st.markdown(f"""
-    <head>
-        <!-- Custom Android / Chrome App Icon -->
-        <link rel="icon" type="image/png" sizes="192x192" href="{APP_LOGO_URL}">
-        
-        <!-- Custom iPhone / iPad Home Screen Icon -->
-        <link rel="apple-touch-icon" sizes="180x180" href="{APP_LOGO_URL}">
-    </head>
+st.markdown("""
     <style>
-    /* 🛑 Streamlit Branding / Logo / Header Complete Removal */
-    [data-testid="stHeader"] {{ display: none !important; }}
-    footer {{ display: none !important; visibility: hidden !important; }}
-    #MainMenu {{ visibility: hidden !important; }}
-    div[data-testid="stStatusWidget"] {{ visibility: hidden !important; }}
-    .stDeployButton {{ display: none !important; }}
+    /* Streamlit Header/Footer Hide */
+    header[data-testid="stHeader"] { visibility: hidden; height: 0%; }
+    footer { visibility: hidden; }
     
     /* Number Input +/- Hide */
-    button[title="Increment"], button[title="Decrement"] {{ display: none !important; }}
-    div[data-testid="stNumberInputStepUp"], div[data-testid="stNumberInputStepDown"] {{ display: none !important; }}
+    button[title="Increment"], button[title="Decrement"] { display: none !important; }
+    div[data-testid="stNumberInputStepUp"], div[data-testid="stNumberInputStepDown"] { display: none !important; }
 
     /* Modern Dark Background */
-    .stApp {{
+    .stApp {
         background: linear-gradient(135deg, #0b0f19 0%, #111827 100%);
         color: #f3f4f6;
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    }}
+    }
 
     /* Card Styling with Touch-Glow Effect */
-    div.css-1r6slb0, div.stForm, div[data-testid="stExpander"] {{
+    div.css-1r6slb0, div.stForm, div[data-testid="stExpander"] {
         background: rgba(17, 24, 39, 0.8) !important;
         backdrop-filter: blur(16px);
         border: 1px solid rgba(255, 255, 255, 0.08) !important;
@@ -55,28 +40,28 @@ st.markdown(f"""
         padding: 18px !important;
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
         transition: all 0.3s ease-in-out;
-    }}
+    }
 
     /* 🌟 Mobile Touch Glow Effects for Inputs & Focus */
-    input:focus, select:focus, textarea:focus, div[data-baseweb="select"]:focus-within {{
+    input:focus, select:focus, textarea:focus, div[data-baseweb="select"]:focus-within {
         border-color: #3b82f6 !important;
         box-shadow: 0 0 15px rgba(59, 130, 246, 0.6) !important;
         outline: none !important;
         transition: all 0.2s ease-in-out;
-    }}
+    }
 
     /* Input Fields Styling */
-    input, select, textarea {{
+    input, select, textarea {
         border-radius: 12px !important;
         background-color: #1f2937 !important;
         color: #ffffff !important;
         border: 1px solid #374151 !important;
         padding: 12px !important;
-        font-size: 16px !important;
-    }}
+        font-size: 16px !important; /* Prevents auto-zoom on mobile Safari/Chrome */
+    }
 
-    /* Primary Action Buttons */
-    div.stButton > button[kind="primary"] {{
+    /* Primary Action Buttons (Glow on Touch/Click) */
+    div.stButton > button[kind="primary"] {
         background: linear-gradient(90deg, #ef4444 0%, #f87171 100%) !important;
         color: white !important;
         font-weight: 700 !important;
@@ -86,14 +71,24 @@ st.markdown(f"""
         box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4);
         transition: all 0.2s ease-in-out;
         width: 100%;
-    }}
-    div.stButton > button[kind="primary"]:active, div.stButton > button[kind="primary"]:focus {{
+    }
+    div.stButton > button[kind="primary"]:active, div.stButton > button[kind="primary"]:focus {
         transform: scale(0.98);
         box-shadow: 0 0 25px rgba(239, 68, 68, 0.8) !important;
-    }}
+    }
+
+    /* Secondary Buttons Touch Glow */
+    div.stButton > button {
+        border-radius: 12px !important;
+        transition: all 0.2s ease-in-out;
+    }
+    div.stButton > button:active {
+        transform: scale(0.96);
+        box-shadow: 0 0 15px rgba(59, 130, 246, 0.5) !important;
+    }
 
     /* Mobile Header Banner */
-    .main-header {{
+    .main-header {
         background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
         padding: 22px 15px;
         border-radius: 20px;
@@ -101,47 +96,14 @@ st.markdown(f"""
         box-shadow: 0 10px 30px rgba(37, 99, 235, 0.35);
         margin-bottom: 20px;
         border: 1px solid rgba(255, 255, 255, 0.15);
-    }}
+    }
+
+    /* Radio Buttons Touch Improvement */
+    div[data-testid="stMarkdownContainer"] p {
+        font-size: 15px;
+    }
     </style>
 """, unsafe_allow_html=True)
-
-# 📲 PWA Manifest Script With Custom App Logo
-pwa_manifest_script = f"""
-<script>
-    const manifestData = {{
-        "short_name": "Patil Infra",
-        "name": "PATIL INFRATECH",
-        "icons": [
-            {{
-                "src": "{APP_LOGO_URL}",
-                "type": "image/png",
-                "sizes": "192x192",
-                "purpose": "any maskable"
-            }},
-            {{
-                "src": "{APP_LOGO_URL}",
-                "type": "image/png",
-                "sizes": "512x512",
-                "purpose": "any maskable"
-            }}
-        ],
-        "start_url": "/",
-        "background_color": "#0b0f19",
-        "theme_color": "#ef4444",
-        "display": "standalone"
-    }};
-
-    const stringManifest = JSON.stringify(manifestData);
-    const blob = new Blob([stringManifest], {{type: 'application/json'}});
-    const manifestURL = URL.createObjectURL(blob);
-
-    let link = document.createElement('link');
-    link.rel = 'manifest';
-    link.href = manifestURL;
-    document.getElementsByTagName('head')[0].appendChild(link);
-</script>
-"""
-st.markdown(pwa_manifest_script, unsafe_allow_html=True)
 
 # --- १. वेलकम स्क्रीन ॲनिमेशन ---
 welcome_placeholder = st.empty()
@@ -237,15 +199,6 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# 📲 PWA Banner
-st.markdown("""
-    <div style='background: linear-gradient(90deg, #1e293b, #0f172a); padding: 10px; border-radius: 12px; text-align: center; border: 1px solid #3b82f6; margin-bottom: 15px;'>
-        <p style='color: #93c5fd; margin:0; font-size: 13px; font-weight: bold;'>
-            📱 ॲप मोबाईलवर इन्स्टॉल करण्यासाठी: Chrome मेनू (⋮) वर क्लिक करून <b>'Add to Home screen'</b> निवडा!
-        </p>
-    </div>
-""", unsafe_allow_html=True)
-
 # ==========================================
 # 👤 युझर नाव प्रविष्ट करणे
 # ==========================================
@@ -310,7 +263,7 @@ if st.session_state.app_user_name is None:
                 u_hist = info.get("history", [])
                 
                 user_info_table = f"""
-| Field | माहिती (User Details) |
+|DateField | माहिती (User Details) |
 | :--- | :--- |
 | **👤 युझरचे नाव (Name)** | {u_name} |
 | **💬 शेवटची युझर कमेंट** | {u_comm} |
@@ -433,7 +386,7 @@ if "Concrete Work" in main_choice:
         scaffolding_cost = st.number_input("स्कॅफोल्डिंग/सेंटरिंग खर्च (₹):", min_value=0.0, value=0.0, key="cc_scaf")
         contingency_cost = st.number_input("आकस्मिक खर्च (Contingencies) (₹):", min_value=0.0, value=0.0, key="cc_cont")
     with o_col2:
-        water_pct = st.number_input("वॉटर charge टक्केवारी (%):", min_value=0.0, value=1.0, key="cc_wat_p")
+        water_pct = st.number_input("वॉटर चार्ज टक्केवारी (%):", min_value=0.0, value=1.0, key="cc_wat_p")
         profit_pct = st.number_input("कंत्राटदार नफा टक्केवारी (%):", min_value=0.0, value=10.0, key="cc_prof_p")
 
     st.markdown("#### 💬 कमेंट पॅनल (Comment Panel)")
@@ -542,7 +495,7 @@ else:
         scaffolding_cost = st.number_input("पाळत/स्कॅफोल्डिंग खर्च (₹):", min_value=0.0, value=0.0, key="bw_sc")
         contingency_cost = st.number_input("आकस्मिक खर्च (₹):", min_value=0.0, value=0.0, key="bw_cc")
     with bo_col2:
-        water_pct = st.number_input("वॉटर charge (%):", min_value=0.0, value=1.0, key="bw_wp")
+        water_pct = st.number_input("वॉटर चार्ज (%):", min_value=0.0, value=1.0, key="bw_wp")
         profit_pct = st.number_input("कंत्राटदार नफा (%):", min_value=0.0, value=10.0, key="bw_pp")
 
     st.markdown("#### 💬 कमेंट पॅनल (Comment Panel)")
