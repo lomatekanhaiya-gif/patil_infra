@@ -11,6 +11,59 @@ import time
 # 🚨 Streamlit चा नियम: set_page_config नेहमी सर्वात आधी असावे!
 st.set_page_config(page_title="PATIL INFRATECH", page_icon="🏗️", layout="centered")
 
+import streamlit as st
+
+# 🚨 Page Config
+st.set_page_config(page_title="PATIL INFRATECH", page_icon="🏗️", layout="centered")
+
+# ==========================================
+# 📲 PWA INSTALLATION INJECTOR (Mobile Add to Home Screen)
+# ==========================================
+pwa_code = """
+<script>
+    // Manifest Link Injecting
+    let link = document.createElement('link');
+    link.rel = 'manifest';
+    link.href = '/manifest.json';
+    document.getElementsByTagName('head')[0].appendChild(link);
+
+    // Prompt logic
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        const installBtn = document.getElementById('pwa-install-btn');
+        if(installBtn) {
+            installBtn.style.display = 'block';
+        }
+    });
+
+    function installPWA() {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    console.log('User accepted PWA install');
+                }
+                deferredPrompt = null;
+            });
+        }
+    }
+</script>
+
+<div style="background: linear-gradient(90deg, #1e293b, #0f172a); padding: 12px; border-radius: 12px; text-align: center; border: 1px solid #3b82f6; margin-bottom: 15px;">
+    <p style="color: #ffffff; margin: 0 0 8px 0; font-size: 14px; font-weight: bold;">
+        📱 PATIL INFRATECH ॲप मोबाईल स्क्रीनवर इन्स्टॉल करा!
+    </p>
+    <button id="pwa-install-btn" onclick="installPWA()" style="background: #2563eb; color: white; border: none; padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; box-shadow: 0 0 10px rgba(37,99,235,0.5);">
+        📥 Add to Home Screen (इन्स्टॉल करा)
+    </button>
+</div>
+"""
+
+# ॲपमध्ये PWA चा पॉप-अप बार दाखवणे
+st.components.v1.html(pwa_code, height=100)
+
 # ==========================================
 # 🎨 ULTRA-MOBILE & TOUCH-GLOW CUSTOM STYLING (CSS)
 # ==========================================
