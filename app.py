@@ -12,7 +12,7 @@ import time
 st.set_page_config(page_title="PATIL INFRATECH", page_icon="🏗️", layout="centered")
 
 # ==========================================
-# 🎨 NEXT-LEVEL MODERN CUSTOM STYLING (CSS)
+# 🎨 ULTRA-MOBILE & TOUCH-GLOW CUSTOM STYLING (CSS)
 # ==========================================
 st.markdown("""
     <style>
@@ -24,54 +24,83 @@ st.markdown("""
     button[title="Increment"], button[title="Decrement"] { display: none !important; }
     div[data-testid="stNumberInputStepUp"], div[data-testid="stNumberInputStepDown"] { display: none !important; }
 
-    /* App Background Gradient */
+    /* Modern Dark Background */
     .stApp {
-        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-        color: #f8fafc;
-        font-family: 'Inter', sans-serif;
+        background: linear-gradient(135deg, #0b0f19 0%, #111827 100%);
+        color: #f3f4f6;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
-    /* Glassmorphism Cards */
+    /* Card Styling with Touch-Glow Effect */
     div.css-1r6slb0, div.stForm, div[data-testid="stExpander"] {
-        background: rgba(30, 41, 59, 0.7) !important;
-        backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        border-radius: 16px !important;
-        padding: 15px !important;
-        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        background: rgba(17, 24, 39, 0.8) !important;
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-radius: 20px !important;
+        padding: 18px !important;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        transition: all 0.3s ease-in-out;
     }
 
-    /* Primary Buttons */
-    div.stButton > button[kind="primary"] {
-        background: linear-gradient(90deg, #ff4b4b 0%, #ff7676 100%) !important;
-        color: white !important;
-        font-weight: bold !important;
-        border-radius: 12px !important;
-        border: none !important;
-        box-shadow: 0 4px 15px rgba(255, 75, 75, 0.4);
-        transition: all 0.3s ease;
-    }
-    div.stButton > button[kind="primary"]:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(255, 75, 75, 0.6);
+    /* 🌟 Mobile Touch Glow Effects for Inputs & Focus */
+    input:focus, select:focus, textarea:focus, div[data-baseweb="select"]:focus-within {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 15px rgba(59, 130, 246, 0.6) !important;
+        outline: none !important;
+        transition: all 0.2s ease-in-out;
     }
 
-    /* Custom Input Fields */
+    /* Input Fields Styling */
     input, select, textarea {
-        border-radius: 8px !important;
-        background-color: #0f172a !important;
-        color: white !important;
-        border: 1px solid #334155 !important;
+        border-radius: 12px !important;
+        background-color: #1f2937 !important;
+        color: #ffffff !important;
+        border: 1px solid #374151 !important;
+        padding: 12px !important;
+        font-size: 16px !important; /* Prevents auto-zoom on mobile Safari/Chrome */
     }
 
-    /* Header Banner */
+    /* Primary Action Buttons (Glow on Touch/Click) */
+    div.stButton > button[kind="primary"] {
+        background: linear-gradient(90deg, #ef4444 0%, #f87171 100%) !important;
+        color: white !important;
+        font-weight: 700 !important;
+        border-radius: 14px !important;
+        border: none !important;
+        padding: 12px 20px !important;
+        box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4);
+        transition: all 0.2s ease-in-out;
+        width: 100%;
+    }
+    div.stButton > button[kind="primary"]:active, div.stButton > button[kind="primary"]:focus {
+        transform: scale(0.98);
+        box-shadow: 0 0 25px rgba(239, 68, 68, 0.8) !important;
+    }
+
+    /* Secondary Buttons Touch Glow */
+    div.stButton > button {
+        border-radius: 12px !important;
+        transition: all 0.2s ease-in-out;
+    }
+    div.stButton > button:active {
+        transform: scale(0.96);
+        box-shadow: 0 0 15px rgba(59, 130, 246, 0.5) !important;
+    }
+
+    /* Mobile Header Banner */
     .main-header {
-        background: linear-gradient(90deg, #1e3a8a 0%, #3b82f6 100%);
-        padding: 20px;
-        border-radius: 16px;
+        background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+        padding: 22px 15px;
+        border-radius: 20px;
         text-align: center;
-        box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+        box-shadow: 0 10px 30px rgba(37, 99, 235, 0.35);
         margin-bottom: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    /* Radio Buttons Touch Improvement */
+    div[data-testid="stMarkdownContainer"] p {
+        font-size: 15px;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -99,8 +128,8 @@ if not st.session_state.skip_welcome:
             st.rerun()
 
         st.markdown("<br><br>", unsafe_allow_html=True)
-        st.markdown("<h1 style='text-align: center; color: #FF4B4B;'>🏗️ WELCOME TO PATIL INFRATECH...</h1>", unsafe_allow_html=True)
-        st.markdown("<h3 style='text-align: center; color: #cbd5e1;'>तुमचे स्वप्न, आमचे एस्टिमेशन!</h3>", unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align: center; color: #ef4444;'>🏗️ WELCOME TO PATIL INFRATECH...</h1>", unsafe_allow_html=True)
+        st.markdown("<h3 style='text-align: center; color: #9ca3af;'>तुमचे स्वप्न, आमचे एस्टिमेशन!</h3>", unsafe_allow_html=True)
         
         progress_bar = st.progress(0)
         status_text = st.empty()
@@ -115,9 +144,9 @@ if not st.session_state.skip_welcome:
         st.caption("Concept & Logic by: Kanhaiya (Founder of Patil Infratech)")
         
         for i in range(5):
-            status_text.markdown(f"<p style='text-align: center; font-size: 20px; font-weight: bold; color: #f8fafc;'>{construction_stages[i]}</p>", unsafe_allow_html=True)
+            status_text.markdown(f"<p style='text-align: center; font-size: 18px; font-weight: bold; color: #f3f4f6;'>{construction_stages[i]}</p>", unsafe_allow_html=True)
             progress_bar.progress((i + 1) * 20)
-            time.sleep(1.5)
+            time.sleep(1.2)
 
     welcome_placeholder.empty()
     st.session_state.skip_welcome = True
@@ -164,14 +193,14 @@ if "active_report" not in st.session_state:
 # मुख्य टायटल बॅनर
 st.markdown("""
     <div class="main-header">
-        <h1 style='color: white; margin:0;'>🏗️ PATIL INFRATECH</h1>
-        <p style='color: #e2e8f0; margin:5px 0 0 0;'>📐 Quantity Surveyor & Cost Estimator</p>
-        <small style='color: #94a3b8;'>Concept & Logic by: Kanhaiya (Founder of Patil Infratech)</small>
+        <h1 style='color: white; margin:0; font-size: 26px;'>🏗️ PATIL INFRATECH</h1>
+        <p style='color: #e0e7ff; margin:5px 0 0 0; font-size: 14px;'>📐 Quantity Surveyor & Cost Estimator</p>
+        <small style='color: #93c5fd;'>Concept & Logic by: Kanhaiya (Founder of Patil Infratech)</small>
     </div>
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 👤 युझर नाव प्रविष्ट करणे (Login/Pass काढला आहे)
+# 👤 युझर नाव प्रविष्ट करणे
 # ==========================================
 if st.session_state.app_user_name is None:
     st.markdown("### 👤 ॲपमध्ये प्रवेश करण्यासाठी नाव प्रविष्ट करा")
@@ -183,7 +212,6 @@ if st.session_state.app_user_name is None:
             st.session_state.app_user_name = u_input
             user_db = load_db()
             
-            # युझर रेकॉर्ड चेक आणि क्रिएट करणे
             if u_input not in user_db:
                 new_welcome_msg = f"Welcome {u_input} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये हार्दिक स्वागत🥳"
                 user_db[u_input] = {
@@ -235,7 +263,7 @@ if st.session_state.app_user_name is None:
                 u_hist = info.get("history", [])
                 
                 user_info_table = f"""
-| फील्ड (Field) | माहिती (User Details) |
+|DateField | माहिती (User Details) |
 | :--- | :--- |
 | **👤 युझरचे नाव (Name)** | {u_name} |
 | **💬 शेवटची युझर कमेंट** | {u_comm} |
@@ -279,7 +307,7 @@ current_user_name = st.session_state.app_user_name
 user_db = load_db()
 
 # युझर हेडर व चेंज बटण
-col_u, col_lo = st.columns([4, 1.5])
+col_u, col_lo = st.columns([3.5, 1.5])
 col_u.success(f"👤 युझर: **{current_user_name}**")
 if col_lo.button("🔄 नाव बदला"):
     st.session_state.app_user_name = None
@@ -290,7 +318,7 @@ if col_lo.button("🔄 नाव बदला"):
 # 📉 मास्टर मार्केट रेट्स बार
 master_rates = user_db.get("MASTER_MARKET_RATES", {"cement": 400.0, "sand": 2500.0, "bricks": 8.0, "aggregate": 2200.0, "steel": 60.0})
 st.markdown(
-    f"<div style='background: linear-gradient(90deg, #1e293b 0%, #0f172a 100%); padding: 10px; border-radius: 10px; text-align: center; font-size: 13px; font-weight: bold; color: #f8fafc; margin-bottom: 15px; border-left: 5px solid #FF4B4B; border: 1px solid rgba(255,255,255,0.1);'>"
+    f"<div style='background: linear-gradient(90deg, #1f2937 0%, #111827 100%); padding: 12px; border-radius: 14px; text-align: center; font-size: 13px; font-weight: bold; color: #f3f4f6; margin-bottom: 15px; border-left: 5px solid #ef4444; border: 1px solid rgba(255,255,255,0.08); shadow: 0 0 10px rgba(0,0,0,0.5);'>"
     f"📢 आजचे मार्केट दर 🏷️ cement: ₹{master_rates['cement']}/bag | sand: ₹{master_rates['sand']}/m³ | aggregate: ₹{master_rates['aggregate']}/m³ | steel: ₹{master_rates['steel']}/Kg | brick: ₹{master_rates['bricks']}/nos"
     f"</div>", 
     unsafe_allow_html=True
