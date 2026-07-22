@@ -11,6 +11,56 @@ import time
 st.set_page_config(page_title="PATIL INFRATECH", page_icon="🏗️", layout="centered")
 
 # ==========================================
+# --- १. वेलकम स्क्रीन ॲनिमेशन (Always Play) ---
+# ==========================================
+welcome_placeholder = st.empty()
+
+if 'welcome_completed' not in st.session_state:
+    st.session_state.welcome_completed = False
+
+if not st.session_state.welcome_completed:
+    with welcome_placeholder.container():
+        st.markdown("""
+            <style>
+            div.stButton > button {
+                position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+                background-color: transparent !important; border: none !important;
+                color: transparent !important; z-index: 99999; cursor: pointer;
+            }
+            </style>
+        """, unsafe_allow_html=True)
+        
+        # स्क्रीनवर कुठेही टच केल्यास Skip होईल
+        if st.button("Skip Welcome", key="invisible_skip_btn"):
+            st.session_state.welcome_completed = True
+            st.rerun()
+
+        st.markdown("<br><br>", unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align: center; color: #60a5fa;'>🏗️ WELCOME TO PATIL INFRATECH...</h1>", unsafe_allow_html=True)
+        st.markdown("<h3 style='text-align: center; color: #9ca3af;'>तुमचे स्वप्न, आमचे एस्टिमेशन!</h3>", unsafe_allow_html=True)
+        st.caption("<p style='text-align: center; color: #6b7280;'>(पुढे जाण्यासाठी स्क्रीनवर कुठेही टच करा)</p>", unsafe_allow_html=True)
+        
+        progress_bar = st.progress(0)
+        status_text = st.empty()
+        
+        construction_stages = [
+            "🧱 पाया खोदण्याचे काम सुरू आहे...",
+            "🏗️ खांब आणि कॉलम उभे राहत आहेत...",
+            "🧱 विटांचे बांधकाम (Brickwork) प्रगतीपथावर आहे...",
+            "🏠 छताचे (Slab) काम पूर्ण होत आहे...",
+            "✨ फिनिशिंग आणि रंगकाम पूर्ण झाले! घर तयार आहे! 🎉"
+        ]
+        
+        for i in range(5):
+            status_text.markdown(f"<p style='text-align: center; font-size: 18px; font-weight: bold; color: #f3f4f6;'>{construction_stages[i]}</p>", unsafe_allow_html=True)
+            progress_bar.progress((i + 1) * 20)
+            time.sleep(1.0)
+
+    welcome_placeholder.empty()
+    st.session_state.welcome_completed = True
+
+
+# ==========================================
 # 🎨 ULTRA-MOBILE & CLEAN THEME STYLING (CSS)
 # ==========================================
 st.markdown("""
