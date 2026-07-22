@@ -70,7 +70,7 @@ st.markdown("""
 
     /* 🔴 फक्त Primary Buttons (Enter App / Generate Report) साठी Red Gradient */
     div.stButton > button[kind="primary"] {
-        background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%) !important;
+        background: linear-gradient(90deg, #dc2626 100%, #dc2626 100%) !important;
         color: white !important;
         font-weight: 700 !important;
         border-radius: 14px !important;
