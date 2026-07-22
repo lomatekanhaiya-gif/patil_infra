@@ -1,19 +1,3 @@
-भावा, एकदम सोप्पं काम केलंय!
-
-ॲपमधील सर्व लाल रंग (Red Color) काढून टाकला आहे. फक्त खालील दोन गोष्टींवरच लाल (Red) रंग ठेवला आहे:
-
-1. **"ॲप उघडा (Enter App) 👉"** बटण
-2. **"📊 GENERATE RATE ANALYSIS REPORT"** बटण
-
-बाकी इनपुट बॉक्सेस, हेडर, टेक्स्ट आणि सिलेक्ट बॉक्सेसचा सर्व रेड कलर पूर्णपणे हटवला आहे आणि त्याला मस्त डार्क-ब्लू/ग्रे थीम लुक दिला आहे.
-
----
-
-### 💻 अपडेट केलेला संपूर्ण कोड:
-
-हा कोड थेट कॉपी करून पेस्ट करून घे:
-
-```python
 # KANHA_1p - पाटील इन्फ्राटेक (Streamlit Web Application)
 import streamlit as st
 import math
@@ -27,7 +11,7 @@ import time
 st.set_page_config(page_title="PATIL INFRATECH", page_icon="🏗️", layout="centered")
 
 # ==========================================
-# 🎨 ULTRA-MOBILE & CLEAN THEME STYLING (CSS)
+# 🎨 ULTRA-MOBILE & TOUCH-GLOW CUSTOM STYLING (CSS)
 # ==========================================
 st.markdown("""
     <style>
@@ -46,47 +30,38 @@ st.markdown("""
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
-    /* Universal Screen Touch Glow (Theme Blue) */
-    .stApp:active {
-        box-shadow: inset 0 0 50px rgba(59, 130, 246, 0.2) !important;
-    }
-
-    /* Card Styling with Theme Glow Effect */
+    /* Card Styling with Touch-Glow Effect */
     div.stForm, div[data-testid="stExpander"] {
         background: rgba(17, 24, 39, 0.8) !important;
         backdrop-filter: blur(16px);
-        border: 1px solid rgba(59, 130, 246, 0.2) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
         border-radius: 20px !important;
         padding: 18px !important;
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        transition: all 0.3s ease-in-out;
     }
 
-    /* 🚫 सर्व इनपुट्समधून Red Color पूर्ण काढला - Theme Gray/Blue Border */
-    div[data-baseweb="select"] > div,
-    div[data-baseweb="input"] > div,
-    div[data-baseweb="base-input"],
-    div[data-baseweb="popover"],
+    /* Mobile Touch Glow Effects for Inputs & Focus */
+    input:focus, select:focus, textarea:focus, div[data-baseweb="select"]:focus-within {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 15px rgba(59, 130, 246, 0.6) !important;
+        outline: none !important;
+        transition: all 0.2s ease-in-out;
+    }
+
+    /* Input Fields Styling */
     input, select, textarea {
-        border-color: #374151 !important;
         border-radius: 12px !important;
         background-color: #1f2937 !important;
         color: #ffffff !important;
-        outline: none !important;
+        border: 1px solid #374151 !important;
+        padding: 12px !important;
+        font-size: 16px !important;
     }
 
-    /* 🌟 Focus आल्यावर फक्त Theme Blue Glow */
-    div[data-baseweb="select"]:focus-within > div,
-    div[data-baseweb="input"]:focus-within > div,
-    div[data-baseweb="base-input"]:focus-within,
-    input:focus, select:focus, textarea:focus {
-        border-color: #3b82f6 !important;
-        box-shadow: 0 0 18px rgba(59, 130, 246, 0.5) !important;
-        outline: none !important;
-    }
-
-    /* 🔴 फक्त Primary Buttons (Enter App / Generate Report) साठी Red Gradient */
+    /* Primary Action Buttons */
     div.stButton > button[kind="primary"] {
-        background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%) !important;
+        background: linear-gradient(90deg, #ef4444 0%, #f87171 100%) !important;
         color: white !important;
         font-weight: 700 !important;
         border-radius: 14px !important;
@@ -96,25 +71,22 @@ st.markdown("""
         transition: all 0.2s ease-in-out;
         width: 100%;
     }
-    div.stButton > button[kind="primary"]:active {
+    div.stButton > button[kind="primary"]:active, div.stButton > button[kind="primary"]:focus {
         transform: scale(0.98);
         box-shadow: 0 0 25px rgba(239, 68, 68, 0.8) !important;
     }
 
-    /* बाकीचे नॉर्मल बटन्स - Dark Blue Accent (No Red) */
-    div.stButton > button:not([kind="primary"]) {
+    /* Secondary Buttons Touch Glow */
+    div.stButton > button {
         border-radius: 12px !important;
-        background-color: #1f2937 !important;
-        color: #f3f4f6 !important;
-        border: 1px solid #374151 !important;
         transition: all 0.2s ease-in-out;
     }
-    div.stButton > button:not([kind="primary"]):active {
+    div.stButton > button:active {
         transform: scale(0.96);
-        box-shadow: 0 0 18px rgba(59, 130, 246, 0.5) !important;
+        box-shadow: 0 0 15px rgba(59, 130, 246, 0.5) !important;
     }
 
-    /* Mobile Header Banner - Deep Blue Gradient */
+    /* Mobile Header Banner */
     .main-header {
         background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
         padding: 22px 15px;
@@ -154,7 +126,7 @@ if not st.session_state.skip_welcome:
             st.rerun()
 
         st.markdown("<br><br>", unsafe_allow_html=True)
-        st.markdown("<h1 style='text-align: center; color: #60a5fa;'>🏗️ WELCOME TO PATIL INFRATECH...</h1>", unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align: center; color: #ef4444;'>🏗️ WELCOME TO PATIL INFRATECH...</h1>", unsafe_allow_html=True)
         st.markdown("<h3 style='text-align: center; color: #9ca3af;'>तुमचे स्वप्न, आमचे एस्टिमेशन!</h3>", unsafe_allow_html=True)
         
         progress_bar = st.progress(0)
@@ -231,7 +203,6 @@ if st.session_state.app_user_name is None:
     
     u_input = st.text_input("तुमचे नाव (Your Name):", placeholder="NAME", key="entry_user_name").strip()
     
-    # 🔴 [Red Color Keep] - Enter App Button
     if st.button("ॲप उघडा (Enter App) 👉", type="primary"):
         if u_input:
             st.session_state.app_user_name = u_input
@@ -268,7 +239,7 @@ if st.session_state.app_user_name is None:
             adm_agg = st.number_input("aggregate (par m³ ₹):", min_value=0.0, value=float(m_rates.get("aggregate", 2200.0)), step=1.0, key="adm_agg_inp_fixed")
             adm_ste = st.number_input("steel दर (per kg ₹):", min_value=0.0, value=float(m_rates.get("steel", 60.0)), step=1.0, key="adm_ste_inp_fixed")
             
-            if st.button("💾 Save Master Market Rates", key="save_master_rates_fixed"):
+            if st.button("💾 Save Master Market Rates", type="primary", key="save_master_rates_fixed"):
                 user_db["MASTER_MARKET_RATES"] = {
                     "cement": adm_cem, "sand": adm_snd, "bricks": adm_brk, "aggregate": adm_agg, "steel": adm_ste
                 }
@@ -339,10 +310,10 @@ if col_lo.button("🔄 नाव बदला"):
     st.session_state.current_comment = "काही नाही"
     st.rerun()
 
-# 📉 मास्टर मार्केट रेट्स बार (Blue Theme Border)
+# 📉 मास्टर मार्केट रेट्स बार
 master_rates = user_db.get("MASTER_MARKET_RATES", {"cement": 400.0, "sand": 2500.0, "bricks": 8.0, "aggregate": 2200.0, "steel": 60.0})
 st.markdown(
-    f"<div style='background: linear-gradient(90deg, #1f2937 0%, #111827 100%); padding: 12px; border-radius: 14px; text-align: center; font-size: 13px; font-weight: bold; color: #f3f4f6; margin-bottom: 15px; border-left: 5px solid #3b82f6; border: 1px solid rgba(255,255,255,0.08); shadow: 0 0 10px rgba(0,0,0,0.5);'>"
+    f"<div style='background: linear-gradient(90deg, #1f2937 0%, #111827 100%); padding: 12px; border-radius: 14px; text-align: center; font-size: 13px; font-weight: bold; color: #f3f4f6; margin-bottom: 15px; border-left: 5px solid #ef4444; border: 1px solid rgba(255,255,255,0.08); shadow: 0 0 10px rgba(0,0,0,0.5);'>"
     f"📢 आजचे मार्केट दर 🏷️ cement: ₹{master_rates['cement']}/bag | sand: ₹{master_rates['sand']}/m³ | aggregate: ₹{master_rates['aggregate']}/m³ | steel: ₹{master_rates['steel']}/Kg | brick: ₹{master_rates['bricks']}/nos"
     f"</div>", 
     unsafe_allow_html=True
@@ -424,7 +395,6 @@ if "Concrete Work" in main_choice:
                 save_db(user_db)
             st.success("✅ कमेंट सेव्ह झाली!")
 
-    # 🔴 [Red Color Keep] - Generate Report Button
     if st.button("📊 GENERATE RATE ANALYSIS REPORT", type="primary", key="cc_report_btn"):
         dry_volume = volume * 1.54
         total_parts = cement_ratio + sand_ratio + aggregate_ratio
@@ -520,7 +490,7 @@ else:
         scaffolding_cost = st.number_input("पाळत/स्कॅफोल्डिंग खर्च (₹):", min_value=0.0, value=0.0, key="bw_sc")
         contingency_cost = st.number_input("आकस्मिक खर्च (₹):", min_value=0.0, value=0.0, key="bw_cc")
     with bo_col2:
-        water_pct = st.number_input("वॉटर charge (%):", min_value=0.0, value=1.0, key="bw_wp")
+        water_pct = st.number_input("वॉटर चार्ज (%):", min_value=0.0, value=1.0, key="bw_wp")
         profit_pct = st.number_input("कंत्राटदार नफा (%):", min_value=0.0, value=10.0, key="bw_pp")
 
     st.markdown("#### 💬 कमेंट पॅनल (Comment Panel)")
@@ -534,7 +504,6 @@ else:
                 save_db(user_db)
             st.success("✅ कमेंट सेव्ह झाली!")
 
-    # 🔴 [Red Color Keep] - Generate Report Button
     if st.button("📊 GENERATE RATE ANALYSIS REPORT", type="primary", key="bw_report_btn"):
         total_bricks = math.ceil(volume * 500)
         dry_mortar_vol = volume * 0.30
@@ -590,5 +559,3 @@ else:
             }
             user_db[current_user_name]["history"].append(new_report)
             save_db(user_db)
-
-```
