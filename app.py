@@ -621,7 +621,7 @@ elif st.session_state.selected_module == "Rate Analysis":
                 save_db(user_db)
 
 # ==========================================
-# 🛑 MODULE 2: BBS (BAR BENDING SCHEDULE) MODULE - EASY UNIT SELECTION
+# 🛑 MODULE 2: BBS (BAR BENDING SCHEDULE) MODULE - WITH HOOK SELECTION (90° & 135°)
 # ==========================================
 elif st.session_state.selected_module == "BBS":
     if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_to_main_bbs"):
@@ -638,7 +638,7 @@ elif st.session_state.selected_module == "BBS":
 
     st.markdown("#### 📐 घटकाची आकाराची माहिती (Enter L, B, H Dimensions)")
     
-    # 💡 L, B, H साठी मोकळे इनपुट बॉक्सेस (Blank Values)
+    # L, B, H साठी मोकळे बॉक्सेस
     col_l, col_w, col_d = st.columns(3)
     with col_l:
         val_L = st.number_input("लांबी L (Length):", min_value=0.0, value=None, placeholder="उदा. 10 किंवा 3", key="bbs_val_L")
@@ -647,11 +647,17 @@ elif st.session_state.selected_module == "BBS":
     with col_d:
         val_D = st.number_input("उंची / खोली H (Depth):", min_value=0.0, value=None, placeholder="उदा. 12 किंवा 0.45", key="bbs_val_D")
 
-    # 💡 युनिट विचारणे (Meters, Feet, Inches)
+    # युनिट निवडणे
     unit_type = st.radio("❓ **वरील L, B, H आकडे कशात आहेत? (Select Dimension Unit):**", 
                          ["Meters (m)", "Feet (ft)", "Inches (in)"], horizontal=True)
 
-    # Auto Cover Values (Standard IS 456)
+    # 💡 नवीन फीचर: हुक अँगल विचारणे (90° किंवा 135°)
+    hook_angle = "135° (Standard Seismic Hook)"
+    if "Column" in rcc_component or "Beam" in rcc_component:
+        hook_angle = st.radio("🔗 **Stirrup / Tie चा Hook कोणता वापरायचा? (Select Hook Angle):**", 
+                              ["135° (Standard Seismic Hook - 10d)", "90° (Standard L-Hook - 9d)"], horizontal=True)
+
+    # Auto Cover Values (IS 456)
     if "Footing" in rcc_component: default_cover_mm = 50
     elif "Column" in rcc_component: default_cover_mm = 40
     elif "Beam" in rcc_component: default_cover_mm = 25
@@ -660,15 +666,12 @@ elif st.session_state.selected_module == "BBS":
     clear_cover_mm = st.number_input("क्लियर कव्हर (Clear Cover in mm):", min_value=10, value=default_cover_mm, step=5, key=f"bbs_cov_{rcc_component}")
     cover_m = clear_cover_mm / 1000.0
 
-    # 🎯 ACCURATE UNIT CONVERSION TO METERS INTERNAL
+    # INTERNAL UNIT CONVERSION TO METERS
     L, W, D = 0.0, 0.0, 0.0
     if val_L is not None and val_W is not None and val_D is not None:
-        if "Meters" in unit_type:
-            L, W, D = float(val_L), float(val_W), float(val_D)
-        elif "Feet" in unit_type:
-            L, W, D = float(val_L) * 0.3048, float(val_W) * 0.3048, float(val_D) * 0.3048
-        elif "Inches" in unit_type:
-            L, W, D = float(val_L) * 0.0254, float(val_W) * 0.0254, float(val_D) * 0.0254
+        if "Meters" in unit_type: L, W, D = float(val_L), float(val_W), float(val_D)
+        elif "Feet" in unit_type: L, W, D = float(val_L) * 0.3048, float(val_W) * 0.3048, float(val_D) * 0.3048
+        elif "Inches" in unit_type: L, W, D = float(val_L) * 0.0254, float(val_W) * 0.0254, float(val_D) * 0.0254
 
     st.markdown("---")
     st.markdown("#### 🔩 स्टील बार तपशील (Bar Details)")
@@ -711,14 +714,14 @@ elif st.session_state.selected_module == "BBS":
 
                 calc_note_marathi = f"""
 📌 **कॅल्क्युलेशन नोट (Footing Calculation Breakdown):**
-* **इनपुट युनिट:** L, B, H चे आकडे तुम्ही **{unit_type}** मध्ये दिले होते. ॲपमध्ये अचूकतेसाठी त्याचे मीटरमध्ये रुपांतर करून कॅल्क्युलेशन केले आहे.
+* **इनपुट युनिट:** L, B, H चे आकडे तुम्ही **{unit_type}** मध्ये दिले होते. ॲपमध्ये अचूकतेसाठी त्याचे मीटरमध्ये रुपांतर केले आहे.
 * **वापरलेले बार:** X-दिशा {dia_main}mm Main Bar & Y-दिशा {dia_dist}mm Distribution Bar.
 * **काय Add केले (+):** फुटिंगचे दोन्ही बाजूंचे L-Bend म्हणजेच $2 \\times (Depth - 2 \\times Clear Cover)$.
 * **काय Minus केले (-):** Clear Cover ({clear_cover_mm}mm) आणि ९०° Bends Deducation ($2 \\times 2d$).
 * **एकूण वजन मोजण्याची पद्धत:** $\\text{{Weight (Kg)}} = \\frac{{d^2}}{{162}} \\times \\text{{Total Length (m)}}$.
 """
 
-    # ==================== 2. Column Logic ====================
+    # ==================== 2. Column Logic (WITH HOOK SELECTION) ====================
     elif "Column" in rcc_component:
         col_c1, col_c2 = st.columns(2)
         with col_c1:
@@ -747,28 +750,38 @@ elif st.session_state.selected_module == "BBS":
                 tot_len_m_main = cut_len_m_main * nos_col_main
                 wt_main = tot_len_m_main * ((dia_col_main ** 2) / 162.0)
 
+                # 🎯 HOOK ANGLE CALCULATION (90° vs 135°)
                 a = L - (2 * cover_m)
                 b = W - (2 * cover_m)
-                hook_len = 2 * 10 * d_st
-                bend_ded = (3 * 2 * d_st) + (2 * 3 * d_st)
+
+                if "135°" in hook_angle:
+                    hook_len = 2 * 10 * d_st  # 135 deg seismic hook (10d)
+                    bend_ded = (3 * 2 * d_st) + (2 * 3 * d_st)  # 3 Bends @ 90° + 2 Bends @ 135°
+                    hook_text = "135° Hook ($2 \\times 10d$)"
+                else:
+                    hook_len = 2 * 9 * d_st   # 90 deg L-hook (9d)
+                    bend_ded = 5 * 2 * d_st    # 5 Bends @ 90°
+                    hook_text = "90° Hook ($2 \\times 9d$)"
+
                 cut_len_m_st = (2 * (a + b)) + hook_len - bend_ded
                 nos_st = math.ceil(D / (spacing_stirrup / 1000.0)) + 1
                 tot_len_m_st = cut_len_m_st * nos_st
                 wt_st = tot_len_m_st * ((dia_stirrup ** 2) / 162.0)
 
                 bbs_rows.append({"desc": f"Main Bar ({dia_col_main}mm - {nos_col_main} Nos)", "nos": nos_col_main, "dia": dia_col_main, "cut_len_m": cut_len_m_main, "tot_len_m": tot_len_m_main, "wt": wt_main})
-                bbs_rows.append({"desc": f"Stirrup ({dia_stirrup}mm)", "nos": nos_st, "dia": dia_stirrup, "cut_len_m": cut_len_m_st, "tot_len_m": tot_len_m_st, "wt": wt_st})
+                bbs_rows.append({"desc": f"Stirrup ({dia_stirrup}mm - {hook_angle.split(' ')[0]} Hook)", "nos": nos_st, "dia": dia_stirrup, "cut_len_m": cut_len_m_st, "tot_len_m": tot_len_m_st, "wt": wt_st})
 
                 calc_note_marathi = f"""
 📌 **कॅल्क्युलेशन नोट (Column Calculation Breakdown):**
-* **इनपुट युनिट:** L, B, H चे आकडे तुम्ही **{unit_type}** मध्ये दिले होते. ॲपमध्ये अचूकतेसाठी त्याचे मीटरमध्ये रुपांतर करून कॅल्क्युलेशन केले आहे.
+* **इनपुट युनिट:** L, B, H चे आकडे **{unit_type}** मध्ये दिले होते.
 * **वापरलेले बार:** {dia_col_main}mm Main Bar & {dia_stirrup}mm Stirrup.
-* **काय Add केले (+):** Main Bar मध्ये Development Length ($L_d = 50d$) आणि Stirrup मध्ये $2 \\times 10d$ Hook Length.
-* **काय Minus केले (-):** Stirrup साठी चारही बाजूंचे Clear Cover ({clear_cover_mm}mm) आणि Bends Deducation ($3 \\times 2d$ [९०°] + $2 \\times 3d$ [१३५°]).
+* **निवडलेला Hook Angle:** {hook_text}.
+* **काय Add केले (+):** Main Bar मध्ये Development Length ($L_d = 50d$) आणि Stirrup मध्ये {hook_text} Hook Length.
+* **काय Minus केले (-):** Stirrup साठी चारही बाजूंचे Clear Cover ({clear_cover_mm}mm) आणि Bends Deducation.
 * **ऑटो बार संख्या:** कॉलम साईझनुसार ऑटो {nos_col_main} Main Bars मोजले आहेत.
 """
 
-    # ==================== 3. Beam Logic ====================
+    # ==================== 3. Beam Logic (WITH HOOK SELECTION) ====================
     elif "Beam" in rcc_component:
         col_b1, col_b2 = st.columns(2)
         with col_b1:
@@ -798,23 +811,35 @@ elif st.session_state.selected_module == "BBS":
                 tot_len_top = cut_len_m_top * nos_b_top
                 wt_top = tot_len_top * ((dia_b_top ** 2) / 162.0)
 
+                # 🎯 HOOK ANGLE CALCULATION (90° vs 135°)
                 a = W - (2 * cover_m)
                 b = D - (2 * cover_m)
-                cut_len_st = (2 * (a + b)) + (20 * d_st) - (5 * 2 * d_st)
+
+                if "135°" in hook_angle:
+                    hook_len = 2 * 10 * d_st  # 135 deg seismic hook
+                    bend_ded = (3 * 2 * d_st) + (2 * 3 * d_st)
+                    hook_text = "135° Hook ($2 \\times 10d$)"
+                else:
+                    hook_len = 2 * 9 * d_st   # 90 deg L-hook
+                    bend_ded = 5 * 2 * d_st
+                    hook_text = "90° Hook ($2 \\times 9d$)"
+
+                cut_len_st = (2 * (a + b)) + hook_len - bend_ded
                 nos_st = math.ceil(L / (spacing_b_st / 1000.0)) + 1
                 tot_len_st = cut_len_st * nos_st
                 wt_st = tot_len_st * ((dia_b_st ** 2) / 162.0)
 
                 bbs_rows.append({"desc": f"Main Bar ({dia_b_bot}mm Bottom)", "nos": nos_b_bot, "dia": dia_b_bot, "cut_len_m": cut_len_m_bot, "tot_len_m": tot_len_bot, "wt": wt_bot})
                 bbs_rows.append({"desc": f"Distribution Bar ({dia_b_top}mm Top Anchor)", "nos": nos_b_top, "dia": dia_b_top, "cut_len_m": cut_len_m_top, "tot_len_m": tot_len_top, "wt": wt_top})
-                bbs_rows.append({"desc": f"Stirrup ({dia_b_st}mm)", "nos": nos_st, "dia": dia_b_st, "cut_len_m": cut_len_st, "tot_len_m": tot_len_st, "wt": wt_st})
+                bbs_rows.append({"desc": f"Stirrup ({dia_b_st}mm - {hook_angle.split(' ')[0]} Hook)", "nos": nos_st, "dia": dia_b_st, "cut_len_m": cut_len_st, "tot_len_m": tot_len_st, "wt": wt_st})
 
                 calc_note_marathi = f"""
 📌 **कॅल्क्युलेशन नोट (Beam Calculation Breakdown):**
-* **इनपुट युनिट:** L, B, H चे आकडे तुम्ही **{unit_type}** मध्ये दिले होते. ॲपमध्ये अचूकतेसाठी त्याचे मीटरमध्ये रुपांतर करून कॅल्क्युलेशन केले आहे.
+* **इनपुट युनिट:** L, B, H चे आकडे **{unit_type}** मध्ये दिले होते.
 * **वापरलेले बार:** {dia_b_bot}mm Main Bar (Bottom), {dia_b_top}mm Top Anchor Bar & {dia_b_st}mm Stirrup.
-* **काय Add केले (+):** Bottom Bar मध्ये Development Length ($2 \\times 50d$) आणि Top Bar मध्ये $2 \\times 12d$ Hooks.
-* **काय Minus केले (-):** बीमच्या कडांचे Clear Cover ({clear_cover_mm}mm) आणि ९०° Bends Deducation ($2 \\times 2d$).
+* **निवडलेला Hook Angle:** {hook_text}.
+* **काय Add केले (+):** Bottom Bar मध्ये Development Length ($2 \\times 50d$), Top Bar मध्ये $2 \\times 12d$ Hooks आणि Stirrup मध्ये {hook_text} Hooks.
+* **काय Minus केले (-):** बीमच्या कडांचे Clear Cover ({clear_cover_mm}mm) आणि Bends Deducation.
 * **ऑटो बार संख्या:** रुंदीनुसार ऑटो {nos_b_bot} Bottom Main Bars मोजले आहेत.
 """
 
@@ -852,7 +877,7 @@ elif st.session_state.selected_module == "BBS":
 
                 calc_note_marathi = f"""
 📌 **कॅल्क्युलेशन नोट (Slab Calculation Breakdown):**
-* **इनपुट युनिट:** L, B, H चे आकडे तुम्ही **{unit_type}** मध्ये दिले होते. ॲपमध्ये अचूकतेसाठी त्याचे मीटरमध्ये रुपांतर करून कॅल्क्युलेशन केले आहे.
+* **इनपुट युनिट:** L, B, H चे आकडे तुम्ही **{unit_type}** मध्ये दिले होते.
 * **वापरलेले बार:** {dia_s_main}mm Main Bentup Bar (45° Crank) & {dia_s_dist}mm Distribution Bar.
 * **काय Add केले (+):** 45° Crank साठी वाढीव लांबी ($2 \\times 0.42d$) आणि दोन्ही टोकचे Hooks ($2 \\times 9d$).
 * **काय Minus केले (-):** स्लॅबचे Clear Cover ({clear_cover_mm}mm) आणि Bends Deducation ($4 \\times 1d$ [45°] + $2 \\times 2d$ [90°]).
