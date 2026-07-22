@@ -7,56 +7,6 @@ import datetime
 import pandas as pd
 import time
 
-import streamlit as st
-import math
-import json
-import os
-import datetime
-import pandas as pd
-import io
-import time
-import re  # 👈 १. हे नवीन इम्पोर्ट वर जोडून घे
-
-st.set_page_config(page_title="PATIL INFRATECH", page_icon="📐", layout="centered")
-
-# =========================================================
-# 🧠 SMART PARSER FUNCTION (इथे जसेच्या तसे पेस्ट कर)
-# =========================================================
-def parse_to_meters(input_str):
-    if not input_str:
-        return 0.0
-    
-    s = str(input_str).strip().lower()
-    
-    # कोट्स हाताळणे (2' 3" किंवा 2' किंवा 3")
-    if "'" in s or '"' in s:
-        feet, inches = 0.0, 0.0
-        match_both = re.search(r"(\d+(?:\.\d+)?)\s*'\s*(\d+(?:\.\d+)?)\s*\"", s)
-        if match_both:
-            return (float(match_both.group(1)) * 0.3048) + (float(match_both.group(2)) * 0.0254)
-        
-        match_feet = re.search(r"(\d+(?:\.\d+)?)\s*'", s)
-        if match_feet:
-            return float(match_feet.group(1)) * 0.3048
-            
-        match_inches = re.search(r"(\d+(?:\.\d+)?)\s*\"", s)
-        if match_inches:
-            return float(match_inches.group(1)) * 0.0254
-
-    # टेक्स्ट युनिट्स (ft, feet, in, inch, m, mm, cm)
-    val_match = re.search(r"^(\d+(?:\.\d+)?)", s)
-    if not val_match:
-        return 0.0
-    
-    val = float(val_match.group(1))
-    
-    if "feet" in s or "ft" in s: return val * 0.3048
-    elif "inch" in s or "in" in s: return val * 0.0254
-    elif "mm" in s: return val / 1000.0
-    elif "cm" in s: return val / 100.0
-    else: return val  # जर युनिट नसेल किंवा 'm' असेल तर थेट मीटर
-        
-
 # 🚨 Streamlit नियम: set_page_config नेहमी सर्वात आधी असावे!
 st.set_page_config(page_title="PATIL INFRATECH", page_icon="🏗️", layout="centered")
 
@@ -668,16 +618,41 @@ elif st.session_state.selected_module == "Rate Analysis":
                 user_db[current_user_name]["history"].append(new_report)
                 save_db(user_db)
 
-# १. युझरकडून टेक्स्ट इनपुट घेणे
-raw_l = st.text_input("लांबी टाका (उदा. 2m, 6ft, 6', 6'3\"): ", value="2m", key="bbs_l_txt")
+# ==========================================
+# 🛑 MODULE 2: BBS (BAR BENDING SCHEDULE) MODULE - WITH HOOK SELECTION (90° & 135°)
+# ==========================================
+elif st.session_state.selected_module == "BBS":
+    if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_to_main_bbs"):
+        st.session_state.selected_module = None
+        st.rerun()
+        
+    st.write("---")
+    st.subheader("🏗️ Bar Bending Schedule (BBS Calculator)")
+    st.caption("100% Precise Standard IS 2502 & IS 456 Calculations")
 
-# २. त्या व्हॅल्यूला मीटरमध्ये कन्व्हर्ट करून जुन्या व्हेरिएबलला देणे
-member_length = parse_to_meters(raw_l)
+    # १. RCC घटक निवडणे
+    rcc_component = st.selectbox("🧱 RCC घटक निवडा (Select RCC Component):", 
+                                 ["Footing (फुटिंग)", "Column (खांब/कॉलम)", "Beam (बीम)", "Slab (छत/स्लॅब)"])
+
+    st.markdown("#### 📐 घटकाची आकाराची माहिती (Enter L, B, H Dimensions)")
+    
+    # L, B, H साठी मोकळे बॉक्सेस
+    col_l, col_w, col_d = st.columns(3)
+    with col_l:
+        val_L = st.number_input("लांबी L (Length):", min_value=0.0, value=None, placeholder="उदा. 10 किंवा 3", key="bbs_val_L")
+    with col_w:
+        val_W = st.number_input("रुंदी B (Width):", min_value=0.0, value=None, placeholder="उदा. 1.5 किंवा 0.3", key="bbs_val_W")
+    with col_d:
+        val_D = st.number_input("उंची / खोली H (Depth):", min_value=0.0, value=None, placeholder="उदा. 12 किंवा 0.45", key="bbs_val_D")
+
+    # युनिट निवडणे
+    unit_type = st.radio("❓ **वरील L, B, H आकडे कशात आहेत? (Select Dimension Unit):**", 
+                         ["Meters (m)", "Feet (ft)", "Inches (in)"], horizontal=True)
 
     # 💡 नवीन फीचर: हुक अँगल विचारणे (90° किंवा 135°)
-hook_angle = "135° (Standard Seismic Hook)"
-if "Column" in rcc_component or "Beam" in rcc_component:
-    hook_angle = st.radio("🔗 **Stirrup / Tie चा Hook कोणता वापरायचा? (Select Hook Angle):**", 
+    hook_angle = "135° (Standard Seismic Hook)"
+    if "Column" in rcc_component or "Beam" in rcc_component:
+        hook_angle = st.radio("🔗 **Stirrup / Tie चा Hook कोणता वापरायचा? (Select Hook Angle):**", 
                               ["135° (Standard Seismic Hook - 10d)", "90° (Standard L-Hook - 9d)"], horizontal=True)
 
     # Auto Cover Values (IS 456)
