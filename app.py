@@ -11,7 +11,7 @@ import time
 st.set_page_config(page_title="PATIL INFRATECH", page_icon="🏗️", layout="centered")
 
 # ==========================================
-# 🎨 ULTRA-MOBILE & TOUCH-GLOW CUSTOM STYLING (CSS)
+# 🎨 ULTRA-MOBILE & THEME TOUCH-GLOW STYLING (CSS)
 # ==========================================
 st.markdown("""
     <style>
@@ -23,40 +23,51 @@ st.markdown("""
     button[title="Increment"], button[title="Decrement"] { display: none !important; }
     div[data-testid="stNumberInputStepUp"], div[data-testid="stNumberInputStepDown"] { display: none !important; }
 
-    /* Modern Dark Background */
+    /* Modern Dark Background with Universal Touch-Glow Effect */
     .stApp {
         background: linear-gradient(135deg, #0b0f19 0%, #111827 100%);
         color: #f3f4f6;
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        transition: box-shadow 0.2s ease-in-out;
     }
 
-    /* Card Styling with Touch-Glow Effect */
+    /* 🌟 Universal Screen Touch Glow (रिकाम्या जागी टच/क्लिक केल्यास पूर्ण स्क्रीनवर ग्लो येईल) */
+    .stApp:active {
+        box-shadow: inset 0 0 50px rgba(59, 130, 246, 0.25) !important;
+    }
+
+    /* Card Styling with Theme-Glow Effect */
     div.stForm, div[data-testid="stExpander"] {
         background: rgba(17, 24, 39, 0.8) !important;
         backdrop-filter: blur(16px);
-        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border: 1px solid rgba(59, 130, 246, 0.2) !important;
         border-radius: 20px !important;
         padding: 18px !important;
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
         transition: all 0.3s ease-in-out;
     }
-
-    /* Mobile Touch Glow Effects for Inputs & Focus */
-    input:focus, select:focus, textarea:focus, div[data-baseweb="select"]:focus-within {
+    
+    div.stForm:active, div[data-testid="stExpander"]:active {
         border-color: #3b82f6 !important;
-        box-shadow: 0 0 15px rgba(59, 130, 246, 0.6) !important;
-        outline: none !important;
-        transition: all 0.2s ease-in-out;
+        box-shadow: 0 0 20px rgba(59, 130, 246, 0.3) !important;
     }
 
-    /* Input Fields Styling */
+    /* Input Fields Styling - Red Border Completely Removed */
     input, select, textarea {
         border-radius: 12px !important;
         background-color: #1f2937 !important;
         color: #ffffff !important;
-        border: 1px solid #374151 !important;
+        border: 1.5px solid #374151 !important; /* Theme Border (No Red Border) */
         padding: 12px !important;
         font-size: 16px !important;
+        transition: all 0.2s ease-in-out !important;
+    }
+
+    /* 🌟 Mobile Input Focus Glow Effect (Theme Blue Glow) */
+    input:focus, select:focus, textarea:focus, div[data-baseweb="select"]:focus-within {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 18px rgba(59, 130, 246, 0.6) !important;
+        outline: none !important;
     }
 
     /* Primary Action Buttons */
@@ -73,7 +84,7 @@ st.markdown("""
     }
     div.stButton > button[kind="primary"]:active, div.stButton > button[kind="primary"]:focus {
         transform: scale(0.98);
-        box-shadow: 0 0 25px rgba(239, 68, 68, 0.8) !important;
+        box-shadow: 0 0 25px rgba(59, 130, 246, 0.8) !important; /* Theme Glow on Touch */
     }
 
     /* Secondary Buttons Touch Glow */
@@ -83,7 +94,7 @@ st.markdown("""
     }
     div.stButton > button:active {
         transform: scale(0.96);
-        box-shadow: 0 0 15px rgba(59, 130, 246, 0.5) !important;
+        box-shadow: 0 0 18px rgba(59, 130, 246, 0.6) !important;
     }
 
     /* Mobile Header Banner */
@@ -95,6 +106,11 @@ st.markdown("""
         box-shadow: 0 10px 30px rgba(37, 99, 235, 0.35);
         margin-bottom: 20px;
         border: 1px solid rgba(255, 255, 255, 0.15);
+        transition: all 0.2s ease-in-out;
+    }
+
+    .main-header:active {
+        box-shadow: 0 0 25px rgba(59, 130, 246, 0.7);
     }
 
     div[data-testid="stMarkdownContainer"] p {
@@ -490,7 +506,7 @@ else:
         scaffolding_cost = st.number_input("पाळत/स्कॅफोल्डिंग खर्च (₹):", min_value=0.0, value=0.0, key="bw_sc")
         contingency_cost = st.number_input("आकस्मिक खर्च (₹):", min_value=0.0, value=0.0, key="bw_cc")
     with bo_col2:
-        water_pct = st.number_input("वॉटर चार्ज (%):", min_value=0.0, value=1.0, key="bw_wp")
+        water_pct = st.number_input("वॉटर湯 charge (%):", min_value=0.0, value=1.0, key="bw_wp")
         profit_pct = st.number_input("कंत्राटदार नफा (%):", min_value=0.0, value=10.0, key="bw_pp")
 
     st.markdown("#### 💬 कमेंट पॅनल (Comment Panel)")
