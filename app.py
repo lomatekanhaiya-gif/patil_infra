@@ -655,7 +655,7 @@ elif st.session_state.selected_module == "BBS":
         default_cover_mm = 15
         default_cover_in = 0.75
 
-    # 💡 L, B, D DEFAULT VALUE = None (Starting Box Blank)
+    # 💡 L, B, D DEFAULT VALUE = None
     L, W, D = 0.0, 0.0, 0.0
 
     if unit_choice == "Meters (m / mm)":
@@ -702,6 +702,7 @@ elif st.session_state.selected_module == "BBS":
     st.markdown("#### 🔩 स्टील बार तपशील (Bar Details)")
 
     bbs_rows = []
+    calc_note_marathi = ""  # 💡 मराठी नोटसाठी व्हेरिॲबल
 
     # ==================== 1. Footing Logic ====================
     if "Footing" in rcc_component:
@@ -733,17 +734,26 @@ elif st.session_state.selected_module == "BBS":
                 tot_len_m_Y = cut_len_m_Y * nos_Y
                 wt_Y = tot_len_m_Y * ((dia_dist ** 2) / 162.0)
 
-                bbs_rows.append({"desc": "Main Bars (X-Dir Bottom Mesh)", "nos": nos_X, "dia": dia_main, "cut_len_m": cut_len_m_X, "tot_len_m": tot_len_m_X, "wt": wt_X})
-                bbs_rows.append({"desc": "Main Bars (Y-Dir Bottom Mesh)", "nos": nos_Y, "dia": dia_dist, "cut_len_m": cut_len_m_Y, "tot_len_m": tot_len_m_Y, "wt": wt_Y})
+                # 💡 सोपी नावे
+                bbs_rows.append({"desc": f"Main Bar (X-Dir {dia_main}mm)", "nos": nos_X, "dia": dia_main, "cut_len_m": cut_len_m_X, "tot_len_m": tot_len_m_X, "wt": wt_X})
+                bbs_rows.append({"desc": f"Distribution Bar (Y-Dir {dia_dist}mm)", "nos": nos_Y, "dia": dia_dist, "cut_len_m": cut_len_m_Y, "tot_len_m": tot_len_m_Y, "wt": wt_Y})
 
-    # ==================== 2. Column Logic (FEET & METERS BOTH AUTO NOS) ====================
+                calc_note_marathi = f"""
+📌 **कॅल्क्युलेशन नोट (Footing Calculation Breakdown):**
+* **वापरलेले बार:** X-दिशा {dia_main}mm Main Bar & Y-दिशा {dia_dist}mm Distribution Bar.
+* **काय Add केले (+):** फुटिंगच्या दोन्ही बाजूंचे L-Bend म्हणजेच $2 \\times (Depth - 2 \\times Clear Cover)$.
+* **काय Minus केले (-):** दोन्ही बाजूचे Clear Cover ({cover_m*1000:.0f}mm) आणि २ ठिकाणी ९०° Bend Deductions ($2 \\times 2d$).
+* **एकूण वजन मोजण्याची पद्धत:** $\\text{{Weight (Kg)}} = \\frac{{d^2}}{{162}} \\times \\text{{Total Length (m)}}$.
+"""
+
+    # ==================== 2. Column Logic ====================
     elif "Column" in rcc_component:
         col_c1, col_c2 = st.columns(2)
         with col_c1:
-            dia_col_main = st.selectbox("Main Longitudinal Bar Dia (mm):", [12, 16, 20, 25], index=1)
+            dia_col_main = st.selectbox("Main Bar Dia (mm):", [12, 16, 20, 25], index=1)
             bar_spacing_col = st.number_input("Main Bars Spacing / Gap (mm):", min_value=100, value=150, step=25)
         with col_c2:
-            dia_stirrup = st.selectbox("Stirrup/Tie Dia (mm):", [6, 8, 10], index=1)
+            dia_stirrup = st.selectbox("Stirrup Dia (mm):", [6, 8, 10], index=1)
             spacing_stirrup = st.number_input("Stirrup Spacing (mm):", min_value=75, value=150, step=25)
 
         if st.button("📊 GENERATE BBS REPORT", type="primary", key="gen_bbs_column"):
@@ -752,7 +762,6 @@ elif st.session_state.selected_module == "BBS":
             else:
                 d_main, d_st = dia_col_main / 1000.0, dia_stirrup / 1000.0
 
-                # 💡 AUTO CALCULATE MAIN BARS
                 core_L = L - (2 * cover_m)
                 core_W = W - (2 * cover_m)
                 sp_m = bar_spacing_col / 1000.0
@@ -775,15 +784,24 @@ elif st.session_state.selected_module == "BBS":
                 tot_len_m_st = cut_len_m_st * nos_st
                 wt_st = tot_len_m_st * ((dia_stirrup ** 2) / 162.0)
 
-                bbs_rows.append({"desc": f"Longitudinal Main Bars (Auto: {nos_col_main} Nos)", "nos": nos_col_main, "dia": dia_col_main, "cut_len_m": cut_len_m_main, "tot_len_m": tot_len_m_main, "wt": wt_main})
-                bbs_rows.append({"desc": "Column Rectangular Ties/Stirrups", "nos": nos_st, "dia": dia_stirrup, "cut_len_m": cut_len_m_st, "tot_len_m": tot_len_m_st, "wt": wt_st})
+                # 💡 सोपी नावे
+                bbs_rows.append({"desc": f"Main Bar ({dia_col_main}mm - {nos_col_main} Nos)", "nos": nos_col_main, "dia": dia_col_main, "cut_len_m": cut_len_m_main, "tot_len_m": tot_len_m_main, "wt": wt_main})
+                bbs_rows.append({"desc": f"Stirrup ({dia_stirrup}mm)", "nos": nos_st, "dia": dia_stirrup, "cut_len_m": cut_len_m_st, "tot_len_m": tot_len_m_st, "wt": wt_st})
 
-    # ==================== 3. Beam Logic (FEET & METERS BOTH AUTO NOS) ====================
+                calc_note_marathi = f"""
+📌 **कॅल्क्युलेशन नोट (Column Calculation Breakdown):**
+* **वापरलेले बार:** {dia_col_main}mm Main Bar & {dia_stirrup}mm Stirrup.
+* **काय Add केले (+):** Main Bar मध्ये Development Length ($L_d = 50d$) आणि Stirrup मध्ये $2 \\times 10d$ Hook Length.
+* **काय Minus केले (-):** Stirrup साठी चारही बाजूंचे Clear Cover ({cover_m*1000:.0f}mm) आणि Bends Deducation ($3 \\times 2d$ [९०°] + $2 \\times 3d$ [१३५°]).
+* **ऑटो बार संख्या:** कॉलम साईझनुसार ऑटो {nos_col_main} Main Bars मोजले आहेत.
+"""
+
+    # ==================== 3. Beam Logic ====================
     elif "Beam" in rcc_component:
         col_b1, col_b2 = st.columns(2)
         with col_b1:
-            dia_b_bot = st.selectbox("Bottom Main Bar Dia (mm):", [12, 16, 20, 25], index=1)
-            dia_b_top = st.selectbox("Top Anchor/Hanger Bar Dia (mm):", [10, 12, 16], index=1)
+            dia_b_bot = st.selectbox("Main Bar Dia (mm):", [12, 16, 20, 25], index=1)
+            dia_b_top = st.selectbox("Top Anchor Bar Dia (mm):", [10, 12, 16], index=1)
             main_spacing_beam = st.number_input("Main Bar Spacing (mm):", min_value=100, value=150, step=25)
         with col_b2:
             dia_b_st = st.selectbox("Stirrup Dia (mm):", [6, 8, 10], index=1)
@@ -795,7 +813,6 @@ elif st.session_state.selected_module == "BBS":
             else:
                 d_bot, d_top, d_st = dia_b_bot / 1000.0, dia_b_top / 1000.0, dia_b_st / 1000.0
 
-                # 💡 AUTO CALCULATE BEAM BARS
                 core_width = W - (2 * cover_m)
                 nos_b_bot = max(2, math.ceil(core_width / (main_spacing_beam / 1000.0)) + 1)
                 nos_b_top = 2
@@ -816,9 +833,18 @@ elif st.session_state.selected_module == "BBS":
                 tot_len_st = cut_len_st * nos_st
                 wt_st = tot_len_st * ((dia_b_st ** 2) / 162.0)
 
-                bbs_rows.append({"desc": f"Bottom Tension Bars (Auto: {nos_b_bot} Nos)", "nos": nos_b_bot, "dia": dia_b_bot, "cut_len_m": cut_len_m_bot, "tot_len_m": tot_len_bot, "wt": wt_bot})
-                bbs_rows.append({"desc": "Top Anchor / Hanger Bars", "nos": nos_b_top, "dia": dia_b_top, "cut_len_m": cut_len_m_top, "tot_len_m": tot_len_top, "wt": wt_top})
-                bbs_rows.append({"desc": "Vertical 2-Legged Stirrups", "nos": nos_st, "dia": dia_b_st, "cut_len_m": cut_len_st, "tot_len_m": tot_len_st, "wt": wt_st})
+                # 💡 सोपी नावे
+                bbs_rows.append({"desc": f"Main Bar ({dia_b_bot}mm Bottom)", "nos": nos_b_bot, "dia": dia_b_bot, "cut_len_m": cut_len_m_bot, "tot_len_m": tot_len_bot, "wt": wt_bot})
+                bbs_rows.append({"desc": f"Distribution Bar ({dia_b_top}mm Top Anchor)", "nos": nos_b_top, "dia": dia_b_top, "cut_len_m": cut_len_m_top, "tot_len_m": tot_len_top, "wt": wt_top})
+                bbs_rows.append({"desc": f"Stirrup ({dia_b_st}mm)", "nos": nos_st, "dia": dia_b_st, "cut_len_m": cut_len_st, "tot_len_m": tot_len_st, "wt": wt_st})
+
+                calc_note_marathi = f"""
+📌 **कॅल्क्युलेशन नोट (Beam Calculation Breakdown):**
+* **वापरलेले बार:** {dia_b_bot}mm Main Bar (Bottom), {dia_b_top}mm Top Anchor Bar & {dia_b_st}mm Stirrup.
+* **काय Add केले (+):** Bottom Bar मध्ये Development Length ($2 \\times 50d$) आणि Top Bar मध्ये $2 \\times 12d$ Hooks.
+* **काय Minus केले (-):** बीमच्या कडांचे Clear Cover ({cover_m*1000:.0f}mm) आणि ९०° Bends Deducation ($2 \\times 2d$).
+* **ऑटो बार संख्या:** रुंदीनुसार ऑटो {nos_b_bot} Bottom Main Bars मोजले आहेत.
+"""
 
     # ==================== 4. Slab Logic ====================
     else:
@@ -849,8 +875,17 @@ elif st.session_state.selected_module == "BBS":
                 tot_len_s_dist = cut_len_s_dist * nos_s_dist
                 wt_s_dist = tot_len_s_dist * ((dia_s_dist ** 2) / 162.0)
 
-                bbs_rows.append({"desc": f"Main Bent-up Bars (Auto: {nos_s_main} Nos)", "nos": nos_s_main, "dia": dia_s_main, "cut_len_m": cut_len_s_main, "tot_len_m": tot_len_s_main, "wt": wt_s_main})
-                bbs_rows.append({"desc": f"Distribution Bars (Auto: {nos_s_dist} Nos)", "nos": nos_s_dist, "dia": dia_s_dist, "cut_len_m": cut_len_s_dist, "tot_len_m": tot_len_s_dist, "wt": wt_s_dist})
+                # 💡 सोपी नावे
+                bbs_rows.append({"desc": f"Bentup Bar ({dia_s_main}mm Main Crank)", "nos": nos_s_main, "dia": dia_s_main, "cut_len_m": cut_len_s_main, "tot_len_m": tot_len_s_main, "wt": wt_s_main})
+                bbs_rows.append({"desc": f"Distribution Bar ({dia_s_dist}mm Straight)", "nos": nos_s_dist, "dia": dia_s_dist, "cut_len_m": cut_len_s_dist, "tot_len_m": tot_len_s_dist, "wt": wt_s_dist})
+
+                calc_note_marathi = f"""
+📌 **कॅल्क्युलेशन नोट (Slab Calculation Breakdown):**
+* **वापरलेले बार:** {dia_s_main}mm Main Bentup Bar (45° Crank) & {dia_s_dist}mm Distribution Bar.
+* **काय Add केले (+):** 45° Crank साठी वाढीव लांबी ($2 \\times 0.42d$) आणि दोन्ही टोकचे Hooks ($2 \\times 9d$).
+* **काय Minus केले (-):** स्लॅबचे Clear Cover ({cover_m*1000:.0f}mm) आणि Bends Deducation ($4 \\times 1d$ [45°] + $2 \\times 2d$ [90°]).
+* **ऑटो बार संख्या:** Spacing नुसार {nos_s_main} Bentup Bars आणि {nos_s_dist} Distribution Bars मोजले आहेत.
+"""
 
     # ==================== DISPLAY CLEAN TABLE FORMAT ====================
     if bbs_rows:
@@ -860,7 +895,6 @@ elif st.session_state.selected_module == "BBS":
 
         total_weight_kg = sum(r["wt"] for r in bbs_rows)
         
-        # Exact Table Format Ordered Properly
         table_markdown = "| Description | Nos | Dia (mm) | Length | Total Length | Weight (kg) |\n"
         table_markdown += "| :--- | :--- | :--- | :--- | :--- | :--- |\n"
 
@@ -876,19 +910,23 @@ elif st.session_state.selected_module == "BBS":
 
             table_markdown += f"| **{row['desc']}** | {row['nos']} | {row['dia']} | {cut_str} | {tot_str} | **{row['wt']:.2f}** |\n"
 
-        # Grand Total Rows at Bottom
         table_markdown += f"| **GRAND TOTAL WEIGHT (KG)** | - | - | - | - | **{total_weight_kg:.2f} Kg** |\n"
         table_markdown += f"| **GRAND TOTAL WEIGHT (TONNES)** | - | - | - | - | **{(total_weight_kg/1000.0):.3f} Ton** |\n"
 
         st.markdown(table_markdown)
 
+        # 💡 मराठी टेक्निकल नोट डिस्प्ले
+        if calc_note_marathi:
+            st.info(calc_note_marathi)
+
         user_db = load_db()
         if current_user_name in user_db:
             timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            full_report_save = table_markdown + "\n\n" + calc_note_marathi
             new_report = {
                 "timestamp": timestamp,
                 "user_note": f"BBS Report - {rcc_component}",
-                "report_data": table_markdown
+                "report_data": full_report_save
             }
             user_db[current_user_name]["history"].append(new_report)
             save_db(user_db)
