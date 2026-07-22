@@ -639,3 +639,144 @@ elif st.session_state.selected_module == "BBS":
     st.write("---")
     st.subheader("🏗️ Bar Bending Schedule (BBS Calculator)")
     st.caption("comming soon")
+
+class BBSCalculator:
+    # 1. Automatic Covers Default (50, 40, 25, 15)
+    DEFAULT_COVERS = {
+        'footing': 50,
+        'column': 40,
+        'beam': 25,
+        'slab': 15
+    }
+
+    @staticmethod
+    def get_unit_weight(dia):
+        """Steel Weight Formula: (D^2 / 162) kg/m"""
+        return (dia ** 2) / 162.0
+
+    @classmethod
+    def calculate_cutting_length(cls, component_type, description, nos, dia, L, B, H, custom_cover=None):
+        """
+        - component_type: 'footing', 'column', 'beam', 'slab'
+        - description: 'Main Bar', 'Distribution Bar', 'Bent-up Bar', 'Stirrup'
+        - L, B, H: Length, Width/Breadth, Height/Depth in mm
+        - custom_cover: User input cover (If empty, automatic cover is used)
+        """
+        
+        # Auto Cover Selection or User Custom Cover
+        cover = custom_cover if custom_cover is not None else cls.DEFAULT_COVERS.get(component_type.lower(), 25)
+        
+        cutting_length_mm = 0
+
+        # =========================================================================
+        # INSERT YOUR CUSTOM FORMULAS HERE (APLE FORMULE YETHE ADD KARA)
+        # =========================================================================
+        
+        if component_type.lower() == 'footing':
+            # EXAMPLE / PLACEHOLDER FORMULA FOR FOOTING:
+            # cutting_length_mm = (L - 2 * cover) + 2 * (H - 2 * cover)
+            pass
+
+        elif component_type.lower() == 'column':
+            # EXAMPLE / PLACEHOLDER FORMULA FOR COLUMN:
+            # cutting_length_mm = H + (12 * dia) - cover
+            pass
+
+        elif component_type.lower() == 'beam':
+            if description.lower() == 'stirrup':
+                # EXAMPLE / PLACEHOLDER FORMULA FOR BEAM STIRRUP:
+                # a = B - (2 * cover)
+                # b = H - (2 * cover)
+                # cutting_length_mm = 2 * (a + b) + (2 * 10 * dia)
+                pass
+            else:
+                # MAIN BEAM BAR FORMULA
+                pass
+
+        elif component_type.lower() == 'slab':
+            if description.lower() == 'bent-up bar':
+                # SLAB BENT-UP BAR FORMULA (1 Side bent-up)
+                pass
+            else:
+                # MAIN / DISTRIBUTION BAR FORMULA
+                pass
+
+        # =========================================================================
+        
+        # Convert mm to Meters
+        cutting_length_m = round(cutting_length_mm / 1000.0, 3)
+        total_length_m = round(cutting_length_m * nos, 3)
+        
+        # Weight Calculation
+        unit_weight_per_m = cls.get_unit_weight(dia)
+        weight = round(cutting_length_m * unit_weight_per_m, 2)
+        total_weight = round(total_length_m * unit_weight_per_m, 2)
+
+        return {
+            "description": f"{description} ({component_type.capitalize()})",
+            "nos": nos,
+            "dia": dia,
+            "length": cutting_length_m,
+            "total_length": total_length_m,
+            "weight": weight,
+            "total_weight": total_weight
+        }
+
+
+def generate_bbs_report(records):
+    """Generates standard BBS table report"""
+    print("\n" + "="*85)
+    print("                              BAR BENDING SCHEDULE (BBS)")
+    print("="*85)
+    
+    header = f"| {'SR.NO':<5} | {'DESCRIPTION':<30} | {'NOS':<4} | {'DIA':<4} | {'LENGTH':<8} | {'TOTAL LENGTH':<12} | {'WEIGHT':<8} | {'TOTAL WEIGHT':<12} |"
+    print(header)
+    print("-" * len(header))
+
+    grand_total_length = 0
+    grand_total_weight = 0
+
+    for idx, item in enumerate(records, start=1):
+        row = (
+            f"| {idx:<5} "
+            f"| {item['description']:<30} "
+            f"| {item['nos']:<4} "
+            f"| {item['dia']:<4} "
+            f"| {item['length']:<8.3f} "
+            f"| {item['total_length']:<12.3f} "
+            f"| {item['weight']:<8.2f} "
+            f"| {item['total_weight']:<12.2f} |"
+        )
+        print(row)
+        grand_total_length += item['total_length']
+        grand_total_weight += item['total_weight']
+
+    print("-" * len(header))
+    print(f"| {'TOTAL':<50} | {grand_total_length:<12.3f} m | {'':<8} | {grand_total_weight:<12.2f} kg |")
+    print("="*85)
+
+
+# =========================================================================
+# SAMPLE USAGE / ENTRY POINT
+# =========================================================================
+if __name__ == "__main__":
+    report_list = []
+
+    # Example Item 1: Footing (Automatic Cover = 50mm)
+    item1 = BBSCalculator.calculate_cutting_length(
+        component_type='footing', 
+        description='Main Bar', 
+        nos=12, dia=12, L=1500, B=1500, H=400
+    )
+    report_list.append(item1)
+
+    # Example Item 2: Column (User Defined Custom Cover = 45mm)
+    item2 = BBSCalculator.calculate_cutting_length(
+        component_type='column', 
+        description='Main Bar', 
+        nos=8, dia=16, L=300, B=450, H=3000, custom_cover=45
+    )
+    report_list.append(item2)
+
+    # Generate Standard Final Report
+    generate_bbs_report(report_list)
