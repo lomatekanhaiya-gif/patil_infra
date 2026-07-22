@@ -621,7 +621,7 @@ elif st.session_state.selected_module == "Rate Analysis":
                 save_db(user_db)
 
 # ==========================================
-# 🛑 MODULE 2: BBS (BAR BENDING SCHEDULE) MODULE - IS 2502 & IS 456
+# 🛑 MODULE 2: BBS (BAR BENDING SCHEDULE) MODULE - EASY UNIT SELECTION
 # ==========================================
 elif st.session_state.selected_module == "BBS":
     if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_to_main_bbs"):
@@ -632,77 +632,49 @@ elif st.session_state.selected_module == "BBS":
     st.subheader("🏗️ Bar Bending Schedule (BBS Calculator)")
     st.caption("100% Precise Standard IS 2502 & IS 456 Calculations")
 
-    # १. युनिट निवडणे
-    unit_choice = st.radio("📏 युनिट निवडा (Select Dimension Unit):", ["Meters (m / mm)", "Feet & Inches (ft / in)"])
-
-    # २. RCC घटक निवडणे
+    # १. RCC घटक निवडणे
     rcc_component = st.selectbox("🧱 RCC घटक निवडा (Select RCC Component):", 
                                  ["Footing (फुटिंग)", "Column (खांब/कॉलम)", "Beam (बीम)", "Slab (छत/स्लॅब)"])
 
-    st.markdown("#### 📐 घटकाची आकाराची माहिती (Dimensions & Cover)")
+    st.markdown("#### 📐 घटकाची आकाराची माहिती (Enter L, B, H Dimensions)")
     
-    # Auto Cover Values
-    if "Footing" in rcc_component:
-        default_cover_mm = 50
-        default_cover_in = 2.0
-    elif "Column" in rcc_component:
-        default_cover_mm = 40
-        default_cover_in = 1.5
-    elif "Beam" in rcc_component:
-        default_cover_mm = 25
-        default_cover_in = 1.0
-    else: # Slab
-        default_cover_mm = 15
-        default_cover_in = 0.75
+    # 💡 L, B, H साठी मोकळे इनपुट बॉक्सेस (Blank Values)
+    col_l, col_w, col_d = st.columns(3)
+    with col_l:
+        val_L = st.number_input("लांबी L (Length):", min_value=0.0, value=None, placeholder="उदा. 10 किंवा 3", key="bbs_val_L")
+    with col_w:
+        val_W = st.number_input("रुंदी B (Width):", min_value=0.0, value=None, placeholder="उदा. 1.5 किंवा 0.3", key="bbs_val_W")
+    with col_d:
+        val_D = st.number_input("उंची / खोली H (Depth):", min_value=0.0, value=None, placeholder="उदा. 12 किंवा 0.45", key="bbs_val_D")
 
-    # 💡 L, B, D DEFAULT VALUE = None
+    # 💡 युनिट विचारणे (Meters, Feet, Inches)
+    unit_type = st.radio("❓ **वरील L, B, H आकडे कशात आहेत? (Select Dimension Unit):**", 
+                         ["Meters (m)", "Feet (ft)", "Inches (in)"], horizontal=True)
+
+    # Auto Cover Values (Standard IS 456)
+    if "Footing" in rcc_component: default_cover_mm = 50
+    elif "Column" in rcc_component: default_cover_mm = 40
+    elif "Beam" in rcc_component: default_cover_mm = 25
+    else: default_cover_mm = 15 # Slab
+
+    clear_cover_mm = st.number_input("क्लियर कव्हर (Clear Cover in mm):", min_value=10, value=default_cover_mm, step=5, key=f"bbs_cov_{rcc_component}")
+    cover_m = clear_cover_mm / 1000.0
+
+    # 🎯 ACCURATE UNIT CONVERSION TO METERS INTERNAL
     L, W, D = 0.0, 0.0, 0.0
-
-    if unit_choice == "Meters (m / mm)":
-        col_l, col_w, col_d = st.columns(3)
-        with col_l:
-            L_m = st.number_input("लांबी L (Meters):", min_value=0.0, value=None, placeholder="उदा. 3.0", key="bbs_l_m")
-        with col_w:
-            W_m = st.number_input("रुंदी B (Meters):", min_value=0.0, value=None, placeholder="उदा. 0.3", key="bbs_w_m")
-        with col_d:
-            D_m = st.number_input("खोली/ऊंची D (Meters):", min_value=0.0, value=None, placeholder="उदा. 0.45", key="bbs_d_m")
-            
-        clear_cover_mm = st.number_input("क्लियर कव्हर (Clear Cover in mm):", min_value=10, value=default_cover_mm, step=5, key=f"bbs_cov_m_{rcc_component}")
-        
-        if L_m is not None: L = float(L_m)
-        if W_m is not None: W = float(W_m)
-        if D_m is not None: D = float(D_m)
-        cover_m = clear_cover_mm / 1000.0
-
-    else: # Feet & Inches
-        col_f1, col_i1 = st.columns(2)
-        with col_f1: L_ft = st.number_input("लांबी (Feet):", min_value=0, value=None, placeholder="उदा. 10", key="bbs_l_ft")
-        with col_i1: L_in = st.number_input("लांबी (Inches):", min_value=0, max_value=11, value=0, key="bbs_l_in")
-
-        col_f2, col_i2 = st.columns(2)
-        with col_f2: W_ft = st.number_input("रुंदी (Feet):", min_value=0, value=None, placeholder="उदा. 1", key="bbs_w_ft")
-        with col_i2: W_in = st.number_input("रुंदी (Inches):", min_value=0, max_value=11, value=0, key="bbs_w_in")
-
-        col_f3, col_i3 = st.columns(2)
-        with col_f3: D_ft = st.number_input("खोली/ऊंची (Feet):", min_value=0, value=None, placeholder="उदा. 1", key="bbs_d_ft")
-        with col_i3: D_in = st.number_input("खोली/ऊंची (Inches):", min_value=0, max_value=11, value=0, key="bbs_d_in")
-
-        clear_cover_in = st.number_input("क्लियर कव्हर (Clear Cover in Inches):", min_value=0.25, value=default_cover_in, step=0.25, key=f"bbs_cov_in_{rcc_component}")
-
-        l_total_in = ((L_ft if L_ft is not None else 0) * 12) + (L_in if L_in is not None else 0)
-        w_total_in = ((W_ft if W_ft is not None else 0) * 12) + (W_in if W_in is not None else 0)
-        d_total_in = ((D_ft if D_ft is not None else 0) * 12) + (D_in if D_in is not None else 0)
-
-        L = l_total_in * 0.0254
-        W = w_total_in * 0.0254
-        D = d_total_in * 0.0254
-        cover_m = clear_cover_in * 0.0254
+    if val_L is not None and val_W is not None and val_D is not None:
+        if "Meters" in unit_type:
+            L, W, D = float(val_L), float(val_W), float(val_D)
+        elif "Feet" in unit_type:
+            L, W, D = float(val_L) * 0.3048, float(val_W) * 0.3048, float(val_D) * 0.3048
+        elif "Inches" in unit_type:
+            L, W, D = float(val_L) * 0.0254, float(val_W) * 0.0254, float(val_D) * 0.0254
 
     st.markdown("---")
     st.markdown("#### 🔩 स्टील बार तपशील (Bar Details)")
 
     bbs_rows = []
-    calc_note_marathi = ""  # 💡 मराठी नोटसाठी व्हेरिॲबल
+    calc_note_marathi = ""
 
     # ==================== 1. Footing Logic ====================
     if "Footing" in rcc_component:
@@ -716,7 +688,7 @@ elif st.session_state.selected_module == "BBS":
 
         if st.button("📊 GENERATE BBS REPORT", type="primary", key="gen_bbs_footing"):
             if L <= 0 or W <= 0 or D <= 0:
-                st.warning("⚠️ कृपया आधी लांबी, रुंदी आणि खोली (L, B, D) भरून घ्या!")
+                st.warning("⚠️ कृपया आधी L, B आणि H च्या सर्व व्हॅल्यू भरून घ्या!")
             else:
                 d_m, d_d = dia_main / 1000.0, dia_dist / 1000.0
 
@@ -734,15 +706,15 @@ elif st.session_state.selected_module == "BBS":
                 tot_len_m_Y = cut_len_m_Y * nos_Y
                 wt_Y = tot_len_m_Y * ((dia_dist ** 2) / 162.0)
 
-                # 💡 सोपी नावे
                 bbs_rows.append({"desc": f"Main Bar (X-Dir {dia_main}mm)", "nos": nos_X, "dia": dia_main, "cut_len_m": cut_len_m_X, "tot_len_m": tot_len_m_X, "wt": wt_X})
                 bbs_rows.append({"desc": f"Distribution Bar (Y-Dir {dia_dist}mm)", "nos": nos_Y, "dia": dia_dist, "cut_len_m": cut_len_m_Y, "tot_len_m": tot_len_m_Y, "wt": wt_Y})
 
                 calc_note_marathi = f"""
 📌 **कॅल्क्युलेशन नोट (Footing Calculation Breakdown):**
+* **इनपुट युनिट:** L, B, H चे आकडे तुम्ही **{unit_type}** मध्ये दिले होते. ॲपमध्ये अचूकतेसाठी त्याचे मीटरमध्ये रुपांतर करून कॅल्क्युलेशन केले आहे.
 * **वापरलेले बार:** X-दिशा {dia_main}mm Main Bar & Y-दिशा {dia_dist}mm Distribution Bar.
-* **काय Add केले (+):** फुटिंगच्या दोन्ही बाजूंचे L-Bend म्हणजेच $2 \\times (Depth - 2 \\times Clear Cover)$.
-* **काय Minus केले (-):** दोन्ही बाजूचे Clear Cover ({cover_m*1000:.0f}mm) आणि २ ठिकाणी ९०° Bend Deductions ($2 \\times 2d$).
+* **काय Add केले (+):** फुटिंगचे दोन्ही बाजूंचे L-Bend म्हणजेच $2 \\times (Depth - 2 \\times Clear Cover)$.
+* **काय Minus केले (-):** Clear Cover ({clear_cover_mm}mm) आणि ९०° Bends Deducation ($2 \\times 2d$).
 * **एकूण वजन मोजण्याची पद्धत:** $\\text{{Weight (Kg)}} = \\frac{{d^2}}{{162}} \\times \\text{{Total Length (m)}}$.
 """
 
@@ -758,7 +730,7 @@ elif st.session_state.selected_module == "BBS":
 
         if st.button("📊 GENERATE BBS REPORT", type="primary", key="gen_bbs_column"):
             if L <= 0 or W <= 0 or D <= 0:
-                st.warning("⚠️ कृपया आधी लांबी, रुंदी आणि खोली (L, B, D) भरून घ्या!")
+                st.warning("⚠️ कृपया आधी L, B आणि H च्या सर्व व्हॅल्यू भरून घ्या!")
             else:
                 d_main, d_st = dia_col_main / 1000.0, dia_stirrup / 1000.0
 
@@ -784,15 +756,15 @@ elif st.session_state.selected_module == "BBS":
                 tot_len_m_st = cut_len_m_st * nos_st
                 wt_st = tot_len_m_st * ((dia_stirrup ** 2) / 162.0)
 
-                # 💡 सोपी नावे
                 bbs_rows.append({"desc": f"Main Bar ({dia_col_main}mm - {nos_col_main} Nos)", "nos": nos_col_main, "dia": dia_col_main, "cut_len_m": cut_len_m_main, "tot_len_m": tot_len_m_main, "wt": wt_main})
                 bbs_rows.append({"desc": f"Stirrup ({dia_stirrup}mm)", "nos": nos_st, "dia": dia_stirrup, "cut_len_m": cut_len_m_st, "tot_len_m": tot_len_m_st, "wt": wt_st})
 
                 calc_note_marathi = f"""
 📌 **कॅल्क्युलेशन नोट (Column Calculation Breakdown):**
+* **इनपुट युनिट:** L, B, H चे आकडे तुम्ही **{unit_type}** मध्ये दिले होते. ॲपमध्ये अचूकतेसाठी त्याचे मीटरमध्ये रुपांतर करून कॅल्क्युलेशन केले आहे.
 * **वापरलेले बार:** {dia_col_main}mm Main Bar & {dia_stirrup}mm Stirrup.
 * **काय Add केले (+):** Main Bar मध्ये Development Length ($L_d = 50d$) आणि Stirrup मध्ये $2 \\times 10d$ Hook Length.
-* **काय Minus केले (-):** Stirrup साठी चारही बाजूंचे Clear Cover ({cover_m*1000:.0f}mm) आणि Bends Deducation ($3 \\times 2d$ [९०°] + $2 \\times 3d$ [१३५°]).
+* **काय Minus केले (-):** Stirrup साठी चारही बाजूंचे Clear Cover ({clear_cover_mm}mm) आणि Bends Deducation ($3 \\times 2d$ [९०°] + $2 \\times 3d$ [१३५°]).
 * **ऑटो बार संख्या:** कॉलम साईझनुसार ऑटो {nos_col_main} Main Bars मोजले आहेत.
 """
 
@@ -809,7 +781,7 @@ elif st.session_state.selected_module == "BBS":
 
         if st.button("📊 GENERATE BBS REPORT", type="primary", key="gen_bbs_beam"):
             if L <= 0 or W <= 0 or D <= 0:
-                st.warning("⚠️ कृपया आधी लांबी, रुंदी आणि खोली (L, B, D) भरून घ्या!")
+                st.warning("⚠️ कृपया आधी L, B आणि H च्या सर्व व्हॅल्यू भरून घ्या!")
             else:
                 d_bot, d_top, d_st = dia_b_bot / 1000.0, dia_b_top / 1000.0, dia_b_st / 1000.0
 
@@ -833,16 +805,16 @@ elif st.session_state.selected_module == "BBS":
                 tot_len_st = cut_len_st * nos_st
                 wt_st = tot_len_st * ((dia_b_st ** 2) / 162.0)
 
-                # 💡 सोपी नावे
                 bbs_rows.append({"desc": f"Main Bar ({dia_b_bot}mm Bottom)", "nos": nos_b_bot, "dia": dia_b_bot, "cut_len_m": cut_len_m_bot, "tot_len_m": tot_len_bot, "wt": wt_bot})
                 bbs_rows.append({"desc": f"Distribution Bar ({dia_b_top}mm Top Anchor)", "nos": nos_b_top, "dia": dia_b_top, "cut_len_m": cut_len_m_top, "tot_len_m": tot_len_top, "wt": wt_top})
                 bbs_rows.append({"desc": f"Stirrup ({dia_b_st}mm)", "nos": nos_st, "dia": dia_b_st, "cut_len_m": cut_len_st, "tot_len_m": tot_len_st, "wt": wt_st})
 
                 calc_note_marathi = f"""
 📌 **कॅल्क्युलेशन नोट (Beam Calculation Breakdown):**
+* **इनपुट युनिट:** L, B, H चे आकडे तुम्ही **{unit_type}** मध्ये दिले होते. ॲपमध्ये अचूकतेसाठी त्याचे मीटरमध्ये रुपांतर करून कॅल्क्युलेशन केले आहे.
 * **वापरलेले बार:** {dia_b_bot}mm Main Bar (Bottom), {dia_b_top}mm Top Anchor Bar & {dia_b_st}mm Stirrup.
 * **काय Add केले (+):** Bottom Bar मध्ये Development Length ($2 \\times 50d$) आणि Top Bar मध्ये $2 \\times 12d$ Hooks.
-* **काय Minus केले (-):** बीमच्या कडांचे Clear Cover ({cover_m*1000:.0f}mm) आणि ९०° Bends Deducation ($2 \\times 2d$).
+* **काय Minus केले (-):** बीमच्या कडांचे Clear Cover ({clear_cover_mm}mm) आणि ९०° Bends Deducation ($2 \\times 2d$).
 * **ऑटो बार संख्या:** रुंदीनुसार ऑटो {nos_b_bot} Bottom Main Bars मोजले आहेत.
 """
 
@@ -858,7 +830,7 @@ elif st.session_state.selected_module == "BBS":
 
         if st.button("📊 GENERATE BBS REPORT", type="primary", key="gen_bbs_slab"):
             if L <= 0 or W <= 0 or D <= 0:
-                st.warning("⚠️ कृपया आधी लांबी, रुंदी आणि खोली (L, B, D) भरून घ्या!")
+                st.warning("⚠️ कृपया आधी L, B आणि H च्या सर्व व्हॅल्यू भरून घ्या!")
             else:
                 d_main, d_dist = dia_s_main / 1000.0, dia_s_dist / 1000.0
 
@@ -875,15 +847,15 @@ elif st.session_state.selected_module == "BBS":
                 tot_len_s_dist = cut_len_s_dist * nos_s_dist
                 wt_s_dist = tot_len_s_dist * ((dia_s_dist ** 2) / 162.0)
 
-                # 💡 सोपी नावे
                 bbs_rows.append({"desc": f"Bentup Bar ({dia_s_main}mm Main Crank)", "nos": nos_s_main, "dia": dia_s_main, "cut_len_m": cut_len_s_main, "tot_len_m": tot_len_s_main, "wt": wt_s_main})
                 bbs_rows.append({"desc": f"Distribution Bar ({dia_s_dist}mm Straight)", "nos": nos_s_dist, "dia": dia_s_dist, "cut_len_m": cut_len_s_dist, "tot_len_m": tot_len_s_dist, "wt": wt_s_dist})
 
                 calc_note_marathi = f"""
 📌 **कॅल्क्युलेशन नोट (Slab Calculation Breakdown):**
+* **इनपुट युनिट:** L, B, H चे आकडे तुम्ही **{unit_type}** मध्ये दिले होते. ॲपमध्ये अचूकतेसाठी त्याचे मीटरमध्ये रुपांतर करून कॅल्क्युलेशन केले आहे.
 * **वापरलेले बार:** {dia_s_main}mm Main Bentup Bar (45° Crank) & {dia_s_dist}mm Distribution Bar.
 * **काय Add केले (+):** 45° Crank साठी वाढीव लांबी ($2 \\times 0.42d$) आणि दोन्ही टोकचे Hooks ($2 \\times 9d$).
-* **काय Minus केले (-):** स्लॅबचे Clear Cover ({cover_m*1000:.0f}mm) आणि Bends Deducation ($4 \\times 1d$ [45°] + $2 \\times 2d$ [90°]).
+* **काय Minus केले (-):** स्लॅबचे Clear Cover ({clear_cover_mm}mm) आणि Bends Deducation ($4 \\times 1d$ [45°] + $2 \\times 2d$ [90°]).
 * **ऑटो बार संख्या:** Spacing नुसार {nos_s_main} Bentup Bars आणि {nos_s_dist} Distribution Bars मोजले आहेत.
 """
 
@@ -891,24 +863,15 @@ elif st.session_state.selected_module == "BBS":
     if bbs_rows:
         st.success("🎉 BAR BENDING SCHEDULE (BBS) यशस्वीरित्या तयार झाला आहे!")
         st.markdown(f"### 📊 BBS REPORT - {rcc_component.split(' ')[0].upper()}")
-        st.info(f"👤 **Prepared For:** {current_user_name} | **Unit Selected:** {unit_choice}")
+        st.info(f"👤 **Prepared For:** {current_user_name} | **Input Dimension Unit:** {unit_type}")
 
         total_weight_kg = sum(r["wt"] for r in bbs_rows)
         
-        table_markdown = "| Description | Nos | Dia (mm) | Length | Total Length | Weight (kg) |\n"
+        table_markdown = "| Description | Nos | Dia (mm) | Cutting Length (m) | Total Length (m) | Weight (kg) |\n"
         table_markdown += "| :--- | :--- | :--- | :--- | :--- | :--- |\n"
 
         for row in bbs_rows:
-            if unit_choice == "Meters (m / mm)":
-                cut_str = f"{row['cut_len_m']:.3f} m"
-                tot_str = f"{row['tot_len_m']:.2f} m"
-            else: # Feet & Inches
-                cut_ft = row['cut_len_m'] / 0.3048
-                tot_ft = row['tot_len_m'] / 0.3048
-                cut_str = f"{int(cut_ft)}'-{round((cut_ft % 1)*12)}\""
-                tot_str = f"{int(tot_ft)}'-{round((tot_ft % 1)*12)}\""
-
-            table_markdown += f"| **{row['desc']}** | {row['nos']} | {row['dia']} | {cut_str} | {tot_str} | **{row['wt']:.2f}** |\n"
+            table_markdown += f"| **{row['desc']}** | {row['nos']} | {row['dia']} | {row['cut_len_m']:.3f} m | {row['tot_len_m']:.2f} m | **{row['wt']:.2f}** |\n"
 
         table_markdown += f"| **GRAND TOTAL WEIGHT (KG)** | - | - | - | - | **{total_weight_kg:.2f} Kg** |\n"
         table_markdown += f"| **GRAND TOTAL WEIGHT (TONNES)** | - | - | - | - | **{(total_weight_kg/1000.0):.3f} Ton** |\n"
