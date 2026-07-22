@@ -31,7 +31,7 @@ st.markdown("""
         transition: box-shadow 0.2s ease-in-out;
     }
 
-    /* 🌟 Universal Screen Touch Glow (रिकाम्या जागी टच/क्लिक केल्यास पूर्ण स्क्रीनवर ग्लो येईल) */
+    /* 🌟 Universal Screen Touch Glow */
     .stApp:active {
         box-shadow: inset 0 0 50px rgba(59, 130, 246, 0.25) !important;
     }
@@ -46,25 +46,25 @@ st.markdown("""
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
         transition: all 0.3s ease-in-out;
     }
-    
-    div.stForm:active, div[data-testid="stExpander"]:active {
-        border-color: #3b82f6 !important;
-        box-shadow: 0 0 20px rgba(59, 130, 246, 0.3) !important;
-    }
 
-    /* Input Fields Styling - Red Border Completely Removed */
+    /* 🚫 Streamlit चा Default Red Border Completely Remove करणे */
+    div[data-baseweb="select"] > div,
+    div[data-baseweb="input"] > div,
+    div[data-baseweb="base-input"],
+    div[data-baseweb="popover"],
     input, select, textarea {
+        border-color: #374151 !important;
         border-radius: 12px !important;
         background-color: #1f2937 !important;
         color: #ffffff !important;
-        border: 1.5px solid #374151 !important; /* Theme Border (No Red Border) */
-        padding: 12px !important;
-        font-size: 16px !important;
-        transition: all 0.2s ease-in-out !important;
+        outline: none !important;
     }
 
-    /* 🌟 Mobile Input Focus Glow Effect (Theme Blue Glow) */
-    input:focus, select:focus, textarea:focus, div[data-baseweb="select"]:focus-within {
+    /* 🌟 Focus किंवा Active झाल्यावर Theme Blue Glow देणे (No Red) */
+    div[data-baseweb="select"]:focus-within > div,
+    div[data-baseweb="input"]:focus-within > div,
+    div[data-baseweb="base-input"]:focus-within,
+    input:focus, select:focus, textarea:focus {
         border-color: #3b82f6 !important;
         box-shadow: 0 0 18px rgba(59, 130, 246, 0.6) !important;
         outline: none !important;
@@ -84,7 +84,7 @@ st.markdown("""
     }
     div.stButton > button[kind="primary"]:active, div.stButton > button[kind="primary"]:focus {
         transform: scale(0.98);
-        box-shadow: 0 0 25px rgba(59, 130, 246, 0.8) !important; /* Theme Glow on Touch */
+        box-shadow: 0 0 25px rgba(59, 130, 246, 0.8) !important;
     }
 
     /* Secondary Buttons Touch Glow */
@@ -106,11 +106,6 @@ st.markdown("""
         box-shadow: 0 10px 30px rgba(37, 99, 235, 0.35);
         margin-bottom: 20px;
         border: 1px solid rgba(255, 255, 255, 0.15);
-        transition: all 0.2s ease-in-out;
-    }
-
-    .main-header:active {
-        box-shadow: 0 0 25px rgba(59, 130, 246, 0.7);
     }
 
     div[data-testid="stMarkdownContainer"] p {
@@ -506,7 +501,7 @@ else:
         scaffolding_cost = st.number_input("पाळत/स्कॅफोल्डिंग खर्च (₹):", min_value=0.0, value=0.0, key="bw_sc")
         contingency_cost = st.number_input("आकस्मिक खर्च (₹):", min_value=0.0, value=0.0, key="bw_cc")
     with bo_col2:
-        water_pct = st.number_input("वॉटर湯 charge (%):", min_value=0.0, value=1.0, key="bw_wp")
+        water_pct = st.number_input("वॉटर चार्ज (%):", min_value=0.0, value=1.0, key="bw_wp")
         profit_pct = st.number_input("कंत्राटदार नफा (%):", min_value=0.0, value=10.0, key="bw_pp")
 
     st.markdown("#### 💬 कमेंट पॅनल (Comment Panel)")
