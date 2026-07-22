@@ -614,7 +614,7 @@ elif st.session_state.selected_module == "Rate Analysis":
                 save_db(user_db)
 
 # ==========================================
-# 🛑 MODULE 2: BBS (BAR BENDING SCHEDULE) MODULE - IS 2502 & MSBTE
+# 🛑 MODULE 2: BBS (BAR BENDING SCHEDULE) MODULE - IS 2502 & IS 456
 # ==========================================
 elif st.session_state.selected_module == "BBS":
     if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_to_main_bbs"):
@@ -623,7 +623,7 @@ elif st.session_state.selected_module == "BBS":
         
     st.write("---")
     st.subheader("🏗️ Bar Bending Schedule (BBS Calculator)")
-    st.caption("IS 2502 & MSBTE Standards")
+    st.caption("IS 2502 & IS 456 Standards")
 
     # १. युनिट निवडणे
     unit_choice = st.radio("📏 युनिट निवडा (Select Dimension Unit):", ["Meters (m / mm)", "Feet & Inches (ft / in)"])
@@ -634,6 +634,20 @@ elif st.session_state.selected_module == "BBS":
 
     st.markdown("#### 📐 घटकाची आकाराची माहिती (Dimensions & Cover)")
     
+    # IS 456 नुसार Auto Cover Values
+    if "Footing" in rcc_component:
+        default_cover_mm = 50
+        default_cover_in = 2.0
+    elif "Column" in rcc_component:
+        default_cover_mm = 40
+        default_cover_in = 1.5
+    elif "Beam" in rcc_component:
+        default_cover_mm = 25
+        default_cover_in = 1.0
+    else: # Slab
+        default_cover_mm = 15
+        default_cover_in = 0.75
+
     # इनपुट फॉर्म युनिटनुसार
     if unit_choice == "Meters (m / mm)":
         col_l, col_w, col_d = st.columns(3)
@@ -644,7 +658,7 @@ elif st.session_state.selected_module == "BBS":
         with col_d:
             D_m = st.number_input("खोली/ऊंची D (Meters):", min_value=0.1, value=0.45, step=0.05, key="bbs_d_m")
             
-        clear_cover_mm = st.number_input("क्लियर कव्हर (Clear Cover in mm):", min_value=15, value=40, step=5, key="bbs_cov_m")
+        clear_cover_mm = st.number_input("क्लियर कव्हर (Clear Cover in mm):", min_value=10, value=default_cover_mm, step=5, key=f"bbs_cov_m_{rcc_component}")
         
         L = L_m
         W = W_m
@@ -670,7 +684,7 @@ elif st.session_state.selected_module == "BBS":
         with col_i3:
             D_in = st.number_input("खोली/ऊंची (Inches):", min_value=0, max_value=11, value=6, key="bbs_d_in")
 
-        clear_cover_in = st.number_input("क्लियर कव्हर (Clear Cover in Inches):", min_value=0.5, value=1.5, step=0.25, key="bbs_cov_in")
+        clear_cover_in = st.number_input("क्लियर कव्हर (Clear Cover in Inches):", min_value=0.25, value=default_cover_in, step=0.25, key=f"bbs_cov_in_{rcc_component}")
 
         L = (L_ft + L_in / 12.0) * 0.3048
         W = (W_ft + W_in / 12.0) * 0.3048
