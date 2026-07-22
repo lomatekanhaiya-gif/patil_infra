@@ -64,9 +64,14 @@ if not st.session_state.welcome_completed:
 # ==========================================
 st.markdown("""
     <style>
-    /* Streamlit Header/Footer Hide */
-    header[data-testid="stHeader"] { visibility: hidden; height: 0%; }
-    footer { visibility: hidden; }
+    /* 🔒 Hide Streamlit Branding, GitHub Logo & Main Menu */
+    #MainMenu { visibility: hidden; }
+    header[data-testid="stHeader"] { visibility: hidden; height: 0%; display: none !important; }
+    footer { visibility: hidden; display: none !important; }
+    .stAppHeader { display: none !important; }
+    [data-testid="stToolbar"] { visibility: hidden !important; display: none !important; }
+    [data-testid="stDecoration"] { display: none !important; }
+    [data-testid="stStatusWidget"] { visibility: hidden !important; }
     
     /* Number Input +/- Hide */
     button[title="Increment"], button[title="Decrement"] { display: none !important; }
@@ -252,7 +257,12 @@ if st.session_state.app_user_name is None:
     with st.expander("🛡️ Admin Database Panel (Only Kanhaiya)"):
         admin_id = st.text_input("Admin ID:", key="adm_id")
         admin_pass = st.text_input("Password:", type="password", key="adm_pass")
-        if admin_id == "kanha_1p" and admin_pass == "@Dellg15":
+        
+        # Secrets वापरून सुरक्षितता तपासणे (किंवा फॉलबॅक वापरणे)
+        secret_admin_id = st.secrets.get("ADMIN_ID", "kanha_1p") if hasattr(st, "secrets") else "kanha_1p"
+        secret_admin_pass = st.secrets.get("ADMIN_PASS", "@Dellg15") if hasattr(st, "secrets") else "@Dellg15"
+
+        if admin_id == secret_admin_id and admin_pass == secret_admin_pass:
             st.success("🔓 डेटाबेस अनलॉक झाला!")
             user_db = load_db()
             
