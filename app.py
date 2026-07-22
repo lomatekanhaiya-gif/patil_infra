@@ -115,13 +115,15 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- १. वेलकम स्क्रीन ॲनिमेशन ---
+# ==========================================
+# --- १. वेलकम स्क्रीन ॲनिमेशन (Always Play) ---
+# ==========================================
 welcome_placeholder = st.empty()
 
-if 'skip_welcome' not in st.session_state:
-    st.session_state.skip_welcome = False
+if 'welcome_completed' not in st.session_state:
+    st.session_state.welcome_completed = False
 
-if not st.session_state.skip_welcome:
+if not st.session_state.welcome_completed:
     with welcome_placeholder.container():
         st.markdown("""
             <style>
@@ -133,13 +135,15 @@ if not st.session_state.skip_welcome:
             </style>
         """, unsafe_allow_html=True)
         
-        if st.button("Skip", key="invisible_skip_btn"):
-            st.session_state.skip_welcome = True
+        # स्क्रीनवर कुठेही टच केल्यास Skip होईल
+        if st.button("Skip Welcome", key="invisible_skip_btn"):
+            st.session_state.welcome_completed = True
             st.rerun()
 
         st.markdown("<br><br>", unsafe_allow_html=True)
         st.markdown("<h1 style='text-align: center; color: #60a5fa;'>🏗️ WELCOME TO PATIL INFRATECH...</h1>", unsafe_allow_html=True)
         st.markdown("<h3 style='text-align: center; color: #9ca3af;'>तुमचे स्वप्न, आमचे एस्टिमेशन!</h3>", unsafe_allow_html=True)
+        st.caption("<p style='text-align: center; color: #6b7280;'>(पुढे जाण्यासाठी स्क्रीनवर कुठेही टच करा)</p>", unsafe_allow_html=True)
         
         progress_bar = st.progress(0)
         status_text = st.empty()
@@ -151,15 +155,14 @@ if not st.session_state.skip_welcome:
             "🏠 छताचे (Slab) काम पूर्ण होत आहे...",
             "✨ फिनिशिंग आणि रंगकाम पूर्ण झाले! घर तयार आहे! 🎉"
         ]
-        st.caption("Concept & Logic by: Kanhaiya (Founder of Patil Infratech)")
         
         for i in range(5):
             status_text.markdown(f"<p style='text-align: center; font-size: 18px; font-weight: bold; color: #f3f4f6;'>{construction_stages[i]}</p>", unsafe_allow_html=True)
             progress_bar.progress((i + 1) * 20)
-            time.sleep(1.2)
+            time.sleep(1.0)
 
     welcome_placeholder.empty()
-    st.session_state.skip_welcome = True
+    st.session_state.welcome_completed = True
 
 # 📂 फाईल डेटाबेस मॅनेजमेंट
 DB_FILE = "users_db.json"
@@ -324,6 +327,7 @@ if col_lo.button("🔄 नाव बदला"):
     st.session_state.app_user_name = None
     st.session_state.current_comment = "काही नाही"
     st.session_state.selected_module = None
+    st.session_state.welcome_completed = False  # पुन्हा लॉगिन करताना वेलकम स्क्रीन येईल
     st.rerun()
 
 current_user_data = user_db.get(current_user_name, {})
