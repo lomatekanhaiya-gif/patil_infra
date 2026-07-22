@@ -675,9 +675,9 @@ raw_l = st.text_input("लांबी टाका (उदा. 2m, 6ft, 6', 6'3
 member_length = parse_to_meters(raw_l)
 
     # 💡 नवीन फीचर: हुक अँगल विचारणे (90° किंवा 135°)
-    hook_angle = "135° (Standard Seismic Hook)"
-    if "Column" in rcc_component or "Beam" in rcc_component:
-     hook_angle = st.radio("🔗 **Stirrup / Tie चा Hook कोणता वापरायचा? (Select Hook Angle):**", 
+hook_angle = "135° (Standard Seismic Hook)"
+if "Column" in rcc_component or "Beam" in rcc_component:
+    hook_angle = st.radio("🔗 **Stirrup / Tie चा Hook कोणता वापरायचा? (Select Hook Angle):**", 
                               ["135° (Standard Seismic Hook - 10d)", "90° (Standard L-Hook - 9d)"], horizontal=True)
 
     # Auto Cover Values (IS 456)
