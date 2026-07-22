@@ -53,7 +53,7 @@ if not st.session_state.welcome_completed:
         for i in range(5):
             status_text.markdown(f"<p style='text-align: center; font-size: 18px; font-weight: bold; color: #f3f4f6;'>{construction_stages[i]}</p>", unsafe_allow_html=True)
             progress_bar.progress((i + 1) * 20)
-            time.sleep(0.6)
+            time.sleep(0.5)
 
     welcome_placeholder.empty()
     st.session_state.welcome_completed = True
@@ -655,40 +655,48 @@ elif st.session_state.selected_module == "BBS":
         default_cover_mm = 15
         default_cover_in = 0.75
 
-    # इनपुट फॉर्म युनिटनुसार
+    # 💡 L, B, D DEFAULT VALUE = None (Starting Box Blank)
+    L, W, D = 0.0, 0.0, 0.0
+
     if unit_choice == "Meters (m / mm)":
         col_l, col_w, col_d = st.columns(3)
         with col_l:
-            L_m = st.number_input("लांबी L (Meters):", min_value=0.1, value=3.0, step=0.1, key="bbs_l_m")
+            L_m = st.number_input("लांबी L (Meters):", min_value=0.0, value=None, placeholder="उदा. 3.0", key="bbs_l_m")
         with col_w:
-            W_m = st.number_input("रुंदी B (Meters):", min_value=0.1, value=0.3, step=0.1, key="bbs_w_m")
+            W_m = st.number_input("रुंदी B (Meters):", min_value=0.0, value=None, placeholder="उदा. 0.3", key="bbs_w_m")
         with col_d:
-            D_m = st.number_input("खोली/ऊंची D (Meters):", min_value=0.1, value=0.45, step=0.05, key="bbs_d_m")
+            D_m = st.number_input("खोली/ऊंची D (Meters):", min_value=0.0, value=None, placeholder="उदा. 0.45", key="bbs_d_m")
             
         clear_cover_mm = st.number_input("क्लियर कव्हर (Clear Cover in mm):", min_value=10, value=default_cover_mm, step=5, key=f"bbs_cov_m_{rcc_component}")
         
-        L, W, D = L_m, W_m, D_m
+        if L_m is not None: L = float(L_m)
+        if W_m is not None: W = float(W_m)
+        if D_m is not None: D = float(D_m)
         cover_m = clear_cover_mm / 1000.0
 
     else: # Feet & Inches
         col_f1, col_i1 = st.columns(2)
-        with col_f1: L_ft = st.number_input("लांबी (Feet):", min_value=0, value=10, key="bbs_l_ft")
+        with col_f1: L_ft = st.number_input("लांबी (Feet):", min_value=0, value=None, placeholder="उदा. 10", key="bbs_l_ft")
         with col_i1: L_in = st.number_input("लांबी (Inches):", min_value=0, max_value=11, value=0, key="bbs_l_in")
 
         col_f2, col_i2 = st.columns(2)
-        with col_f2: W_ft = st.number_input("रुंदी (Feet):", min_value=0, value=1, key="bbs_w_ft")
+        with col_f2: W_ft = st.number_input("रुंदी (Feet):", min_value=0, value=None, placeholder="उदा. 1", key="bbs_w_ft")
         with col_i2: W_in = st.number_input("रुंदी (Inches):", min_value=0, max_value=11, value=0, key="bbs_w_in")
 
         col_f3, col_i3 = st.columns(2)
-        with col_f3: D_ft = st.number_input("खोली/ऊंची (Feet):", min_value=0, value=1, key="bbs_d_ft")
-        with col_i3: D_in = st.number_input("खोली/ऊंची (Inches):", min_value=0, max_value=11, value=6, key="bbs_d_in")
+        with col_f3: D_ft = st.number_input("खोली/ऊंची (Feet):", min_value=0, value=None, placeholder="उदा. 1", key="bbs_d_ft")
+        with col_i3: D_in = st.number_input("खोली/ऊंची (Inches):", min_value=0, max_value=11, value=0, key="bbs_d_in")
 
         clear_cover_in = st.number_input("क्लियर कव्हर (Clear Cover in Inches):", min_value=0.25, value=default_cover_in, step=0.25, key=f"bbs_cov_in_{rcc_component}")
 
-        L = (L_ft + L_in / 12.0) * 0.3048
-        W = (W_ft + W_in / 12.0) * 0.3048
-        D = (D_ft + D_in / 12.0) * 0.3048
-        cover_m = (clear_cover_in / 12.0) * 0.3048
+        l_total_in = ((L_ft if L_ft is not None else 0) * 12) + (L_in if L_in is not None else 0)
+        w_total_in = ((W_ft if W_ft is not None else 0) * 12) + (W_in if W_in is not None else 0)
+        d_total_in = ((D_ft if D_ft is not None else 0) * 12) + (D_in if D_in is not None else 0)
+
+        L = l_total_in * 0.0254
+        W = w_total_in * 0.0254
+        D = d_total_in * 0.0254
+        cover_m = clear_cover_in * 0.0254
 
     st.markdown("---")
     st.markdown("#### 🔩 स्टील बार तपशील (Bar Details)")
@@ -706,26 +714,29 @@ elif st.session_state.selected_module == "BBS":
             spacing_dist = st.number_input("Y-Direction Spacing (mm):", min_value=50, value=150, step=25)
 
         if st.button("📊 GENERATE BBS REPORT", type="primary", key="gen_bbs_footing"):
-            d_m, d_d = dia_main / 1000.0, dia_dist / 1000.0
+            if L <= 0 or W <= 0 or D <= 0:
+                st.warning("⚠️ कृपया आधी लांबी, रुंदी आणि खोली (L, B, D) भरून घ्या!")
+            else:
+                d_m, d_d = dia_main / 1000.0, dia_dist / 1000.0
 
-            eff_L = L - (2 * cover_m)
-            nos_X = math.ceil((W - 2 * cover_m) / (spacing_main / 1000.0)) + 1
-            bend_len_X = 2 * (D - 2 * cover_m)
-            cut_len_m_X = eff_L + bend_len_X - (2 * 2 * d_m)
-            tot_len_m_X = cut_len_m_X * nos_X
-            wt_X = tot_len_m_X * ((dia_main ** 2) / 162.0)
+                eff_L = L - (2 * cover_m)
+                nos_X = math.ceil((W - 2 * cover_m) / (spacing_main / 1000.0)) + 1
+                bend_len_X = 2 * (D - 2 * cover_m)
+                cut_len_m_X = eff_L + bend_len_X - (2 * 2 * d_m)
+                tot_len_m_X = cut_len_m_X * nos_X
+                wt_X = tot_len_m_X * ((dia_main ** 2) / 162.0)
 
-            eff_W = W - (2 * cover_m)
-            nos_Y = math.ceil((L - 2 * cover_m) / (spacing_dist / 1000.0)) + 1
-            bend_len_Y = 2 * (D - 2 * cover_m)
-            cut_len_m_Y = eff_W + bend_len_Y - (2 * 2 * d_d)
-            tot_len_m_Y = cut_len_m_Y * nos_Y
-            wt_Y = tot_len_m_Y * ((dia_dist ** 2) / 162.0)
+                eff_W = W - (2 * cover_m)
+                nos_Y = math.ceil((L - 2 * cover_m) / (spacing_dist / 1000.0)) + 1
+                bend_len_Y = 2 * (D - 2 * cover_m)
+                cut_len_m_Y = eff_W + bend_len_Y - (2 * 2 * d_d)
+                tot_len_m_Y = cut_len_m_Y * nos_Y
+                wt_Y = tot_len_m_Y * ((dia_dist ** 2) / 162.0)
 
-            bbs_rows.append({"desc": "Main Bars (X-Dir Bottom Mesh)", "nos": nos_X, "dia": dia_main, "cut_len_m": cut_len_m_X, "tot_len_m": tot_len_m_X, "wt": wt_X})
-            bbs_rows.append({"desc": "Main Bars (Y-Dir Bottom Mesh)", "nos": nos_Y, "dia": dia_dist, "cut_len_m": cut_len_m_Y, "tot_len_m": tot_len_m_Y, "wt": wt_Y})
+                bbs_rows.append({"desc": "Main Bars (X-Dir Bottom Mesh)", "nos": nos_X, "dia": dia_main, "cut_len_m": cut_len_m_X, "tot_len_m": tot_len_m_X, "wt": wt_X})
+                bbs_rows.append({"desc": "Main Bars (Y-Dir Bottom Mesh)", "nos": nos_Y, "dia": dia_dist, "cut_len_m": cut_len_m_Y, "tot_len_m": tot_len_m_Y, "wt": wt_Y})
 
-    # ==================== 2. Column Logic (AUTO CALCULATE MAIN BARS) ====================
+    # ==================== 2. Column Logic (FEET & METERS BOTH AUTO NOS) ====================
     elif "Column" in rcc_component:
         col_c1, col_c2 = st.columns(2)
         with col_c1:
@@ -736,37 +747,38 @@ elif st.session_state.selected_module == "BBS":
             spacing_stirrup = st.number_input("Stirrup Spacing (mm):", min_value=75, value=150, step=25)
 
         if st.button("📊 GENERATE BBS REPORT", type="primary", key="gen_bbs_column"):
-            d_main, d_st = dia_col_main / 1000.0, dia_stirrup / 1000.0
+            if L <= 0 or W <= 0 or D <= 0:
+                st.warning("⚠️ कृपया आधी लांबी, रुंदी आणि खोली (L, B, D) भरून घ्या!")
+            else:
+                d_main, d_st = dia_col_main / 1000.0, dia_stirrup / 1000.0
 
-            # 💡 AUTO CALCULATE COLUMN MAIN BARS ACCORDING TO SIZE (L x W)
-            core_L = L - (2 * cover_m)
-            core_W = W - (2 * cover_m)
-            sp_m = bar_spacing_col / 1000.0
-            
-            side1_extra = max(0, math.floor(core_L / sp_m) - 1)
-            side2_extra = max(0, math.floor(core_W / sp_m) - 1)
-            
-            # 4 Corner Bars + Extra Intermediate Bars
-            nos_col_main = 4 + (2 * side1_extra) + (2 * side2_extra)
+                # 💡 AUTO CALCULATE MAIN BARS
+                core_L = L - (2 * cover_m)
+                core_W = W - (2 * cover_m)
+                sp_m = bar_spacing_col / 1000.0
+                
+                side1_extra = max(0, math.floor(core_L / sp_m) - 1)
+                side2_extra = max(0, math.floor(core_W / sp_m) - 1)
+                nos_col_main = 4 + (2 * side1_extra) + (2 * side2_extra)
 
-            ld_m = 50 * d_main
-            cut_len_m_main = D + ld_m
-            tot_len_m_main = cut_len_m_main * nos_col_main
-            wt_main = tot_len_m_main * ((dia_col_main ** 2) / 162.0)
+                ld_m = 50 * d_main
+                cut_len_m_main = D + ld_m
+                tot_len_m_main = cut_len_m_main * nos_col_main
+                wt_main = tot_len_m_main * ((dia_col_main ** 2) / 162.0)
 
-            a = L - (2 * cover_m)
-            b = W - (2 * cover_m)
-            hook_len = 2 * 10 * d_st
-            bend_ded = (3 * 2 * d_st) + (2 * 3 * d_st)
-            cut_len_m_st = (2 * (a + b)) + hook_len - bend_ded
-            nos_st = math.ceil(D / (spacing_stirrup / 1000.0)) + 1
-            tot_len_m_st = cut_len_m_st * nos_st
-            wt_st = tot_len_m_st * ((dia_stirrup ** 2) / 162.0)
+                a = L - (2 * cover_m)
+                b = W - (2 * cover_m)
+                hook_len = 2 * 10 * d_st
+                bend_ded = (3 * 2 * d_st) + (2 * 3 * d_st)
+                cut_len_m_st = (2 * (a + b)) + hook_len - bend_ded
+                nos_st = math.ceil(D / (spacing_stirrup / 1000.0)) + 1
+                tot_len_m_st = cut_len_m_st * nos_st
+                wt_st = tot_len_m_st * ((dia_stirrup ** 2) / 162.0)
 
-            bbs_rows.append({"desc": f"Longitudinal Main Bars (Auto: {nos_col_main} Nos)", "nos": nos_col_main, "dia": dia_col_main, "cut_len_m": cut_len_m_main, "tot_len_m": tot_len_m_main, "wt": wt_main})
-            bbs_rows.append({"desc": "Column Rectangular Ties/Stirrups", "nos": nos_st, "dia": dia_stirrup, "cut_len_m": cut_len_m_st, "tot_len_m": tot_len_m_st, "wt": wt_st})
+                bbs_rows.append({"desc": f"Longitudinal Main Bars (Auto: {nos_col_main} Nos)", "nos": nos_col_main, "dia": dia_col_main, "cut_len_m": cut_len_m_main, "tot_len_m": tot_len_m_main, "wt": wt_main})
+                bbs_rows.append({"desc": "Column Rectangular Ties/Stirrups", "nos": nos_st, "dia": dia_stirrup, "cut_len_m": cut_len_m_st, "tot_len_m": tot_len_m_st, "wt": wt_st})
 
-    # ==================== 3. Beam Logic (AUTO CALCULATE BARS) ====================
+    # ==================== 3. Beam Logic (FEET & METERS BOTH AUTO NOS) ====================
     elif "Beam" in rcc_component:
         col_b1, col_b2 = st.columns(2)
         with col_b1:
@@ -778,32 +790,35 @@ elif st.session_state.selected_module == "BBS":
             spacing_b_st = st.number_input("Stirrup Spacing (mm):", min_value=75, value=150, step=25)
 
         if st.button("📊 GENERATE BBS REPORT", type="primary", key="gen_bbs_beam"):
-            d_bot, d_top, d_st = dia_b_bot / 1000.0, dia_b_top / 1000.0, dia_b_st / 1000.0
+            if L <= 0 or W <= 0 or D <= 0:
+                st.warning("⚠️ कृपया आधी लांबी, रुंदी आणि खोली (L, B, D) भरून घ्या!")
+            else:
+                d_bot, d_top, d_st = dia_b_bot / 1000.0, dia_b_top / 1000.0, dia_b_st / 1000.0
 
-            # 💡 AUTO CALCULATE BEAM BARS
-            core_width = W - (2 * cover_m)
-            nos_b_bot = max(2, math.ceil(core_width / (main_spacing_beam / 1000.0)) + 1)
-            nos_b_top = 2  # Standard 2 Top Hanger Bars
+                # 💡 AUTO CALCULATE BEAM BARS
+                core_width = W - (2 * cover_m)
+                nos_b_bot = max(2, math.ceil(core_width / (main_spacing_beam / 1000.0)) + 1)
+                nos_b_top = 2
 
-            d_dev = 50 * d_bot
-            cut_len_m_bot = L - (2 * cover_m) + (2 * d_dev) - (2 * 2 * d_bot)
-            tot_len_bot = cut_len_m_bot * nos_b_bot
-            wt_bot = tot_len_bot * ((dia_b_bot ** 2) / 162.0)
+                d_dev = 50 * d_bot
+                cut_len_m_bot = L - (2 * cover_m) + (2 * d_dev) - (2 * 2 * d_bot)
+                tot_len_bot = cut_len_m_bot * nos_b_bot
+                wt_bot = tot_len_bot * ((dia_b_bot ** 2) / 162.0)
 
-            cut_len_m_top = L - (2 * cover_m) + (2 * 12 * d_top)
-            tot_len_top = cut_len_m_top * nos_b_top
-            wt_top = tot_len_top * ((dia_b_top ** 2) / 162.0)
+                cut_len_m_top = L - (2 * cover_m) + (2 * 12 * d_top)
+                tot_len_top = cut_len_m_top * nos_b_top
+                wt_top = tot_len_top * ((dia_b_top ** 2) / 162.0)
 
-            a = W - (2 * cover_m)
-            b = D - (2 * cover_m)
-            cut_len_st = (2 * (a + b)) + (20 * d_st) - (5 * 2 * d_st)
-            nos_st = math.ceil(L / (spacing_b_st / 1000.0)) + 1
-            tot_len_st = cut_len_st * nos_st
-            wt_st = tot_len_st * ((dia_b_st ** 2) / 162.0)
+                a = W - (2 * cover_m)
+                b = D - (2 * cover_m)
+                cut_len_st = (2 * (a + b)) + (20 * d_st) - (5 * 2 * d_st)
+                nos_st = math.ceil(L / (spacing_b_st / 1000.0)) + 1
+                tot_len_st = cut_len_st * nos_st
+                wt_st = tot_len_st * ((dia_b_st ** 2) / 162.0)
 
-            bbs_rows.append({"desc": f"Bottom Tension Bars (Auto: {nos_b_bot} Nos)", "nos": nos_b_bot, "dia": dia_b_bot, "cut_len_m": cut_len_m_bot, "tot_len_m": tot_len_bot, "wt": wt_bot})
-            bbs_rows.append({"desc": "Top Anchor / Hanger Bars", "nos": nos_b_top, "dia": dia_b_top, "cut_len_m": cut_len_m_top, "tot_len_m": tot_len_top, "wt": wt_top})
-            bbs_rows.append({"desc": "Vertical 2-Legged Stirrups", "nos": nos_st, "dia": dia_b_st, "cut_len_m": cut_len_st, "tot_len_m": tot_len_st, "wt": wt_st})
+                bbs_rows.append({"desc": f"Bottom Tension Bars (Auto: {nos_b_bot} Nos)", "nos": nos_b_bot, "dia": dia_b_bot, "cut_len_m": cut_len_m_bot, "tot_len_m": tot_len_bot, "wt": wt_bot})
+                bbs_rows.append({"desc": "Top Anchor / Hanger Bars", "nos": nos_b_top, "dia": dia_b_top, "cut_len_m": cut_len_m_top, "tot_len_m": tot_len_top, "wt": wt_top})
+                bbs_rows.append({"desc": "Vertical 2-Legged Stirrups", "nos": nos_st, "dia": dia_b_st, "cut_len_m": cut_len_st, "tot_len_m": tot_len_st, "wt": wt_st})
 
     # ==================== 4. Slab Logic ====================
     else:
@@ -816,23 +831,26 @@ elif st.session_state.selected_module == "BBS":
             spacing_s_dist = st.number_input("Distribution Spacing (mm):", min_value=100, value=175, step=25)
 
         if st.button("📊 GENERATE BBS REPORT", type="primary", key="gen_bbs_slab"):
-            d_main, d_dist = dia_s_main / 1000.0, dia_s_dist / 1000.0
+            if L <= 0 or W <= 0 or D <= 0:
+                st.warning("⚠️ कृपया आधी लांबी, रुंदी आणि खोली (L, B, D) भरून घ्या!")
+            else:
+                d_main, d_dist = dia_s_main / 1000.0, dia_s_dist / 1000.0
 
-            depth_d = D - (2 * cover_m) - d_main
-            crank_len = 0.42 * depth_d 
-            
-            cut_len_s_main = L - (2 * cover_m) + (2 * crank_len) + (2 * 9 * d_main) - (4 * 1 * d_main) - (2 * 2 * d_main)
-            nos_s_main = math.ceil(W / (spacing_s_main / 1000.0)) + 1
-            tot_len_s_main = cut_len_s_main * nos_s_main
-            wt_s_main = tot_len_s_main * ((dia_s_main ** 2) / 162.0)
+                depth_d = D - (2 * cover_m) - d_main
+                crank_len = 0.42 * depth_d 
+                
+                cut_len_s_main = L - (2 * cover_m) + (2 * crank_len) + (2 * 9 * d_main) - (4 * 1 * d_main) - (2 * 2 * d_main)
+                nos_s_main = math.ceil(W / (spacing_s_main / 1000.0)) + 1
+                tot_len_s_main = cut_len_s_main * nos_s_main
+                wt_s_main = tot_len_s_main * ((dia_s_main ** 2) / 162.0)
 
-            cut_len_s_dist = W - (2 * cover_m) + (2 * 9 * d_dist) - (2 * 2 * d_dist)
-            nos_s_dist = math.ceil(L / (spacing_s_dist / 1000.0)) + 1
-            tot_len_s_dist = cut_len_s_dist * nos_s_dist
-            wt_s_dist = tot_len_s_dist * ((dia_s_dist ** 2) / 162.0)
+                cut_len_s_dist = W - (2 * cover_m) + (2 * 9 * d_dist) - (2 * 2 * d_dist)
+                nos_s_dist = math.ceil(L / (spacing_s_dist / 1000.0)) + 1
+                tot_len_s_dist = cut_len_s_dist * nos_s_dist
+                wt_s_dist = tot_len_s_dist * ((dia_s_dist ** 2) / 162.0)
 
-            bbs_rows.append({"desc": f"Main Bent-up Bars (Auto: {nos_s_main} Nos)", "nos": nos_s_main, "dia": dia_s_main, "cut_len_m": cut_len_s_main, "tot_len_m": tot_len_s_main, "wt": wt_s_main})
-            bbs_rows.append({"desc": f"Distribution Bars (Auto: {nos_s_dist} Nos)", "nos": nos_s_dist, "dia": dia_s_dist, "cut_len_m": cut_len_s_dist, "tot_len_m": tot_len_s_dist, "wt": wt_s_dist})
+                bbs_rows.append({"desc": f"Main Bent-up Bars (Auto: {nos_s_main} Nos)", "nos": nos_s_main, "dia": dia_s_main, "cut_len_m": cut_len_s_main, "tot_len_m": tot_len_s_main, "wt": wt_s_main})
+                bbs_rows.append({"desc": f"Distribution Bars (Auto: {nos_s_dist} Nos)", "nos": nos_s_dist, "dia": dia_s_dist, "cut_len_m": cut_len_s_dist, "tot_len_m": tot_len_s_dist, "wt": wt_s_dist})
 
     # ==================== DISPLAY CLEAN TABLE FORMAT ====================
     if bbs_rows:
