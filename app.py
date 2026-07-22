@@ -630,4 +630,4 @@ elif st.session_state.selected_module == "BBS":
         
     st.write("---")
     st.subheader("🏗️ Bar Bending Schedule (BBS)")
-    st.info("🚧 हा विभाग लवकरच उपलब्ध होईल! तू तुझा BBS चा कोड इथे सहज जोडू शकतोस.")
+    st.info("🚧 हा विभाग लवकरच उपलब्ध होईल!")
