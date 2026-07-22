@@ -11,56 +11,6 @@ import time
 st.set_page_config(page_title="PATIL INFRATECH", page_icon="🏗️", layout="centered")
 
 # ==========================================
-# --- १. वेलकम स्क्रीन ॲनिमेशन (Always Play) ---
-# ==========================================
-welcome_placeholder = st.empty()
-
-if 'welcome_completed' not in st.session_state:
-    st.session_state.welcome_completed = False
-
-if not st.session_state.welcome_completed:
-    with welcome_placeholder.container():
-        st.markdown("""
-            <style>
-            div.stButton > button {
-                position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-                background-color: transparent !important; border: none !important;
-                color: transparent !important; z-index: 99999; cursor: pointer;
-            }
-            </style>
-        """, unsafe_allow_html=True)
-        
-        # स्क्रीनवर कुठेही टच केल्यास Skip होईल
-        if st.button("Skip Welcome", key="invisible_skip_btn"):
-            st.session_state.welcome_completed = True
-            st.rerun()
-
-        st.markdown("<br><br>", unsafe_allow_html=True)
-        st.markdown("<h1 style='text-align: center; color: #60a5fa;'>🏗️ WELCOME TO PATIL INFRATECH...</h1>", unsafe_allow_html=True)
-        st.markdown("<h3 style='text-align: center; color: #9ca3af;'>तुमचे स्वप्न, आमचे एस्टिमेशन!</h3>", unsafe_allow_html=True)
-        st.caption("<p style='text-align: center; color: #6b7280;'>(पुढे जाण्यासाठी स्क्रीनवर कुठेही टच करा)</p>", unsafe_allow_html=True)
-        
-        progress_bar = st.progress(0)
-        status_text = st.empty()
-        
-        construction_stages = [
-            "🧱 पाया खोदण्याचे काम सुरू आहे...",
-            "🏗️ खांब आणि कॉलम उभे राहत आहेत...",
-            "🧱 विटांचे बांधकाम (Brickwork) प्रगतीपथावर आहे...",
-            "🏠 छताचे (Slab) काम पूर्ण होत आहे...",
-            "✨ फिनिशिंग आणि रंगकाम पूर्ण झाले! घर तयार आहे! 🎉"
-        ]
-        
-        for i in range(5):
-            status_text.markdown(f"<p style='text-align: center; font-size: 18px; font-weight: bold; color: #f3f4f6;'>{construction_stages[i]}</p>", unsafe_allow_html=True)
-            progress_bar.progress((i + 1) * 20)
-            time.sleep(1.0)
-
-    welcome_placeholder.empty()
-    st.session_state.welcome_completed = True
-
-
-# ==========================================
 # 🎨 ULTRA-MOBILE & CLEAN THEME STYLING (CSS)
 # ==========================================
 st.markdown("""
@@ -165,6 +115,54 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# ==========================================
+# --- १. वेलकम स्क्रीन ॲनिमेशन (Always Play) ---
+# ==========================================
+welcome_placeholder = st.empty()
+
+if 'welcome_completed' not in st.session_state:
+    st.session_state.welcome_completed = False
+
+if not st.session_state.welcome_completed:
+    with welcome_placeholder.container():
+        st.markdown("""
+            <style>
+            div.stButton > button {
+                position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+                background-color: transparent !important; border: none !important;
+                color: transparent !important; z-index: 99999; cursor: pointer;
+            }
+            </style>
+        """, unsafe_allow_html=True)
+        
+        if st.button("Skip Welcome", key="invisible_skip_btn"):
+            st.session_state.welcome_completed = True
+            st.rerun()
+
+        st.markdown("<br><br>", unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align: center; color: #60a5fa;'>🏗️ WELCOME TO PATIL INFRATECH...</h1>", unsafe_allow_html=True)
+        st.markdown("<h3 style='text-align: center; color: #9ca3af;'>तुमचे स्वप्न, आमचे एस्टिमेशन!</h3>", unsafe_allow_html=True)
+        st.caption("<p style='text-align: center; color: #6b7280;'>(पुढे जाण्यासाठी स्क्रीनवर कुठेही टच करा)</p>", unsafe_allow_html=True)
+        
+        progress_bar = st.progress(0)
+        status_text = st.empty()
+        
+        construction_stages = [
+            "🧱 पाया खोदण्याचे काम सुरू आहे...",
+            "🏗️ खांब आणि कॉलम उभे राहत आहेत...",
+            "🧱 विटांचे बांधकाम (Brickwork) प्रगतीपथावर आहे...",
+            "🏠 छताचे (Slab) काम पूर्ण होत आहे...",
+            "✨ फिनिशिंग आणि रंगकाम पूर्ण झाले! घर तयार आहे! 🎉"
+        ]
+        
+        for i in range(5):
+            status_text.markdown(f"<p style='text-align: center; font-size: 18px; font-weight: bold; color: #f3f4f6;'>{construction_stages[i]}</p>", unsafe_allow_html=True)
+            progress_bar.progress((i + 1) * 20)
+            time.sleep(1.0)
+
+    welcome_placeholder.empty()
+    st.session_state.welcome_completed = True
+
 # 📂 फाईल डेटाबेस मॅनेजमेंट
 DB_FILE = "users_db.json"
 
@@ -221,7 +219,6 @@ if st.session_state.app_user_name is None:
     
     u_input = st.text_input("तुमचे नाव (Your Name):", placeholder="NAME", key="entry_user_name").strip()
     
-    # 🔴 [Red Color Keep] - Enter App Button
     if st.button("ॲप उघडा (Enter App) 👉", type="primary"):
         if u_input:
             st.session_state.app_user_name = u_input
@@ -328,7 +325,9 @@ if col_lo.button("🔄 नाव बदला"):
     st.session_state.app_user_name = None
     st.session_state.current_comment = "काही नाही"
     st.session_state.selected_module = None
-   
+    st.session_state.welcome_completed = False
+    st.rerun()
+
 current_user_data = user_db.get(current_user_name, {})
 admin_msg = current_user_data.get("admin_message", None)
 if admin_msg:
@@ -387,15 +386,10 @@ elif st.session_state.selected_module == "Rate Analysis":
         unsafe_allow_html=True
     )
 
-    # २. मुख्य काम निवडणे
     main_choice = st.radio("**काय काम करायचे आहे ते निवडा :**", ["Concrete Work (काँक्रीट काम)", "Brickwork (वीटकाम)"])
 
-    # ------------------------------------------
-    # 🧱 काँक्रीट काम (CONCRETE WORK)
-    # ------------------------------------------
     if "Concrete Work" in main_choice:
         st.subheader("🧱 Concrete Work Estimation")
-        
         col1, col2 = st.columns(2)
         with col1:
             grade = st.selectbox("काँक्रीट ग्रेड निवडा:", ["M10 (1:3:6)", "M15 (1:2:4)", "M20 (1:1.5:3)", "M25 (1:1:2)"])
@@ -456,7 +450,6 @@ elif st.session_state.selected_module == "Rate Analysis":
                     save_db(user_db)
                 st.success("✅ कमेंट सेव्ह झाली!")
 
-        # 🔴 [Red Color Keep] - Generate Report Button
         if st.button("📊 GENERATE RATE ANALYSIS REPORT", type="primary", key="cc_report_btn"):
             dry_volume = volume * 1.54
             total_parts = cement_ratio + sand_ratio + aggregate_ratio
@@ -514,12 +507,8 @@ elif st.session_state.selected_module == "Rate Analysis":
                 user_db[current_user_name]["history"].append(new_report)
                 save_db(user_db)
 
-    # ------------------------------------------
-    # 🧱 वीटकाम (BRICKWORK)
-    # ------------------------------------------
     else:
         st.subheader("🧱 Brickwork Estimation")
-        
         mortar_choice = st.selectbox("मॉर्टर मिक्स गुणोत्तर (Mortar Mix Ratio) निवडा:", 
                                      ["1:3 (सिमेंट : वाळू)", "1:4 (सिमेंट : वाळू)", "1:5 (सिमेंट : वाळू)", "1:6 (सिमेंट : वाळू)"])
         
@@ -566,7 +555,6 @@ elif st.session_state.selected_module == "Rate Analysis":
                     save_db(user_db)
                 st.success("✅ कमेंट सेव्ह झाली!")
 
-        # 🔴 [Red Color Keep] - Generate Report Button
         if st.button("📊 GENERATE RATE ANALYSIS REPORT", type="primary", key="bw_report_btn"):
             total_bricks = math.ceil(volume * 500)
             dry_mortar_vol = volume * 0.30
@@ -624,7 +612,7 @@ elif st.session_state.selected_module == "Rate Analysis":
                 save_db(user_db)
 
 # ==========================================
-# 🛑 MODULE 2: BBS (BAR BENDING SCHEDULE) MODULE
+# 🛑 MODULE 2: BBS (BAR BENDING SCHEDULE) MODULE - IS 2502 & MSBTE
 # ==========================================
 elif st.session_state.selected_module == "BBS":
     if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_to_main_bbs"):
@@ -632,5 +620,223 @@ elif st.session_state.selected_module == "BBS":
         st.rerun()
         
     st.write("---")
-    st.subheader("🏗️ Bar Bending Schedule (BBS)")
-    st.info("🚧 हा विभाग लवकरच उपलब्ध होईल!")
+    st.subheader("🏗️ Bar Bending Schedule (BBS Calculator)")
+    st.caption("IS 2502 & MSBTE Standards")
+
+    # १. युनिट निवडणे
+    unit_choice = st.radio("📏 युनिट निवडा (Select Dimension Unit):", ["Meters (m / mm)", "Feet & Inches (ft / in)"])
+
+    # २. RCC घटक निवडणे
+    rcc_component = st.selectbox("🧱 RCC घटक निवडा (Select RCC Component):", 
+                                 ["Footing (फुटिंग)", "Column (खांब/कॉलम)", "Beam (बीम)", "Slab (छत/स्लॅब)"])
+
+    st.markdown("#### 📐 घटकाची आकाराची माहिती (Dimensions & Cover)")
+    
+    # इनपुट फॉर्म युनिटनुसार
+    if unit_choice == "Meters (m / mm)":
+        col_l, col_w, col_d = st.columns(3)
+        with col_l:
+            L_m = st.number_input("लांबी L (Meters):", min_value=0.1, value=3.0, step=0.1, key="bbs_l_m")
+        with col_w:
+            W_m = st.number_input("रुंदी B (Meters):", min_value=0.1, value=0.3, step=0.1, key="bbs_w_m")
+        with col_d:
+            D_m = st.number_input("खोली/ऊंची D (Meters):", min_value=0.1, value=0.45, step=0.05, key="bbs_d_m")
+            
+        clear_cover_mm = st.number_input("क्लियर कव्हर (Clear Cover in mm):", min_value=15, value=40, step=5, key="bbs_cov_m")
+        
+        # Internally Convert to Meters for calculations
+        L = L_m
+        W = W_m
+        D = D_m
+        cover_m = clear_cover_mm / 1000.0
+
+    else: # Feet & Inches
+        col_f1, col_i1 = st.columns(2)
+        with col_f1:
+            L_ft = st.number_input("लांबी (Feet):", min_value=0, value=10, key="bbs_l_ft")
+        with col_i1:
+            L_in = st.number_input("लांबी (Inches):", min_value=0, max_value=11, value=0, key="bbs_l_in")
+
+        col_f2, col_i2 = st.columns(2)
+        with col_f2:
+            W_ft = st.number_input("रुंदी (Feet):", min_value=0, value=1, key="bbs_w_ft")
+        with col_i2:
+            W_in = st.number_input("रुंदी (Inches):", min_value=0, max_value=11, value=0, key="bbs_w_in")
+
+        col_f3, col_i3 = st.columns(2)
+        with col_f3:
+            D_ft = st.number_input("खोली/ऊंची (Feet):", min_value=0, value=1, key="bbs_d_ft")
+        with col_i3:
+            D_in = st.number_input("खोली/ऊंची (Inches):", min_value=0, max_value=11, value=6, key="bbs_d_in")
+
+        clear_cover_in = st.number_input("क्लियर कव्हर (Clear Cover in Inches):", min_value=0.5, value=1.5, step=0.25, key="bbs_cov_in")
+
+        # Convert Feet+Inches to Meters internally for calculation
+        L = (L_ft + L_in / 12.0) * 0.3048
+        W = (W_ft + W_in / 12.0) * 0.3048
+        D = (D_ft + D_in / 12.0) * 0.3048
+        cover_m = (clear_cover_in / 12.0) * 0.3048
+
+    st.markdown("---")
+    st.markdown("#### 🔩 स्टील बार तपशील (Bar Details)")
+
+    bbs_rows = []
+
+    # ==================== Footing Logic ====================
+    if "Footing" in rcc_component:
+        col_f_m1, col_f_m2 = st.columns(2)
+        with col_f_m1:
+            dia_main = st.selectbox("X-Direction Bar Dia (mm):", [8, 10, 12, 16, 20], index=2)
+            spacing_main = st.number_input("X-Direction Spacing (mm):", min_value=50, value=150, step=25)
+        with col_f_m2:
+            dia_dist = st.selectbox("Y-Direction Bar Dia (mm):", [8, 10, 12, 16, 20], index=2)
+            spacing_dist = st.number_input("Y-Direction Spacing (mm):", min_value=50, value=150, step=25)
+
+        if st.button("📊 GENERATE BBS REPORT", type="primary", key="gen_bbs_footing"):
+            # X Bar
+            eff_L = L - (2 * cover_m)
+            nos_X = math.ceil((W - 2 * cover_m) / (spacing_main / 1000.0)) + 1
+            bend_length = 2 * (D - 2 * cover_m) # L-bend both sides
+            cut_len_m_X = eff_L + bend_length - (2 * 2 * (dia_main / 1000.0)) # 2 90-deg bends
+            tot_len_m_X = cut_len_m_X * nos_X
+            wt_X = tot_len_m_X * ((dia_main ** 2) / 162.0)
+
+            # Y Bar
+            eff_W = W - (2 * cover_m)
+            nos_Y = math.ceil((L - 2 * cover_m) / (spacing_dist / 1000.0)) + 1
+            cut_len_m_Y = eff_W + bend_length - (2 * 2 * (dia_dist / 1000.0))
+            tot_len_m_Y = cut_len_m_Y * nos_Y
+            wt_Y = tot_len_m_Y * ((dia_dist ** 2) / 162.0)
+
+            bbs_rows.append({"sr": 1, "desc": "Main Bars (X-Dir Bottom Mesh)", "nos": nos_X, "dia": dia_main, "cut_len_m": cut_len_m_X, "tot_len_m": tot_len_m_X, "wt": wt_X})
+            bbs_rows.append({"sr": 2, "desc": "Main Bars (Y-Dir Bottom Mesh)", "nos": nos_Y, "dia": dia_dist, "cut_len_m": cut_len_m_Y, "tot_len_m": tot_len_m_Y, "wt": wt_Y})
+
+    # ==================== Column Logic ====================
+    elif "Column" in rcc_component:
+        col_c1, col_c2 = st.columns(2)
+        with col_c1:
+            dia_col_main = st.selectbox("Main Longitudinal Bar Dia (mm):", [12, 16, 20, 25], index=1)
+            nos_col_main = st.number_input("Main Bars Number (Nos):", min_value=4, value=6, step=2)
+        with col_c2:
+            dia_stirrup = st.selectbox("Stirrup/Tie Dia (mm):", [6, 8, 10], index=1)
+            spacing_stirrup = st.number_input("Stirrup Spacing (mm):", min_value=75, value=150, step=25)
+
+        if st.button("📊 GENERATE BBS REPORT", type="primary", key="gen_bbs_column"):
+            # Main Bar Length
+            ld_m = 50 * (dia_col_main / 1000.0) # Ld
+            cut_len_m_main = D + ld_m
+            tot_len_m_main = cut_len_m_main * nos_col_main
+            wt_main = tot_len_m_main * ((dia_col_main ** 2) / 162.0)
+
+            # Stirrups
+            a = L - 2 * cover_m
+            b = W - 2 * cover_m
+            hook_len = 2 * 10 * (dia_stirrup / 1000.0) # 135 deg hook
+            bend_ded = (3 * 2 * (dia_stirrup / 1000.0)) + (2 * 3 * (dia_stirrup / 1000.0)) # 3 90deg + 2 135deg
+            cut_len_m_st = (2 * (a + b)) + hook_len - bend_ded
+            nos_st = math.ceil(D / (spacing_stirrup / 1000.0)) + 1
+            tot_len_m_st = cut_len_m_st * nos_st
+            wt_st = tot_len_m_st * ((dia_stirrup ** 2) / 162.0)
+
+            bbs_rows.append({"sr": 1, "desc": "Longitudinal Main Bars", "nos": nos_col_main, "dia": dia_col_main, "cut_len_m": cut_len_m_main, "tot_len_m": tot_len_m_main, "wt": wt_main})
+            bbs_rows.append({"sr": 2, "desc": "Column Rectangular Ties/Stirrups", "nos": nos_st, "dia": dia_stirrup, "cut_len_m": cut_len_m_st, "tot_len_m": tot_len_m_st, "wt": wt_st})
+
+    # ==================== Beam Logic ====================
+    elif "Beam" in rcc_component:
+        col_b1, col_b2 = st.columns(2)
+        with col_b1:
+            dia_b_bot = st.selectbox("Bottom Main Bar Dia (mm):", [12, 16, 20, 25], index=1)
+            nos_b_bot = st.number_input("Bottom Main Bars (Nos):", min_value=2, value=3)
+            dia_b_top = st.selectbox("Top Anchor/Hanger Bar Dia (mm):", [10, 12, 16], index=1)
+            nos_b_top = st.number_input("Top Anchor Bars (Nos):", min_value=2, value=2)
+        with col_b2:
+            dia_b_st = st.selectbox("Stirrup Dia (mm):", [6, 8, 10], index=1)
+            spacing_b_st = st.number_input("Stirrup Spacing (mm):", min_value=75, value=150, step=25)
+
+        if st.button("📊 GENERATE BBS REPORT", type="primary", key="gen_bbs_beam"):
+            d_dev = 50 * (dia_b_bot / 1000.0)
+            cut_len_m_bot = L - (2 * cover_m) + (2 * d_dev) - (2 * 2 * (dia_b_bot / 1000.0))
+            tot_len_bot = cut_len_m_bot * nos_b_bot
+            wt_bot = tot_len_bot * ((dia_b_bot ** 2) / 162.0)
+
+            cut_len_m_top = L - (2 * cover_m) + (2 * 12 * (dia_b_top / 1000.0))
+            tot_len_top = cut_len_m_top * nos_b_top
+            wt_top = tot_len_top * ((dia_b_top ** 2) / 162.0)
+
+            a = W - 2 * cover_m
+            b = D - 2 * cover_m
+            cut_len_st = 2 * (a + b) + (20 * (dia_b_st / 1000.0)) - (5 * 2 * (dia_b_st / 1000.0))
+            nos_st = math.ceil(L / (spacing_b_st / 1000.0)) + 1
+            tot_len_st = cut_len_st * nos_st
+            wt_st = tot_len_st * ((dia_b_st ** 2) / 162.0)
+
+            bbs_rows.append({"sr": 1, "desc": "Bottom Main Tension Bars", "nos": nos_b_bot, "dia": dia_b_bot, "cut_len_m": cut_len_m_bot, "tot_len_m": tot_len_bot, "wt": wt_bot})
+            bbs_rows.append({"sr": 2, "desc": "Top Anchor / Hanger Bars", "nos": nos_b_top, "dia": dia_b_top, "cut_len_m": cut_len_m_top, "tot_len_m": tot_len_top, "wt": wt_top})
+            bbs_rows.append({"sr": 3, "desc": "Vertical 2-Legged Stirrups", "nos": nos_st, "dia": dia_b_st, "cut_len_m": cut_len_st, "tot_len_m": tot_len_st, "wt": wt_st})
+
+    # ==================== Slab Logic ====================
+    else:
+        col_s1, col_s2 = st.columns(2)
+        with col_s1:
+            dia_s_main = st.selectbox("Main Crank Bar Dia (mm):", [8, 10, 12], index=1)
+            spacing_s_main = st.number_input("Main Bar Spacing (mm):", min_value=100, value=150, step=25)
+        with col_s2:
+            dia_s_dist = st.selectbox("Distribution Bar Dia (mm):", [6, 8, 10], index=1)
+            spacing_s_dist = st.number_input("Distribution Spacing (mm):", min_value=100, value=175, step=25)
+
+        if st.button("📊 GENERATE BBS REPORT", type="primary", key="gen_bbs_slab"):
+            depth_d = D - (2 * cover_m)
+            crank_len = 0.42 * depth_d
+            cut_len_s_main = L - (2 * cover_m) + (2 * crank_len) + (2 * 9 * (dia_s_main / 1000.0))
+            nos_s_main = math.ceil(W / (spacing_s_main / 1000.0)) + 1
+            tot_len_s_main = cut_len_s_main * nos_s_main
+            wt_s_main = tot_len_s_main * ((dia_s_main ** 2) / 162.0)
+
+            cut_len_s_dist = W - (2 * cover_m) + (2 * 9 * (dia_s_dist / 1000.0))
+            nos_s_dist = math.ceil(L / (spacing_s_dist / 1000.0)) + 1
+            tot_len_s_dist = cut_len_s_dist * nos_s_dist
+            wt_s_dist = tot_len_s_dist * ((dia_s_dist ** 2) / 162.0)
+
+            bbs_rows.append({"sr": 1, "desc": "Main Crank Bars (Alternative Crank)", "nos": nos_s_main, "dia": dia_s_main, "cut_len_m": cut_len_s_main, "tot_len_m": tot_len_s_main, "wt": wt_s_main})
+            bbs_rows.append({"sr": 2, "desc": "Distribution Bars (Straight)", "nos": nos_s_dist, "dia": dia_s_dist, "cut_len_m": cut_len_s_dist, "tot_len_m": tot_len_s_dist, "wt": wt_s_dist})
+
+    # ==================== DISPLAY TABLE ====================
+    if bbs_rows:
+        st.success("🎉 BAR BENDING SCHEDULE (BBS) यशस्वीरित्या तयार झाला आहे!")
+        st.markdown(f"### 📊 BBS REPORT - {rcc_component.split(' ')[0].upper()}")
+        st.info(f"👤 **Prepared For:** {current_user_name} | **Unit Selected:** {unit_choice}")
+
+        total_weight_kg = sum(r["wt"] for r in bbs_rows)
+        
+        # Format table based on Unit Choice
+        table_markdown = "| SR.NO | DESCRIPTION | NOS | DIA (mm) | CUTTING LENGTH | TOTAL LENGTH | WEIGHT (kg) |\n"
+        table_markdown += "| :--- | :--- | :--- | :--- | :--- | :--- | :--- |\n"
+
+        for row in bbs_rows:
+            if unit_choice == "Meters (m / mm)":
+                cut_str = f"{row['cut_len_m']:.3f} m"
+                tot_str = f"{row['tot_len_m']:.2f} m"
+            else: # Feet & Inches Display
+                cut_ft = row['cut_len_m'] / 0.3048
+                tot_ft = row['tot_len_m'] / 0.3048
+                cut_str = f"{int(cut_ft)}'-{round((cut_ft % 1)*12)}\""
+                tot_str = f"{int(tot_ft)}'-{round((tot_ft % 1)*12)}\""
+
+            table_markdown += f"| {row['sr']} | **{row['desc']}** | {row['nos']} | {row['dia']} | {cut_str} | {tot_str} | **{row['wt']:.2f}** |\n"
+
+        table_markdown += f"| | **TOTAL STEEL WEIGHT** | | | | | **{total_weight_kg:.2f} Kg** |\n"
+        table_markdown += f"| | **TOTAL IN TONNES** | | | | | **{(total_weight_kg/1000.0):.3f} Ton** |\n"
+
+        st.markdown(table_markdown)
+
+        # Save to DB
+        user_db = load_db()
+        if current_user_name in user_db:
+            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            new_report = {
+                "timestamp": timestamp,
+                "user_note": f"BBS Report - {rcc_component}",
+                "report_data": table_markdown
+            }
+            user_db[current_user_name]["history"].append(new_report)
+            save_db(user_db)
