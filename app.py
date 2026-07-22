@@ -5,7 +5,6 @@ import json
 import os
 import datetime
 import pandas as pd
-import io
 import time
 
 # 🚨 Streamlit चा नियम: set_page_config नेहमी सर्वात आधी असावे!
@@ -32,7 +31,7 @@ st.markdown("""
     }
 
     /* Card Styling with Touch-Glow Effect */
-    div.css-1r6slb0, div.stForm, div[data-testid="stExpander"] {
+    div.stForm, div[data-testid="stExpander"] {
         background: rgba(17, 24, 39, 0.8) !important;
         backdrop-filter: blur(16px);
         border: 1px solid rgba(255, 255, 255, 0.08) !important;
@@ -42,7 +41,7 @@ st.markdown("""
         transition: all 0.3s ease-in-out;
     }
 
-    /* 🌟 Mobile Touch Glow Effects for Inputs & Focus */
+    /* Mobile Touch Glow Effects for Inputs & Focus */
     input:focus, select:focus, textarea:focus, div[data-baseweb="select"]:focus-within {
         border-color: #3b82f6 !important;
         box-shadow: 0 0 15px rgba(59, 130, 246, 0.6) !important;
@@ -57,10 +56,10 @@ st.markdown("""
         color: #ffffff !important;
         border: 1px solid #374151 !important;
         padding: 12px !important;
-        font-size: 16px !important; /* Prevents auto-zoom on mobile Safari/Chrome */
+        font-size: 16px !important;
     }
 
-    /* Primary Action Buttons (Glow on Touch/Click) */
+    /* Primary Action Buttons */
     div.stButton > button[kind="primary"] {
         background: linear-gradient(90deg, #ef4444 0%, #f87171 100%) !important;
         color: white !important;
@@ -98,7 +97,6 @@ st.markdown("""
         border: 1px solid rgba(255, 255, 255, 0.15);
     }
 
-    /* Radio Buttons Touch Improvement */
     div[data-testid="stMarkdownContainer"] p {
         font-size: 15px;
     }
@@ -187,8 +185,6 @@ if "app_user_name" not in st.session_state:
     st.session_state.app_user_name = None
 if "current_comment" not in st.session_state:
     st.session_state.current_comment = "काही नाही"
-if "active_report" not in st.session_state:
-    st.session_state.active_report = None
 
 # मुख्य टायटल बॅनर
 st.markdown("""
@@ -312,7 +308,6 @@ col_u.success(f"👤 युझर: **{current_user_name}**")
 if col_lo.button("🔄 नाव बदला"):
     st.session_state.app_user_name = None
     st.session_state.current_comment = "काही नाही"
-    st.session_state.active_report = None
     st.rerun()
 
 # 📉 मास्टर मार्केट रेट्स बार
@@ -335,7 +330,7 @@ if admin_msg:
 main_choice = st.radio("**काय काम करायचे आहे ते निवडा :**", ["Concrete Work (काँक्रीट काम)", "Brickwork (वीटकाम)"])
 
 # ==========================================
-# 🛑 काँक्रीट काम (CONCRETE WORK MODULE) - UNTOUCHED LOGIC
+# 🛑 काँक्रीट काम (CONCRETE WORK MODULE)
 # ==========================================
 if "Concrete Work" in main_choice:
     st.subheader("🧱 Concrete Work Estimation")
@@ -458,7 +453,7 @@ if "Concrete Work" in main_choice:
             save_db(user_db)
 
 # ==========================================
-# 🛑 वीटकाम (BRICKWORK MODULE) - UNTOUCHED LOGIC
+# 🛑 वीटकाम (BRICKWORK MODULE)
 # ==========================================
 else:
     st.subheader("🧱 Brickwork Estimation")
@@ -553,18 +548,6 @@ else:
 | **GRAND TOTAL** | | | | **₹ {grand_total:.2f}/-** |
 """
         st.markdown(report_table)
-        
-        st.session_state.active_report = {
-            "type": "Brickwork",
-            "grand_total": grand_total,
-            "data": {
-                "Description": ["Bricks", "Cement", "Sand", "GRAND TOTAL"],
-                "Quantity": [total_bricks, cement_bags, round(sand_m3, 2), ""],
-                "Unit": ["Nos", "Bags", "m³", ""],
-                "Amount (INR)": [total_brick_cost, total_cement_cost, total_sand_cost, grand_total]
-            },
-            "txt": f"PATIL INFRATECH - BRICKWORK REPORT\nयुझर: {current_user_name}\nतारीख: {datetime.date.today()}\n----------------------------------------\n* विटा: {total_bricks} Nos\n* सिमेंट: {cement_bags} Bags\n* वाळू: {sand_m3:.2f} m3\n----------------------------------------\nGRAND TOTAL: INR {grand_total:.2f}/-"
-        }
 
         user_db = load_db()
         if current_user_name in user_db:
