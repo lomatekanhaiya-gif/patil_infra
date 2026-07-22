@@ -11,6 +11,56 @@ import time
 st.set_page_config(page_title="PATIL INFRATECH", page_icon="🏗️", layout="centered")
 
 # ==========================================
+# --- १. वेलकम स्क्रीन ॲनिमेशन (Always Play) ---
+# ==========================================
+welcome_placeholder = st.empty()
+
+if 'welcome_completed' not in st.session_state:
+    st.session_state.welcome_completed = False
+
+if not st.session_state.welcome_completed:
+    with welcome_placeholder.container():
+        st.markdown("""
+            <style>
+            div.stButton > button {
+                position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+                background-color: transparent !important; border: none !important;
+                color: transparent !important; z-index: 99999; cursor: pointer;
+            }
+            </style>
+        """, unsafe_allow_html=True)
+        
+        # स्क्रीनवर कुठेही टच केल्यास Skip होईल
+        if st.button("Skip Welcome", key="invisible_skip_btn"):
+            st.session_state.welcome_completed = True
+            st.rerun()
+
+        st.markdown("<br><br>", unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align: center; color: #60a5fa;'>🏗️ WELCOME TO PATIL INFRATECH...</h1>", unsafe_allow_html=True)
+        st.markdown("<h3 style='text-align: center; color: #9ca3af;'>तुमचे स्वप्न, आमचे एस्टिमेशन!</h3>", unsafe_allow_html=True)
+        st.caption("<p style='text-align: center; color: #6b7280;'>(पुढे जाण्यासाठी स्क्रीनवर कुठेही टच करा)</p>", unsafe_allow_html=True)
+        
+        progress_bar = st.progress(0)
+        status_text = st.empty()
+        
+        construction_stages = [
+            "🧱 पाया खोदण्याचे काम सुरू आहे...",
+            "🏗️ खांब आणि कॉलम उभे राहत आहेत...",
+            "🧱 विटांचे बांधकाम (Brickwork) प्रगतीपथावर आहे...",
+            "🏠 छताचे (Slab) काम पूर्ण होत आहे...",
+            "✨ फिनिशिंग आणि रंगकाम पूर्ण झाले! घर तयार आहे! 🎉"
+        ]
+        
+        for i in range(5):
+            status_text.markdown(f"<p style='text-align: center; font-size: 18px; font-weight: bold; color: #f3f4f6;'>{construction_stages[i]}</p>", unsafe_allow_html=True)
+            progress_bar.progress((i + 1) * 20)
+            time.sleep(1.0)
+
+    welcome_placeholder.empty()
+    st.session_state.welcome_completed = True
+
+
+# ==========================================
 # 🎨 ULTRA-MOBILE & CLEAN THEME STYLING (CSS)
 # ==========================================
 st.markdown("""
@@ -114,54 +164,6 @@ st.markdown("""
     }
     </style>
 """, unsafe_allow_html=True)
-
-# ==========================================
-# --- १. वेलकम स्क्रीन ॲनिमेशन (Always Play) ---
-# ==========================================
-welcome_placeholder = st.empty()
-
-if 'welcome_completed' not in st.session_state:
-    st.session_state.welcome_completed = False
-
-if not st.session_state.welcome_completed:
-    with welcome_placeholder.container():
-        st.markdown("""
-            <style>
-            div.stButton > button {
-                position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-                background-color: transparent !important; border: none !important;
-                color: transparent !important; z-index: 99999; cursor: pointer;
-            }
-            </style>
-        """, unsafe_allow_html=True)
-        
-        if st.button("Skip Welcome", key="invisible_skip_btn"):
-            st.session_state.welcome_completed = True
-            st.rerun()
-
-        st.markdown("<br><br>", unsafe_allow_html=True)
-        st.markdown("<h1 style='text-align: center; color: #60a5fa;'>🏗️ WELCOME TO PATIL INFRATECH...</h1>", unsafe_allow_html=True)
-        st.markdown("<h3 style='text-align: center; color: #9ca3af;'>तुमचे स्वप्न, आमचे एस्टिमेशन!</h3>", unsafe_allow_html=True)
-        st.caption("<p style='text-align: center; color: #6b7280;'>(पुढे जाण्यासाठी स्क्रीनवर कुठेही टच करा)</p>", unsafe_allow_html=True)
-        
-        progress_bar = st.progress(0)
-        status_text = st.empty()
-        
-        construction_stages = [
-            "🧱 पाया खोदण्याचे काम सुरू आहे...",
-            "🏗️ खांब आणि कॉलम उभे राहत आहेत...",
-            "🧱 विटांचे बांधकाम (Brickwork) प्रगतीपथावर आहे...",
-            "🏠 छताचे (Slab) काम पूर्ण होत आहे...",
-            "✨ फिनिशिंग आणि रंगकाम पूर्ण झाले! घर तयार आहे! 🎉"
-        ]
-        
-        for i in range(5):
-            status_text.markdown(f"<p style='text-align: center; font-size: 18px; font-weight: bold; color: #f3f4f6;'>{construction_stages[i]}</p>", unsafe_allow_html=True)
-            progress_bar.progress((i + 1) * 20)
-            time.sleep(1.0)
-
-    welcome_placeholder.empty()
-    st.session_state.welcome_completed = True
 
 # 📂 फाईल डेटाबेस मॅनेजमेंट
 DB_FILE = "users_db.json"
@@ -644,7 +646,6 @@ elif st.session_state.selected_module == "BBS":
             
         clear_cover_mm = st.number_input("क्लियर कव्हर (Clear Cover in mm):", min_value=15, value=40, step=5, key="bbs_cov_m")
         
-        # Internally Convert to Meters for calculations
         L = L_m
         W = W_m
         D = D_m
@@ -671,7 +672,6 @@ elif st.session_state.selected_module == "BBS":
 
         clear_cover_in = st.number_input("क्लियर कव्हर (Clear Cover in Inches):", min_value=0.5, value=1.5, step=0.25, key="bbs_cov_in")
 
-        # Convert Feet+Inches to Meters internally for calculation
         L = (L_ft + L_in / 12.0) * 0.3048
         W = (W_ft + W_in / 12.0) * 0.3048
         D = (D_ft + D_in / 12.0) * 0.3048
@@ -693,15 +693,13 @@ elif st.session_state.selected_module == "BBS":
             spacing_dist = st.number_input("Y-Direction Spacing (mm):", min_value=50, value=150, step=25)
 
         if st.button("📊 GENERATE BBS REPORT", type="primary", key="gen_bbs_footing"):
-            # X Bar
             eff_L = L - (2 * cover_m)
             nos_X = math.ceil((W - 2 * cover_m) / (spacing_main / 1000.0)) + 1
-            bend_length = 2 * (D - 2 * cover_m) # L-bend both sides
-            cut_len_m_X = eff_L + bend_length - (2 * 2 * (dia_main / 1000.0)) # 2 90-deg bends
+            bend_length = 2 * (D - 2 * cover_m)
+            cut_len_m_X = eff_L + bend_length - (2 * 2 * (dia_main / 1000.0))
             tot_len_m_X = cut_len_m_X * nos_X
             wt_X = tot_len_m_X * ((dia_main ** 2) / 162.0)
 
-            # Y Bar
             eff_W = W - (2 * cover_m)
             nos_Y = math.ceil((L - 2 * cover_m) / (spacing_dist / 1000.0)) + 1
             cut_len_m_Y = eff_W + bend_length - (2 * 2 * (dia_dist / 1000.0))
@@ -722,17 +720,15 @@ elif st.session_state.selected_module == "BBS":
             spacing_stirrup = st.number_input("Stirrup Spacing (mm):", min_value=75, value=150, step=25)
 
         if st.button("📊 GENERATE BBS REPORT", type="primary", key="gen_bbs_column"):
-            # Main Bar Length
-            ld_m = 50 * (dia_col_main / 1000.0) # Ld
+            ld_m = 50 * (dia_col_main / 1000.0)
             cut_len_m_main = D + ld_m
             tot_len_m_main = cut_len_m_main * nos_col_main
             wt_main = tot_len_m_main * ((dia_col_main ** 2) / 162.0)
 
-            # Stirrups
             a = L - 2 * cover_m
             b = W - 2 * cover_m
-            hook_len = 2 * 10 * (dia_stirrup / 1000.0) # 135 deg hook
-            bend_ded = (3 * 2 * (dia_stirrup / 1000.0)) + (2 * 3 * (dia_stirrup / 1000.0)) # 3 90deg + 2 135deg
+            hook_len = 2 * 10 * (dia_stirrup / 1000.0)
+            bend_ded = (3 * 2 * (dia_stirrup / 1000.0)) + (2 * 3 * (dia_stirrup / 1000.0))
             cut_len_m_st = (2 * (a + b)) + hook_len - bend_ded
             nos_st = math.ceil(D / (spacing_stirrup / 1000.0)) + 1
             tot_len_m_st = cut_len_m_st * nos_st
@@ -808,7 +804,6 @@ elif st.session_state.selected_module == "BBS":
 
         total_weight_kg = sum(r["wt"] for r in bbs_rows)
         
-        # Format table based on Unit Choice
         table_markdown = "| SR.NO | DESCRIPTION | NOS | DIA (mm) | CUTTING LENGTH | TOTAL LENGTH | WEIGHT (kg) |\n"
         table_markdown += "| :--- | :--- | :--- | :--- | :--- | :--- | :--- |\n"
 
@@ -829,7 +824,6 @@ elif st.session_state.selected_module == "BBS":
 
         st.markdown(table_markdown)
 
-        # Save to DB
         user_db = load_db()
         if current_user_name in user_db:
             timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
