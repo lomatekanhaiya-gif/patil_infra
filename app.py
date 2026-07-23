@@ -7,6 +7,8 @@ import datetime
 import pandas as pd
 import time
 import urllib.parse
+import random
+import string
 
 # 🚨 Streamlit नियम: set_page_config नेहमी सर्वात आधी असावे!
 st.set_page_config(page_title="PATIL INFRATECH", page_icon="🏗️", layout="centered")
@@ -189,7 +191,6 @@ st.markdown("""
 
 # 📂 फाईल डेटाबेस मॅनेजमेंट
 DB_FILE = "users_db.json"
-MASTER_PREMIUM_CODE = "PATIL100"  # 🔑 हा तुझा मास्टर प्रिमियम अनलॉक कोड आहे!
 
 def load_db():
     db = {
@@ -199,8 +200,11 @@ def load_db():
             "comment": "मास्टर ॲडमीन अकाउंट",
             "admin_message": "मास्टर ॲडमीन",
             "is_premium": True,
+            "premium_expiry": "2099-12-31",
+            "assigned_code": None,
             "history": []
-        }
+        },
+        "PREMIUM_CODES": {} # Active unused codes database
     }
     if os.path.exists(DB_FILE):
         try:
@@ -219,6 +223,50 @@ def save_db(db):
         json.dump(db, f, ensure_ascii=False, indent=4)
 
 user_db = load_db()
+
+# 🔑 random 6 digit code generator function
+def generate_random_code():
+    return "PATIL-" + ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
+
+# 🎉 3 SECONDS FULL SCREEN CELEBRATION OVERLAY
+def show_premium_celebration(username, days=28):
+    placeholder = st.empty()
+    with placeholder.container():
+        st.markdown(f"""
+            <div style="position: fixed; top:0; left:0; width:100vw; height:100vh; 
+                        background: linear-gradient(135deg, #0b0f19 0%, #1e3a8a 50%, #111827 100%);
+                        z-index: 999999; display: flex; flex-direction: column; 
+                        justify-content: center; align-items: center; text-align: center; padding: 20px;">
+                <h1 style="font-size: 60px; margin: 0;">👑 🎉</h1>
+                <h1 style="color: #60a5fa; font-size: 32px; font-weight: 800; margin-top: 10px;">CONGRATULATIONS {username.upper()}!</h1>
+                <h2 style="color: #f3f4f6; font-size: 22px; margin-top: 10px;">YOU ARE NOW A PREMIUM MEMBER OF PATIL INFRATECH!</h2>
+                <p style="color: #93c5fd; font-size: 18px; margin-top: 5px;">Your WhatsApp sharing & premium features are active for <b>{days} DAYS</b>! 🚀</p>
+            </div>
+        """, unsafe_allow_html=True)
+        time.sleep(3)
+    placeholder.empty()
+
+# ⏳ Check & Auto-Expire Premium Status
+def check_user_premium_status(username):
+    db = load_db()
+    user_info = db.get(username, {})
+    if isinstance(user_info, dict) and user_info.get("is_premium", False):
+        exp_date_str = user_info.get("premium_expiry")
+        if exp_date_str:
+            try:
+                exp_date = datetime.datetime.strptime(exp_date_str, "%Y-%m-%d").date()
+                if datetime.date.today() > exp_date:
+                    user_info["is_premium"] = False
+                    user_info["premium_expiry"] = None
+                    save_db(db)
+                    return False, 0
+                else:
+                    rem_days = (exp_date - datetime.date.today()).days
+                    return True, rem_days
+            except:
+                pass
+        return True, 28
+    return False, 0
 
 # सेशन स्टेट इनिशियलायझेशन
 if "app_user_name" not in st.session_state:
@@ -257,6 +305,7 @@ if st.session_state.app_user_name is None:
                     "comment": "काही नाही",
                     "admin_message": new_welcome_msg,
                     "is_premium": False,
+                    "premium_expiry": None,
                     "history": []
                 }
                 save_db(user_db)
@@ -294,40 +343,61 @@ if st.session_state.app_user_name is None:
                 st.success("✅ आजचे मास्टर मार्केट दर (स्टीलसहित) डेटाबेसमध्ये यशस्वीरित्या अपडेट झाले!")
             
             st.markdown("---")
-            st.markdown("### 📋 युझर डेटाबेस MASTER LIST")
+            st.markdown("### 📋 युझर डेटाबेस MASTER LIST & CODE GENERATION")
             
             for mob in list(user_db.keys()):
-                if mob in ["9999999999", "MASTER_MARKET_RATES"]: continue
+                if mob in ["9999999999", "MASTER_MARKET_RATES", "PREMIUM_CODES"]: continue
                 info = user_db[mob]
                 if not isinstance(info, dict): continue
                     
                 u_name = info.get("id", mob)
                 u_comm = info.get("comment", "काही नाही")
                 u_prem = info.get("is_premium", False)
+                exp_date = info.get("premium_expiry", "N/A")
                 u_hist = info.get("history", [])
                 
                 user_info_table = f"""
 |DateField | माहिती (User Details) |
 | :--- | :--- |
 | **👤 युझरचे नाव (Name)** | {u_name} |
-| **⭐ स्टेटस (Status)** | {'👑 PREMIUM' if u_prem else '🆓 FREE'} |
+| **⭐ स्टेटस (Status)** | {'👑 PREMIUM (Expiry: ' + str(exp_date) + ')' if u_prem else '🆓 FREE'} |
 | **💬 शेवटची युझर कमेंट** | {u_comm} |
 """
                 st.markdown(user_info_table)
                 
-                # 👑 Admin directly Premium toggle button
-                if not u_prem:
-                    if st.button(f"👑 Make Premium User: {u_name}", key=f"prem_{mob}"):
-                        user_db[mob]["is_premium"] = True
+                # 🔑 1. GENERATE UNIQUE 28-DAY CODE FOR THIS USER
+                c_col1, c_col2 = st.columns(2)
+                with c_col1:
+                    if st.button(f"🔑 Generate 28-Day Code for {u_name}", key=f"gen_code_{mob}"):
+                        new_c = generate_random_code()
+                        if "PREMIUM_CODES" not in user_db: user_db["PREMIUM_CODES"] = {}
+                        user_db["PREMIUM_CODES"][new_c] = {
+                            "assigned_to": u_name,
+                            "used": False,
+                            "created_at": datetime.datetime.now().strftime("%Y-%m-%d")
+                        }
+                        # Auto put code in inbox message input
+                        user_db[mob]["admin_message"] = f"तुमचा २८ दिवसांचा प्रिमियम अनलॉक कोड: {new_c}"
                         save_db(user_db)
-                        st.success(f"🎉 {u_name} ला प्रिमियम केले आहे!")
+                        st.success(f"🎉 नवीन कोड तयार झाला: `{new_c}` (इनबॉक्स मेसेजमध्ये ऑटोमॅटिक जोडला गेला!)")
                         st.rerun()
-                else:
-                    if st.button(f"🔻 Revoke Premium: {u_name}", key=f"rev_{mob}"):
-                        user_db[mob]["is_premium"] = False
-                        save_db(user_db)
-                        st.warning(f"❌ {u_name} चे प्रिमियम काढले आहे.")
-                        st.rerun()
+
+                # 👑 2. DIRECT FREE PREMIUM ACTIVATION BY ADMIN
+                with c_col2:
+                    if not u_prem:
+                        if st.button(f"👑 Make Premium Directly (28 Days)", key=f"prem_{mob}"):
+                            user_db[mob]["is_premium"] = True
+                            user_db[mob]["premium_expiry"] = (datetime.date.today() + datetime.timedelta(days=28)).strftime("%Y-%m-%d")
+                            save_db(user_db)
+                            show_premium_celebration(u_name, 28)
+                            st.rerun()
+                    else:
+                        if st.button(f"🔻 Revoke Premium: {u_name}", key=f"rev_{mob}"):
+                            user_db[mob]["is_premium"] = False
+                            user_db[mob]["premium_expiry"] = None
+                            save_db(user_db)
+                            st.warning(f"❌ {u_name} चे प्रिमियम काढले आहे.")
+                            st.rerun()
 
                 if st.button(f"🗑️ Delete User: {u_name}", key=f"del_{mob}"):
                     del user_db[mob]
@@ -337,7 +407,7 @@ if st.session_state.app_user_name is None:
                 
                 current_msg = info.get("admin_message", "ॲडमीन कडून सध्या कोणताही मेसेज नाही.")
                 st.caption(f"📩 सध्याचा मेसेज: {current_msg}")
-                new_msg = st.text_input(f"✍️ {u_name} साठी नवीन मेसेज/कोड टाईप करा:", key=f"msg_{mob}")
+                new_msg = st.text_input(f"✍️ {u_name} साठी नवीन मेसेज/कोड टाईप करा:", value=current_msg, key=f"msg_{mob}")
                 if st.button(f"✉️ मेसेज पाठवा ({u_name})", key=f"btn_msg_{mob}"):
                     if new_msg.strip():
                         user_db[mob]["admin_message"] = new_msg.strip()
@@ -365,10 +435,11 @@ if st.session_state.app_user_name is None:
 current_user_name = st.session_state.app_user_name
 user_db = load_db()
 
-# युझर हेडर व चेंज बटण
+# युझर हेडर व प्रिमियम व्हॅलिडिटी तपासणी
+is_user_premium, remaining_days = check_user_premium_status(current_user_name)
+
 col_u, col_lo = st.columns([3.5, 1.5])
-is_user_premium = user_db.get(current_user_name, {}).get("is_premium", False)
-badge = "👑 PREMIUM" if is_user_premium else "🆓 FREE"
+badge = f"👑 PREMIUM ({remaining_days} days left)" if is_user_premium else "🆓 FREE"
 col_u.success(f"👤 युझर: **{current_user_name}** | [{badge}]")
 
 if col_lo.button("🔄 नाव बदला"):
@@ -385,37 +456,60 @@ if admin_msg:
     st.write("---")
 
 # ==========================================
-# 🔐 ॲप अनलॉक/प्रीमियम फंक्शन (Helper Function)
+# 🔐 ॲप अनलॉक/प्रीमियम फंक्शन (ONE TIME CODE LOGIC)
 # ==========================================
 def render_whatsapp_feature(encoded_msg, key_prefix):
     user_db = load_db()
-    current_user_data = user_db.get(current_user_name, {})
-    is_prem = current_user_data.get("is_premium", False)
+    is_prem, rem_days = check_user_premium_status(current_user_name)
 
     if is_prem:
         # 🟢 प्रिमियम युझरला डायरेक्ट व्हॉट्सॲप शेअर बटण दिसेल
         st.markdown(f'''
             <a href="https://wa.me/?text={encoded_msg}" target="_blank">
                 <button style="width: 100%; background-color: #25D366; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px;">
-                    📱 Share Full Report on WhatsApp (👑 Premium Unlocked)
+                    📱 Share Full Report on WhatsApp (👑 Premium - {rem_days} Days Active)
                 </button>
             </a>
         ''', unsafe_allow_html=True)
     else:
-        # 🔒 फ्री युझरला लॉक दिसेल व कोड विचारला जाईल
-        with st.expander("🔒 WhatsApp Report Sharing - Unlock Premium"):
+        # 🔒 फ्री युझरला लॉक दिसेल व युनिक कोड विचारला जाईल
+        with st.expander("🔒 WhatsApp Report Sharing - Unlock 28 Days Premium"):
             st.warning("⚠️ व्हॉट्सॲपवर पूर्ण रिपोर्ट शेअर करण्याचे फीचर प्रिमियम युझर्ससाठी आहे.")
             st.caption("💡 अनलॉक करण्यासाठी कन्हैया (Admin) कडून मिळालेला प्रिमियम कोड इथे टाका:")
             
             p_code = st.text_input("Enter Activation Code:", type="password", key=f"{key_prefix}_code_input").strip()
             if st.button("🔓 Unlock WhatsApp Share", key=f"{key_prefix}_unlock_btn"):
-                if p_code == MASTER_PREMIUM_CODE or p_code.lower() == "patil100":
+                codes_db = user_db.get("PREMIUM_CODES", {})
+                
+                # १. युनिक कोड तपासणे
+                if p_code in codes_db and not codes_db[p_code].get("used", False):
+                    # Mark code as USED
+                    user_db["PREMIUM_CODES"][p_code]["used"] = True
+                    user_db["PREMIUM_CODES"][p_code]["used_by"] = current_user_name
+                    user_db["PREMIUM_CODES"][p_code]["used_date"] = datetime.datetime.now().strftime("%Y-%m-%d")
+
+                    # Activate 28 Days Premium for User
+                    exp_date = (datetime.date.today() + datetime.timedelta(days=28)).strftime("%Y-%m-%d")
                     user_db[current_user_name]["is_premium"] = True
+                    user_db[current_user_name]["premium_expiry"] = exp_date
                     save_db(user_db)
-                    st.success("🎉 अभिनंदन! तुमचे WhatsApp Sharing फीचर कायमचे अनलॉक झाले आहे!")
+
+                    # 🎉 3 Sec Celebration Overlay
+                    show_premium_celebration(current_user_name, 28)
                     st.rerun()
+
+                # 2. Master Fallback Code (PATIL100)
+                elif p_code == "PATIL100" or p_code.lower() == "patil100":
+                    exp_date = (datetime.date.today() + datetime.timedelta(days=28)).strftime("%Y-%m-%d")
+                    user_db[current_user_name]["is_premium"] = True
+                    user_db[current_user_name]["premium_expiry"] = exp_date
+                    save_db(user_db)
+
+                    show_premium_celebration(current_user_name, 28)
+                    st.rerun()
+
                 else:
-                    st.error("❌ चुकीचा कोड! कृपया ॲडमीनकडून मिळालेला अचूक कोड टाका.")
+                    st.error("❌ हा कोड चुकीचा आहे किंवा आधीच वापरला गेला आहे!")
 
 # ==========================================
 # 🎛️ DASHBOARD / ICON SELECTION SCREEN
@@ -916,7 +1010,6 @@ elif st.session_state.selected_module == "BBS":
             b_nos = bm_bot_nos * num_members
             b_tot_len = b_cut_m * b_nos
             b_unit_wt = (bm_bot_dia ** 2) / 162.0
-            b_tot_wt = b_len_m = b_cut_m * b_nos
             b_tot_wt = b_tot_len * b_unit_wt
             calc_list.append({"Desc": "Bottom Main Bars", "Nos": b_nos, "Dia": bm_bot_dia, "Len": b_cut_m, "TotLen": b_tot_len, "Wt": b_unit_wt, "TotWt": b_tot_wt})
 
