@@ -189,6 +189,7 @@ st.markdown("""
 
 # 📂 फाईल डेटाबेस मॅनेजमेंट
 DB_FILE = "users_db.json"
+MASTER_PREMIUM_CODE = "PATIL100"  # 🔑 हा तुझा मास्टर प्रिमियम अनलॉक कोड आहे!
 
 def load_db():
     db = {
@@ -197,6 +198,7 @@ def load_db():
             "password": "patiladmin123",
             "comment": "मास्टर ॲडमीन अकाउंट",
             "admin_message": "मास्टर ॲडमीन",
+            "is_premium": True,
             "history": []
         }
     }
@@ -254,6 +256,7 @@ if st.session_state.app_user_name is None:
                     "id": u_input,
                     "comment": "काही नाही",
                     "admin_message": new_welcome_msg,
+                    "is_premium": False,
                     "history": []
                 }
                 save_db(user_db)
@@ -300,16 +303,32 @@ if st.session_state.app_user_name is None:
                     
                 u_name = info.get("id", mob)
                 u_comm = info.get("comment", "काही नाही")
+                u_prem = info.get("is_premium", False)
                 u_hist = info.get("history", [])
                 
                 user_info_table = f"""
 |DateField | माहिती (User Details) |
 | :--- | :--- |
 | **👤 युझरचे नाव (Name)** | {u_name} |
+| **⭐ स्टेटस (Status)** | {'👑 PREMIUM' if u_prem else '🆓 FREE'} |
 | **💬 शेवटची युझर कमेंट** | {u_comm} |
 """
                 st.markdown(user_info_table)
                 
+                # 👑 Admin directly Premium toggle button
+                if not u_prem:
+                    if st.button(f"👑 Make Premium User: {u_name}", key=f"prem_{mob}"):
+                        user_db[mob]["is_premium"] = True
+                        save_db(user_db)
+                        st.success(f"🎉 {u_name} ला प्रिमियम केले आहे!")
+                        st.rerun()
+                else:
+                    if st.button(f"🔻 Revoke Premium: {u_name}", key=f"rev_{mob}"):
+                        user_db[mob]["is_premium"] = False
+                        save_db(user_db)
+                        st.warning(f"❌ {u_name} चे प्रिमियम काढले आहे.")
+                        st.rerun()
+
                 if st.button(f"🗑️ Delete User: {u_name}", key=f"del_{mob}"):
                     del user_db[mob]
                     save_db(user_db)
@@ -318,7 +337,7 @@ if st.session_state.app_user_name is None:
                 
                 current_msg = info.get("admin_message", "ॲडमीन कडून सध्या कोणताही मेसेज नाही.")
                 st.caption(f"📩 सध्याचा मेसेज: {current_msg}")
-                new_msg = st.text_input(f"✍️ {u_name} साठी नवीन मेसेज टाईप करा:", key=f"msg_{mob}")
+                new_msg = st.text_input(f"✍️ {u_name} साठी नवीन मेसेज/कोड टाईप करा:", key=f"msg_{mob}")
                 if st.button(f"✉️ मेसेज पाठवा ({u_name})", key=f"btn_msg_{mob}"):
                     if new_msg.strip():
                         user_db[mob]["admin_message"] = new_msg.strip()
@@ -348,11 +367,15 @@ user_db = load_db()
 
 # युझर हेडर व चेंज बटण
 col_u, col_lo = st.columns([3.5, 1.5])
-col_u.success(f"👤 युझर: **{current_user_name}**")
+is_user_premium = user_db.get(current_user_name, {}).get("is_premium", False)
+badge = "👑 PREMIUM" if is_user_premium else "🆓 FREE"
+col_u.success(f"👤 युझर: **{current_user_name}** | [{badge}]")
+
 if col_lo.button("🔄 नाव बदला"):
     st.session_state.app_user_name = None
     st.session_state.current_comment = "काही नाही"
     st.session_state.selected_module = None
+    st.rerun()
     
 current_user_data = user_db.get(current_user_name, {})
 admin_msg = current_user_data.get("admin_message", None)
@@ -360,6 +383,39 @@ if admin_msg:
     st.markdown("### 📥 ॲडमीन कडून आलेला मेसेज (Inbox)")
     st.info(f"📢 **kanha:** {admin_msg}")
     st.write("---")
+
+# ==========================================
+# 🔐 ॲप अनलॉक/प्रीमियम फंक्शन (Helper Function)
+# ==========================================
+def render_whatsapp_feature(encoded_msg, key_prefix):
+    user_db = load_db()
+    current_user_data = user_db.get(current_user_name, {})
+    is_prem = current_user_data.get("is_premium", False)
+
+    if is_prem:
+        # 🟢 प्रिमियम युझरला डायरेक्ट व्हॉट्सॲप शेअर बटण दिसेल
+        st.markdown(f'''
+            <a href="https://wa.me/?text={encoded_msg}" target="_blank">
+                <button style="width: 100%; background-color: #25D366; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px;">
+                    📱 Share Full Report on WhatsApp (👑 Premium Unlocked)
+                </button>
+            </a>
+        ''', unsafe_allow_html=True)
+    else:
+        # 🔒 फ्री युझरला लॉक दिसेल व कोड विचारला जाईल
+        with st.expander("🔒 WhatsApp Report Sharing - Unlock Premium"):
+            st.warning("⚠️ व्हॉट्सॲपवर पूर्ण रिपोर्ट शेअर करण्याचे फीचर प्रिमियम युझर्ससाठी आहे.")
+            st.caption("💡 अनलॉक करण्यासाठी कन्हैया (Admin) कडून मिळालेला प्रिमियम कोड इथे टाका:")
+            
+            p_code = st.text_input("Enter Activation Code:", type="password", key=f"{key_prefix}_code_input").strip()
+            if st.button("🔓 Unlock WhatsApp Share", key=f"{key_prefix}_unlock_btn"):
+                if p_code == MASTER_PREMIUM_CODE or p_code.lower() == "patil100":
+                    user_db[current_user_name]["is_premium"] = True
+                    save_db(user_db)
+                    st.success("🎉 अभिनंदन! तुमचे WhatsApp Sharing फीचर कायमचे अनलॉक झाले आहे!")
+                    st.rerun()
+                else:
+                    st.error("❌ चुकीचा कोड! कृपया ॲडमीनकडून मिळालेला अचूक कोड टाका.")
 
 # ==========================================
 # 🎛️ DASHBOARD / ICON SELECTION SCREEN
@@ -521,7 +577,6 @@ elif st.session_state.selected_module == "Rate Analysis":
 """
             st.markdown(report_table)
             
-            # 🟢 FULL REPORT WHATSAPP TEXT
             msg_text = f"🏗️ *PATIL INFRATECH - RATE ANALYSIS REPORT*\n"
             msg_text += f"👤 *Prepared For:* {current_user_name}\n"
             msg_text += f"🧱 *Work:* Concrete Work ({component.split(' ')[0]})\n"
@@ -542,16 +597,10 @@ elif st.session_state.selected_module == "Rate Analysis":
             
             btn_col1, btn_col2 = st.columns(2)
             with btn_col1:
-                st.markdown(f'''
-                    <a href="https://wa.me/?text={encoded_msg}" target="_blank">
-                        <button style="width: 100%; background-color: #25D366; color: white; border: none; padding: 10px; border-radius: 12px; font-weight: bold; cursor: pointer;">
-                            📱 Share Full Report on WhatsApp
-                        </button>
-                    </a>
-                ''', unsafe_allow_html=True)
+                render_whatsapp_feature(encoded_msg, "ra_conc")
             with btn_col2:
                 st.markdown('''
-                    <button onclick="window.print()" style="width: 100%; background-color: #3b82f6; color: white; border: none; padding: 10px; border-radius: 12px; font-weight: bold; cursor: pointer;">
+                    <button onclick="window.print()" style="width: 100%; background-color: #3b82f6; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px;">
                         📄 Print / Download A3 PDF
                     </button>
                 ''', unsafe_allow_html=True)
@@ -660,7 +709,6 @@ elif st.session_state.selected_module == "Rate Analysis":
 """
             st.markdown(report_table)
 
-            # 🟢 FULL BRICKWORK REPORT WHATSAPP TEXT
             msg_text = f"🏗️ *PATIL INFRATECH - BRICKWORK REPORT*\n"
             msg_text += f"👤 *Prepared For:* {current_user_name}\n"
             msg_text += f"🧱 *Ratio:* {mortar_choice.split(' ')[0]} | *Vol:* {volume} m³\n"
@@ -679,16 +727,10 @@ elif st.session_state.selected_module == "Rate Analysis":
             
             btn_col1, btn_col2 = st.columns(2)
             with btn_col1:
-                st.markdown(f'''
-                    <a href="https://wa.me/?text={encoded_msg}" target="_blank">
-                        <button style="width: 100%; background-color: #25D366; color: white; border: none; padding: 10px; border-radius: 12px; font-weight: bold; cursor: pointer;">
-                            📱 Share Full Report on WhatsApp
-                        </button>
-                    </a>
-                ''', unsafe_allow_html=True)
+                render_whatsapp_feature(encoded_msg, "ra_bw")
             with btn_col2:
                 st.markdown('''
-                    <button onclick="window.print()" style="width: 100%; background-color: #3b82f6; color: white; border: none; padding: 10px; border-radius: 12px; font-weight: bold; cursor: pointer;">
+                    <button onclick="window.print()" style="width: 100%; background-color: #3b82f6; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px;">
                         📄 Print / Download A3 PDF
                     </button>
                 ''', unsafe_allow_html=True)
@@ -874,6 +916,7 @@ elif st.session_state.selected_module == "BBS":
             b_nos = bm_bot_nos * num_members
             b_tot_len = b_cut_m * b_nos
             b_unit_wt = (bm_bot_dia ** 2) / 162.0
+            b_tot_wt = b_len_m = b_cut_m * b_nos
             b_tot_wt = b_tot_len * b_unit_wt
             calc_list.append({"Desc": "Bottom Main Bars", "Nos": b_nos, "Dia": bm_bot_dia, "Len": b_cut_m, "TotLen": b_tot_len, "Wt": b_unit_wt, "TotWt": b_tot_wt})
 
@@ -931,7 +974,6 @@ elif st.session_state.selected_module == "BBS":
 """
         st.markdown(report_table, unsafe_allow_html=True)
 
-        # 🟢 FULL BBS REPORT WHATSAPP TEXT GENERATION (हुबेहूब टेबल डेटा व्हॉट्सॲपवर पाठवणे)
         msg_text = f"🏗️ *PATIL INFRATECH - BAR BENDING SCHEDULE (BBS)*\n"
         msg_text += f"👤 *Prepared For:* {current_user_name}\n"
         msg_text += f"📐 *Component:* {rcc_comp}\n"
@@ -958,21 +1000,14 @@ elif st.session_state.selected_module == "BBS":
 
         btn_col1, btn_col2 = st.columns(2)
         with btn_col1:
-            st.markdown(f'''
-                <a href="https://wa.me/?text={encoded_msg}" target="_blank">
-                    <button style="width: 100%; background-color: #25D366; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer;">
-                        📱 Share Full BBS Report on WhatsApp
-                    </button>
-                </a>
-            ''', unsafe_allow_html=True)
+            render_whatsapp_feature(encoded_msg, "bbs_main")
         with btn_col2:
             st.markdown('''
-                <button onclick="window.print()" style="width: 100%; background-color: #3b82f6; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer;">
+                <button onclick="window.print()" style="width: 100%; background-color: #3b82f6; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px;">
                     📄 Print / Save A3 Size PDF
                 </button>
             ''', unsafe_allow_html=True)
 
-        # इतिहास सेव्ह करणे
         user_db = load_db()
         if current_user_name in user_db:
             timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
