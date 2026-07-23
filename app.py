@@ -629,7 +629,7 @@ elif st.session_state.selected_module == "Rate Analysis":
                 save_db(user_db)
 
 # ==========================================
-# 🛑 MODULE 2: BBS (BAR BENDING SCHEDULE) MODULE - FULLY WORKING
+# 🛑 MODULE 2: BBS (BAR BENDING SCHEDULE) MODULE - WITH AUTO CLEAR COVER
 # ==========================================
 elif st.session_state.selected_module == "BBS":
     if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_to_main_bbs"):
@@ -639,16 +639,44 @@ elif st.session_state.selected_module == "BBS":
     st.write("---")
     st.subheader("🏗️ Bar Bending Schedule (BBS Calculator)")
     
-    # १. RCC घटक निवडणे
-    rcc_comp = st.selectbox("घटक (RCC Component) निवडा:", ["Footing", "Column", "Beam", "Slab"])
+    # ----------------------------------------------------
+    # १. घटकानुसार ऑटोमॅटिक Clear Cover सेट करण्याची लॉजिक
+    # ----------------------------------------------------
+    default_covers = {
+        "Footing": 50,
+        "Column": 40,
+        "Beam": 25,
+        "Slab": 20
+    }
+
+    def update_cover_from_component():
+        # युझरने घटक बदलल्यास आपोआप त्याचा बाय-डिफॉल्ट कव्हर सेट होईल
+        selected_comp = st.session_state.get("bbs_rcc_component", "Footing")
+        st.session_state["bbs_cover"] = default_covers.get(selected_comp, 25)
+
+    # सेशन स्टेटमध्ये सुरुवातीला व्हॅल्यू नसल्यास सेट करा
+    if "bbs_cover" not in st.session_state:
+        st.session_state["bbs_cover"] = 50
+
+    # १. RCC घटक निवडणे (on_change कॉल बॅक वापरला आहे)
+    rcc_comp = st.selectbox(
+        "घटक (RCC Component) निवडा:", 
+        ["Footing", "Column", "Beam", "Slab"],
+        key="bbs_rcc_component",
+        on_change=update_cover_from_component
+    )
     
-    # घटकानुसार बाय-डिफॉल्ट क्लिअर कव्हर ठरवणे
-    default_covers = {"Footing": 50, "Column": 40, "Beam": 25, "Slab": 20}
-    def_cov = default_covers.get(rcc_comp, 25)
-    
-    # २. क्लिअर कव्हर (५ च्या पटीत युझर बदलू शकतो)
+    # २. क्लिअर कव्हर (ऑटो सेलेक्ट होईल + ५ च्या पटीत युझर स्वतः बदलू शकतो)
     st.markdown("#### [१] Clear Cover (मिमी मध्ये)")
-    cover = st.number_input("Clear Cover (mm):", min_value=10, max_value=100, value=def_cov, step=5, key="bbs_cover")
+    cover = st.number_input(
+        "Clear Cover (mm):", 
+        min_value=10, 
+        max_value=100, 
+        step=5, 
+        key="bbs_cover"
+    )
+    
+    st.caption(f"💡 **टीप:** {rcc_comp} साठी मानांकित (Standard) Clear Cover **{cover} mm** आपोआप सेलेक्ट केला आहे. तुम्ही तो बदलू शकता.")
     
     # ३. डायमेन्शन्स (L, B, H / Depth)
     st.markdown("#### [२] घटकाचे आकारमान (Dimensions in mm)")
@@ -684,45 +712,39 @@ elif st.session_state.selected_module == "BBS":
                 save_db(user_db)
             st.success("✅ कमेंट सेव्ह झाली!")
 
-    # ५. कॅल्क्युलेशन रिपोर्ट बटण
+    # ५. कॅल्क्युलेशन रिपोर्ट जनरेट करणे
     if st.button("🧮 CALCULATE BBS REPORT", type="primary", key="bbs_calc_btn"):
         # युनिट वेट गणित: d^2 / 162 (Kg/m)
         unit_weight = (bar_dia ** 2) / 162.0
         
-        # कटिंग लेंथ कॅल्क्युलेशन (घटकानुसार लॉजिक)
-        # L_net, B_net, H_net (कव्हर वजा करून)
+        # कटिंग लेंथ मोजणी (कव्हर वजा करून)
         l_net = length_mm - (2 * cover)
         b_net = width_mm - (2 * cover)
         h_net = height_mm - (2 * cover)
         
-        hook_val = 12 * bar_dia if "135°" in hook_angle else 10 * bar_dia
         bend_deduction_90 = 2 * bar_dia
         
         if rcc_comp == "Footing":
-            # Footing Mesh Bar (L-shape leg = 200mm both side)
             leg_length = 200.0
             cutting_length_mm = l_net + (2 * leg_length) - (2 * bend_deduction_90)
-            spacing = 150.0  # standard 150mm c/c
+            spacing = 150.0  
             no_of_bars = math.ceil(width_mm / spacing) + 1
-            total_bars = no_of_bars * 2 * num_members  # Both ways
+            total_bars = no_of_bars * 2 * num_members  # दोन्ही बाजूंनी (Both ways)
             shape_desc = "Main & Distribution Mesh (Both Ways)"
 
         elif rcc_comp == "Column":
-            # Main Longitudinal Bars + L-development length (300mm at bottom)
             ld_length = 300.0
             cutting_length_mm = height_mm + ld_length
-            total_bars = 4 * num_members  # मानकांनुसार ४ बार पकडून
+            total_bars = 4 * num_members  # ४ बार मानकांनुसार
             shape_desc = "Vertical Main Bars with L-bend"
 
         elif rcc_comp == "Beam":
-            # Main Bars with L-development both side (ld = 50d/300mm)
             ld_length = max(300.0, 30 * bar_dia)
             cutting_length_mm = l_net + (2 * ld_length) - (2 * bend_deduction_90)
-            total_bars = 4 * num_members  # टॉप २ + बॉटम २
+            total_bars = 4 * num_members
             shape_desc = "Straight Longitudinal Bars with Anchoring Hooks"
 
         else:  # Slab
-            # Straight Main Bars with 90 deg hooks at ends
             hook_bend = 10 * bar_dia
             cutting_length_mm = l_net + (2 * hook_bend)
             spacing = 150.0
@@ -745,6 +767,7 @@ elif st.session_state.selected_module == "BBS":
 | **Component Name** | {rcc_comp} |
 | **Bar Shape Description** | {shape_desc} |
 | **Diameter of Bar (mm)** | {bar_dia} mm |
+| **Clear Cover Used** | {cover} mm |
 | **Unit Weight (d²/162)** | {unit_weight:.3f} Kg/m |
 | **Cutting Length per Bar** | {cutting_length_m:.3f} m ({cutting_length_mm:.0f} mm) |
 | **Total Number of Bars** | {total_bars} Nos |
@@ -755,7 +778,7 @@ elif st.session_state.selected_module == "BBS":
 """
         st.markdown(report_table)
 
-        # इतिहास जतन करणे
+        # इतिहास डेटाबेसमध्ये जतन करणे
         user_db = load_db()
         if current_user_name in user_db:
             timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
