@@ -245,7 +245,7 @@ def show_premium_celebration(username, duration_str="28 Days"):
         time.sleep(3)
     placeholder.empty()
 
-# ⏳ प्रिमियम स्टेटस व अचूक एक्सपायरी तपासणी (Minutes/Hours/Days Support)
+# ⏳ प्रिमियम स्टेटस व अचूक एक्सपायरी तपासणी
 def check_user_premium_status(username):
     db = load_db()
     user_info = db.get(username, {})
@@ -253,7 +253,6 @@ def check_user_premium_status(username):
         exp_date_str = user_info.get("premium_expiry")
         if exp_date_str:
             try:
-                # Full datetime checking
                 exp_datetime = datetime.datetime.strptime(exp_date_str, "%Y-%m-%d %H:%M:%S")
                 now_datetime = datetime.datetime.now()
                 
@@ -397,13 +396,13 @@ if st.session_state.app_user_name is None:
                                 "used": False,
                                 "created_at": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                             }
-                            # इनबॉक्समध्ये मेसेज जोडणे
+                            # युझरच्या इनबॉक्समध्ये हा कोड मेसेज म्हणून पाठवणे
                             user_db[mob]["admin_message"] = f"तुमचा प्रिमियम कोड: {new_c} (ॲपमध्ये टाकून प्रिमियम अनलॉक करा)"
                             save_db(user_db)
                             st.success(f"🎉 {u_name} साठी कोड तयार झाला: `{new_c}`")
                             st.rerun()
 
-                # ⏱️ 2. CUSTOM TIME EXPAND / SET BY ADMIN (Minutes, Hours, Days Option)
+                # ⏱️ 2. CUSTOM TIME EXPAND / SET BY ADMIN
                 st.markdown("##### ⏱️ सेट किंवा वाढवा Custom Premium Time:")
                 t_col1, t_col2 = st.columns(2)
                 with t_col1:
@@ -482,7 +481,8 @@ if col_lo.button("🔄 नाव बदला"):
     st.session_state.current_comment = "काही नाही"
     st.session_state.selected_module = None
     st.rerun()
-    
+
+# 🔄 इनबॉक्स मेसेज नेहमी लेटेस्ट डेटाबेसमधून लोड करणे
 current_user_data = user_db.get(current_user_name, {})
 admin_msg = current_user_data.get("admin_message", None)
 if admin_msg:
@@ -514,12 +514,12 @@ if not is_user_premium:
                     user_db[current_user_name]["is_premium"] = True
                     user_db[current_user_name]["premium_expiry"] = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
 
-                    # 🔄 ३. इनबॉक्स मेसेज पूर्ववत जुन्या वेलकम मेसेजमध्ये बदलणे!
+                    # 🔄 ३. इनबॉक्स मेसेज ऑटो-रिसेट करून जुन्या मूळ वेलकम मेसेजवर आणणे!
                     user_db[current_user_name]["admin_message"] = f"Welcome {current_user_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये हार्दिक स्वागत🥳"
                     
                     save_db(user_db)
 
-                    # 🎉 ३ सेकंदांचा पूर्ण ऑपेक ॲनिमेशन दाखवणे
+                    # 🎉 ३ सेकंदांचा १००% ऑपेक प्रिमियम ओव्हरले ॲनिमेशन दाखवणे
                     show_premium_celebration(current_user_name, "28 Days")
                     st.rerun()
             else:
@@ -555,19 +555,21 @@ def render_whatsapp_feature(encoded_msg, key_prefix):
                     if c_info.get("used", False):
                         st.error("❌ हा कोड आधीच वापरला गेला आहे! तो आता व्हॅलिड नाही.")
                     else:
-                        # कोड USED करणे
+                        # १. कोड USED करणे
                         user_db["PREMIUM_CODES"][p_code]["used"] = True
                         user_db["PREMIUM_CODES"][p_code]["used_by"] = current_user_name
                         user_db["PREMIUM_CODES"][p_code]["used_date"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+                        # २. २८ दिवसांचे प्रिमियम सेव्ह करणे
                         exp_datetime = datetime.datetime.now() + datetime.timedelta(days=28)
                         user_db[current_user_name]["is_premium"] = True
                         user_db[current_user_name]["premium_expiry"] = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
                         
-                        # इनबॉक्स पूर्ववत करणे
+                        # 🔄 ३. इनबॉक्स मेसेज पूर्ववत वेलकम मेसेजवर रिसेट करणे!
                         user_db[current_user_name]["admin_message"] = f"Welcome {current_user_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये हार्दिक स्वागत🥳"
                         save_db(user_db)
 
+                        # 🎉 ३ सेकंदांचा प्रिमियम सेलिब्रेशन ओव्हरले
                         show_premium_celebration(current_user_name, "28 Days")
                         st.rerun()
                 else:
