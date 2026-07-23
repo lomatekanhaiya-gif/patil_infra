@@ -60,7 +60,7 @@ if not st.session_state.welcome_completed:
 
 
 # ==========================================
-# 🎨 ULTRA-MOBILE & CLEAN THEME STYLING (CSS)
+# 🎨 ULTRA-PREMIUM INPUT & CLEAN THEME STYLING (CSS)
 # ==========================================
 st.markdown("""
     <style>
@@ -93,51 +93,63 @@ st.markdown("""
         border-collapse: collapse;
     }
     .stMarkdown th, .stMarkdown td {
-        padding: 8px 12px !important;
+        padding: 10px 14px !important;
         border: 1px solid #374151 !important;
     }
 
     /* Universal Screen Touch Glow */
     .stApp:active {
-        box-shadow: inset 0 0 50px rgba(59, 130, 246, 0.2) !important;
+        box-shadow: inset 0 0 50px rgba(59, 130, 246, 0.15) !important;
     }
 
     /* Card Styling */
     div.stForm, div[data-testid="stExpander"] {
-        background: rgba(17, 24, 39, 0.8) !important;
+        background: rgba(17, 24, 39, 0.75) !important;
         backdrop-filter: blur(16px);
-        border: 1px solid rgba(59, 130, 246, 0.2) !important;
+        border: 1px solid rgba(59, 130, 246, 0.25) !important;
         border-radius: 20px !important;
         padding: 18px !important;
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     }
 
-    /* Inputs Theme Gray/Blue Border */
+    /* 💎 PREMIUM INPUTS & DROPDOWNS STYLING */
     div[data-baseweb="select"] > div,
     div[data-baseweb="input"] > div,
     div[data-baseweb="base-input"],
-    div[data-baseweb="popover"],
     input, select, textarea {
         border-color: #374151 !important;
-        border-radius: 12px !important;
-        background-color: #1f2937 !important;
+        border-radius: 14px !important;
+        background-color: #161e2e !important;
         color: #ffffff !important;
         outline: none !important;
+        font-weight: 500 !important;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4) !important;
+        transition: all 0.25s ease-in-out !important;
     }
 
-    /* Focus Theme Blue Glow */
+    /* 🌟 PREMIUM FOCUS GLOW EFFECT */
     div[data-baseweb="select"]:focus-within > div,
     div[data-baseweb="input"]:focus-within > div,
     div[data-baseweb="base-input"]:focus-within,
     input:focus, select:focus, textarea:focus {
         border-color: #3b82f6 !important;
-        box-shadow: 0 0 18px rgba(59, 130, 246, 0.5) !important;
-        outline: none !important;
+        background-color: #1f2937 !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3), inset 0 1px 2px rgba(0,0,0,0.2) !important;
+        transform: translateY(-1px);
+    }
+
+    /* Input Labels Upgrade */
+    label, div[data-testid="stWidgetLabel"] p {
+        color: #9ca3af !important;
+        font-weight: 600 !important;
+        font-size: 13px !important;
+        letter-spacing: 0.3px !important;
+        margin-bottom: 4px !important;
     }
 
     /* Primary Buttons Red Gradient */
     div.stButton > button[kind="primary"] {
-        background: linear-gradient(90deg, #dc2626 100%, #dc2626 100%) !important;
+        background: linear-gradient(90deg, #dc2626 0%, #ef4444 100%) !important;
         color: white !important;
         font-weight: 700 !important;
         border-radius: 14px !important;
@@ -258,7 +270,6 @@ if st.session_state.app_user_name is None:
         admin_id = st.text_input("Admin ID:", key="adm_id")
         admin_pass = st.text_input("Password:", type="password", key="adm_pass")
         
-        # Secrets वापरून सुरक्षितता तपासणे (किंवा फॉलबॅक वापरणे)
         secret_admin_id = st.secrets.get("ADMIN_ID", "kanha_1p") if hasattr(st, "secrets") else "kanha_1p"
         secret_admin_pass = st.secrets.get("ADMIN_PASS", "@Dellg15") if hasattr(st, "secrets") else "@Dellg15"
 
@@ -629,7 +640,7 @@ elif st.session_state.selected_module == "Rate Analysis":
                 save_db(user_db)
 
 # ==========================================
-# 🛑 MODULE 2: BBS (BAR BENDING SCHEDULE) MODULE - CUSTOM REPORT TABLE FORMAT
+# 🛑 MODULE 2: BBS (BAR BENDING SCHEDULE) MODULE
 # ==========================================
 elif st.session_state.selected_module == "BBS":
     if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_to_main_bbs"):
@@ -849,12 +860,11 @@ elif st.session_state.selected_module == "BBS":
         st.markdown(f"### 🏗️ BAR BENDING SCHEDULE (BBS) REPORT")
         st.info(f"👤 **Prepared For:** {current_user_name} | **घटक:** {rcc_comp} | **Clear Cover:** {cover} mm | **एकूण घटक संख्या:** {num_members}")
 
-        # नवीन फॉरमॅटनुसार टेबल रोज (Rows) तयार करणे
+        # टेबल रोज (Rows)
         table_rows = ""
         for item in calc_list:
             table_rows += f"| {item['Desc']} | {item['Nos']} | {item['Dia']} mm | {item['Len']:.3f} m | {item['TotLen']:.2f} m | {item['Wt']:.3f} Kg/m | {item['TotWt']:.2f} Kg |\n"
 
-        # युझरने मागितलेला नेमका फॉरमॅट
         report_table = f"""
 | DESCRIPTION | NOS | DIA | LENGTH | TOTAL LENGTH | WEIGHT | TOTAL WEIGHT |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
