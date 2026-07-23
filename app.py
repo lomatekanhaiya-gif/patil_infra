@@ -629,7 +629,7 @@ elif st.session_state.selected_module == "Rate Analysis":
                 save_db(user_db)
 
 # ==========================================
-# 🛑 MODULE 2: BBS (BAR BENDING SCHEDULE) MODULE - WITH AUTO CLEAR COVER
+# 🛑 MODULE 2: BBS (BAR BENDING SCHEDULE) MODULE - UPDATED WITH METERS INPUT & MM CALCULATIONS
 # ==========================================
 elif st.session_state.selected_module == "BBS":
     if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_to_main_bbs"):
@@ -650,24 +650,32 @@ elif st.session_state.selected_module == "BBS":
     }
 
     def update_cover_from_component():
-        # युझरने घटक बदलल्यास आपोआप त्याचा बाय-डिफॉल्ट कव्हर सेट होईल
         selected_comp = st.session_state.get("bbs_rcc_component", "Footing")
         st.session_state["bbs_cover"] = default_covers.get(selected_comp, 25)
 
-    # सेशन स्टेटमध्ये सुरुवातीला व्हॅल्यू नसल्यास सेट करा
     if "bbs_cover" not in st.session_state:
         st.session_state["bbs_cover"] = 50
 
-    # १. RCC घटक निवडणे (on_change कॉल बॅक वापरला आहे)
+    # १. RCC घटक निवडणे
     rcc_comp = st.selectbox(
         "घटक (RCC Component) निवडा:", 
         ["Footing", "Column", "Beam", "Slab"],
         key="bbs_rcc_component",
         on_change=update_cover_from_component
     )
-    
-    # २. क्लिअर कव्हर (ऑटो सेलेक्ट होईल + ५ च्या पटीत युझर स्वतः बदलू शकतो)
-    st.markdown("#### [१] Clear Cover (मिमी मध्ये)")
+
+    # २. डायमेन्शन्स L, B, H (मीटर (m) मध्ये इनपुट)
+    st.markdown("#### [१] घटकाचे आकारमान (Dimensions in Meters - m)")
+    dim_col1, dim_col2, dim_col3 = st.columns(3)
+    with dim_col1:
+        length_m = st.number_input("लांबी L (m):", min_value=0.1, value=3.0, step=0.1, key="bbs_l")
+    with dim_col2:
+        width_m = st.number_input("रुंदी B (m):", min_value=0.1, value=3.0, step=0.1, key="bbs_b")
+    with dim_col3:
+        height_m = st.number_input("उंची/खोली H/Depth (m):", min_value=0.1, value=0.45, step=0.05, key="bbs_h")
+
+    # ३. क्लिअर कव्हर (ऑटो सेलेक्ट + ५ च्या पटीत युझर बदलू शकतो)
+    st.markdown("#### [२] Clear Cover (मिमी मध्ये)")
     cover = st.number_input(
         "Clear Cover (mm):", 
         min_value=10, 
@@ -678,16 +686,6 @@ elif st.session_state.selected_module == "BBS":
     
     st.caption(f"💡 **टीप:** {rcc_comp} साठी मानांकित (Standard) Clear Cover **{cover} mm** आपोआप सेलेक्ट केला आहे. तुम्ही तो बदलू शकता.")
     
-    # ३. डायमेन्शन्स (L, B, H / Depth)
-    st.markdown("#### [२] घटकाचे आकारमान (Dimensions in mm)")
-    dim_col1, dim_col2, dim_col3 = st.columns(3)
-    with dim_col1:
-        length_mm = st.number_input("लांबी L (mm):", min_value=100.0, value=3000.0, step=100.0, key="bbs_l")
-    with dim_col2:
-        width_mm = st.number_input("रुंदी B (mm):", min_value=100.0, value=3000.0, step=100.0, key="bbs_b")
-    with dim_col3:
-        height_mm = st.number_input("उंची/खोली H/Depth (mm):", min_value=100.0, value=450.0, step=50.0, key="bbs_h")
-        
     # ४. स्टील बार डायमीटर आणि हुक अँगल
     st.markdown("#### [३] स्टील बार तपशील (Steel Details)")
     st_col1, st_col2, st_col3 = st.columns(3)
@@ -712,12 +710,17 @@ elif st.session_state.selected_module == "BBS":
                 save_db(user_db)
             st.success("✅ कमेंट सेव्ह झाली!")
 
-    # ५. कॅल्क्युलेशन रिपोर्ट जनरेट करणे
+    # ५. कॅल्क्युलेशन रिपोर्ट जनरेट करणे (मीटरचे मिनीमीटर मध्ये रूपांतर करून अचूक गणना)
     if st.button("🧮 CALCULATE BBS REPORT", type="primary", key="bbs_calc_btn"):
+        # internal Calculation साठी m -> mm मध्ये कन्व्हर्ट केले
+        length_mm = length_m * 1000.0
+        width_mm = width_m * 1000.0
+        height_mm = height_m * 1000.0
+
         # युनिट वेट गणित: d^2 / 162 (Kg/m)
         unit_weight = (bar_dia ** 2) / 162.0
         
-        # कटिंग लेंथ मोजणी (कव्हर वजा करून)
+        # कटिंग लेंथ मोजणी (कव्हर वजा करून mm मध्ये)
         l_net = length_mm - (2 * cover)
         b_net = width_mm - (2 * cover)
         h_net = height_mm - (2 * cover)
@@ -765,6 +768,7 @@ elif st.session_state.selected_module == "BBS":
 | Parameter | Value / Detail |
 | :--- | :--- |
 | **Component Name** | {rcc_comp} |
+| **Dimensions (L x B x H)** | {length_m:.2f} m x {width_m:.2f} m x {height_m:.2f} m |
 | **Bar Shape Description** | {shape_desc} |
 | **Diameter of Bar (mm)** | {bar_dia} mm |
 | **Clear Cover Used** | {cover} mm |
