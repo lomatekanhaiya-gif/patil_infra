@@ -164,6 +164,15 @@ st.markdown("""
         border: 1px solid rgba(255, 255, 255, 0.15);
     }
 
+    /* 👑 ADMIN PANEL USER CARD STYLING */
+    .admin-user-card {
+        background: rgba(31, 41, 55, 0.85);
+        border: 1px solid #3b82f6;
+        border-radius: 14px;
+        padding: 15px;
+        margin-bottom: 12px;
+    }
+
     /* 🖨️ A3 PRINT STYLING CONTROL */
     @media print {
         @page {
@@ -353,9 +362,9 @@ if st.session_state.app_user_name is None:
                 st.success("✅ आजचे मास्टर मार्केट दर (स्टीलसहित) डेटाबेसमध्ये यशस्वीरित्या अपडेट झाले!")
             
             st.markdown("---")
-            st.markdown("### 📋 युझर डेटाबेस MASTER LIST (Clean View)")
+            st.markdown("### 📋 युझर डेटाबेस MASTER LIST (Super Clean UI)")
             
-            # 🧹 CLEAN USER LIST EXPANDERS (राडा पूर्णपणे बंद)
+            # 🧹 CLEAN & LARGE USER CARDS IN ADMIN PANEL
             for mob in list(user_db.keys()):
                 if mob in ["9999999999", "MASTER_MARKET_RATES", "PREMIUM_CODES"]: continue
                 info = user_db[mob]
@@ -368,7 +377,7 @@ if st.session_state.app_user_name is None:
                 is_req = info.get("requested_code", False)
                 u_hist = info.get("history", [])
                 
-                # १. युझरसाठी तयार केलेला एकमेव ॲक्टिव्ह (Unused) कोड शोधणे
+                # युझरचा एकमेव अनयुझ्ड कोड शोधणे
                 assigned_code = None
                 if "PREMIUM_CODES" in user_db:
                     for c_code, c_data in user_db["PREMIUM_CODES"].items():
@@ -376,19 +385,27 @@ if st.session_state.app_user_name is None:
                             assigned_code = c_code
                             break
 
-                status_label = "👑 PREMIUM" if u_prem else ("🚨 CODE REQUESTED!" if is_req else "🆓 FREE")
+                status_badge = "👑 PREMIUM" if u_prem else ("🚨 CODE REQUESTED!" if is_req else "🆓 FREE USER")
                 
-                # 👤 USER EXPANDER HEADER
-                with st.expander(f"👤 {u_name} | [{status_label}]"):
-                    st.write(f"**माहिती:** Status = `{status_label}` | Expiry = `{exp_date}` | Active Unused Code = `{assigned_code if assigned_code else 'काही नाही'}`")
-                    st.write(f"**शेवटची कमेंट:** {u_comm}")
+                # 👤 SINGLE USER EXPANDER HEADER
+                with st.expander(f"👤 {u_name.upper()} ➔ [{status_badge}]"):
                     
-                    # 🚀 1. DIRECT ONE-CLICK CODE GENERATE & SEND BUTTON
-                    st.markdown("---")
+                    # 🖥️ LARGE & BOLD DETAILS DISPLAY (मोठी आणि स्पष्ट माहिती)
+                    st.markdown(f"""
+                        <div class="admin-user-card">
+                            <h3 style="margin:0; color:#60a5fa;">👤 {u_name}</h3>
+                            <p style="margin:5px 0; font-size:16px;"><b>माहिती/स्टेटस:</b> <span style="color:#f59e0b;">{status_badge}</span></p>
+                            <p style="margin:5px 0; font-size:15px;"><b>प्रिमियम मुदत (Expiry):</b> <code>{exp_date}</code></p>
+                            <p style="margin:5px 0; font-size:15px;"><b>ॲक्टिव्ह कोड (Unused):</b> <code style="color:#10b981; font-size:16px;">{assigned_code if assigned_code else 'काही नाही'}</code></p>
+                            <p style="margin:5px 0; font-size:14px; color:#9ca3af;"><b>युझर कमेंट:</b> {u_comm}</p>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    
+                    # 🚀 1. ONE-CLICK CODE GENERATE & SEND BUTTON
                     if assigned_code:
-                        st.info(f"💡 {u_name} साठी तयार कोड: `{assigned_code}` (इनबॉक्समध्ये पाठवलेला आहे)")
+                        st.info(f"💡 {u_name} साठी आधीच एक कोड तयार आहे: `{assigned_code}` (युझर इनबॉक्समध्ये उपलब्ध)")
                     else:
-                        if st.button(f"🚀 Generate & Send Unique Code to {u_name}", key=f"gen_send_{mob}"):
+                        if st.button(f"🚀 Generate & Send Code to {u_name}", key=f"gen_send_{mob}"):
                             new_c = generate_random_code()
                             if "PREMIUM_CODES" not in user_db: user_db["PREMIUM_CODES"] = {}
                             user_db["PREMIUM_CODES"][new_c] = {
@@ -397,20 +414,21 @@ if st.session_state.app_user_name is None:
                                 "created_at": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                             }
                             user_db[mob]["admin_message"] = f"तुमचा प्रिमियम कोड: {new_c} (ॲपमध्ये टाकून प्रिमियम अनलॉक करा)"
-                            user_db[mob]["requested_code"] = False # Reset Request Status
+                            user_db[mob]["requested_code"] = False
                             save_db(user_db)
-                            st.success(f"🎉 {u_name} साठी कोड ऑटोमॅटिकली तयार होऊन पाठवला गेला: `{new_c}`")
+                            st.success(f"🎉 {u_name} ला ऑटोमॅटिकली कोड पाठवला: `{new_c}`")
                             st.rerun()
 
                     # ⏱️ 2. CUSTOM TIME EXPAND / SET BY ADMIN
-                    st.markdown("##### ⏱️ सेट किंवा वाढवा Custom Premium Time:")
+                    st.markdown("---")
+                    st.markdown("##### ⏱️ प्रिमियम वेळ सेट करा / वाढवा (Custom Expiry):")
                     t_col1, t_col2 = st.columns(2)
                     with t_col1:
-                        time_val = st.number_input("कालावधी संख्या (Value):", min_value=1, value=28, key=f"t_val_{mob}")
+                        time_val = st.number_input("संख्या (Value):", min_value=1, value=28, key=f"t_val_{mob}")
                     with t_col2:
-                        time_unit = st.selectbox("युनिट निवडा (Unit):", ["Minutes", "Hours", "Days"], index=2, key=f"t_unit_{mob}")
+                        time_unit = st.selectbox("युनिट (Unit):", ["Minutes", "Hours", "Days"], index=2, key=f"t_unit_{mob}")
 
-                    if st.button(f"⚡ Set Custom Premium ({time_val} {time_unit})", key=f"btn_custom_{mob}"):
+                    if st.button(f"⚡ Set Premium Time ({time_val} {time_unit})", key=f"btn_custom_{mob}"):
                         now = datetime.datetime.now()
                         if time_unit == "Minutes":
                             exp_time = now + datetime.timedelta(minutes=time_val)
@@ -423,7 +441,7 @@ if st.session_state.app_user_name is None:
                         user_db[mob]["premium_expiry"] = exp_time.strftime("%Y-%m-%d %H:%M:%S")
                         user_db[mob]["requested_code"] = False
                         save_db(user_db)
-                        st.success(f"✅ {u_name} साठी {time_val} {time_unit} चा प्रिमियम सेव्ह झाला!")
+                        st.success(f"✅ {u_name} साठी {time_val} {time_unit} सेव्ह केले!")
                         show_premium_celebration(u_name, f"{time_val} {time_unit}")
                         st.rerun()
 
@@ -435,13 +453,14 @@ if st.session_state.app_user_name is None:
                             st.warning(f"❌ {u_name} चे प्रिमियम काढले आहे.")
                             st.rerun()
 
+                    st.markdown("---")
                     current_msg = info.get("admin_message", "ॲडमीन कडून सध्या कोणताही मेसेज नाही.")
                     new_msg = st.text_input(f"✍️ {u_name} साठी इनबॉक्स मेसेज बदलणे:", value=current_msg, key=f"msg_{mob}")
                     if st.button(f"✉️ मेसेज सेव्ह करा ({u_name})", key=f"btn_msg_{mob}"):
                         if new_msg.strip():
                             user_db[mob]["admin_message"] = new_msg.strip()
                             save_db(user_db)
-                            st.success(f"✅ '{u_name}' चा इनबॉक्स मेसेज सेव्ह झाला!")
+                            st.success(f"✅ '{u_name}' चा इनबॉक्स मेसेज अपडेट झाला!")
                             st.rerun()
 
                     if st.button(f"🗑️ Delete User: {u_name}", key=f"del_{mob}"):
@@ -450,12 +469,14 @@ if st.session_state.app_user_name is None:
                         st.error(f"❌ युझर '{u_name}' डिलीट केला आहे!")
                         st.rerun()
                     
-                    st.markdown("##### 📜 जनरेट केलेले एस्टिमेशन रिपोर्ट्स")
+                    # 📜 USER REPORTS DISPLAY (टीप/नोट्स पूर्णपणे बंद!)
+                    st.markdown("---")
+                    st.markdown(f"##### 📜 {u_name} चे जनरेट केलेले एस्टिमेशन रिपोर्ट्स ({len(u_hist)})")
                     if u_hist:
                         for idx, hist in enumerate(u_hist, 1):
                             if isinstance(hist, dict):
-                                st.markdown(f"🗓️ **रिपोर्ट क्रमांक {idx} | तारीख व वेळ: `{hist.get('timestamp', 'N/A')}`**")
-                                st.markdown(f"* **कामाची टीप:** {hist.get('user_note', 'काही नाही')}")
+                                st.markdown(f"🗓️ **रिपोर्ट क्रमांक {idx} | वेळ: `{hist.get('timestamp', 'N/A')}`**")
+                                # विनाकारण दिसणाऱ्या नोट्स पूर्णपणे काढून टाकल्या आहेत!
                                 st.markdown(hist.get("report_data", "डेटा उपलब्ध नाही"))
                                 st.write("---")
                     else:
