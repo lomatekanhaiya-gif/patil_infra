@@ -629,7 +629,7 @@ elif st.session_state.selected_module == "Rate Analysis":
                 save_db(user_db)
 
 # ==========================================
-# 🛑 MODULE 2: BBS (BAR BENDING SCHEDULE) MODULE - UPDATED WITH METERS INPUT & MM CALCULATIONS
+# 🛑 MODULE 2: BBS (BAR BENDING SCHEDULE) MODULE - MULTI-BAR SELECTION LOGIC
 # ==========================================
 elif st.session_state.selected_module == "BBS":
     if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_to_main_bbs"):
@@ -640,7 +640,7 @@ elif st.session_state.selected_module == "BBS":
     st.subheader("🏗️ Bar Bending Schedule (BBS Calculator)")
     
     # ----------------------------------------------------
-    # १. घटकानुसार ऑटोमॅटिक Clear Cover सेट करण्याची लॉजिक
+    # १. घटकानुसार ऑटोमॅटिक Clear Cover सेट करणे
     # ----------------------------------------------------
     default_covers = {
         "Footing": 50,
@@ -664,17 +664,17 @@ elif st.session_state.selected_module == "BBS":
         on_change=update_cover_from_component
     )
 
-    # २. डायमेन्शन्स L, B, H (मीटर (m) मध्ये इनपुट)
+    # २. आकारमान L, B, H (मीटर - m मध्ये)
     st.markdown("#### [१] घटकाचे आकारमान (Dimensions in Meters - m)")
     dim_col1, dim_col2, dim_col3 = st.columns(3)
     with dim_col1:
         length_m = st.number_input("लांबी L (m):", min_value=0.1, value=3.0, step=0.1, key="bbs_l")
     with dim_col2:
-        width_m = st.number_input("रुंदी B (m):", min_value=0.1, value=3.0, step=0.1, key="bbs_b")
+        width_m = st.number_input("रुंदी B (m):", min_value=0.1, value=0.3, step=0.05, key="bbs_b")
     with dim_col3:
         height_m = st.number_input("उंची/खोली H/Depth (m):", min_value=0.1, value=0.45, step=0.05, key="bbs_h")
 
-    # ३. क्लिअर कव्हर (ऑटो सेलेक्ट + ५ च्या पटीत युझर बदलू शकतो)
+    # ३. क्लिअर कव्हर
     st.markdown("#### [२] Clear Cover (मिमी मध्ये)")
     cover = st.number_input(
         "Clear Cover (mm):", 
@@ -683,24 +683,63 @@ elif st.session_state.selected_module == "BBS":
         step=5, 
         key="bbs_cover"
     )
+    st.caption(f"💡 **टीप:** {rcc_comp} साठी मानांकित Clear Cover **{cover} mm** आपोआप सेट केला आहे.")
+
+    # ४. घटकानुसार विविध बार निवडीचे पर्याय (Dynamic Bar Options)
+    st.markdown("#### [३] स्टील बारचे प्रकार आणि व्यास (Steel Reinforcement Details)")
     
-    st.caption(f"💡 **टीप:** {rcc_comp} साठी मानांकित (Standard) Clear Cover **{cover} mm** आपोआप सेलेक्ट केला आहे. तुम्ही तो बदलू शकता.")
-    
-    # ४. स्टील बार डायमीटर आणि हुक अँगल
-    st.markdown("#### [३] स्टील बार तपशील (Steel Details)")
-    st_col1, st_col2, st_col3 = st.columns(3)
-    with st_col1:
-        bar_dia = st.selectbox("बारचा व्यास DIA (mm):", [8, 10, 12, 16, 20, 25, 32], index=2, key="bbs_dia")
-    with st_col2:
-        hook_angle = st.selectbox("Hook Angle:", ["90° (Bend = 2d)", "135° (Hook = 10d/12d)"], key="bbs_hook")
-    with st_col3:
-        num_members = st.number_input("एकूण घटक संख्या (No. of Members):", min_value=1, value=1, step=1, key="bbs_mem")
+    dia_list = [8, 10, 12, 16, 20, 25, 32]
+
+    # variables तयार ठेवू
+    bars_data = [] # stores dicts of each bar type calculation
+    num_members = st.number_input("एकूण घटक संख्या (No. of Identical Members):", min_value=1, value=1, step=1, key="bbs_mem")
+
+    if rcc_comp == "Footing":
+        c1, c2 = st.columns(2)
+        with c1:
+            f_main_dia = st.selectbox("Main Bar DIA (mm):", dia_list, index=2, key="f_m_dia") # 12mm
+            f_main_spacing = st.number_input("Main Bar Spacing (mm):", min_value=50, value=150, step=10, key="f_m_sp")
+        with c2:
+            f_dist_dia = st.selectbox("Distribution Bar DIA (mm):", dia_list, index=1, key="f_d_dia") # 10mm
+            f_dist_spacing = st.number_input("Distribution Bar Spacing (mm):", min_value=50, value=150, step=10, key="f_d_sp")
+
+    elif rcc_comp == "Column":
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            col_main_dia = st.selectbox("Main Vertical Bar DIA (mm):", dia_list, index=3, key="col_m_dia") # 16mm
+            col_main_nos = st.number_input("Main Bars (नग/Nos):", min_value=4, value=4, step=2, key="col_m_nos")
+        with c2:
+            col_st_dia = st.selectbox("Stirrup/Ring DIA (mm):", dia_list, index=0, key="col_s_dia") # 8mm
+            col_st_spacing = st.number_input("Stirrup Spacing (mm):", min_value=50, value=150, step=10, key="col_s_sp")
+        with c3:
+            col_hook_angle = st.selectbox("Ring Hook Angle:", ["135° (Hook = 10d)", "90° (Hook = 6d)"], key="col_h_ang")
+
+    elif rcc_comp == "Beam":
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            bm_top_dia = st.selectbox("Top Main Bar DIA (mm):", dia_list, index=2, key="bm_t_dia") # 12mm
+            bm_top_nos = st.number_input("Top Bars (नग/Nos):", min_value=2, value=2, step=1, key="bm_t_nos")
+        with c2:
+            bm_bot_dia = st.selectbox("Bottom Main Bar DIA (mm):", dia_list, index=3, key="bm_b_dia") # 16mm
+            bm_bot_nos = st.number_input("Bottom Bars (नग/Nos):", min_value=2, value=2, step=1, key="bm_b_nos")
+        with c3:
+            bm_st_dia = st.selectbox("Stirrup/Ring DIA (mm):", dia_list, index=0, key="bm_s_dia") # 8mm
+            bm_st_spacing = st.number_input("Stirrup Spacing (mm):", min_value=50, value=150, step=10, key="bm_s_sp")
+
+    else:  # Slab
+        c1, c2 = st.columns(2)
+        with c1:
+            sl_main_dia = st.selectbox("Main Bar DIA (mm):", dia_list, index=1, key="sl_m_dia") # 10mm
+            sl_main_spacing = st.number_input("Main Bar Spacing (mm):", min_value=50, value=150, step=10, key="sl_m_sp")
+        with c2:
+            sl_dist_dia = st.selectbox("Distribution Bar DIA (mm):", dia_list, index=0, key="sl_d_dia") # 8mm
+            sl_dist_spacing = st.number_input("Distribution Bar Spacing (mm):", min_value=50, value=150, step=10, key="sl_d_sp")
 
     master_rates = user_db.get("MASTER_MARKET_RATES", {"steel": 60.0})
     steel_rate_kg = st.number_input("आजचा स्टील दर (₹/Kg):", min_value=0.0, value=float(master_rates.get("steel", 60.0)), key="bbs_rate")
 
     st.markdown("#### 💬 कमेंट पॅनल (Comment Panel)")
-    user_note = st.text_area("या BBS बाबत काही नोंद लिहायची असल्यास इथे लिहा:", placeholder="उदा. C1 Column BBS calculation...", key="bbs_note")
+    user_note = st.text_area("या BBS बाबत काही नोंद लिहायची असल्यास इथे लिहा:", placeholder="उदा. Column C1 BBS Details...", key="bbs_note")
     if st.button("💬 कमेंट सबमिट करा", key="bbs_comment_btn"):
         if user_note.strip():
             st.session_state.current_comment = user_note.strip()
@@ -710,75 +749,116 @@ elif st.session_state.selected_module == "BBS":
                 save_db(user_db)
             st.success("✅ कमेंट सेव्ह झाली!")
 
-    # ५. कॅल्क्युलेशन रिपोर्ट जनरेट करणे (मीटरचे मिनीमीटर मध्ये रूपांतर करून अचूक गणना)
+    # ५. कॅल्क्युलेशन रिपोर्ट जनरेट करणे (मल्टी-बार लॉजिकसह)
     if st.button("🧮 CALCULATE BBS REPORT", type="primary", key="bbs_calc_btn"):
         # internal Calculation साठी m -> mm मध्ये कन्व्हर्ट केले
         length_mm = length_m * 1000.0
         width_mm = width_m * 1000.0
         height_mm = height_m * 1000.0
 
-        # युनिट वेट गणित: d^2 / 162 (Kg/m)
-        unit_weight = (bar_dia ** 2) / 162.0
-        
-        # कटिंग लेंथ मोजणी (कव्हर वजा करून mm मध्ये)
         l_net = length_mm - (2 * cover)
         b_net = width_mm - (2 * cover)
         h_net = height_mm - (2 * cover)
-        
-        bend_deduction_90 = 2 * bar_dia
-        
+
+        calc_list = []
+
         if rcc_comp == "Footing":
-            leg_length = 200.0
-            cutting_length_mm = l_net + (2 * leg_length) - (2 * bend_deduction_90)
-            spacing = 150.0  
-            no_of_bars = math.ceil(width_mm / spacing) + 1
-            total_bars = no_of_bars * 2 * num_members  # दोन्ही बाजूंनी (Both ways)
-            shape_desc = "Main & Distribution Mesh (Both Ways)"
+            # 1. Main Bars (along Length)
+            m_leg = 200.0
+            m_cut_mm = l_net + (2 * m_leg) - (4 * f_main_dia)
+            m_nos = (math.ceil(width_mm / f_main_spacing) + 1) * num_members
+            m_len_m = (m_cut_mm / 1000.0) * m_nos
+            m_wt = m_len_m * ((f_main_dia ** 2) / 162.0)
+            calc_list.append({"Type": "Main Bars (Longitudinal)", "Dia": f_main_dia, "Cut_m": m_cut_mm/1000.0, "Nos": m_nos, "Total_m": m_len_m, "Weight_kg": m_wt})
+
+            # 2. Distribution Bars (along Width)
+            d_leg = 200.0
+            d_cut_mm = b_net + (2 * d_leg) - (4 * f_dist_dia)
+            d_nos = (math.ceil(length_mm / f_dist_spacing) + 1) * num_members
+            d_len_m = (d_cut_mm / 1000.0) * d_nos
+            d_wt = d_len_m * ((f_dist_dia ** 2) / 162.0)
+            calc_list.append({"Type": "Distribution Bars (Transverse)", "Dia": f_dist_dia, "Cut_m": d_cut_mm/1000.0, "Nos": d_nos, "Total_m": d_len_m, "Weight_kg": d_wt})
 
         elif rcc_comp == "Column":
-            ld_length = 300.0
-            cutting_length_mm = height_mm + ld_length
-            total_bars = 4 * num_members  # ४ बार मानकांनुसार
-            shape_desc = "Vertical Main Bars with L-bend"
+            # 1. Main Vertical Bars
+            m_ld = 300.0  # L bend at footing junction
+            m_cut_mm = height_mm + m_ld
+            m_nos = col_main_nos * num_members
+            m_len_m = (m_cut_mm / 1000.0) * m_nos
+            m_wt = m_len_m * ((col_main_dia ** 2) / 162.0)
+            calc_list.append({"Type": "Main Vertical Bars", "Dia": col_main_dia, "Cut_m": m_cut_mm/1000.0, "Nos": m_nos, "Total_m": m_len_m, "Weight_kg": m_wt})
+
+            # 2. Stirrups / Rings
+            hook_len = 10 * col_st_dia if "135°" in col_hook_angle else 6 * col_st_dia
+            # Ring cutting length = 2*(b_net + h_net) + 2*hook - bend deductions
+            st_cut_mm = (2 * (b_net + h_net)) + (2 * hook_len) - (3 * 2 * col_st_dia)
+            st_nos = (math.ceil(height_mm / col_st_spacing) + 1) * num_members
+            st_len_m = (st_cut_mm / 1000.0) * st_nos
+            st_wt = st_len_m * ((col_st_dia ** 2) / 162.0)
+            calc_list.append({"Type": "Stirrups / Ties (Rings)", "Dia": col_st_dia, "Cut_m": st_cut_mm/1000.0, "Nos": st_nos, "Total_m": st_len_m, "Weight_kg": st_wt})
 
         elif rcc_comp == "Beam":
-            ld_length = max(300.0, 30 * bar_dia)
-            cutting_length_mm = l_net + (2 * ld_length) - (2 * bend_deduction_90)
-            total_bars = 4 * num_members
-            shape_desc = "Straight Longitudinal Bars with Anchoring Hooks"
+            # 1. Top Main Bars
+            t_ld = max(300.0, 30 * bm_top_dia)
+            t_cut_mm = l_net + (2 * t_ld) - (4 * bm_top_dia)
+            t_nos = bm_top_nos * num_members
+            t_len_m = (t_cut_mm / 1000.0) * t_nos
+            t_wt = t_len_m * ((bm_top_dia ** 2) / 162.0)
+            calc_list.append({"Type": "Top Main Bars", "Dia": bm_top_dia, "Cut_m": t_cut_mm/1000.0, "Nos": t_nos, "Total_m": t_len_m, "Weight_kg": t_wt})
 
-        else:  # Slab
-            hook_bend = 10 * bar_dia
-            cutting_length_mm = l_net + (2 * hook_bend)
-            spacing = 150.0
-            no_of_bars = math.ceil(width_mm / spacing) + 1
-            total_bars = no_of_bars * num_members
-            shape_desc = "Slab Main Reinforcement Bars"
+            # 2. Bottom Main Bars
+            b_ld = max(300.0, 30 * bm_bot_dia)
+            b_cut_mm = l_net + (2 * b_ld) - (4 * bm_bot_dia)
+            b_nos = bm_bot_nos * num_members
+            b_len_m = (b_cut_mm / 1000.0) * b_nos
+            b_wt = b_len_m * ((bm_bot_dia ** 2) / 162.0)
+            calc_list.append({"Type": "Bottom Main Bars", "Dia": bm_bot_dia, "Cut_m": b_cut_mm/1000.0, "Nos": b_nos, "Total_m": b_len_m, "Weight_kg": b_wt})
 
-        cutting_length_m = cutting_length_mm / 1000.0
-        total_length_m = cutting_length_m * total_bars
-        total_weight_kg = total_length_m * unit_weight
+            # 3. Stirrups / Rings
+            st_cut_mm = (2 * (b_net + h_net)) + (2 * 10 * bm_st_dia) - (3 * 2 * bm_st_dia)
+            st_nos = (math.ceil(length_mm / bm_st_spacing) + 1) * num_members
+            st_len_m = (st_cut_mm / 1000.0) * st_nos
+            st_wt = st_len_m * ((bm_st_dia ** 2) / 162.0)
+            calc_list.append({"Type": "Stirrups / Rings", "Dia": bm_st_dia, "Cut_m": st_cut_mm/1000.0, "Nos": st_nos, "Total_m": st_len_m, "Weight_kg": st_wt})
+
+        else: # Slab
+            # 1. Main Bars
+            m_hook = 10 * sl_main_dia
+            m_cut_mm = l_net + (2 * m_hook)
+            m_nos = (math.ceil(width_mm / sl_main_spacing) + 1) * num_members
+            m_len_m = (m_cut_mm / 1000.0) * m_nos
+            m_wt = m_len_m * ((sl_main_dia ** 2) / 162.0)
+            calc_list.append({"Type": "Main Bars", "Dia": sl_main_dia, "Cut_m": m_cut_mm/1000.0, "Nos": m_nos, "Total_m": m_len_m, "Weight_kg": m_wt})
+
+            # 2. Distribution Bars
+            d_hook = 10 * sl_dist_dia
+            d_cut_mm = b_net + (2 * d_hook)
+            d_nos = (math.ceil(length_mm / sl_dist_spacing) + 1) * num_members
+            d_len_m = (d_cut_mm / 1000.0) * d_nos
+            d_wt = d_len_m * ((sl_dist_dia ** 2) / 162.0)
+            calc_list.append({"Type": "Distribution Bars", "Dia": sl_dist_dia, "Cut_m": d_cut_mm/1000.0, "Nos": d_nos, "Total_m": d_len_m, "Weight_kg": d_wt})
+
+        total_weight_kg = sum(item["Weight_kg"] for item in calc_list)
         total_cost = total_weight_kg * steel_rate_kg
 
         st.success("🎉 BBS रिपोर्ट यशस्वीरित्या तयार झाला आहे!")
         st.markdown(f"### 🏗️ BAR BENDING SCHEDULE (BBS) REPORT")
-        st.info(f"👤 **Prepared For:** {current_user_name} | **घटक:** {rcc_comp} | **Clear Cover:** {cover} mm | **Bar Dia:** {bar_dia} mm")
+        st.info(f"👤 **Prepared For:** {current_user_name} | **घटक:** {rcc_comp} | **Clear Cover:** {cover} mm | **एकूण घटक संख्या:** {num_members}")
+
+        # Table formatting
+        table_rows = ""
+        for item in calc_list:
+            table_rows += f"| **{item['Type']}** | {item['Dia']} mm | {item['Cut_m']:.3f} m | {item['Nos']} | {item['Total_m']:.2f} m | {item['Weight_kg']:.2f} Kg |\n"
 
         report_table = f"""
-| Parameter | Value / Detail |
-| :--- | :--- |
-| **Component Name** | {rcc_comp} |
-| **Dimensions (L x B x H)** | {length_m:.2f} m x {width_m:.2f} m x {height_m:.2f} m |
-| **Bar Shape Description** | {shape_desc} |
-| **Diameter of Bar (mm)** | {bar_dia} mm |
-| **Clear Cover Used** | {cover} mm |
-| **Unit Weight (d²/162)** | {unit_weight:.3f} Kg/m |
-| **Cutting Length per Bar** | {cutting_length_m:.3f} m ({cutting_length_mm:.0f} mm) |
-| **Total Number of Bars** | {total_bars} Nos |
-| **Total Running Length** | {total_length_m:.2f} m |
-| **Total Weight of Steel** | **{total_weight_kg:.2f} Kg** ({total_weight_kg/1000:.3f} MT) |
-| **Steel Rate** | ₹ {steel_rate_kg:.2f} / Kg |
-| **ESTIMATED STEEL COST** | **₹ {total_cost:.2f}/-** |
+| Bar Description | DIA (mm) | Cutting Length | Total Nos | Running Length | Total Weight (Kg) |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+{table_rows}
+| **SUMMARY** | | | | | |
+| **Dimensions (L x B x H)** | \multicolumn{{5}}{{l|}}{{{length_m:.2f} m x {width_m:.2f} m x {height_m:.2f} m}} |
+| **Total Weight of Steel** | \multicolumn{{5}}{{l|}}{{\textbf{{{total_weight_kg:.2f} Kg}} ({total_weight_kg/1000:.3f} MT)}} |
+| **Steel Rate** | \multicolumn{{5}}{{l|}}{{₹ {steel_rate_kg:.2f} / Kg}} |
+| **ESTIMATED STEEL COST** | \multicolumn{{5}}{{l|}}{{\textbf{{₹ {total_cost:.2f}/-}}}} |
 """
         st.markdown(report_table)
 
