@@ -201,6 +201,7 @@ def load_db():
             "admin_message": "मास्टर ॲडमीन",
             "is_premium": True,
             "premium_expiry": "2099-12-31 23:59:59",
+            "requested_code": False,
             "history": []
         },
         "PREMIUM_CODES": {} # Active & used codes database
@@ -314,6 +315,7 @@ if st.session_state.app_user_name is None:
                     "admin_message": new_welcome_msg,
                     "is_premium": False,
                     "premium_expiry": None,
+                    "requested_code": False,
                     "history": []
                 }
                 save_db(user_db)
@@ -351,8 +353,9 @@ if st.session_state.app_user_name is None:
                 st.success("✅ आजचे मास्टर मार्केट दर (स्टीलसहित) डेटाबेसमध्ये यशस्वीरित्या अपडेट झाले!")
             
             st.markdown("---")
-            st.markdown("### 📋 युझर डेटाबेस MASTER LIST & CUSTOM EXPIRY CONTROL")
+            st.markdown("### 📋 युझर डेटाबेस MASTER LIST (Clean View)")
             
+            # 🧹 CLEAN USER LIST EXPANDERS (राडा पूर्णपणे बंद)
             for mob in list(user_db.keys()):
                 if mob in ["9999999999", "MASTER_MARKET_RATES", "PREMIUM_CODES"]: continue
                 info = user_db[mob]
@@ -362,9 +365,10 @@ if st.session_state.app_user_name is None:
                 u_comm = info.get("comment", "काही नाही")
                 u_prem = info.get("is_premium", False)
                 exp_date = info.get("premium_expiry", "N/A")
+                is_req = info.get("requested_code", False)
                 u_hist = info.get("history", [])
                 
-                # युझरसाठी तयार केलेला एकमेव ॲक्टिव्ह (Unused) कोड शोधणे
+                # १. युझरसाठी तयार केलेला एकमेव ॲक्टिव्ह (Unused) कोड शोधणे
                 assigned_code = None
                 if "PREMIUM_CODES" in user_db:
                     for c_code, c_data in user_db["PREMIUM_CODES"].items():
@@ -372,23 +376,19 @@ if st.session_state.app_user_name is None:
                             assigned_code = c_code
                             break
 
-                user_info_table = f"""
-|DateField | माहिती (User Details) |
-| :--- | :--- |
-| **👤 युझरचे नाव (Name)** | {u_name} |
-| **⭐ स्टेटस (Status)** | {'👑 PREMIUM (Expiry: ' + str(exp_date) + ')' if u_prem else '🆓 FREE'} |
-| **🔑 Active Code (Unused)** | `{assigned_code if assigned_code else 'काही नाही'}` |
-| **💬 शेवटची युझर कमेंट** | {u_comm} |
-"""
-                st.markdown(user_info_table)
+                status_label = "👑 PREMIUM" if u_prem else ("🚨 CODE REQUESTED!" if is_req else "🆓 FREE")
                 
-                # 🔑 1. GENERATE UNIQUE CODE (फक्त एकच कोड बनेल)
-                c_col1, c_col2 = st.columns(2)
-                with c_col1:
+                # 👤 USER EXPANDER HEADER
+                with st.expander(f"👤 {u_name} | [{status_label}]"):
+                    st.write(f"**माहिती:** Status = `{status_label}` | Expiry = `{exp_date}` | Active Unused Code = `{assigned_code if assigned_code else 'काही नाही'}`")
+                    st.write(f"**शेवटची कमेंट:** {u_comm}")
+                    
+                    # 🚀 1. DIRECT ONE-CLICK CODE GENERATE & SEND BUTTON
+                    st.markdown("---")
                     if assigned_code:
-                        st.info(f"💡 {u_name} साठी तयार केलेला कोड: `{assigned_code}`")
+                        st.info(f"💡 {u_name} साठी तयार कोड: `{assigned_code}` (इनबॉक्समध्ये पाठवलेला आहे)")
                     else:
-                        if st.button(f"🔑 Generate Code for {u_name}", key=f"gen_code_{mob}"):
+                        if st.button(f"🚀 Generate & Send Unique Code to {u_name}", key=f"gen_send_{mob}"):
                             new_c = generate_random_code()
                             if "PREMIUM_CODES" not in user_db: user_db["PREMIUM_CODES"] = {}
                             user_db["PREMIUM_CODES"][new_c] = {
@@ -396,70 +396,70 @@ if st.session_state.app_user_name is None:
                                 "used": False,
                                 "created_at": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                             }
-                            # युझरच्या इनबॉक्समध्ये हा कोड मेसेज म्हणून पाठवणे
                             user_db[mob]["admin_message"] = f"तुमचा प्रिमियम कोड: {new_c} (ॲपमध्ये टाकून प्रिमियम अनलॉक करा)"
+                            user_db[mob]["requested_code"] = False # Reset Request Status
                             save_db(user_db)
-                            st.success(f"🎉 {u_name} साठी कोड तयार झाला: `{new_c}`")
+                            st.success(f"🎉 {u_name} साठी कोड ऑटोमॅटिकली तयार होऊन पाठवला गेला: `{new_c}`")
                             st.rerun()
 
-                # ⏱️ 2. CUSTOM TIME EXPAND / SET BY ADMIN
-                st.markdown("##### ⏱️ सेट किंवा वाढवा Custom Premium Time:")
-                t_col1, t_col2 = st.columns(2)
-                with t_col1:
-                    time_val = st.number_input("कालावधी संख्या (Value):", min_value=1, value=28, key=f"t_val_{mob}")
-                with t_col2:
-                    time_unit = st.selectbox("युनिट निवडा (Unit):", ["Minutes", "Hours", "Days"], index=2, key=f"t_unit_{mob}")
+                    # ⏱️ 2. CUSTOM TIME EXPAND / SET BY ADMIN
+                    st.markdown("##### ⏱️ सेट किंवा वाढवा Custom Premium Time:")
+                    t_col1, t_col2 = st.columns(2)
+                    with t_col1:
+                        time_val = st.number_input("कालावधी संख्या (Value):", min_value=1, value=28, key=f"t_val_{mob}")
+                    with t_col2:
+                        time_unit = st.selectbox("युनिट निवडा (Unit):", ["Minutes", "Hours", "Days"], index=2, key=f"t_unit_{mob}")
 
-                if st.button(f"⚡ Set Custom Premium ({time_val} {time_unit})", key=f"btn_custom_{mob}"):
-                    now = datetime.datetime.now()
-                    if time_unit == "Minutes":
-                        exp_time = now + datetime.timedelta(minutes=time_val)
-                    elif time_unit == "Hours":
-                        exp_time = now + datetime.timedelta(hours=time_val)
-                    else:  # Days
-                        exp_time = now + datetime.timedelta(days=time_val)
+                    if st.button(f"⚡ Set Custom Premium ({time_val} {time_unit})", key=f"btn_custom_{mob}"):
+                        now = datetime.datetime.now()
+                        if time_unit == "Minutes":
+                            exp_time = now + datetime.timedelta(minutes=time_val)
+                        elif time_unit == "Hours":
+                            exp_time = now + datetime.timedelta(hours=time_val)
+                        else:  # Days
+                            exp_time = now + datetime.timedelta(days=time_val)
 
-                    user_db[mob]["is_premium"] = True
-                    user_db[mob]["premium_expiry"] = exp_time.strftime("%Y-%m-%d %H:%M:%S")
-                    save_db(user_db)
-                    st.success(f"✅ {u_name} साठी {time_val} {time_unit} चा प्रिमियम सेव्ह झाला!")
-                    show_premium_celebration(u_name, f"{time_val} {time_unit}")
-                    st.rerun()
-
-                if u_prem:
-                    if st.button(f"🔻 Revoke Premium: {u_name}", key=f"rev_{mob}"):
-                        user_db[mob]["is_premium"] = False
-                        user_db[mob]["premium_expiry"] = None
+                        user_db[mob]["is_premium"] = True
+                        user_db[mob]["premium_expiry"] = exp_time.strftime("%Y-%m-%d %H:%M:%S")
+                        user_db[mob]["requested_code"] = False
                         save_db(user_db)
-                        st.warning(f"❌ {u_name} चे प्रिमियम काढले आहे.")
+                        st.success(f"✅ {u_name} साठी {time_val} {time_unit} चा प्रिमियम सेव्ह झाला!")
+                        show_premium_celebration(u_name, f"{time_val} {time_unit}")
                         st.rerun()
 
-                if st.button(f"🗑️ Delete User: {u_name}", key=f"del_{mob}"):
-                    del user_db[mob]
-                    save_db(user_db)
-                    st.error(f"❌ युझर '{u_name}' डिलीट केला आहे!")
-                    st.rerun()
-                
-                current_msg = info.get("admin_message", "ॲडमीन कडून सध्या कोणताही मेसेज नाही.")
-                new_msg = st.text_input(f"✍️ {u_name} साठी इनबॉक्स मेसेज बदलणे:", value=current_msg, key=f"msg_{mob}")
-                if st.button(f"✉️ मेसेज सेव्ह करा ({u_name})", key=f"btn_msg_{mob}"):
-                    if new_msg.strip():
-                        user_db[mob]["admin_message"] = new_msg.strip()
+                    if u_prem:
+                        if st.button(f"🔻 Revoke Premium: {u_name}", key=f"rev_{mob}"):
+                            user_db[mob]["is_premium"] = False
+                            user_db[mob]["premium_expiry"] = None
+                            save_db(user_db)
+                            st.warning(f"❌ {u_name} चे प्रिमियम काढले आहे.")
+                            st.rerun()
+
+                    current_msg = info.get("admin_message", "ॲडमीन कडून सध्या कोणताही मेसेज नाही.")
+                    new_msg = st.text_input(f"✍️ {u_name} साठी इनबॉक्स मेसेज बदलणे:", value=current_msg, key=f"msg_{mob}")
+                    if st.button(f"✉️ मेसेज सेव्ह करा ({u_name})", key=f"btn_msg_{mob}"):
+                        if new_msg.strip():
+                            user_db[mob]["admin_message"] = new_msg.strip()
+                            save_db(user_db)
+                            st.success(f"✅ '{u_name}' चा इनबॉक्स मेसेज सेव्ह झाला!")
+                            st.rerun()
+
+                    if st.button(f"🗑️ Delete User: {u_name}", key=f"del_{mob}"):
+                        del user_db[mob]
                         save_db(user_db)
-                        st.success(f"✅ '{u_name}' चा इनबॉक्स मेसेज सेव्ह झाला!")
+                        st.error(f"❌ युझर '{u_name}' डिलीट केला आहे!")
                         st.rerun()
-                
-                with st.expander(f"📜 {u_name} चे जनरेट केलेले एस्टिमेशन रिपोर्ट्स ({len(u_hist)})"):
+                    
+                    st.markdown("##### 📜 जनरेट केलेले एस्टिमेशन रिपोर्ट्स")
                     if u_hist:
                         for idx, hist in enumerate(u_hist, 1):
                             if isinstance(hist, dict):
                                 st.markdown(f"🗓️ **रिपोर्ट क्रमांक {idx} | तारीख व वेळ: `{hist.get('timestamp', 'N/A')}`**")
-                                st.markdown(f"* **या कामाची विशिष्ट कमेंट:** {hist.get('user_note', 'काही नाही')}")
+                                st.markdown(f"* **कामाची टीप:** {hist.get('user_note', 'काही नाही')}")
                                 st.markdown(hist.get("report_data", "डेटा उपलब्ध नाही"))
                                 st.write("---")
                     else:
                         st.info("ℹ️ या युझरने अजून एकही रिपोर्ट जनरेट केलेला नाही.")
-                st.markdown("---")
         elif admin_id or admin_pass:
             st.error("❌ चुकीचा Admin ID किंवा Password!")
             
@@ -491,39 +491,48 @@ if admin_msg:
     st.write("---")
 
 # ==========================================
-# 🔑 १. युझरसाठी स्वतंत्र 'REDEEM CODE' ऑप्शन (FREE USER ONLY)
+# 🔑 १. युझरसाठी प्रिमियम कोड रिक्वेस्ट व इनपुट (FREE USER ONLY)
 # ==========================================
 if not is_user_premium:
-    with st.expander("🔑 प्रिमियम अनलॉक करा (Enter Premium Code Here)"):
+    with st.expander("🔑 प्रिमियम अनलॉक करा (Enter Premium Code)"):
         st.markdown("##### 🎁 तुम्हाला मिळालेला प्रिमियम कोड इथे प्रविष्ट करा:")
         input_code = st.text_input("Enter Code (e.g. PATIL-XXXXX):", key="home_code_input").strip()
-        if st.button("🔓 Activate Premium Now", key="home_activate_btn", type="primary"):
-            codes_db = user_db.get("PREMIUM_CODES", {})
-            if input_code in codes_db:
-                c_info = codes_db[input_code]
-                if c_info.get("used", False):
-                    st.error("❌ हा कोड आधीच वापरला गेला आहे! तो आता व्हॅलिड नाही.")
+        
+        c_btn1, c_btn2 = st.columns(2)
+        with c_btn1:
+            if st.button("🔓 Activate Premium Now", key="home_activate_btn", type="primary"):
+                codes_db = user_db.get("PREMIUM_CODES", {})
+                if input_code in codes_db:
+                    c_info = codes_db[input_code]
+                    if c_info.get("used", False):
+                        st.error("❌ हा कोड आधीच वापरला गेला आहे! तो आता व्हॅलिड नाही.")
+                    else:
+                        # १. कोड USED म्हणून नोंदवणे
+                        user_db["PREMIUM_CODES"][input_code]["used"] = True
+                        user_db["PREMIUM_CODES"][input_code]["used_by"] = current_user_name
+                        user_db["PREMIUM_CODES"][input_code]["used_date"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+                        # २. २८ दिवसांचे प्रिमियम सेव्ह करणे
+                        exp_datetime = datetime.datetime.now() + datetime.timedelta(days=28)
+                        user_db[current_user_name]["is_premium"] = True
+                        user_db[current_user_name]["premium_expiry"] = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
+
+                        # 🔄 ३. इनबॉक्स मेसेज ऑटो-रिसेट करून जुन्या मूळ वेलकम मेसेजवर आणणे!
+                        user_db[current_user_name]["admin_message"] = f"Welcome {current_user_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये हार्दिक स्वागत🥳"
+                        save_db(user_db)
+
+                        # 🎉 ३ सेकंदांचा १००% ऑपेक प्रिमियम ओव्हरले ॲनिमेशन दाखवणे
+                        show_premium_celebration(current_user_name, "28 Days")
+                        st.rerun()
                 else:
-                    # १. कोड USED म्हणून नोंदवणे
-                    user_db["PREMIUM_CODES"][input_code]["used"] = True
-                    user_db["PREMIUM_CODES"][input_code]["used_by"] = current_user_name
-                    user_db["PREMIUM_CODES"][input_code]["used_date"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    st.error("❌ चुकीचा कोड! कृपया ॲडमीनकडून आलेला अचूक कोड टाका.")
 
-                    # २. २८ दिवसांचे प्रिमियम सेव्ह करणे
-                    exp_datetime = datetime.datetime.now() + datetime.timedelta(days=28)
-                    user_db[current_user_name]["is_premium"] = True
-                    user_db[current_user_name]["premium_expiry"] = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
-
-                    # 🔄 ३. इनबॉक्स मेसेज ऑटो-रिसेट करून जुन्या मूळ वेलकम मेसेजवर आणणे!
-                    user_db[current_user_name]["admin_message"] = f"Welcome {current_user_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये हार्दिक स्वागत🥳"
-                    
-                    save_db(user_db)
-
-                    # 🎉 ३ सेकंदांचा १००% ऑपेक प्रिमियम ओव्हरले ॲनिमेशन दाखवणे
-                    show_premium_celebration(current_user_name, "28 Days")
-                    st.rerun()
-            else:
-                st.error("❌ चुकीचा कोड! कृपया ॲडमीनकडून आलेला अचूक कोड टाका.")
+        with c_btn2:
+            # 📩 USER REQUEST CODE BUTTON FOR ADMIN
+            if st.button("📩 Request Code from Admin", key="req_code_btn"):
+                user_db[current_user_name]["requested_code"] = True
+                save_db(user_db)
+                st.success("✅ कन्हैया (Admin) ला कोडसाठी रिक्वेस्ट पाठवली आहे! लवकरच इनबॉक्समध्ये कोड दिसेल.")
 
 # ==========================================
 # 🔐 ॲप व्हॉट्सॲप फीचर अनलॉक/प्रीमियम फंक्शन
@@ -548,32 +557,41 @@ def render_whatsapp_feature(encoded_msg, key_prefix):
             st.caption("💡 अनलॉक करण्यासाठी कन्हैया (Admin) कडून आलेला प्रिमियम कोड खाली टाका:")
             
             p_code = st.text_input("Enter Activation Code:", key=f"{key_prefix}_code_input").strip()
-            if st.button("🔓 Unlock WhatsApp Share Now", key=f"{key_prefix}_unlock_btn"):
-                codes_db = user_db.get("PREMIUM_CODES", {})
-                if p_code in codes_db:
-                    c_info = codes_db[p_code]
-                    if c_info.get("used", False):
-                        st.error("❌ हा कोड आधीच वापरला गेला आहे! तो आता व्हॅलिड नाही.")
+            
+            w_col1, w_col2 = st.columns(2)
+            with w_col1:
+                if st.button("🔓 Unlock WhatsApp Share Now", key=f"{key_prefix}_unlock_btn"):
+                    codes_db = user_db.get("PREMIUM_CODES", {})
+                    if p_code in codes_db:
+                        c_info = codes_db[p_code]
+                        if c_info.get("used", False):
+                            st.error("❌ हा कोड आधीच वापरला गेला आहे! तो आता व्हॅलिड नाही.")
+                        else:
+                            # १. कोड USED करणे
+                            user_db["PREMIUM_CODES"][p_code]["used"] = True
+                            user_db["PREMIUM_CODES"][p_code]["used_by"] = current_user_name
+                            user_db["PREMIUM_CODES"][p_code]["used_date"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+                            # २. २८ दिवसांचे प्रिमियम सेव्ह करणे
+                            exp_datetime = datetime.datetime.now() + datetime.timedelta(days=28)
+                            user_db[current_user_name]["is_premium"] = True
+                            user_db[current_user_name]["premium_expiry"] = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
+                            
+                            # 🔄 ३. इनबॉक्स मेसेज पूर्ववत वेलकम मेसेजवर रिसेट करणे!
+                            user_db[current_user_name]["admin_message"] = f"Welcome {current_user_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये हार्दिक स्वागत🥳"
+                            save_db(user_db)
+
+                            # 🎉 ३ सेकंदांचा प्रिमियम सेलिब्रेशन ओव्हरले
+                            show_premium_celebration(current_user_name, "28 Days")
+                            st.rerun()
                     else:
-                        # १. कोड USED करणे
-                        user_db["PREMIUM_CODES"][p_code]["used"] = True
-                        user_db["PREMIUM_CODES"][p_code]["used_by"] = current_user_name
-                        user_db["PREMIUM_CODES"][p_code]["used_date"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        st.error("❌ चुकीचा प्रिमियम कोड! कृपया अचूक कोड टाका.")
 
-                        # २. २८ दिवसांचे प्रिमियम सेव्ह करणे
-                        exp_datetime = datetime.datetime.now() + datetime.timedelta(days=28)
-                        user_db[current_user_name]["is_premium"] = True
-                        user_db[current_user_name]["premium_expiry"] = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
-                        
-                        # 🔄 ३. इनबॉक्स मेसेज पूर्ववत वेलकम मेसेजवर रिसेट करणे!
-                        user_db[current_user_name]["admin_message"] = f"Welcome {current_user_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये हार्दिक स्वागत🥳"
-                        save_db(user_db)
-
-                        # 🎉 ३ सेकंदांचा प्रिमियम सेलिब्रेशन ओव्हरले
-                        show_premium_celebration(current_user_name, "28 Days")
-                        st.rerun()
-                else:
-                    st.error("❌ चुकीचा प्रिमियम कोड! कृपया अचूक कोड टाका.")
+            with w_col2:
+                if st.button("📩 Request Code from Admin", key=f"{key_prefix}_req_btn"):
+                    user_db[current_user_name]["requested_code"] = True
+                    save_db(user_db)
+                    st.success("✅ ॲडमीनला कोडसाठी रिक्वेस्ट पाठवली आहे!")
 
 # ==========================================
 # 🎛️ DASHBOARD / ICON SELECTION SCREEN
