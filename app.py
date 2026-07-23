@@ -203,7 +203,7 @@ def load_db():
             "premium_expiry": "2099-12-31",
             "history": []
         },
-        "PREMIUM_CODES": {} # Active unused codes database
+        "PREMIUM_CODES": {} # Active & used codes database
     }
     if os.path.exists(DB_FILE):
         try:
@@ -355,7 +355,7 @@ if st.session_state.app_user_name is None:
                 exp_date = info.get("premium_expiry", "N/A")
                 u_hist = info.get("history", [])
                 
-                # युझरसाठी तयार केलेला जनरेटेड कोड शोधणे
+                # १. युझरसाठी तयार केलेला एकमेव ॲक्टिव्ह (Unused) कोड शोधणे
                 assigned_code = None
                 if "PREMIUM_CODES" in user_db:
                     for c_code, c_data in user_db["PREMIUM_CODES"].items():
@@ -368,27 +368,30 @@ if st.session_state.app_user_name is None:
 | :--- | :--- |
 | **👤 युझरचे नाव (Name)** | {u_name} |
 | **⭐ स्टेटस (Status)** | {'👑 PREMIUM (Expiry: ' + str(exp_date) + ')' if u_prem else '🆓 FREE'} |
-| **🔑 Active Code (Unused)** | `{assigned_code if assigned_code else 'कोणताही नाही'}` |
+| **🔑 Active Code (Unused)** | `{assigned_code if assigned_code else 'काही नाही'}` |
 | **💬 शेवटची युझर कमेंट** | {u_comm} |
 """
                 st.markdown(user_info_table)
                 
-                # 🔑 1. GENERATE UNIQUE 28-DAY CODE FOR THIS SPECIFIC USER
+                # 🔑 1. GENERATE UNIQUE 28-DAY CODE (फक्त एकच कोड बनेल)
                 c_col1, c_col2 = st.columns(2)
                 with c_col1:
-                    if st.button(f"🔑 Generate 28-Day Code for {u_name}", key=f"gen_code_{mob}"):
-                        new_c = generate_random_code()
-                        if "PREMIUM_CODES" not in user_db: user_db["PREMIUM_CODES"] = {}
-                        user_db["PREMIUM_CODES"][new_c] = {
-                            "assigned_to": u_name,
-                            "used": False,
-                            "created_at": datetime.datetime.now().strftime("%Y-%m-%d")
-                        }
-                        # युझरच्या इनबॉक्स मेसेजमध्ये हा कोड ऑटोमॅटिक जोडला जाईल
-                        user_db[mob]["admin_message"] = f"तुमचा २८ दिवसांचा प्रिमियम कोड: {new_c} (ॲपमध्ये टाकून अनलॉक करा)"
-                        save_db(user_db)
-                        st.success(f"🎉 {u_name} साठी नवीन कोड तयार झाला: `{new_c}`")
-                        st.rerun()
+                    if assigned_code:
+                        st.info(f"💡 {u_name} साठी आधीच एक कोड तयार आहे: `{assigned_code}`")
+                    else:
+                        if st.button(f"🔑 Generate 1 Unique Code for {u_name}", key=f"gen_code_{mob}"):
+                            new_c = generate_random_code()
+                            if "PREMIUM_CODES" not in user_db: user_db["PREMIUM_CODES"] = {}
+                            user_db["PREMIUM_CODES"][new_c] = {
+                                "assigned_to": u_name,
+                                "used": False,
+                                "created_at": datetime.datetime.now().strftime("%Y-%m-%d")
+                            }
+                            # युझरच्या इनबॉक्स मेसेजमध्ये हा एकमेव कोड जोडला जाईल
+                            user_db[mob]["admin_message"] = f"तुमचा २८ दिवसांचा प्रिमियम कोड: {new_c} (ॲपमध्ये टाकून अनलॉक करा)"
+                            save_db(user_db)
+                            st.success(f"🎉 {u_name} साठी १ युनिक कोड तयार झाला: `{new_c}`")
+                            st.rerun()
 
                 # 👑 2. DIRECT FREE PREMIUM ACTIVATION BY ADMIN
                 with c_col2:
@@ -446,7 +449,7 @@ user_db = load_db()
 is_user_premium, remaining_days = check_user_premium_status(current_user_name)
 
 col_u, col_lo = st.columns([3.5, 1.5])
-badge = f"👑 PREMIUM ({remaining_days} Days Left)" if is_user_premium else "🆓 FREE"
+badge = f"👑 PREMIUM ({remaining_days} Days Left)" if is_user_premium else "🆓 FREE USER"
 col_u.success(f"👤 युझर: **{current_user_name}** | [{badge}]")
 
 if col_lo.button("🔄 नाव बदला"):
@@ -458,12 +461,43 @@ if col_lo.button("🔄 नाव बदला"):
 current_user_data = user_db.get(current_user_name, {})
 admin_msg = current_user_data.get("admin_message", None)
 if admin_msg:
-    st.markdown("### 📥 ॲडमीन कडून आलेला मेसेज / कोड (Inbox)")
+    st.markdown("### 📥 ॲडमीन कडून आलेला मेसेज / प्रिमियम कोड (Inbox)")
     st.info(f"📢 **kanha:** {admin_msg}")
     st.write("---")
 
 # ==========================================
-# 🔐 ॲप अनलॉक/प्रीमियम फंक्शन (ONE TIME UNIQUE CODE LOGIC)
+# 🔑 १. युझरसाठी स्वतंत्र 'REDEEM CODE' ऑप्शन (FREE USER ONLY)
+# ==========================================
+if not is_user_premium:
+    with st.expander("🔑 प्रिमियम अनलॉक करा (Enter Premium Code Here)"):
+        st.markdown("##### 🎁 तुम्हाला मिळालेला प्रिमियम कोड इथे प्रविष्ट करा:")
+        input_code = st.text_input("Enter Code (e.g. PATIL-XXXXX):", key="home_code_input").strip()
+        if st.button("🔓 Activate 28 Days Premium", key="home_activate_btn", type="primary"):
+            codes_db = user_db.get("PREMIUM_CODES", {})
+            if input_code in codes_db:
+                c_info = codes_db[input_code]
+                if c_info.get("used", False):
+                    st.error("❌ हा कोड आधीच वापरला गेला आहे! तो आता व्हॅलिड नाही.")
+                else:
+                    # कोड USED सेव्ह करणे (Unvalid immediately)
+                    user_db["PREMIUM_CODES"][input_code]["used"] = True
+                    user_db["PREMIUM_CODES"][input_code]["used_by"] = current_user_name
+                    user_db["PREMIUM_CODES"][input_code]["used_date"] = datetime.datetime.now().strftime("%Y-%m-%d")
+
+                    # २८ दिवसांचे प्रिमियम सेव्ह करणे
+                    exp_date = (datetime.date.today() + datetime.timedelta(days=28)).strftime("%Y-%m-%d")
+                    user_db[current_user_name]["is_premium"] = True
+                    user_db[current_user_name]["premium_expiry"] = exp_date
+                    save_db(user_db)
+
+                    # 🎉 ३ सेकंदांचा प्रिमियम ॲनिमेशन दाखवणे
+                    show_premium_celebration(current_user_name, 28)
+                    st.rerun()
+            else:
+                st.error("❌ चुकीचा कोड! कृपया ॲडमीनकडून आलेला अचूक कोड टाका.")
+
+# ==========================================
+# 🔐 ॲप व्हॉट्सॲप फीचर अनलॉक/प्रीमियम फंक्शन
 # ==========================================
 def render_whatsapp_feature(encoded_msg, key_prefix):
     user_db = load_db()
@@ -484,32 +518,28 @@ def render_whatsapp_feature(encoded_msg, key_prefix):
             st.warning("⚠️ व्हॉट्सॲपवर पूर्ण रिपोर्ट शेअर करण्याचे फीचर प्रिमियम युझर्ससाठी आहे.")
             st.caption("💡 अनलॉक करण्यासाठी कन्हैया (Admin) कडून आलेला प्रिमियम कोड खाली टाका:")
             
-            p_code = st.text_input("Enter Your Activation Code:", key=f"{key_prefix}_code_input").strip()
+            p_code = st.text_input("Enter Activation Code:", key=f"{key_prefix}_code_input").strip()
             if st.button("🔓 Unlock WhatsApp Share Now", key=f"{key_prefix}_unlock_btn"):
                 codes_db = user_db.get("PREMIUM_CODES", {})
-                
-                # १. युनिक कोड व्हेरिफीकेशन (One-time use)
                 if p_code in codes_db:
                     c_info = codes_db[p_code]
                     if c_info.get("used", False):
-                        st.error("❌ हा कोड आधीच वापरला गेला आहे! कृपया ॲडमीनकडून नवीन कोड घ्या.")
+                        st.error("❌ हा कोड आधीच वापरला गेला आहे! तो आता व्हॅलिड नाही.")
                     else:
-                        # कोड USED मार्क करणे
+                        # कोड USED सेव्ह करणे
                         user_db["PREMIUM_CODES"][p_code]["used"] = True
                         user_db["PREMIUM_CODES"][p_code]["used_by"] = current_user_name
                         user_db["PREMIUM_CODES"][p_code]["used_date"] = datetime.datetime.now().strftime("%Y-%m-%d")
 
-                        # २८ दिवसांचे प्रिमियम सेव्ह करणे
                         exp_date = (datetime.date.today() + datetime.timedelta(days=28)).strftime("%Y-%m-%d")
                         user_db[current_user_name]["is_premium"] = True
                         user_db[current_user_name]["premium_expiry"] = exp_date
                         save_db(user_db)
 
-                        # 🎉 ३ सेकंदांचा प्रिमियम ॲनिमेशन दाखवणे
                         show_premium_celebration(current_user_name, 28)
                         st.rerun()
                 else:
-                    st.error("❌ चुकीचा प्रिमियम कोड! कृपया तुमच्या इनबॉक्समधील अचूक कोड टाका.")
+                    st.error("❌ चुकीचा प्रिमियम कोड! कृपया अचूक कोड टाका.")
 
 # ==========================================
 # 🎛️ DASHBOARD / ICON SELECTION SCREEN
