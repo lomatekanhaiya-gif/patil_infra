@@ -345,7 +345,7 @@ if col_lo.button("🔄 नाव बदला"):
     st.session_state.app_user_name = None
     st.session_state.current_comment = "काही नाही"
     st.session_state.selected_module = None
-   
+    
 current_user_data = user_db.get(current_user_name, {})
 admin_msg = current_user_data.get("admin_message", None)
 if admin_msg:
@@ -629,7 +629,7 @@ elif st.session_state.selected_module == "Rate Analysis":
                 save_db(user_db)
 
 # ==========================================
-# 🛑 MODULE 2: BBS (BAR BENDING SCHEDULE) MODULE - WITH HOOK SELECTION (90° & 135°)
+# 🛑 MODULE 2: BBS (BAR BENDING SCHEDULE) MODULE - FULLY WORKING
 # ==========================================
 elif st.session_state.selected_module == "BBS":
     if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_to_main_bbs"):
@@ -638,4 +638,131 @@ elif st.session_state.selected_module == "BBS":
         
     st.write("---")
     st.subheader("🏗️ Bar Bending Schedule (BBS Calculator)")
-    st.caption("comming soon")
+    
+    # १. RCC घटक निवडणे
+    rcc_comp = st.selectbox("घटक (RCC Component) निवडा:", ["Footing", "Column", "Beam", "Slab"])
+    
+    # घटकानुसार बाय-डिफॉल्ट क्लिअर कव्हर ठरवणे
+    default_covers = {"Footing": 50, "Column": 40, "Beam": 25, "Slab": 20}
+    def_cov = default_covers.get(rcc_comp, 25)
+    
+    # २. क्लिअर कव्हर (५ च्या पटीत युझर बदलू शकतो)
+    st.markdown("#### [१] Clear Cover (मिमी मध्ये)")
+    cover = st.number_input("Clear Cover (mm):", min_value=10, max_value=100, value=def_cov, step=5, key="bbs_cover")
+    
+    # ३. डायमेन्शन्स (L, B, H / Depth)
+    st.markdown("#### [२] घटकाचे आकारमान (Dimensions in mm)")
+    dim_col1, dim_col2, dim_col3 = st.columns(3)
+    with dim_col1:
+        length_mm = st.number_input("लांबी L (mm):", min_value=100.0, value=3000.0, step=100.0, key="bbs_l")
+    with dim_col2:
+        width_mm = st.number_input("रुंदी B (mm):", min_value=100.0, value=3000.0, step=100.0, key="bbs_b")
+    with dim_col3:
+        height_mm = st.number_input("उंची/खोली H/Depth (mm):", min_value=100.0, value=450.0, step=50.0, key="bbs_h")
+        
+    # ४. स्टील बार डायमीटर आणि हुक अँगल
+    st.markdown("#### [३] स्टील बार तपशील (Steel Details)")
+    st_col1, st_col2, st_col3 = st.columns(3)
+    with st_col1:
+        bar_dia = st.selectbox("बारचा व्यास DIA (mm):", [8, 10, 12, 16, 20, 25, 32], index=2, key="bbs_dia")
+    with st_col2:
+        hook_angle = st.selectbox("Hook Angle:", ["90° (Bend = 2d)", "135° (Hook = 10d/12d)"], key="bbs_hook")
+    with st_col3:
+        num_members = st.number_input("एकूण घटक संख्या (No. of Members):", min_value=1, value=1, step=1, key="bbs_mem")
+
+    master_rates = user_db.get("MASTER_MARKET_RATES", {"steel": 60.0})
+    steel_rate_kg = st.number_input("आजचा स्टील दर (₹/Kg):", min_value=0.0, value=float(master_rates.get("steel", 60.0)), key="bbs_rate")
+
+    st.markdown("#### 💬 कमेंट पॅनल (Comment Panel)")
+    user_note = st.text_area("या BBS बाबत काही नोंद लिहायची असल्यास इथे लिहा:", placeholder="उदा. C1 Column BBS calculation...", key="bbs_note")
+    if st.button("💬 कमेंट सबमिट करा", key="bbs_comment_btn"):
+        if user_note.strip():
+            st.session_state.current_comment = user_note.strip()
+            user_db = load_db()
+            if current_user_name in user_db:
+                user_db[current_user_name]["comment"] = user_note.strip()
+                save_db(user_db)
+            st.success("✅ कमेंट सेव्ह झाली!")
+
+    # ५. कॅल्क्युलेशन रिपोर्ट बटण
+    if st.button("🧮 CALCULATE BBS REPORT", type="primary", key="bbs_calc_btn"):
+        # युनिट वेट गणित: d^2 / 162 (Kg/m)
+        unit_weight = (bar_dia ** 2) / 162.0
+        
+        # कटिंग लेंथ कॅल्क्युलेशन (घटकानुसार लॉजिक)
+        # L_net, B_net, H_net (कव्हर वजा करून)
+        l_net = length_mm - (2 * cover)
+        b_net = width_mm - (2 * cover)
+        h_net = height_mm - (2 * cover)
+        
+        hook_val = 12 * bar_dia if "135°" in hook_angle else 10 * bar_dia
+        bend_deduction_90 = 2 * bar_dia
+        
+        if rcc_comp == "Footing":
+            # Footing Mesh Bar (L-shape leg = 200mm both side)
+            leg_length = 200.0
+            cutting_length_mm = l_net + (2 * leg_length) - (2 * bend_deduction_90)
+            spacing = 150.0  # standard 150mm c/c
+            no_of_bars = math.ceil(width_mm / spacing) + 1
+            total_bars = no_of_bars * 2 * num_members  # Both ways
+            shape_desc = "Main & Distribution Mesh (Both Ways)"
+
+        elif rcc_comp == "Column":
+            # Main Longitudinal Bars + L-development length (300mm at bottom)
+            ld_length = 300.0
+            cutting_length_mm = height_mm + ld_length
+            total_bars = 4 * num_members  # मानकांनुसार ४ बार पकडून
+            shape_desc = "Vertical Main Bars with L-bend"
+
+        elif rcc_comp == "Beam":
+            # Main Bars with L-development both side (ld = 50d/300mm)
+            ld_length = max(300.0, 30 * bar_dia)
+            cutting_length_mm = l_net + (2 * ld_length) - (2 * bend_deduction_90)
+            total_bars = 4 * num_members  # टॉप २ + बॉटम २
+            shape_desc = "Straight Longitudinal Bars with Anchoring Hooks"
+
+        else:  # Slab
+            # Straight Main Bars with 90 deg hooks at ends
+            hook_bend = 10 * bar_dia
+            cutting_length_mm = l_net + (2 * hook_bend)
+            spacing = 150.0
+            no_of_bars = math.ceil(width_mm / spacing) + 1
+            total_bars = no_of_bars * num_members
+            shape_desc = "Slab Main Reinforcement Bars"
+
+        cutting_length_m = cutting_length_mm / 1000.0
+        total_length_m = cutting_length_m * total_bars
+        total_weight_kg = total_length_m * unit_weight
+        total_cost = total_weight_kg * steel_rate_kg
+
+        st.success("🎉 BBS रिपोर्ट यशस्वीरित्या तयार झाला आहे!")
+        st.markdown(f"### 🏗️ BAR BENDING SCHEDULE (BBS) REPORT")
+        st.info(f"👤 **Prepared For:** {current_user_name} | **घटक:** {rcc_comp} | **Clear Cover:** {cover} mm | **Bar Dia:** {bar_dia} mm")
+
+        report_table = f"""
+| Parameter | Value / Detail |
+| :--- | :--- |
+| **Component Name** | {rcc_comp} |
+| **Bar Shape Description** | {shape_desc} |
+| **Diameter of Bar (mm)** | {bar_dia} mm |
+| **Unit Weight (d²/162)** | {unit_weight:.3f} Kg/m |
+| **Cutting Length per Bar** | {cutting_length_m:.3f} m ({cutting_length_mm:.0f} mm) |
+| **Total Number of Bars** | {total_bars} Nos |
+| **Total Running Length** | {total_length_m:.2f} m |
+| **Total Weight of Steel** | **{total_weight_kg:.2f} Kg** ({total_weight_kg/1000:.3f} MT) |
+| **Steel Rate** | ₹ {steel_rate_kg:.2f} / Kg |
+| **ESTIMATED STEEL COST** | **₹ {total_cost:.2f}/-** |
+"""
+        st.markdown(report_table)
+
+        # इतिहास जतन करणे
+        user_db = load_db()
+        if current_user_name in user_db:
+            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            new_report = {
+                "timestamp": timestamp,
+                "user_note": st.session_state.current_comment,
+                "report_data": report_table
+            }
+            user_db[current_user_name]["history"].append(new_report)
+            save_db(user_db)
