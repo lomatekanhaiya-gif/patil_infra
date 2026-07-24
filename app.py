@@ -9,7 +9,13 @@ import time
 import urllib.parse
 import random
 import string
-from google import genai
+
+# Safe Google GenAI Import (Prevents App Crash if library missing)
+try:
+    from google import genai
+    HAS_GENAI = True
+except ImportError:
+    HAS_GENAI = False
 
 # 🚨 Streamlit नियम: set_page_config नेहमी सर्वात आधी असावे!
 st.set_page_config(page_title="PATIL INFRATECH", page_icon="🏗️", layout="centered")
@@ -417,7 +423,7 @@ if st.session_state.app_user_name is None:
                 fl_ra = st.selectbox("1. Rate Analysis Module Access:", ["Free", "Premium"], index=0 if cur_locks.get("Rate Analysis") == "Free" else 1, key="fl_ra_choice")
                 fl_bbs = st.selectbox("2. BBS Calculator Access:", ["Free", "Premium"], index=0 if cur_locks.get("BBS") == "Free" else 1, key="fl_bbs_choice")
                 fl_wa = st.selectbox("3. WhatsApp Full Report Share:", ["Free", "Premium"], index=0 if cur_locks.get("WhatsApp Share") == "Free" else 1, key="fl_wa_choice")
-                fl_ai = st.selectbox("4. Gemini AI Assistant Access:", ["Free", "Premium"], index=0 if cur_locks.get("AI Assistant") == "Free" else 1, key="fl_ai_choice")
+                fl_ai = st.selectbox("4. Smart AI Assistant Access:", ["Free", "Premium"], index=0 if cur_locks.get("AI Assistant") == "Free" else 1, key="fl_ai_choice")
 
                 if st.button("💾 Save Feature Lock Settings", key="save_locks_btn", type="primary"):
                     user_db["FEATURE_LOCKS"] = {
@@ -715,7 +721,7 @@ def render_whatsapp_feature(encoded_msg, key_prefix):
                     st.success("✅ ॲडमीनला कोडसाठी रिक्वेस्ट पाठवली आहे!")
 
 # ==========================================
-# 🤖 GEMINI AI ASSISTANT (Real AI + 5 Sec Thinking Time)
+# 🤖 GEMINI AI ASSISTANT (Real AI Engine + 5 Sec Thinking Time)
 # ==========================================
 st.markdown("---")
 st.markdown("### 🤖 Patil Infratech Gemini AI Assistant")
@@ -736,7 +742,7 @@ if ai_lock_setting == "Free" or is_user_premium:
                 api_key = st.secrets.get("GEMINI_API_KEY", os.getenv("GEMINI_API_KEY", ""))
                 ai_response_text = ""
                 
-                if api_key:
+                if HAS_GENAI and api_key:
                     try:
                         client = genai.Client(api_key=api_key)
                         prompt = f"""
