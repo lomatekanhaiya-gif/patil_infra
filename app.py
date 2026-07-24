@@ -44,8 +44,7 @@ def load_db():
             "BBS": "Free",
             "WhatsApp Share": "Premium",
             "Civil AI Assistant": "Premium"
-        },
-        "ADS_DB": []
+        }
     }
     if os.path.exists(DB_FILE):
         try:
@@ -376,7 +375,7 @@ if st.session_state.app_user_name is None:
 
     st.write("---")
     
-    # 🛡️ ॲडमीन लॉगिन पॅनल (स्वतंत्र नवीन विंडोसारखी रचना)
+    # 🛡️ ॲडमीन लॉगिन पॅनल (4 कंपार्टमेंट्ससह)
     with st.expander("🛡️ Admin Login Panel (Kanhaiya Only)"):
         admin_id = st.text_input("Admin ID:", key="adm_id")
         admin_pass = st.text_input("Password:", type="password", key="adm_pass")
@@ -389,16 +388,33 @@ if st.session_state.app_user_name is None:
             user_db = load_db()
 
             st.markdown("---")
-            st.markdown("### 🛠️ ADMIN CONTROL CENTER (4 Core Modules)")
+            st.markdown("### 🛠️ ADMIN CONTROL CENTER (4 Options)")
             
-            adm_tab = st.selectbox("ॲडमीनचे कार्य निवडा (Select Admin Action):", [
-                "1. Update Market Rates", 
-                "2. Feature Lock Manager", 
-                "3. User List & Data", 
-                "4. Ad & Sponsor Manager"
-            ])
+            # 4 बाजूला बाजूला कॉलम (कंपार्टमेंट्स)
+            ac1, ac2, ac3, ac4 = st.columns(4)
+            
+            with ac1:
+                btn_op1 = st.button("📈 Update Market Rates", use_container_width=True)
+            with ac2:
+                btn_op2 = st.button("⚙️ Feature Lock Manager", use_container_width=True)
+            with ac3:
+                btn_op3 = st.button("👥 User Data", use_container_width=True)
+            with ac4:
+                btn_op4 = st.button("📢 Ad Sponsor", use_container_width=True)
 
-            if "1. Update Market Rates" in adm_tab:
+            # राज्य कायम ठेवण्यासाठी session_state वापरणे
+            if "admin_sel_tab" not in st.session_state:
+                st.session_state.admin_sel_tab = "rates"
+
+            if btn_op1: st.session_state.admin_sel_tab = "rates"
+            if btn_op2: st.session_state.admin_sel_tab = "locks"
+            if btn_op3: st.session_state.admin_sel_tab = "users"
+            if btn_op4: st.session_state.admin_sel_tab = "ads"
+
+            st.write("---")
+
+            # 1. Update Market Rates
+            if st.session_state.admin_sel_tab == "rates":
                 st.markdown("#### 📈 Update Master Market Rates")
                 m_rates = user_db.get("MASTER_MARKET_RATES", {"cement": 400.0, "sand": 2500.0, "bricks": 8.0, "aggregate": 2200.0, "steel": 60.0})
                 
@@ -415,7 +431,8 @@ if st.session_state.app_user_name is None:
                     save_db(user_db)
                     st.success("✅ आजचे मास्टर मार्केट दर डेटाबेसमध्ये यशस्वीरित्या अपडेट झाले!")
 
-            elif "2. Feature Lock Manager" in adm_tab:
+            # 2. Feature Lock Manager
+            elif st.session_state.admin_sel_tab == "locks":
                 st.markdown("#### ⚙️ Feature Lock Manager (Free / Premium)")
                 cur_locks = user_db.get("FEATURE_LOCKS", {"Rate Analysis": "Free", "BBS": "Free", "WhatsApp Share": "Premium", "Civil AI Assistant": "Premium"})
 
@@ -434,70 +451,87 @@ if st.session_state.app_user_name is None:
                     save_db(user_db)
                     st.success("✅ फीचर्स लॉक सेटिंग्स यशस्वीरित्या बदलल्या!")
 
-            elif "3. User List & Data" in adm_tab:
+            # 3. User Data (जुन्या पद्धतीनुसार सर्व युझर्सची यादी व मॅनेजमेंट)
+            elif st.session_state.admin_sel_tab == "users":
                 st.markdown("#### 📋 User Database Master List")
-                all_users_keys = [k for k in user_db.keys() if k not in ["9999999999", "MASTER_MARKET_RATES", "PREMIUM_CODES", "FEATURE_LOCKS", "ADS_DB"]]
                 
-                if all_users_keys:
-                    for mob in all_users_keys:
-                        info = user_db[mob]
-                        if not isinstance(info, dict): continue
-                        u_name = info.get("id", mob)
-                        u_prem = info.get("is_premium", False)
-                        
-                        col_u1, col_u2 = st.columns([3, 2])
-                        if u_prem:
-                            col_u1.markdown(f"<span class='gold-vip-badge'>👑 {u_name.upper()} (VIP)</span>", unsafe_allow_html=True)
-                        else:
-                            col_u1.markdown(f"<span class='free-user-badge'>🆓 {u_name.upper()} (Free)</span>", unsafe_allow_html=True)
-                        
-                        if col_u2.button(f"⚡ Make VIP / Gen Code", key=f"adm_code_{mob}"):
+                if st.session_state.admin_view == "user_detail" and st.session_state.admin_selected_user is not None:
+                    target_user = st.session_state.admin_selected_user
+                    if st.button("⬅️ Back to All Users List"):
+                        st.session_state.admin_view = "main"
+                        st.session_state.admin_selected_user = None
+                        st.rerun()
+
+                    info = user_db.get(target_user, {})
+                    u_name = info.get("id", target_user)
+                    u_comm = info.get("comment", "काही नाही")
+                    u_prem = info.get("is_premium", False)
+                    exp_date = info.get("premium_expiry", "N/A")
+                    is_req = info.get("requested_code", False)
+                    u_hist = info.get("history", [])
+
+                    assigned_code = None
+                    if "PREMIUM_CODES" in user_db:
+                        for c_code, c_data in user_db["PREMIUM_CODES"].items():
+                            if c_data.get("assigned_to") == u_name and not c_data.get("used", False):
+                                assigned_code = c_code
+                                break
+
+                    status_badge = f"👑 VIP MEMBER: {u_name.upper()}" if u_prem else ("🚨 CODE REQUESTED!" if is_req else f"🆓 FREE: {u_name.upper()}")
+
+                    st.markdown(f"### 👤 MANAGE USER: <span style='color:#60a5fa;'>{u_name.upper()}</span>", unsafe_allow_html=True)
+                    st.markdown(f"""
+                        <div class="admin-user-card">
+                            <p style="margin:5px 0; font-size:16px;"><b>माहिती/स्टेटस:</b> <span class="gold-vip-badge">{status_badge}</span></p>
+                            <p style="margin:8px 0 5px 0; font-size:15px;"><b>प्रिमियम मुदत (Expiry):</b> <code>{exp_date}</code></p>
+                            <p style="margin:5px 0; font-size:15px;"><b>ॲक्टिव्ह कोड (Unused):</b> <code style="color:#10b981; font-size:16px;">{assigned_code if assigned_code else 'काही नाही'}</code></p>
+                            <p style="margin:5px 0; font-size:14px; color:#9ca3af;"><b>युझर कमेंट:</b> {u_comm}</p>
+                        </div>
+                    """, unsafe_allow_html=True)
+
+                    if not assigned_code:
+                        if st.button(f"🚀 Generate & Send Unique Code to {u_name}", key=f"win_gen_{target_user}"):
                             new_c = generate_random_code()
                             if "PREMIUM_CODES" not in user_db: user_db["PREMIUM_CODES"] = {}
                             user_db["PREMIUM_CODES"][new_c] = {"assigned_to": u_name, "used": False}
-                            user_db[mob]["admin_message"] = f"तुमचा प्रिमियम कोड: {new_c}"
+                            user_db[target_user]["admin_message"] = f"तुमचा प्रिमियम कोड: {new_c}"
                             save_db(user_db)
-                            st.success(f"Generated Code for {u_name}: `{new_c}`")
+                            st.success(f"Generated Code: `{new_c}`")
                             st.rerun()
-                        st.write("---")
-                else:
-                    st.info("ℹ️ कोणताही युझर नोंदणीकृत नाही.")
 
-            elif "4. Ad & Sponsor Manager" in adm_tab:
-                st.markdown("#### 📢 Ad & Sponsor Manager (जाहिरात व्यवस्थापन)")
-                st.caption("💡 युझर्सनी पाठवलेल्या किंवा ॲडमिनने सेट केलेल्या जाहिराती इथे मॅनेज करा:")
-                
-                if "ADS_DB" not in user_db: user_db["ADS_DB"] = []
-                
-                new_ad_title = st.text_input("Ad / Sponsor Title:")
-                new_ad_desc = st.text_area("Ad Description / Offer:")
-                new_ad_link = st.text_input("Target Link or WhatsApp Number:")
-                
-                if st.button("🚀 Publish New Ad to App", type="primary"):
-                    if new_ad_title.strip():
-                        ad_item = {
-                            "title": new_ad_title,
-                            "desc": new_ad_desc,
-                            "link": new_ad_link,
-                            "active": True,
-                            "date": datetime.datetime.now().strftime("%Y-%m-%d")
-                        }
-                        user_db["ADS_DB"].append(ad_item)
+                    if u_prem and st.button(f"🔻 Revoke Premium: {u_name}", key=f"rev_{target_user}"):
+                        user_db[target_user]["is_premium"] = False
+                        user_db[target_user]["premium_expiry"] = None
                         save_db(user_db)
-                        st.success("✅ जाहिरात यशस्वीरित्या ॲपवर लाईव्ह झाली!")
+                        st.warning("प्रिमियम काढले आहे.")
                         st.rerun()
-
-                st.markdown("---")
-                st.markdown("##### 📋 सध्या चालू असलेल्या जाहिराती (Active Ads):")
-                if user_db["ADS_DB"]:
-                    for idx, ad in enumerate(user_db["ADS_DB"]):
-                        st.info(f"**{ad['title']}** - {ad['desc']}")
-                        if st.button(f"🗑️ Delete Ad #{idx+1}", key=f"del_ad_{idx}"):
-                            user_db["ADS_DB"].pop(idx)
-                            save_db(user_db)
-                            st.rerun()
                 else:
-                    st.info("ℹ️ सध्या कोणतीही ॲड लाईव्ह नाही.")
+                    all_users_keys = [k for k in user_db.keys() if k not in ["9999999999", "MASTER_MARKET_RATES", "PREMIUM_CODES", "FEATURE_LOCKS"]]
+                    if all_users_keys:
+                        for mob in all_users_keys:
+                            info = user_db[mob]
+                            if not isinstance(info, dict): continue
+                            u_name = info.get("id", mob)
+                            u_prem = info.get("is_premium", False)
+                            
+                            col_u1, col_u2 = st.columns([3, 2])
+                            if u_prem:
+                                col_u1.markdown(f"<span class='gold-vip-badge'>👑 VIP: {u_name.upper()}</span>", unsafe_allow_html=True)
+                            else:
+                                col_u1.markdown(f"<span class='free-user-badge'>🆓 Free: {u_name.upper()}</span>", unsafe_allow_html=True)
+                            
+                            if col_u2.button(f"👁️ View {u_name}", key=f"vw_{mob}"):
+                                st.session_state.admin_view = "user_detail"
+                                st.session_state.admin_selected_user = mob
+                                st.rerun()
+                            st.write("---")
+                    else:
+                        st.info("ℹ️ कोणताही युझर नोंदणीकृत नाही.")
+
+            # 4. Ad Sponsor (Coming Soon मेसेज)
+            elif st.session_state.admin_sel_tab == "ads":
+                st.markdown("#### 📢 Ad Sponsor Manager")
+                st.info("🚧 **Coming Soon!** जाहिरात आणि स्पॉन्सरशिप मॅनेज करण्याचे फिचर लवकरच येत आहे.")
 
         elif admin_id or admin_pass:
             st.error("❌ चुकीचा Admin ID किंवा Password!")
@@ -523,18 +557,6 @@ if col_lo.button("🔄 Logout / ॲप बदला"):
     st.session_state.current_comment = "काही नाही"
     st.session_state.selected_module = None
     st.rerun()
-
-# 📢 ॲपवर चालू असलेली ॲड किंवा स्पॉन्सरशिप बॅनर्स दाखवणे
-if "ADS_DB" in user_db and user_db["ADS_DB"]:
-    for ad in user_db["ADS_DB"]:
-        if ad.get("active", False):
-            st.markdown(f"""
-                <div style="background: linear-gradient(135deg, #b45309 0%, #d97706 100%); padding: 12px 18px; border-radius: 14px; margin-bottom: 15px; border: 1px solid #fbbf24; color: #fff;">
-                    <b>📢 SPONSORED / AD: {ad['title']}</b><br>
-                    <span>{ad['desc']}</span><br>
-                    <a href="{ad['link']}" target="_blank" style="color: #fef08a; font-weight: bold; text-decoration: underline;">👉 अधिक माहितीसाठी इथे क्लिक करा</a>
-                </div>
-            """, unsafe_allow_html=True)
 
 # 🔄 इनबॉक्स मेसेज लोड करणे
 current_user_data = user_db.get(current_user_name, {})
