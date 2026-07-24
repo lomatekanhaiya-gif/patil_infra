@@ -67,6 +67,10 @@ user_db = load_db()
 # Session State Initialization
 if "app_user_name" not in st.session_state:
     st.session_state.app_user_name = None
+if "is_admin_logged" not in st.session_state:
+    st.session_state.is_admin_logged = False
+if "admin_dashboard_tab" not in st.session_state:
+    st.session_state.admin_dashboard_tab = "rates"
 if "current_comment" not in st.session_state:
     st.session_state.current_comment = "काही नाही"
 if "selected_module" not in st.session_state:
@@ -307,33 +311,6 @@ if not st.session_state.welcome_completed:
     welcome_placeholder.empty()
     st.session_state.welcome_completed = True
 
-# ==========================================
-# 🛑 USER FIRST-TIME AESTHETIC VIP POPUP CHECK
-# ==========================================
-if current_user_name:
-    u_info = user_db.get(current_user_name, {})
-    if isinstance(u_info, dict) and u_info.get("is_premium", False) and not u_info.get("seen_popup", False):
-        activated_by_text = u_info.get("activated_by", "Kanhaiya (Founder of Patil Infratech)")
-        st.markdown(f"""
-            <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
-                        background: radial-gradient(circle at center, #141b2d 0%, #070a12 100%);
-                        z-index: 9999999; display: flex; flex-direction: column; 
-                        justify-content: center; align-items: center; text-align: center; padding: 25px;">
-                <div style="background: rgba(255, 215, 0, 0.05); backdrop-filter: blur(25px); border-radius: 30px; padding: 40px; box-shadow: 0 0 50px rgba(255, 179, 0, 0.25); max-width: 500px; width: 100%;">
-                    <h1 style="font-size: 70px; margin: 0; text-shadow: 0 0 25px #FFB300;">👑</h1>
-                    <h1 style="background: linear-gradient(135deg, #FFE082 0%, #FFB300 50%, #FF6F00 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 28px; font-weight: 900; margin-top: 15px; letter-spacing: 0.5px;">WELCOME VIP MEMBER<br>{current_user_name.upper()}</h1>
-                    <h2 style="color: #e2e8f0; font-size: 18px; font-weight: 500; margin-top: 15px; line-height: 1.4;">YOU ARE NOW A ROYAL PREMIUM MEMBER OF PATIL INFRATECH!</h2>
-                    <p style="color: #93c5fd; font-size: 15px; margin-top: 12px;">✨ Unlimited WhatsApp Sharing & Full Feature Access Unlocked! 🚀</p>
-                    <hr style="border: 0; height: 1px; background: rgba(255,255,255,0.15); margin: 20px 0;">
-                    <p style="color: #FFE082; font-size: 14px; margin: 0; font-weight: 600; letter-spacing: 0.3px;">✨ Approved & Activated By: {activated_by_text}</p>
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
-        time.sleep(4.0)
-        user_db[current_user_name]["seen_popup"] = True
-        save_db(user_db)
-        st.rerun()
-
 # मुख्य टायटल बॅनर
 st.markdown("""
     <div class="main-header">
@@ -342,6 +319,161 @@ st.markdown("""
         <small style='color: #93c5fd;'>Concept & Logic by: Kanhaiya (Founder of Patil Infratech)</small>
     </div>
 """, unsafe_allow_html=True)
+
+# ==========================================
+# 🛡️ ADMIN PANEL (जर ॲडमीन यशस्वीरीत्या लॉगइन असेल, तर लॉगिन स्क्रीन गायब होईल)
+# ==========================================
+if st.session_state.is_admin_logged:
+    st.markdown("## 👑 ADMIN DASHBOARD (PATIL INFRATECH)")
+    
+    col_logout, _ = st.columns([1, 3])
+    with col_logout:
+        if st.button("🔒 Admin Logout"):
+            st.session_state.is_admin_logged = False
+            st.rerun()
+
+    st.write("---")
+    
+    # इन्स्टाग्रामसारखे ४ वेगवेगळे कंपार्टमेंट्स (Buttons) एका ओळीत
+    ac1, ac2, ac3, ac4 = st.columns(4)
+    with ac1:
+        if st.button("📈 Update Market Rates", use_container_width=True):
+            st.session_state.admin_dashboard_tab = "rates"
+    with ac2:
+        if st.button("⚙️ Feature Lock Manager", use_container_width=True):
+            st.session_state.admin_dashboard_tab = "locks"
+    with ac3:
+        if st.button("👥 User Data", use_container_width=True):
+            st.session_state.admin_dashboard_tab = "users"
+    with ac4:
+        if st.button("📢 Ad Sponsor", use_container_width=True):
+            st.session_state.admin_dashboard_tab = "ads"
+
+    st.write("---")
+    user_db = load_db()
+    current_tab = st.session_state.admin_dashboard_tab
+
+    # 1. Update Market Rates
+    if current_tab == "rates":
+        st.markdown("### 📈 Update Master Market Rates")
+        m_rates = user_db.get("MASTER_MARKET_RATES", {"cement": 400.0, "sand": 2500.0, "bricks": 8.0, "aggregate": 2200.0, "steel": 60.0})
+        
+        adm_cem = st.number_input("Cement (per bag ₹):", min_value=0.0, value=float(m_rates.get("cement", 400.0)), step=1.0)
+        adm_snd = st.number_input("Sand (per m³ ₹):", min_value=0.0, value=float(m_rates.get("sand", 2500.0)), step=1.0)
+        adm_brk = st.number_input("Brick (per nos ₹):", min_value=0.0, value=float(m_rates.get("bricks", 8.0)), step=0.1)
+        adm_agg = st.number_input("Aggregate (per m³ ₹):", min_value=0.0, value=float(m_rates.get("aggregate", 2200.0)), step=1.0)
+        adm_ste = st.number_input("Steel Rate (per kg ₹):", min_value=0.0, value=float(m_rates.get("steel", 60.0)), step=1.0)
+        
+        if st.button("💾 Save Master Market Rates", type="primary"):
+            user_db["MASTER_MARKET_RATES"] = {
+                "cement": adm_cem, "sand": adm_snd, "bricks": adm_brk, "aggregate": adm_agg, "steel": adm_ste
+            }
+            save_db(user_db)
+            st.success("✅ आजचे मास्टर मार्केट दर डेटाबेसमध्ये यशस्वीरित्या अपडेट झाले!")
+
+    # 2. Feature Lock Manager
+    elif current_tab == "locks":
+        st.markdown("### ⚙️ Feature Lock Manager")
+        cur_locks = user_db.get("FEATURE_LOCKS", {"Rate Analysis": "Free", "BBS": "Free", "WhatsApp Share": "Premium", "Civil AI Assistant": "Premium"})
+
+        fl_ra = st.selectbox("Rate Analysis Module Access:", ["Free", "Premium"], index=0 if cur_locks.get("Rate Analysis") == "Free" else 1)
+        fl_bbs = st.selectbox("BBS Calculator Access:", ["Free", "Premium"], index=0 if cur_locks.get("BBS") == "Free" else 1)
+        fl_wa = st.selectbox("WhatsApp Full Report Share:", ["Free", "Premium"], index=0 if cur_locks.get("WhatsApp Share") == "Free" else 1)
+        fl_ai = st.selectbox("Civil AI Assistant Access:", ["Free", "Premium"], index=0 if cur_locks.get("Civil AI Assistant") == "Free" else 1)
+
+        if st.button("💾 Save Feature Lock Settings", type="primary"):
+            user_db["FEATURE_LOCKS"] = {
+                "Rate Analysis": fl_ra,
+                "BBS": fl_bbs,
+                "WhatsApp Share": fl_wa,
+                "Civil AI Assistant": fl_ai
+            }
+            save_db(user_db)
+            st.success("✅ प्रिमियम/फ्री फीचर्स सेटिंग्स यशस्वीरित्या बदलल्या!")
+
+    # 3. User Data (जुनी पद्धत: युझर यादी आणि तपशील)
+    elif current_tab == "users":
+        st.markdown("### 👥 User Database Master List")
+        
+        if st.session_state.admin_view == "user_detail" and st.session_state.admin_selected_user is not None:
+            target_user = st.session_state.admin_selected_user
+            if st.button("⬅️ Back to All Users List"):
+                st.session_state.admin_view = "main"
+                st.session_state.admin_selected_user = None
+                st.rerun()
+
+            info = user_db.get(target_user, {})
+            u_name = info.get("id", target_user)
+            u_comm = info.get("comment", "काही नाही")
+            u_prem = info.get("is_premium", False)
+            exp_date = info.get("premium_expiry", "N/A")
+            is_req = info.get("requested_code", False)
+            u_hist = info.get("history", [])
+
+            assigned_code = None
+            if "PREMIUM_CODES" in user_db:
+                for c_code, c_data in user_db["PREMIUM_CODES"].items():
+                    if c_data.get("assigned_to") == u_name and not c_data.get("used", False):
+                        assigned_code = c_code
+                        break
+
+            status_badge = f"👑 VIP MEMBER: {u_name.upper()}" if u_prem else ("🚨 CODE REQUESTED!" if is_req else f"🆓 FREE: {u_name.upper()}")
+
+            st.markdown(f"#### 👤 MANAGE USER: <span style='color:#60a5fa;'>{u_name.upper()}</span>", unsafe_allow_html=True)
+            st.markdown(f"""
+                <div class="admin-user-card">
+                    <p style="margin:5px 0; font-size:16px;"><b>माहिती/स्टेटस:</b> <span class="gold-vip-badge">{status_badge}</span></p>
+                    <p style="margin:8px 0 5px 0; font-size:15px;"><b>प्रिमियम मुदत (Expiry):</b> <code>{exp_date}</code></p>
+                    <p style="margin:5px 0; font-size:15px;"><b>ॲक्टिव्ह कोड (Unused):</b> <code style="color:#10b981; font-size:16px;">{assigned_code if assigned_code else 'काही नाही'}</code></p>
+                    <p style="margin:5px 0; font-size:14px; color:#9ca3af;"><b>युझर कमेंट:</b> {u_comm}</p>
+                </div>
+            """, unsafe_allow_html=True)
+
+            if not assigned_code:
+                if st.button(f"🚀 Generate & Send Unique Code to {u_name}", key=f"win_gen_{target_user}"):
+                    new_c = generate_random_code()
+                    if "PREMIUM_CODES" not in user_db: user_db["PREMIUM_CODES"] = {}
+                    user_db["PREMIUM_CODES"][new_c] = {"assigned_to": u_name, "used": False}
+                    user_db[target_user]["admin_message"] = f"तुमचा प्रिमियम कोड: {new_c}"
+                    save_db(user_db)
+                    st.success(f"Generated Code: `{new_c}`")
+                    st.rerun()
+
+            if u_prem and st.button(f"🔻 Revoke Premium: {u_name}", key=f"rev_{target_user}"):
+                user_db[target_user]["is_premium"] = False
+                user_db[target_user]["premium_expiry"] = None
+                save_db(user_db)
+                st.warning("प्रिमियम काढले आहे.")
+                st.rerun()
+        else:
+            all_users_keys = [k for k in user_db.keys() if k not in ["9999999999", "MASTER_MARKET_RATES", "PREMIUM_CODES", "FEATURE_LOCKS"]]
+            if all_users_keys:
+                for mob in all_users_keys:
+                    info = user_db[mob]
+                    if not isinstance(info, dict): continue
+                    u_name = info.get("id", mob)
+                    u_prem = info.get("is_premium", False)
+                    
+                    col_u1, col_u2 = st.columns([3, 2])
+                    if u_prem:
+                        col_u1.markdown(f"<span class='gold-vip-badge'>👑 VIP: {u_name.upper()}</span>", unsafe_allow_html=True)
+                    else:
+                        col_u1.markdown(f"<span class='free-user-badge'>🆓 Free: {u_name.upper()}</span>", unsafe_allow_html=True)
+                    
+                    if col_u2.button(f"👁️ View {u_name}", key=f"vw_{mob}"):
+                        st.session_state.admin_view = "user_detail"
+                        st.session_state.admin_selected_user = mob
+                        st.rerun()
+                    st.write("---")
+            else:
+                st.info("ℹ️ कोणताही युझर नोंदणीकृत नाही.")
+
+    # 4. Ad Sponsor (Coming Soon)
+    elif current_tab == "ads":
+        st.markdown("### 📢 Ad Sponsor Manager")
+        st.info("🚧 **Coming Soon!** जाहिरात आणि स्पॉन्सरशिप मॅनेज करण्याचे फिचर लवकरच येत आहे.")
+
+    st.stop()
 
 # ==========================================
 # 👤 युझर नाव प्रविष्ट करणे किंवा ॲडमीन लॉगिन
@@ -375,7 +507,7 @@ if st.session_state.app_user_name is None:
 
     st.write("---")
     
-    # 🛡️ ॲडमीन लॉगिन पॅनल (4 कंपार्टमेंट्ससह)
+    # 🛡️ ॲडमीन लॉगिन पॅनल (इन्स्टाग्रामसारखे: यशस्वी लॉगइन झाल्यावर जुनी स्क्रीन गायब होईल)
     with st.expander("🛡️ Admin Login Panel (Kanhaiya Only)"):
         admin_id = st.text_input("Admin ID:", key="adm_id")
         admin_pass = st.text_input("Password:", type="password", key="adm_pass")
@@ -383,158 +515,12 @@ if st.session_state.app_user_name is None:
         secret_admin_id = st.secrets.get("ADMIN_ID", "kanha_1p") if hasattr(st, "secrets") else "kanha_1p"
         secret_admin_pass = st.secrets.get("ADMIN_PASS", "@Dellg15") if hasattr(st, "secrets") else "@Dellg15"
 
-        if admin_id == secret_admin_id and admin_pass == secret_admin_pass:
-            st.success("🔓 ॲडमीन डॅशबोर्ड अनलॉक झाला!")
-            user_db = load_db()
-
-            st.markdown("---")
-            st.markdown("### 🛠️ ADMIN CONTROL CENTER (4 Options)")
-            
-            # 4 बाजूला बाजूला कॉलम (कंपार्टमेंट्स)
-            ac1, ac2, ac3, ac4 = st.columns(4)
-            
-            with ac1:
-                btn_op1 = st.button("📈 Update Market Rates", use_container_width=True)
-            with ac2:
-                btn_op2 = st.button("⚙️ Feature Lock Manager", use_container_width=True)
-            with ac3:
-                btn_op3 = st.button("👥 User Data", use_container_width=True)
-            with ac4:
-                btn_op4 = st.button("📢 Ad Sponsor", use_container_width=True)
-
-            # राज्य कायम ठेवण्यासाठी session_state वापरणे
-            if "admin_sel_tab" not in st.session_state:
-                st.session_state.admin_sel_tab = "rates"
-
-            if btn_op1: st.session_state.admin_sel_tab = "rates"
-            if btn_op2: st.session_state.admin_sel_tab = "locks"
-            if btn_op3: st.session_state.admin_sel_tab = "users"
-            if btn_op4: st.session_state.admin_sel_tab = "ads"
-
-            st.write("---")
-
-            # 1. Update Market Rates
-            if st.session_state.admin_sel_tab == "rates":
-                st.markdown("#### 📈 Update Master Market Rates")
-                m_rates = user_db.get("MASTER_MARKET_RATES", {"cement": 400.0, "sand": 2500.0, "bricks": 8.0, "aggregate": 2200.0, "steel": 60.0})
-                
-                adm_cem = st.number_input("Cement (per bag ₹):", min_value=0.0, value=float(m_rates.get("cement", 400.0)), step=1.0)
-                adm_snd = st.number_input("Sand (per m³ ₹):", min_value=0.0, value=float(m_rates.get("sand", 2500.0)), step=1.0)
-                adm_brk = st.number_input("Brick (per nos ₹):", min_value=0.0, value=float(m_rates.get("bricks", 8.0)), step=0.1)
-                adm_agg = st.number_input("Aggregate (per m³ ₹):", min_value=0.0, value=float(m_rates.get("aggregate", 2200.0)), step=1.0)
-                adm_ste = st.number_input("Steel Rate (per kg ₹):", min_value=0.0, value=float(m_rates.get("steel", 60.0)), step=1.0)
-                
-                if st.button("💾 Save Master Market Rates", type="primary"):
-                    user_db["MASTER_MARKET_RATES"] = {
-                        "cement": adm_cem, "sand": adm_snd, "bricks": adm_brk, "aggregate": adm_agg, "steel": adm_ste
-                    }
-                    save_db(user_db)
-                    st.success("✅ आजचे मास्टर मार्केट दर डेटाबेसमध्ये यशस्वीरित्या अपडेट झाले!")
-
-            # 2. Feature Lock Manager
-            elif st.session_state.admin_sel_tab == "locks":
-                st.markdown("#### ⚙️ Feature Lock Manager (Free / Premium)")
-                cur_locks = user_db.get("FEATURE_LOCKS", {"Rate Analysis": "Free", "BBS": "Free", "WhatsApp Share": "Premium", "Civil AI Assistant": "Premium"})
-
-                fl_ra = st.selectbox("Rate Analysis Module Access:", ["Free", "Premium"], index=0 if cur_locks.get("Rate Analysis") == "Free" else 1)
-                fl_bbs = st.selectbox("BBS Calculator Access:", ["Free", "Premium"], index=0 if cur_locks.get("BBS") == "Free" else 1)
-                fl_wa = st.selectbox("WhatsApp Full Report Share:", ["Free", "Premium"], index=0 if cur_locks.get("WhatsApp Share") == "Free" else 1)
-                fl_ai = st.selectbox("Civil AI Assistant Access:", ["Free", "Premium"], index=0 if cur_locks.get("Civil AI Assistant") == "Free" else 1)
-
-                if st.button("💾 Save Feature Lock Settings", type="primary"):
-                    user_db["FEATURE_LOCKS"] = {
-                        "Rate Analysis": fl_ra,
-                        "BBS": fl_bbs,
-                        "WhatsApp Share": fl_wa,
-                        "Civil AI Assistant": fl_ai
-                    }
-                    save_db(user_db)
-                    st.success("✅ फीचर्स लॉक सेटिंग्स यशस्वीरित्या बदलल्या!")
-
-            # 3. User Data (जुन्या पद्धतीनुसार सर्व युझर्सची यादी व मॅनेजमेंट)
-            elif st.session_state.admin_sel_tab == "users":
-                st.markdown("#### 📋 User Database Master List")
-                
-                if st.session_state.admin_view == "user_detail" and st.session_state.admin_selected_user is not None:
-                    target_user = st.session_state.admin_selected_user
-                    if st.button("⬅️ Back to All Users List"):
-                        st.session_state.admin_view = "main"
-                        st.session_state.admin_selected_user = None
-                        st.rerun()
-
-                    info = user_db.get(target_user, {})
-                    u_name = info.get("id", target_user)
-                    u_comm = info.get("comment", "काही नाही")
-                    u_prem = info.get("is_premium", False)
-                    exp_date = info.get("premium_expiry", "N/A")
-                    is_req = info.get("requested_code", False)
-                    u_hist = info.get("history", [])
-
-                    assigned_code = None
-                    if "PREMIUM_CODES" in user_db:
-                        for c_code, c_data in user_db["PREMIUM_CODES"].items():
-                            if c_data.get("assigned_to") == u_name and not c_data.get("used", False):
-                                assigned_code = c_code
-                                break
-
-                    status_badge = f"👑 VIP MEMBER: {u_name.upper()}" if u_prem else ("🚨 CODE REQUESTED!" if is_req else f"🆓 FREE: {u_name.upper()}")
-
-                    st.markdown(f"### 👤 MANAGE USER: <span style='color:#60a5fa;'>{u_name.upper()}</span>", unsafe_allow_html=True)
-                    st.markdown(f"""
-                        <div class="admin-user-card">
-                            <p style="margin:5px 0; font-size:16px;"><b>माहिती/स्टेटस:</b> <span class="gold-vip-badge">{status_badge}</span></p>
-                            <p style="margin:8px 0 5px 0; font-size:15px;"><b>प्रिमियम मुदत (Expiry):</b> <code>{exp_date}</code></p>
-                            <p style="margin:5px 0; font-size:15px;"><b>ॲक्टिव्ह कोड (Unused):</b> <code style="color:#10b981; font-size:16px;">{assigned_code if assigned_code else 'काही नाही'}</code></p>
-                            <p style="margin:5px 0; font-size:14px; color:#9ca3af;"><b>युझर कमेंट:</b> {u_comm}</p>
-                        </div>
-                    """, unsafe_allow_html=True)
-
-                    if not assigned_code:
-                        if st.button(f"🚀 Generate & Send Unique Code to {u_name}", key=f"win_gen_{target_user}"):
-                            new_c = generate_random_code()
-                            if "PREMIUM_CODES" not in user_db: user_db["PREMIUM_CODES"] = {}
-                            user_db["PREMIUM_CODES"][new_c] = {"assigned_to": u_name, "used": False}
-                            user_db[target_user]["admin_message"] = f"तुमचा प्रिमियम कोड: {new_c}"
-                            save_db(user_db)
-                            st.success(f"Generated Code: `{new_c}`")
-                            st.rerun()
-
-                    if u_prem and st.button(f"🔻 Revoke Premium: {u_name}", key=f"rev_{target_user}"):
-                        user_db[target_user]["is_premium"] = False
-                        user_db[target_user]["premium_expiry"] = None
-                        save_db(user_db)
-                        st.warning("प्रिमियम काढले आहे.")
-                        st.rerun()
-                else:
-                    all_users_keys = [k for k in user_db.keys() if k not in ["9999999999", "MASTER_MARKET_RATES", "PREMIUM_CODES", "FEATURE_LOCKS"]]
-                    if all_users_keys:
-                        for mob in all_users_keys:
-                            info = user_db[mob]
-                            if not isinstance(info, dict): continue
-                            u_name = info.get("id", mob)
-                            u_prem = info.get("is_premium", False)
-                            
-                            col_u1, col_u2 = st.columns([3, 2])
-                            if u_prem:
-                                col_u1.markdown(f"<span class='gold-vip-badge'>👑 VIP: {u_name.upper()}</span>", unsafe_allow_html=True)
-                            else:
-                                col_u1.markdown(f"<span class='free-user-badge'>🆓 Free: {u_name.upper()}</span>", unsafe_allow_html=True)
-                            
-                            if col_u2.button(f"👁️ View {u_name}", key=f"vw_{mob}"):
-                                st.session_state.admin_view = "user_detail"
-                                st.session_state.admin_selected_user = mob
-                                st.rerun()
-                            st.write("---")
-                    else:
-                        st.info("ℹ️ कोणताही युझर नोंदणीकृत नाही.")
-
-            # 4. Ad Sponsor (Coming Soon मेसेज)
-            elif st.session_state.admin_sel_tab == "ads":
-                st.markdown("#### 📢 Ad Sponsor Manager")
-                st.info("🚧 **Coming Soon!** जाहिरात आणि स्पॉन्सरशिप मॅनेज करण्याचे फिचर लवकरच येत आहे.")
-
-        elif admin_id or admin_pass:
-            st.error("❌ चुकीचा Admin ID किंवा Password!")
+        if st.button("🔓 Login to Admin Panel", type="primary"):
+            if admin_id == secret_admin_id and admin_pass == secret_admin_pass:
+                st.session_state.is_admin_logged = True
+                st.rerun()
+            else:
+                st.error("❌ चुकीचा Admin ID किंवा Password!")
             
     st.stop()
 
