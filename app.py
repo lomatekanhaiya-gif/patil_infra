@@ -9,6 +9,7 @@ import time
 import urllib.parse
 import random
 import string
+from google import genai
 
 # 🚨 Streamlit नियम: set_page_config नेहमी सर्वात आधी असावे!
 st.set_page_config(page_title="PATIL INFRATECH", page_icon="🏗️", layout="centered")
@@ -35,7 +36,8 @@ def load_db():
         "FEATURE_LOCKS": {
             "Rate Analysis": "Free",
             "BBS": "Free",
-            "WhatsApp Share": "Premium"
+            "WhatsApp Share": "Premium",
+            "AI Assistant": "Premium"
         }
     }
     if os.path.exists(DB_FILE):
@@ -123,23 +125,19 @@ st.markdown(f"""
     [data-testid="stDecoration"] {{ display: none !important; }}
     [data-testid="stStatusWidget"] {{ visibility: hidden !important; }}
     
-    /* Hide Step Up/Down buttons in Number Inputs */
     button[title="Increment"], button[title="Decrement"] {{ display: none !important; }}
     div[data-testid="stNumberInputStepUp"], div[data-testid="stNumberInputStepDown"] {{ display: none !important; }}
 
-    /* Modern Dark Background */
     .stApp {{
         background: linear-gradient(135deg, #070a12 0%, #0d1322 100%);
         color: #f3f4f6;
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }}
 
-    /* 🌟 UNIVERSAL SCREEN TOUCH GLOW */
     .stApp:active {{
         box-shadow: inset 0 0 80px {touch_glow_color} !important;
     }}
 
-    /* Table Mobile Responsive Scroll */
     .stMarkdown table {{
         display: block;
         overflow-x: auto;
@@ -152,7 +150,6 @@ st.markdown(f"""
         border: 1px solid #374151 !important;
     }}
 
-    /* Card Styling */
     div.stForm, div[data-testid="stExpander"] {{
         background: rgba(17, 24, 39, 0.8) !important;
         backdrop-filter: blur(16px);
@@ -162,7 +159,6 @@ st.markdown(f"""
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), {input_inner_shadow};
     }}
 
-    /* 💎 PREMIUM INPUTS & DROPDOWNS STYLING */
     div[data-baseweb="select"] > div,
     div[data-baseweb="input"] > div,
     div[data-baseweb="base-input"],
@@ -177,7 +173,6 @@ st.markdown(f"""
         transition: all 0.25s ease-in-out !important;
     }}
 
-    /* 🌟 ACTIVE TOUCH / FOCUS GLOW EFFECT ON INPUTS */
     div[data-baseweb="select"]:focus-within > div,
     div[data-baseweb="input"]:focus-within > div,
     div[data-baseweb="base-input"]:focus-within,
@@ -193,7 +188,6 @@ st.markdown(f"""
         font-size: 13px !important;
     }}
 
-    /* Primary Buttons Red Gradient */
     div.stButton > button[kind="primary"] {{
         background: linear-gradient(90deg, #dc2626 0%, #ef4444 100%) !important;
         color: white !important;
@@ -205,7 +199,6 @@ st.markdown(f"""
         width: 100%;
     }}
 
-    /* Mobile Header Banner */
     .main-header {{
         background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
         padding: 22px 15px;
@@ -216,7 +209,6 @@ st.markdown(f"""
         border: 1px solid rgba(255, 255, 255, 0.15);
     }}
 
-    /* 👑 ROYAL GOLD VIP BADGE */
     .gold-vip-badge {{
         background: linear-gradient(135deg, #FFE082 0%, #FFB300 50%, #FF6F00 100%);
         color: #000000;
@@ -230,7 +222,6 @@ st.markdown(f"""
         border: 1px solid #FFF59D;
     }}
 
-    /* 🆓 STANDARD FREE USER BADGE */
     .free-user-badge {{
         background: rgba(31, 41, 55, 0.9);
         color: #9ca3af;
@@ -242,7 +233,6 @@ st.markdown(f"""
         display: inline-block;
     }}
 
-    /* 👑 ADMIN PANEL USER CARD STYLING */
     .admin-user-card {{
         background: rgba(31, 41, 55, 0.85);
         border: 1px solid #3b82f6;
@@ -251,27 +241,11 @@ st.markdown(f"""
         margin-bottom: 15px;
     }}
 
-    /* 🖨️ A3 PRINT STYLING CONTROL */
     @media print {{
-        @page {{
-            size: A3 landscape;
-            margin: 10mm;
-        }}
-        body * {{
-            visibility: hidden;
-        }}
-        .print-container, .print-container * {{
-            visibility: visible;
-        }}
-        .print-container {{
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            background: white !important;
-            color: black !important;
-            padding: 15px;
-        }}
+        @page {{ size: A3 landscape; margin: 10mm; }}
+        body * {{ visibility: hidden; }}
+        .print-container, .print-container * {{ visibility: visible; }}
+        .print-container {{ position: absolute; left: 0; top: 0; width: 100%; background: white !important; color: black !important; padding: 15px; }}
     }}
     </style>
 """, unsafe_allow_html=True)
@@ -407,9 +381,6 @@ if st.session_state.app_user_name is None:
             st.success("🔓 डेटाबेस अनलॉक झाला!")
             user_db = load_db()
 
-            # ----------------------------------------------------
-            # 🛑 1. ADMIN SUB-WINDOW: MASTER MARKET RATES
-            # ----------------------------------------------------
             if st.session_state.admin_view == "rates":
                 if st.button("⬅️ Back to Admin Main Menu", key="btn_back_from_rates"):
                     st.session_state.admin_view = "main"
@@ -432,9 +403,6 @@ if st.session_state.app_user_name is None:
                     save_db(user_db)
                     st.success("✅ आजचे मास्टर मार्केट दर डेटाबेसमध्ये यशस्वीरित्या अपडेट झाले!")
 
-            # ----------------------------------------------------
-            # 🛑 2. ADMIN SUB-WINDOW: FEATURE LOCK MANAGER
-            # ----------------------------------------------------
             elif st.session_state.admin_view == "locks":
                 if st.button("⬅️ Back to Admin Main Menu", key="btn_back_from_locks"):
                     st.session_state.admin_view = "main"
@@ -444,24 +412,23 @@ if st.session_state.app_user_name is None:
                 st.markdown("### ⚙️ Feature Lock Manager (Free / Premium Selection)")
                 st.caption("💡 इथून तू कोणतेही फीचर फ्री किंवा प्रिमियम करू शकतोस:")
 
-                cur_locks = user_db.get("FEATURE_LOCKS", {"Rate Analysis": "Free", "BBS": "Free", "WhatsApp Share": "Premium"})
+                cur_locks = user_db.get("FEATURE_LOCKS", {"Rate Analysis": "Free", "BBS": "Free", "WhatsApp Share": "Premium", "AI Assistant": "Premium"})
 
                 fl_ra = st.selectbox("1. Rate Analysis Module Access:", ["Free", "Premium"], index=0 if cur_locks.get("Rate Analysis") == "Free" else 1, key="fl_ra_choice")
                 fl_bbs = st.selectbox("2. BBS Calculator Access:", ["Free", "Premium"], index=0 if cur_locks.get("BBS") == "Free" else 1, key="fl_bbs_choice")
                 fl_wa = st.selectbox("3. WhatsApp Full Report Share:", ["Free", "Premium"], index=0 if cur_locks.get("WhatsApp Share") == "Free" else 1, key="fl_wa_choice")
+                fl_ai = st.selectbox("4. Gemini AI Assistant Access:", ["Free", "Premium"], index=0 if cur_locks.get("AI Assistant") == "Free" else 1, key="fl_ai_choice")
 
                 if st.button("💾 Save Feature Lock Settings", key="save_locks_btn", type="primary"):
                     user_db["FEATURE_LOCKS"] = {
                         "Rate Analysis": fl_ra,
                         "BBS": fl_bbs,
-                        "WhatsApp Share": fl_wa
+                        "WhatsApp Share": fl_wa,
+                        "AI Assistant": fl_ai
                     }
                     save_db(user_db)
                     st.success("✅ प्रिमियम/फ्री फीचर्स सेटिंग्स यशस्वीरित्या अपडेट झाल्या!")
 
-            # ----------------------------------------------------
-            # 🛑 3. ADMIN SUB-WINDOW: INDIVIDUAL USER MANAGEMENT
-            # ----------------------------------------------------
             elif st.session_state.admin_view == "user_detail" and st.session_state.admin_selected_user is not None:
                 target_user = st.session_state.admin_selected_user
                 
@@ -486,20 +453,19 @@ if st.session_state.app_user_name is None:
                             assigned_code = c_code
                             break
 
-                status_badge_html = f"<span class='gold-vip-badge'>👑 VIP MEMBER: {u_name.upper()}</span>" if u_prem else (f"<code>[🚨 CODE REQUESTED!]</code>" if is_req else f"<span class='free-user-badge'>🆓 FREE: {u_name.upper()}</span>")
+                status_badge = f"👑 VIP MEMBER: {u_name.upper()}" if u_prem else ("🚨 CODE REQUESTED!" if is_req else f"🆓 FREE: {u_name.upper()}")
 
                 st.markdown(f"### 👤 MANAGE USER: <span style='color:#60a5fa;'>{u_name.upper()}</span>", unsafe_allow_html=True)
                 
                 st.markdown(f"""
                     <div class="admin-user-card">
-                        <p style="margin:5px 0; font-size:16px;"><b>माहिती/स्टेटस:</b> {status_badge_html}</p>
+                        <p style="margin:5px 0; font-size:16px;"><b>माहिती/स्टेटस:</b> <span class="gold-vip-badge">{status_badge}</span></p>
                         <p style="margin:8px 0 5px 0; font-size:15px;"><b>प्रिमियम मुदत (Expiry):</b> <code>{exp_date}</code></p>
                         <p style="margin:5px 0; font-size:15px;"><b>ॲक्टिव्ह कोड (Unused):</b> <code style="color:#10b981; font-size:16px;">{assigned_code if assigned_code else 'काही नाही'}</code></p>
                         <p style="margin:5px 0; font-size:14px; color:#9ca3af;"><b>युझर कमेंट:</b> {u_comm}</p>
                     </div>
                 """, unsafe_allow_html=True)
 
-                # 🚀 1. DIRECT CODE GENERATE & SEND
                 if assigned_code:
                     st.info(f"💡 {u_name} साठी आधीच एक कोड तयार आहे: `{assigned_code}`")
                 else:
@@ -517,7 +483,6 @@ if st.session_state.app_user_name is None:
                         st.success(f"🎉 {u_name} ला ऑटोमॅटिकली कोड पाठवला: `{new_c}`")
                         st.rerun()
 
-                # ⏱️ 2. CUSTOM TIME SET BY ADMIN
                 st.markdown("---")
                 st.markdown("##### ⏱️ प्रिमियम वेळ सेट करा / वाढवा (Custom Expiry):")
                 t_col1, t_col2 = st.columns(2)
@@ -532,13 +497,13 @@ if st.session_state.app_user_name is None:
                         exp_time = now + datetime.timedelta(minutes=time_val)
                     elif time_unit == "Hours":
                         exp_time = now + datetime.timedelta(hours=time_val)
-                    else:  # Days
+                    else:
                         exp_time = now + datetime.timedelta(days=time_val)
 
                     user_db[target_user]["is_premium"] = True
                     user_db[target_user]["premium_expiry"] = exp_time.strftime("%Y-%m-%d %H:%M:%S")
                     user_db[target_user]["requested_code"] = False
-                    user_db[target_user]["seen_popup"] = False # Enable popup for user
+                    user_db[target_user]["seen_popup"] = False
                     user_db[target_user]["activated_by"] = "Kanhaiya (Founder of Patil Infratech)"
                     save_db(user_db)
                     st.success(f"✅ {u_name} साठी {time_val} {time_unit} सेव्ह केले!")
@@ -570,7 +535,6 @@ if st.session_state.app_user_name is None:
                     st.error(f"❌ युझर '{u_name}' डिलीट केला आहे!")
                     st.rerun()
                 
-                # 📜 USER REPORTS DISPLAY
                 st.markdown("---")
                 st.markdown(f"##### 📜 {u_name} चे जनरेट केलेले एस्टिमेशन रिपोर्ट्स ({len(u_hist)})")
                 if u_hist:
@@ -582,9 +546,6 @@ if st.session_state.app_user_name is None:
                 else:
                     st.info("ℹ️ या युझरने अजून एकही रिपोर्ट जनरेट केलेला नाही.")
 
-            # ----------------------------------------------------
-            # 🛑 4. ADMIN MAIN DASHBOARD VIEW
-            # ----------------------------------------------------
             else:
                 col_m1, col_m2 = st.columns(2)
                 with col_m1:
@@ -676,19 +637,16 @@ if not is_user_premium:
                     if c_info.get("used", False):
                         st.error("❌ हा कोड आधीच वापरला गेला आहे! तो आता व्हॅलिड नाही.")
                     else:
-                        # १. कोड USED म्हणून नोंदवणे
                         user_db["PREMIUM_CODES"][input_code]["used"] = True
                         user_db["PREMIUM_CODES"][input_code]["used_by"] = current_user_name
                         user_db["PREMIUM_CODES"][input_code]["used_date"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-                        # २. २८ दिवसांचे प्रिमियम सेव्ह करणे
                         exp_datetime = datetime.datetime.now() + datetime.timedelta(days=28)
                         user_db[current_user_name]["is_premium"] = True
                         user_db[current_user_name]["premium_expiry"] = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
                         user_db[current_user_name]["seen_popup"] = False
                         user_db[current_user_name]["activated_by"] = "Kanhaiya (Founder of Patil Infratech)"
 
-                        # 🔄 ३. इनबॉक्स मेसेज ऑटो-रिसेट करणे
                         user_db[current_user_name]["admin_message"] = f"Welcome {current_user_name}! पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
                         save_db(user_db)
                         st.rerun()
@@ -757,12 +715,54 @@ def render_whatsapp_feature(encoded_msg, key_prefix):
                     st.success("✅ ॲडमीनला कोडसाठी रिक्वेस्ट पाठवली आहे!")
 
 # ==========================================
+# 🤖 GEMINI AI ASSISTANT MODULE (VIP PREMIUM ONLY)
+# ==========================================
+st.markdown("---")
+st.markdown("### 🤖 Patil Infratech AI Assistant (Powered by Gemini)")
+
+locks_cfg = user_db.get("FEATURE_LOCKS", {})
+ai_lock_setting = locks_cfg.get("AI Assistant", "Premium")
+
+if ai_lock_setting == "Free" or is_user_premium:
+    st.caption("💡 कन्स्ट्रक्शन, एस्टिमेशन, सिमेंट किंवा ब्राकवर्कबद्दल काहीही विचारा (मराठी किंवा इंग्रजीमध्ये):")
+    api_key = st.secrets.get("GEMINI_API_KEY", os.getenv("GEMINI_API_KEY", ""))
+    
+    if api_key:
+        try:
+            client = genai.Client(api_key=api_key)
+            user_ai_query = st.text_input("तुमचा प्रश्न टाईप करा:", placeholder="उदा. 1000 sq.ft स्लैबसाठी किती स्टील लागेल?", key="ai_query_input")
+            if st.button("🚀 Ask Gemini AI", key="ask_ai_submit_btn"):
+                if user_ai_query.strip():
+                    with st.spinner("🤖 AI उत्तर तयार करत आहे..."):
+                        response = client.models.generate_content(
+                            model='gemini-2.5-flash',
+                            contents=f"You are an expert civil engineer and construction AI assistant for Patil Infratech. Answer this user query professionally: {user_ai_query}",
+                        )
+                        st.markdown(f"""
+                            <div style="background: rgba(31, 41, 55, 0.9); border-left: 5px solid #FFB300; padding: 16px; border-radius: 14px; color: #f3f4f6; margin-top: 10px;">
+                                <b>🎯 AI उत्तर:</b><br><br>{response.text}
+                            </div>
+                        """, unsafe_allow_html=True)
+                else:
+                    st.warning("⚠️ कृपया आधी तुमचा प्रश्न लिहा!")
+        except Exception as e:
+            st.error(f"❌ AI Error: {e}")
+    else:
+        st.info("ℹ️ AI असिस्टंट सुरू करण्यासाठी ॲडमीनने Streamlit Secrets मध्ये वैध GEMINI_API_KEY टाकणे आवश्यक आहे.")
+else:
+    st.markdown("""
+        <div style="background: rgba(31, 41, 55, 0.6); border: 1px dashed #3b82f6; padding: 15px; border-radius: 14px; text-align: center;">
+            <p style="color: #60a5fa; margin: 0; font-weight: 600;">🔒 Gemini AI Assistant हे फीचर केवळ प्रिमियम (VIP) युझर्ससाठी आहे.</p>
+            <p style="color: #9ca3af; margin: 5px 0 0 0; font-size: 13px;">प्रिमियम कोड टाकून किंवा ॲडमीनकडून कोड मागवून हे फिचर अनलॉक करा.</p>
+        </div>
+    """, unsafe_allow_html=True)
+
+# ==========================================
 # 🎛️ DASHBOARD / ICON SELECTION SCREEN
 # ==========================================
 if st.session_state.selected_module is None:
     st.markdown("### 🚀 तुम्हाला काय करायचे आहे ते निवडा:")
     
-    locks_cfg = user_db.get("FEATURE_LOCKS", {})
     ra_lock = locks_cfg.get("Rate Analysis", "Free")
     bbs_lock = locks_cfg.get("BBS", "Free")
 
