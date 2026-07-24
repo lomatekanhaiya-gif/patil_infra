@@ -393,7 +393,7 @@ if st.session_state.is_admin_logged:
 
     # 3. User Data (पूर्ण युझर मॅनेजमेंट आणि सेफ टाईप चेक)
     elif current_tab == "users":
-        st.markdown("### 📋 User Database Master List")
+        st.markdown("### 📋 User Database Master List (Sorted A-Z)")
         
         if st.session_state.admin_view == "user_detail" and st.session_state.admin_selected_user is not None:
             target_user = st.session_state.admin_selected_user
@@ -485,12 +485,13 @@ if st.session_state.is_admin_logged:
 
             st.markdown("---")
             current_msg = info.get("admin_message", "Admin message...")
-            new_msg = st.text_input(f"✍️ {u_name} साठी इनबॉक्स मेसेज बदलणे:", value=current_msg, key=f"win_msg_{target_user}")
-            if st.button(f"✉️ मेसेज सेव्ह करा ({u_name})", key=f"win_btn_msg_{target_user}"):
+            new_msg = st.text_input(f"✍️ {u_name} साठी इनबॉक्स मेसेज बदलणे (Notification Send):", value=current_msg, key=f"win_msg_{target_user}")
+            if st.button(f"✉️ मेसेज सेव्ह करा व पाठवा ({u_name})", key=f"win_btn_msg_{target_user}"):
                 if new_msg.strip():
                     user_db[target_user]["admin_message"] = new_msg.strip()
+                    user_db[target_user]["unread_notification"] = True # नवीन नोटिफिकेशन फ्लॅग
                     save_db(user_db)
-                    st.success(f"✅ '{u_name}' चा इनबॉक्स मेसेज अपडेट झाला!")
+                    st.success(f"✅ '{u_name}' च्या इनबॉक्समध्ये नवीन मेसेज पाठवला (Notification Sent)!")
                     st.rerun()
 
             if st.button(f"🗑️ Delete User: {u_name}", key=f"win_del_{target_user}"):
@@ -564,6 +565,7 @@ if st.session_state.app_user_name is None:
                     "id": u_input,
                     "comment": "काही नाही",
                     "admin_message": new_welcome_msg,
+                    "unread_notification": False,
                     "is_premium": False,
                     "premium_expiry": None,
                     "requested_code": False,
@@ -577,7 +579,7 @@ if st.session_state.app_user_name is None:
 
     st.write("---")
     
-    # 🛡️ ॲडमीन लॉगिन पॅनल (इन्स्टाग्रामसारखे: यशस्वी लॉगइन झाल्यावर जुनी स्क्रीन गायब होईल)
+    # 🛡️ ॲडमीन लॉगिन पॅनल
     with st.expander("🛡️ Admin Login Panel (Kanhaiya Only)"):
         admin_id = st.text_input("Admin ID:", key="adm_id")
         admin_pass = st.text_input("Password:", type="password", key="adm_pass")
@@ -614,16 +616,40 @@ if col_lo.button("🔄 Logout / ॲप बदला"):
     st.session_state.selected_module = None
     st.rerun()
 
-# 🔄 इनबॉक्स मेसेज लोड करणे
+# ==========================================
+# 🔔 WHATSAPP-LIKE NOTIFICATION & INBOX SYSTEM
+# ==========================================
 current_user_data = user_db.get(current_user_name, {})
-admin_msg = current_user_data.get("admin_message", None)
-if admin_msg:
+if not isinstance(current_user_data, dict):
+    current_user_data = {}
+
+# जर ॲडमीनने नवीन मेसेज पाठवला असेल (Unread Notification)
+if current_user_data.get("unread_notification", False):
+    admin_msg = current_user_data.get("admin_message", "")
+    st.markdown(f"""
+        <div style="background: linear-gradient(135deg, #047857 0%, #065f46 100%); padding: 16px 20px; border-radius: 16px; margin-bottom: 15px; border: 1px solid #34d399; box-shadow: 0 4px 20px rgba(52, 211, 153, 0.3);">
+            <h4 style="color: #6ee7b7; margin: 0 0 5px 0;">🔔 New Notification from Admin</h4>
+            <p style="color: #ffffff; font-size: 16px; margin: 0;">{admin_msg}</p>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    if st.button("✅ Mark as Read & Clear (वाचले आहे)", type="primary"):
+        # मेसेज वाचल्यावर इनबॉक्स रिसेट करून पुन्हा वेलकम मेसेज सेट करणे
+        user_db[current_user_name]["unread_notification"] = False
+        user_db[current_user_name]["admin_message"] = f"Welcome {current_user_name}! पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
+        save_db(user_db)
+        st.success("✅ मेसेज वाचून क्लियर केला आहे!")
+        st.rerun()
+else:
+    # नेहमीचा इनबॉक्स मेसेज किंवा वेलकम मेसेज
+    admin_msg = current_user_data.get("admin_message", f"Welcome {current_user_name}! पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳")
     st.markdown("### 📥 Admin Message / Code Inbox")
     st.info(f"📢 **Admin:** {admin_msg}")
-    st.write("---")
+
+st.write("---")
 
 # ==========================================
-# 🔑 प्रिमियम कोड इनपुट
+# 🔑 प्रिमियम कोड इनपुट (कोड वापरल्यावर इनबॉक्समधील कोड गायब होऊन वेलकम मेसेज येणे)
 # ==========================================
 if not is_user_premium:
     with st.expander("🔑 प्रिमियम अनलॉक करा (Enter Premium Code)"):
@@ -639,7 +665,13 @@ if not is_user_premium:
                     user_db[current_user_name]["premium_expiry"] = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
                     user_db[current_user_name]["seen_popup"] = False
                     user_db[current_user_name]["activated_by"] = "Kanhaiya (Founder of Patil Infratech)"
+                    
+                    # ✅ कोड वापरल्यानंतर इनबॉक्समधील कोड गायब करून वेलकम मेसेज सेट करणे
+                    user_db[current_user_name]["admin_message"] = f"Welcome {current_user_name}! पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
+                    user_db[current_user_name]["unread_notification"] = False
+                    
                     save_db(user_db)
+                    st.success("🎉 प्रिमियम यशस्वीरित्या सुरू झाले!")
                     st.rerun()
                 else:
                     st.error("❌ चुकीचा किंवा आधीच वापरलेला कोड!")
