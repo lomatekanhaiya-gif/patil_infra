@@ -315,7 +315,7 @@ if not st.session_state.welcome_completed:
     st.session_state.welcome_completed = True
 
 # ==========================================
-# 🛑 USER FIRST-TIME ROYAL GOLD POPUP CHECK
+# 🛑 USER FIRST-TIME ROYAL GOLD POPUP CHECK (by Kanhaiya)
 # ==========================================
 if current_user_name:
     u_info = user_db.get(current_user_name, {})
@@ -330,9 +330,13 @@ if current_user_name:
                 <h1 style="background: linear-gradient(135deg, #FFE082 0%, #FFB300 50%, #FF6F00 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 38px; font-weight: 900; margin-top: 15px;">WELCOME VIP MEMBER {current_user_name.upper()}!</h1>
                 <h2 style="color: #f3f4f6; font-size: 24px; margin-top: 10px;">YOU ARE NOW A ROYAL PREMIUM MEMBER OF PATIL INFRATECH!</h2>
                 <p style="color: #FFE082; font-size: 20px; margin-top: 15px;">✨ Unlimited WhatsApp Sharing & Full Feature Access Unlocked! 🚀</p>
+                <br>
+                <div style="background: rgba(255, 213, 79, 0.15); border: 1px dashed #FFD54F; padding: 10px 20px; border-radius: 12px; margin-top: 10px;">
+                    <p style="color: #FFF59D; font-size: 16px; margin:0; font-weight: 700;">✨ Approved & Activated By: Kanhaiya (Founder of Patil Infratech)</p>
+                </div>
             </div>
         """, unsafe_allow_html=True)
-        time.sleep(3)
+        time.sleep(3.5)
         user_db[current_user_name]["seen_popup"] = True
         save_db(user_db)
         st.rerun()
@@ -520,7 +524,7 @@ if st.session_state.app_user_name is None:
                     user_db[target_user]["is_premium"] = True
                     user_db[target_user]["premium_expiry"] = exp_time.strftime("%Y-%m-%d %H:%M:%S")
                     user_db[target_user]["requested_code"] = False
-                    user_db[target_user]["seen_popup"] = False
+                    user_db[target_user]["seen_popup"] = False # Enable popup for user
                     save_db(user_db)
                     st.success(f"✅ {u_name} साठी {time_val} {time_unit} सेव्ह केले!")
                     st.rerun()
@@ -622,7 +626,6 @@ is_user_premium, status_text_str = check_user_premium_status(current_user_name)
 
 col_u, col_lo = st.columns([3.5, 1.5])
 if is_user_premium:
-    # 👑 सुवर्ण रंगाच्या बॅजमध्येच युझरचे नाव समाविष्ट केले आहे!
     col_u.markdown(f"<span class='gold-vip-badge'>👑 VIP MEMBER: {current_user_name.upper()} ({status_text_str})</span>", unsafe_allow_html=True)
 else:
     col_u.success(f"👤 युझर: **{current_user_name}** | [🆓 FREE USER]")
