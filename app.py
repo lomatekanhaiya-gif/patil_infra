@@ -721,7 +721,7 @@ def render_whatsapp_feature(encoded_msg, key_prefix):
                     st.success("✅ ॲडमीनला कोडसाठी रिक्वेस्ट पाठवली आहे!")
 
 # ==========================================
-# 🤖 CIVIL AI ASSISTANT (Live Google Gemini AI Engine)
+# 🤖 CIVIL AI ASSISTANT (Official Google GenAI SDK - gemini-3.6-flash)
 # ==========================================
 st.markdown("---")
 st.markdown("### 🤖 Patil Infratech Civil AI Assistant")
@@ -736,7 +736,7 @@ if ai_lock_setting == "Free" or is_user_premium:
     if st.button("🚀 Ask Civil AI", key="ask_civil_ai_btn"):
         if user_ai_query.strip():
             # 5 Seconds Realistic Thinking Spinner & Delay
-            with st.spinner("🤖 Civil AI is analyzing your question... (कृपया ५ सेकंद वाट पाहा)"):
+            with st.spinner("🤖 Civil AI is analyzing your question and calculating accurately... (कृपया ५ सेकंद वाट पाहा)"):
                 time.sleep(5.0)
                 
                 api_key = st.secrets.get("GEMINI_API_KEY", os.getenv("GEMINI_API_KEY", ""))
@@ -748,17 +748,28 @@ if ai_lock_setting == "Free" or is_user_premium:
                         prompt = f"""
                         You are an expert Senior Civil Engineer and Quantity Surveyor for Patil Infratech, founded by Kanhaiya. 
                         The user is asking a construction, estimation, or material calculation question in any language or script (Marathi, English, Hinglish, Hindi, etc.). 
-                        Provide an accurate, standard, highly professional engineering response. Match the user's language/script context. Do not show internal calculation steps, just give the final direct professional answer.
+                        Provide an accurate, standard, highly professional engineering response with exact formulas or material quantities if applicable. Match the user's language/script context.
                         User Query: {user_ai_query}
                         """
+                        # Using latest frontier model gemini-3.6-flash
                         response = client.models.generate_content(
-                            model='gemini-2.5-flash',
+                            model='gemini-3.6-flash',
                             contents=prompt,
                         )
                         if response and response.text:
                             ai_response_text = response.text
                     except Exception as e:
-                        ai_response_text = f"⚠️ Error communicating with Gemini API: {e}"
+                        try:
+                            # Fallback to gemini-3.5-flash
+                            client = genai.Client(api_key=api_key)
+                            response = client.models.generate_content(
+                                model='gemini-3.5-flash',
+                                contents=prompt,
+                            )
+                            if response and response.text:
+                                ai_response_text = response.text
+                        except Exception as e2:
+                            ai_response_text = f"⚠️ Error communicating with Gemini API: {e2}"
                 else:
                     ai_response_text = "⚠️ GEMINI_API_KEY is missing from Streamlit Secrets or google-genai is not installed."
 
