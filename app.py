@@ -264,6 +264,62 @@ def generate_random_code():
     return "PATIL-" + ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
 
 # ==========================================
+# 🔐 ॲप व्हॉट्सॲप फीचर अनलॉक/प्रीमियम फंक्शन (WhatsApp Error Fixed)
+# ==========================================
+def render_whatsapp_feature(encoded_msg, key_prefix):
+    user_db = load_db()
+    is_prem, status_str = check_user_premium_status(current_user_name)
+    locks_cfg = user_db.get("FEATURE_LOCKS", {})
+    wa_lock_setting = locks_cfg.get("WhatsApp Share", "Premium")
+
+    if wa_lock_setting == "Free" or is_prem:
+        st.markdown(f'''
+            <a href="https://wa.me/?text={encoded_msg}" target="_blank">
+                <button style="width: 100%; background-color: #25D366; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px;">
+                    📱 Share Full Report on WhatsApp {'(🆓 Free Access)' if wa_lock_setting == 'Free' else '(👑 VIP Premium Active)'}
+                </button>
+            </a>
+        ''', unsafe_allow_html=True)
+    else:
+        with st.expander("🔒 WhatsApp Report Sharing - Unlock Premium"):
+            st.warning("⚠️ व्हॉट्सॲपवर पूर्ण रिपोर्ट शेअर करण्याचे फीचर प्रिमियम युझर्ससाठी आहे.")
+            st.caption("💡 अनलॉक करण्यासाठी Admin कडून आलेला प्रिमियम कोड खाली टाका:")
+            
+            p_code = st.text_input("Enter Activation Code:", key=f"{key_prefix}_code_input").strip()
+            
+            w_col1, w_col2 = st.columns(2)
+            with w_col1:
+                if st.button("🔓 Unlock WhatsApp Share Now", key=f"{key_prefix}_unlock_btn"):
+                    codes_db = user_db.get("PREMIUM_CODES", {})
+                    if p_code in codes_db:
+                        c_info = codes_db[p_code]
+                        if c_info.get("used", False):
+                            st.error("❌ हा कोड आधीच वापरला गेला आहे! तो आता व्हॅलिड नाही.")
+                        else:
+                            user_db["PREMIUM_CODES"][p_code]["used"] = True
+                            user_db["PREMIUM_CODES"][p_code]["used_by"] = current_user_name
+                            user_db["PREMIUM_CODES"][p_code]["used_date"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+                            exp_datetime = datetime.datetime.now() + datetime.timedelta(days=28)
+                            user_db[current_user_name]["is_premium"] = True
+                            user_db[current_user_name]["premium_expiry"] = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
+                            user_db[current_user_name]["seen_popup"] = False
+                            user_db[current_user_name]["activated_by"] = "Kanhaiya (Founder of Patil Infratech)"
+                            
+                            user_db[current_user_name]["admin_message"] = f"मी {current_user_name} आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
+                            user_db[current_user_name]["unread_notification"] = False
+                            save_db(user_db)
+                            st.rerun()
+                    else:
+                        st.error("❌ चुकीचा प्रिमियम कोड! कृपया अचूक कोड टाका.")
+
+            with w_col2:
+                if st.button("📩 Request Code from Admin", key=f"{key_prefix}_req_btn"):
+                    user_db[current_user_name]["requested_code"] = True
+                    save_db(user_db)
+                    st.success("✅ ॲडमीनला कोडसाठी रिक्वेस्ट पाठवली आहे!")
+
+# ==========================================
 # --- १. वेलकम स्क्रीन ॲनिमेशन (Always Play) ---
 # ==========================================
 welcome_placeholder = st.empty()
@@ -334,7 +390,6 @@ if st.session_state.is_admin_logged:
 
     st.write("---")
     
-    # ४ वेगळे कंपार्टमेंट्स (Buttons) एका ओळीत
     ac1, ac2, ac3, ac4 = st.columns(4)
     with ac1:
         if st.button("📈 Update Market Rates", use_container_width=True):
@@ -353,7 +408,6 @@ if st.session_state.is_admin_logged:
     user_db = load_db()
     current_tab = st.session_state.admin_dashboard_tab
 
-    # 1. Update Market Rates
     if current_tab == "rates":
         st.markdown("### 📈 Update Master Market Rates")
         m_rates = user_db.get("MASTER_MARKET_RATES", {"cement": 400.0, "sand": 2500.0, "bricks": 8.0, "aggregate": 2200.0, "steel": 60.0})
@@ -371,7 +425,6 @@ if st.session_state.is_admin_logged:
             save_db(user_db)
             st.success("✅ आजचे मास्टर मार्केट दर डेटाबेसमध्ये यशस्वीरित्या अपडेट झाले!")
 
-    # 2. Feature Lock Manager
     elif current_tab == "locks":
         st.markdown("### ⚙️ Feature Lock Manager")
         cur_locks = user_db.get("FEATURE_LOCKS", {"Rate Analysis": "Free", "BBS": "Free", "WhatsApp Share": "Premium", "Civil AI Assistant": "Premium"})
@@ -391,9 +444,8 @@ if st.session_state.is_admin_logged:
             save_db(user_db)
             st.success("✅ प्रिमियम/फ्री फीचर्स सेटिंग्स यशस्वीरित्या बदलल्या!")
 
-    # 3. User Data (पूर्ण युझर मॅनेजमेंट आणि सेफ टाईप चेक)
     elif current_tab == "users":
-        st.markdown("### 📋 User Database Master List")
+        st.markdown("### 📋 User Database Master List (Sorted A-Z)")
         
         if st.session_state.admin_view == "user_detail" and st.session_state.admin_selected_user is not None:
             target_user = st.session_state.admin_selected_user
@@ -485,12 +537,13 @@ if st.session_state.is_admin_logged:
 
             st.markdown("---")
             current_msg = info.get("admin_message", "Admin message...")
-            new_msg = st.text_input(f"✍️ {u_name} साठी इनबॉक्स मेसेज बदलणे:", value=current_msg, key=f"win_msg_{target_user}")
-            if st.button(f"✉️ मेसेज सेव्ह करा ({u_name})", key=f"win_btn_msg_{target_user}"):
+            new_msg = st.text_input(f"✍️ {u_name} साठी इनबॉक्स मेसेज बदलणे (Notification Send):", value=current_msg, key=f"win_msg_{target_user}")
+            if st.button(f"✉️ मेसेज सेव्ह करा व पाठवा ({u_name})", key=f"win_btn_msg_{target_user}"):
                 if new_msg.strip():
                     user_db[target_user]["admin_message"] = new_msg.strip()
+                    user_db[target_user]["unread_notification"] = True
                     save_db(user_db)
-                    st.success(f"✅ '{u_name}' चा इनबॉक्स मेसेज अपडेट झाला!")
+                    st.success(f"✅ '{u_name}' च्या इनबॉक्समध्ये नवीन मेसेज पाठवला (Notification Sent)!")
                     st.rerun()
 
             if st.button(f"🗑️ Delete User: {u_name}", key=f"win_del_{target_user}"):
@@ -538,7 +591,6 @@ if st.session_state.is_admin_logged:
             else:
                 st.info("ℹ️ डेटाबेसमध्ये सध्या कोणताही सामान्य युझर नाही.")
 
-    # 4. Ad Sponsor (Coming Soon)
     elif current_tab == "ads":
         st.markdown("### 📢 Ad Sponsor Manager")
         st.info("🚧 **Coming Soon!** जाहिरात आणि स्पॉन्सरशिप मॅनेज करण्याचे फिचर लवकरच येत आहे.")
@@ -546,51 +598,56 @@ if st.session_state.is_admin_logged:
     st.stop()
 
 # ==========================================
-# 👤 युझर नाव प्रविष्ट करणे किंवा ॲडमीन लॉगिन
+# 👤 युझर नाव प्रविष्ट करणे (कीबोर्डवरील Enter वर चालणारे) व ॲडमीन लॉगिन
 # ==========================================
 if st.session_state.app_user_name is None:
     st.markdown("### 👤 ॲपमध्ये प्रवेश करण्यासाठी नाव प्रविष्ट करा किंवा ॲडमीन लॉगिन करा")
     
-    u_input = st.text_input("तुमचे नाव (Your Name):", placeholder="NAME", key="entry_user_name").strip()
-    
-    if st.button("ॲप उघडा (Enter App) 👉", type="primary"):
-        if u_input:
-            st.session_state.app_user_name = u_input
-            user_db = load_db()
-            
-            if u_input not in user_db:
-                new_welcome_msg = f"Welcome {u_input}! पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
-                user_db[u_input] = {
-                    "id": u_input,
-                    "comment": "काही नाही",
-                    "admin_message": new_welcome_msg,
-                    "is_premium": False,
-                    "premium_expiry": None,
-                    "requested_code": False,
-                    "seen_popup": False,
-                    "history": []
-                }
-                save_db(user_db)
-            st.rerun()
-        else:
-            st.warning("⚠️ कृपया ॲप वापरण्यासाठी आधी तुमचे नाव टाका!")
+    with st.form("user_login_form"):
+        u_input = st.text_input("तुमचे नाव (Your Name):", placeholder="NAME").strip()
+        submit_user = st.form_submit_button("ॲप उघडा (Enter App) 👉", type="primary")
+        
+        if submit_user:
+            if u_input:
+                st.session_state.app_user_name = u_input
+                user_db = load_db()
+                
+                if u_input not in user_db:
+                    new_welcome_msg = f"मी {u_input} आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
+                    user_db[u_input] = {
+                        "id": u_input,
+                        "comment": "काही नाही",
+                        "admin_message": new_welcome_msg,
+                        "unread_notification": False,
+                        "is_premium": False,
+                        "premium_expiry": None,
+                        "requested_code": False,
+                        "seen_popup": False,
+                        "history": []
+                    }
+                    save_db(user_db)
+                st.rerun()
+            else:
+                st.warning("⚠️ कृपया ॲप वापरण्यासाठी आधी तुमचे नाव टाका!")
 
     st.write("---")
     
-    # 🛡️ ॲडमीन लॉगिन पॅनल (इन्स्टाग्रामसारखे: यशस्वी लॉगइन झाल्यावर जुनी स्क्रीन गायब होईल)
-    with st.expander("🛡️ Admin Login Panel (Kanhaiya Only)"):
-        admin_id = st.text_input("Admin ID:", key="adm_id")
-        admin_pass = st.text_input("Password:", type="password", key="adm_pass")
-        
-        secret_admin_id = st.secrets.get("ADMIN_ID", "kanha_1p") if hasattr(st, "secrets") else "kanha_1p"
-        secret_admin_pass = st.secrets.get("ADMIN_PASS", "@Dellg15") if hasattr(st, "secrets") else "@Dellg15"
+    # 🛡️ ॲडमीन लॉगिन पॅनल
+    with st.expander("🛡️ Admin Login Panel"):
+        with st.form("admin_login_form"):
+            admin_id = st.text_input("Admin ID:")
+            admin_pass = st.text_input("Password:", type="password")
+            submit_admin = st.form_submit_button("🔓 Login to Admin Panel", type="primary")
+            
+            secret_admin_id = st.secrets.get("ADMIN_ID", "kanha_1p") if hasattr(st, "secrets") else "kanha_1p"
+            secret_admin_pass = st.secrets.get("ADMIN_PASS", "@Dellg15") if hasattr(st, "secrets") else "@Dellg15"
 
-        if st.button("🔓 Login to Admin Panel", type="primary"):
-            if admin_id == secret_admin_id and admin_pass == secret_admin_pass:
-                st.session_state.is_admin_logged = True
-                st.rerun()
-            else:
-                st.error("❌ चुकीचा Admin ID किंवा Password!")
+            if submit_admin:
+                if admin_id == secret_admin_id and admin_pass == secret_admin_pass:
+                    st.session_state.is_admin_logged = True
+                    st.rerun()
+                else:
+                    st.error("❌ चुकीचा Admin ID किंवा Password!")
             
     st.stop()
 
@@ -614,13 +671,34 @@ if col_lo.button("🔄 Logout / ॲप बदला"):
     st.session_state.selected_module = None
     st.rerun()
 
-# 🔄 इनबॉक्स मेसेज लोड करणे
+# ==========================================
+# 🔔 WHATSAPP-LIKE NOTIFICATION & INBOX SYSTEM
+# ==========================================
 current_user_data = user_db.get(current_user_name, {})
-admin_msg = current_user_data.get("admin_message", None)
-if admin_msg:
+if not isinstance(current_user_data, dict):
+    current_user_data = {}
+
+if current_user_data.get("unread_notification", False):
+    admin_msg = current_user_data.get("admin_message", "")
+    st.markdown(f"""
+        <div style="background: linear-gradient(135deg, #047857 0%, #065f46 100%); padding: 16px 20px; border-radius: 16px; margin-bottom: 15px; border: 1px solid #34d399; box-shadow: 0 4px 20px rgba(52, 211, 153, 0.3);">
+            <h4 style="color: #6ee7b7; margin: 0 0 5px 0;">🔔 नवीन नोटिफिकेशन</h4>
+            <p style="color: #ffffff; font-size: 16px; margin: 0;">{admin_msg}</p>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    if st.button("✅ Mark as Read & Clear (वाचले आहे)", type="primary"):
+        user_db[current_user_name]["unread_notification"] = False
+        user_db[current_user_name]["admin_message"] = f"मी {current_user_name} आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
+        save_db(user_db)
+        st.success("✅ मेसेज वाचून क्लियर केला आहे!")
+        st.rerun()
+else:
+    admin_msg = current_user_data.get("admin_message", f"मी {current_user_name} आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳")
     st.markdown("### 📥 Admin Message / Code Inbox")
     st.info(f"📢 **Admin:** {admin_msg}")
-    st.write("---")
+
+st.write("---")
 
 # ==========================================
 # 🔑 प्रिमियम कोड इनपुट
@@ -632,14 +710,33 @@ if not is_user_premium:
         with c_btn1:
             if st.button("🔓 Activate Premium", type="primary"):
                 codes_db = user_db.get("PREMIUM_CODES", {})
-                if input_code in codes_db and not codes_db[input_code].get("used", False):
+                
+                if input_code == "kanha_1p":
+                    exp_datetime = datetime.datetime.now() + datetime.timedelta(days=1)
+                    user_db[current_user_name]["is_premium"] = True
+                    user_db[current_user_name]["premium_expiry"] = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
+                    user_db[current_user_name]["seen_popup"] = False
+                    user_db[current_user_name]["activated_by"] = "Master Code"
+                    
+                    user_db[current_user_name]["admin_message"] = f"मी {current_user_name} आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
+                    user_db[current_user_name]["unread_notification"] = False
+                    
+                    save_db(user_db)
+                    st.success("🎉 मास्टर कोडद्वारे प्रिमियम यशस्वीरित्या सुरू झाले!")
+                    st.rerun()
+                elif input_code in codes_db and not codes_db[input_code].get("used", False):
                     user_db["PREMIUM_CODES"][input_code]["used"] = True
                     exp_datetime = datetime.datetime.now() + datetime.timedelta(days=28)
                     user_db[current_user_name]["is_premium"] = True
                     user_db[current_user_name]["premium_expiry"] = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
                     user_db[current_user_name]["seen_popup"] = False
-                    user_db[current_user_name]["activated_by"] = "Kanhaiya (Founder of Patil Infratech)"
+                    user_db[current_user_name]["activated_by"] = "Patil Infratech"
+                    
+                    user_db[current_user_name]["admin_message"] = f"मी {current_user_name} आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
+                    user_db[current_user_name]["unread_notification"] = False
+                    
                     save_db(user_db)
+                    st.success("🎉 प्रिमियम यशस्वीरित्या सुरू झाले!")
                     st.rerun()
                 else:
                     st.error("❌ चुकीचा किंवा आधीच वापरलेला कोड!")
@@ -1266,7 +1363,7 @@ elif st.session_state.selected_module == "BBS":
         msg_text += f"--------------------------------\n"
         msg_text += f"⚖️ *TOTAL STEEL WEIGHT:* {total_weight_kg:.2f} Kg ({total_weight_kg/1000:.3f} MT)\n"
         msg_text += f"💵 *Steel Rate:* ₹ {steel_rate_kg:.2f} / Kg\n"
-        msg_text += f"💰 *ESTIMATED COST:* ₹ {total_cost:.2f}/-\n"
+        msg_text += f"💰 *ESTIMATED COST:* ₹ {total_cost:.2f}/- \n"
         msg_text += f"--------------------------------\n"
         msg_text += f"_Generated by Patil Infratech_"
 
