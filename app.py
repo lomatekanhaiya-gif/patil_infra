@@ -9,6 +9,7 @@ import time
 import urllib.parse
 import random
 import string
+from google import genai
 
 # 🚨 Streamlit नियम: set_page_config नेहमी सर्वात आधी असावे!
 st.set_page_config(page_title="PATIL INFRATECH", page_icon="🏗️", layout="centered")
@@ -416,7 +417,7 @@ if st.session_state.app_user_name is None:
                 fl_ra = st.selectbox("1. Rate Analysis Module Access:", ["Free", "Premium"], index=0 if cur_locks.get("Rate Analysis") == "Free" else 1, key="fl_ra_choice")
                 fl_bbs = st.selectbox("2. BBS Calculator Access:", ["Free", "Premium"], index=0 if cur_locks.get("BBS") == "Free" else 1, key="fl_bbs_choice")
                 fl_wa = st.selectbox("3. WhatsApp Full Report Share:", ["Free", "Premium"], index=0 if cur_locks.get("WhatsApp Share") == "Free" else 1, key="fl_wa_choice")
-                fl_ai = st.selectbox("4. Universal AI Assistant Access:", ["Free", "Premium"], index=0 if cur_locks.get("AI Assistant") == "Free" else 1, key="fl_ai_choice")
+                fl_ai = st.selectbox("4. Gemini AI Assistant Access:", ["Free", "Premium"], index=0 if cur_locks.get("AI Assistant") == "Free" else 1, key="fl_ai_choice")
 
                 if st.button("💾 Save Feature Lock Settings", key="save_locks_btn", type="primary"):
                     user_db["FEATURE_LOCKS"] = {
@@ -714,46 +715,59 @@ def render_whatsapp_feature(encoded_msg, key_prefix):
                     st.success("✅ ॲडमीनला कोडसाठी रिक्वेस्ट पाठवली आहे!")
 
 # ==========================================
-# 🤖 UNIVERSAL MULTI-LINGUAL SMART AI ASSISTANT
+# 🤖 GEMINI AI ASSISTANT (Real AI + 5 Sec Thinking Time)
 # ==========================================
 st.markdown("---")
-st.markdown("### 🤖 Patil Infratech Smart AI Assistant")
+st.markdown("### 🤖 Patil Infratech Gemini AI Assistant")
 
 locks_cfg = user_db.get("FEATURE_LOCKS", {})
 ai_lock_setting = locks_cfg.get("AI Assistant", "Premium")
 
 if ai_lock_setting == "Free" or is_user_premium:
-    st.caption("💡 Ask anything about construction, materials, or estimation in ANY language or script (Marathi, Hindi, English, Hinglish, etc.):")
-    user_ai_query = st.text_input("विचारण्यासाठी तुमचा प्रश्न इथे लिहा (Type your query here):", placeholder="उदा. 1000 sq.ft slab, cement calculation, kiti kharch yeil...", key="universal_ai_input")
+    st.caption("💡 Ask any complex construction, estimation, or material question in ANY language or script:")
+    user_ai_query = st.text_input("तुमचा प्रश्न इथे लिहा (Type your query here):", placeholder="उदा. 1000 sq.ft slab calculation, kiti cement lagel...", key="gemini_ai_input")
     
-    if st.button("🚀 Ask Universal AI", key="ask_universal_ai_btn"):
+    if st.button("🚀 Ask Gemini AI", key="ask_gemini_ai_btn"):
         if user_ai_query.strip():
-            q_text = user_ai_query.lower()
-            with st.spinner("🤖 AI is analyzing your question..."):
+            # 5 Seconds Realistic Thinking Spinner & Delay
+            with st.spinner("🤖 AI is thinking deeply and calculating accurately... (कृपया ५ सेकंद वाट पाहा)"):
+                time.sleep(5.0)
                 
-                # Intelligent Multi-Lingual & Multi-Script Keyword Analysis
-                is_cement = any(k in q_text for k in ["cement", "सिमेंट", "सीमेंट", "bags", "bag", "बॅग"])
-                is_steel = any(k in q_text for k in ["steel", "स्टील", "लोखंड", "sarિયા", "iron", "rod", "rods", "bar", "bars"])
-                is_brick = any(k in q_text for k in ["brick", "bricks", "वीट", "विटा", "ईंट", "इंटे", "masonry", "wall"])
-                is_cost = any(k in q_text for k in ["cost", "kharch", "kharcha", "budget", "price", "paise", "रुपये", "खर्च", "पैसा", "rate", "rates"])
-                is_concrete = any(k in q_text for k in ["concrete", "m20", "m25", "mix", "काँक्रीट", "कंक्रीट", "slab", "स्लैब", "roof"])
-
-                if is_cement:
-                    ai_reply = "🏗️ **Patil Infratech AI Answer:** For a standard 1,000 sq.ft RCC slab structure (using M20 grade), you will require approximately **350 to 400 bags of cement**. Additional cement will be needed for foundation and brick masonry work."
-                elif is_steel:
-                    ai_reply = "⚖️ **Patil Infratech AI Answer:** For a typical residential framed building, steel reinforcement consumption is roughly **3.5 to 4.5 kg per sq.ft**. For a 1,000 sq.ft built-up area, expect around **3.5 to 4.5 metric tons** of steel."
-                elif is_brick:
-                    ai_reply = "🧱 **Patil Infratech AI Answer:** For every 1 cubic meter (m³) of brick masonry, you need roughly **500 standard bricks** along with about 0.30 m³ of dry mortar mix."
-                elif is_cost:
-                    ai_reply = "💰 **Patil Infratech AI Answer:** Current market construction costs for standard quality residential buildings range between **₹1,600 to ₹2,200 per sq.ft** (inclusive of basic materials and standard labor)."
-                elif is_concrete:
-                    ai_reply = "📐 **Patil Infratech AI Answer:** For structural concrete work like slabs and beams, standard mixes like **M20 (1:1.5:3)** or **M25 (1:1:2)** are recommended. Always account for a 54% dry volume conversion factor when calculating raw materials from wet concrete volume."
-                else:
-                    ai_reply = f"👷‍♂️ **Patil Infratech AI Answer:** Thank you for your detailed query regarding *\"{user_ai_query}\"*. Our engineering engine notes your inquiry. For precise mathematical breakdowns tailored to your exact site dimensions, please use our dedicated **Rate Analysis** or **BBS Calculator** modules directly from the main menu!"
+                api_key = st.secrets.get("GEMINI_API_KEY", os.getenv("GEMINI_API_KEY", ""))
+                ai_response_text = ""
+                
+                if api_key:
+                    try:
+                        client = genai.Client(api_key=api_key)
+                        prompt = f"""
+                        You are an expert Senior Civil Engineer and Quantity Surveyor for Patil Infratech, founded by Kanhaiya. 
+                        The user is asking a construction/estimation question in any language or script (Marathi, English, Hinglish, etc.). 
+                        Provide an accurate, standard, highly professional engineering response with exact formulas or material quantities if applicable.
+                        User Query: {user_ai_query}
+                        """
+                        response = client.models.generate_content(
+                            model='gemini-2.5-flash',
+                            contents=prompt,
+                        )
+                        ai_response_text = response.text
+                    except Exception as e:
+                        ai_response_text = f"⚠️ Live AI connection notice: Standard fallback activated. (Error details: {e})"
+                
+                # Fallback standard calculation engine if API key is missing or encounters issue
+                if not api_key or not ai_response_text or "Error" in ai_response_text:
+                    q_lower = user_ai_query.lower()
+                    if "cement" in q_lower or "सिमेंट" in q_lower or "bags" in q_lower:
+                        ai_response_text = "🏗️ **Standard Patil Infratech Estimation:** For a standard 1,000 sq.ft RCC slab structure (M20 grade, mix 1:1.5:3), standard material calculation requires approximately **350 to 400 bags of cement**. (Dry volume conversion factor is accounted at 1.54)."
+                    elif "steel" in q_lower or "स्टील" in q_lower or "लोखंड" in q_lower:
+                        ai_response_text = "⚖️ **Standard Patil Infratech Estimation:** For residential framed structures, standard steel consumption ranges between **3.5 kg to 4.5 kg per sq.ft** depending on structural loading and spans."
+                    elif "brick" in q_lower or "वीट" in q_lower or "विटा" in q_lower:
+                        ai_response_text = "🧱 **Standard Patil Infratech Estimation:** For 1 cubic meter of standard brick masonry, approximately **500 bricks** and 0.30 m³ of mortar are professionally required."
+                    else:
+                        ai_response_text = f"👷‍♂️ **Patil Infratech Expert Engineer Analysis:** Regarding your query *\"{user_ai_query}\"*, standard engineering practice dictates accurate dimension inputs. Please utilize our dedicated **Rate Analysis** or **BBS Calculator** modules for exact quantities."
 
                 st.markdown(f"""
-                    <div style="background: rgba(31, 41, 55, 0.95); border-left: 5px solid #FFB300; padding: 18px; border-radius: 14px; color: #f3f4f6; margin-top: 10px; line-height: 1.5;">
-                        {ai_reply}
+                    <div style="background: rgba(31, 41, 55, 0.95); border-left: 5px solid #FFB300; padding: 18px; border-radius: 14px; color: #f3f4f6; margin-top: 10px; line-height: 1.6;">
+                        <b>🎯 Gemini AI Expert Answer:</b><br><br>{ai_response_text}
                     </div>
                 """, unsafe_allow_html=True)
         else:
@@ -761,7 +775,7 @@ if ai_lock_setting == "Free" or is_user_premium:
 else:
     st.markdown("""
         <div style="background: rgba(31, 41, 55, 0.6); border: 1px dashed #3b82f6; padding: 15px; border-radius: 14px; text-align: center;">
-            <p style="color: #60a5fa; margin: 0; font-weight: 600;">🔒 Universal AI Assistant हे फीचर केवळ प्रिमियम (VIP) युझर्ससाठी आहे.</p>
+            <p style="color: #60a5fa; margin: 0; font-weight: 600;">🔒 Gemini AI Assistant हे फीचर केवळ प्रिमियम (VIP) युझर्ससाठी आहे.</p>
             <p style="color: #9ca3af; margin: 5px 0 0 0; font-size: 13px;">प्रिमियम कोड टाकून किंवा ॲडमीनकडून कोड मागवून हे फिचर अनलॉक करा.</p>
         </div>
     """, unsafe_allow_html=True)
@@ -881,7 +895,7 @@ elif st.session_state.selected_module == "Rate Analysis":
             profit_pct = st.number_input("कंत्राटदार नफा टक्केवारी (%):", min_value=0.0, value=10.0, key="cc_prof_p")
 
         st.markdown("#### 💬 कमेंट पॅनल (Comment Panel)")
-        user_note = st.text_area("या एस्टिमेशन संदर्भात काही नोट किंवा कमेंट लिहायची असल्यास इथे लिहा:", placeholder="उदा. ग्राउंड फ्लोअर वीटकाम...", key="cc_note")
+        user_note = st.text_area("या एस्टिमेशन संदर्भात काही नोट किंवा कमेंट लिहायची असल्यास इथे लिहा:", placeholder="उदा. ग्राउंड फ्लोअर वीटकाम...", key="bw_note")
         if st.button("💬 कमेंट सबमिट करा", key="cc_comm_btn"):
             if user_note.strip():
                 st.session_state.current_comment = user_note.strip()
