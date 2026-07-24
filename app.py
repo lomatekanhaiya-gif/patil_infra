@@ -321,7 +321,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 🛡️ ADMIN PANEL (जर ॲडमीन यशस्वीरीत्या लॉगइन असेल, तर लॉगिन स्क्रीन गायब होईल)
+# 🛡️ ADMIN PANEL (इन्स्टाग्रामसारखे: यशस्वी लॉगइन झाल्यावर जुनी स्क्रीन गायब होईल आणि नवीन डॅशबोर्ड येईल)
 # ==========================================
 if st.session_state.is_admin_logged:
     st.markdown("## 👑 ADMIN DASHBOARD (PATIL INFRATECH)")
@@ -334,7 +334,7 @@ if st.session_state.is_admin_logged:
 
     st.write("---")
     
-    # इन्स्टाग्रामसारखे ४ वेगवेगळे कंपार्टमेंट्स (Buttons) एका ओळीत
+    # ४ वेगळे कंपार्टमेंट्स (Buttons) एका ओळीत
     ac1, ac2, ac3, ac4 = st.columns(4)
     with ac1:
         if st.button("📈 Update Market Rates", use_container_width=True):
@@ -391,9 +391,9 @@ if st.session_state.is_admin_logged:
             save_db(user_db)
             st.success("✅ प्रिमियम/फ्री फीचर्स सेटिंग्स यशस्वीरित्या बदलल्या!")
 
-    # 3. User Data (जुनी पद्धत: युझर यादी आणि तपशील)
+    # 3. User Data (जुनी संपूर्ण युझर माहिती व मॅनेजमेंट)
     elif current_tab == "users":
-        st.markdown("### 👥 User Database Master List")
+        st.markdown("### 📋 User Database Master List (Sorted A-Z)")
         
         if st.session_state.admin_view == "user_detail" and st.session_state.admin_selected_user is not None:
             target_user = st.session_state.admin_selected_user
@@ -429,44 +429,112 @@ if st.session_state.is_admin_logged:
                 </div>
             """, unsafe_allow_html=True)
 
-            if not assigned_code:
-                if st.button(f"🚀 Generate & Send Unique Code to {u_name}", key=f"win_gen_{target_user}"):
+            if assigned_code:
+                st.info(f"💡 {u_name} साठी आधीच एक कोड तयार आहे: `{assigned_code}`")
+            else:
+                if st.button(f"🚀 Generate & Send Unique Code to {u_name}", key=f"win_gen_send_{target_user}"):
                     new_c = generate_random_code()
                     if "PREMIUM_CODES" not in user_db: user_db["PREMIUM_CODES"] = {}
-                    user_db["PREMIUM_CODES"][new_c] = {"assigned_to": u_name, "used": False}
-                    user_db[target_user]["admin_message"] = f"तुमचा प्रिमियम कोड: {new_c}"
+                    user_db["PREMIUM_CODES"][new_c] = {
+                        "assigned_to": u_name,
+                        "used": False,
+                        "created_at": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    }
+                    user_db[target_user]["admin_message"] = f"तुमचा प्रिमियम कोड: {new_c} (ॲपमध्ये टाकून प्रिमियम अनलॉक करा)"
+                    user_db[target_user]["requested_code"] = False
                     save_db(user_db)
-                    st.success(f"Generated Code: `{new_c}`")
+                    st.success(f"🎉 {u_name} ला ऑटोमॅटिकली कोड पाठवला: `{new_c}`")
                     st.rerun()
 
-            if u_prem and st.button(f"🔻 Revoke Premium: {u_name}", key=f"rev_{target_user}"):
-                user_db[target_user]["is_premium"] = False
-                user_db[target_user]["premium_expiry"] = None
+            st.markdown("---")
+            st.markdown("##### ⏱️ प्रिमियम वेळ सेट करा / वाढवा (Custom Expiry):")
+            t_col1, t_col2 = st.columns(2)
+            with t_col1:
+                time_val = st.number_input("संख्या (Value):", min_value=1, value=28, key=f"win_t_val_{target_user}")
+            with t_col2:
+                time_unit = st.selectbox("युनिट (Unit):", ["Minutes", "Hours", "Days"], index=2, key=f"win_t_unit_{target_user}")
+
+            if st.button(f"⚡ Set Premium Time ({time_val} {time_unit})", key=f"win_btn_custom_{target_user}"):
+                now = datetime.datetime.now()
+                if time_unit == "Minutes":
+                    exp_time = now + datetime.timedelta(minutes=time_val)
+                elif time_unit == "Hours":
+                    exp_time = now + datetime.timedelta(hours=time_val)
+                else:
+                    exp_time = now + datetime.timedelta(days=time_val)
+
+                user_db[target_user]["is_premium"] = True
+                user_db[target_user]["premium_expiry"] = exp_time.strftime("%Y-%m-%d %H:%M:%S")
+                user_db[target_user]["requested_code"] = False
+                user_db[target_user]["seen_popup"] = False
+                user_db[target_user]["activated_by"] = "Kanhaiya (Founder of Patil Infratech)"
                 save_db(user_db)
-                st.warning("प्रिमियम काढले आहे.")
+                st.success(f"✅ {u_name} साठी {time_val} {time_unit} सेव्ह केले!")
                 st.rerun()
+
+            if u_prem:
+                if st.button(f"🔻 Revoke Premium: {u_name}", key=f"win_rev_{target_user}"):
+                    user_db[target_user]["is_premium"] = False
+                    user_db[target_user]["premium_expiry"] = None
+                    save_db(user_db)
+                    st.warning(f"❌ {u_name} चे प्रिमियम काढले आहे.")
+                    st.rerun()
+
+            st.markdown("---")
+            current_msg = info.get("admin_message", "Admin message...")
+            new_msg = st.text_input(f"✍️ {u_name} साठी इनबॉक्स मेसेज बदलणे:", value=current_msg, key=f"win_msg_{target_user}")
+            if st.button(f"✉️ मेसेज सेव्ह करा ({u_name})", key=f"win_btn_msg_{target_user}"):
+                if new_msg.strip():
+                    user_db[target_user]["admin_message"] = new_msg.strip()
+                    save_db(user_db)
+                    st.success(f"✅ '{u_name}' चा इनबॉक्स मेसेज अपडेट झाला!")
+                    st.rerun()
+
+            if st.button(f"🗑️ Delete User: {u_name}", key=f"win_del_{target_user}"):
+                del user_db[target_user]
+                save_db(user_db)
+                st.session_state.admin_view = "main"
+                st.session_state.admin_selected_user = None
+                st.error(f"❌ युझर '{u_name}' डिलीट केला आहे!")
+                st.rerun()
+            
+            st.markdown("---")
+            st.markdown(f"##### 📜 {u_name} चे जनरेट केलेले एस्टिमेशन रिपोर्ट्स ({len(u_hist)})")
+            if u_hist:
+                for idx, hist in enumerate(u_hist, 1):
+                    if isinstance(hist, dict):
+                        ts = hist.get('timestamp', 'N/A')
+                        with st.expander(f"🗓️ रिपोर्ट #{idx} | तारीख व वेळ: `{ts}`"):
+                            st.markdown(hist.get("report_data", "डेटा उपलब्ध नाही"))
+            else:
+                st.info("ℹ️ या युझरने अजून एकही रिपोर्ट जनरेट केलेला नाही.")
         else:
             all_users_keys = [k for k in user_db.keys() if k not in ["9999999999", "MASTER_MARKET_RATES", "PREMIUM_CODES", "FEATURE_LOCKS"]]
-            if all_users_keys:
-                for mob in all_users_keys:
+            sorted_user_keys = sorted(all_users_keys, key=lambda x: str(user_db[x].get("id", x)).lower())
+
+            if sorted_user_keys:
+                for mob in sorted_user_keys:
                     info = user_db[mob]
                     if not isinstance(info, dict): continue
                     u_name = info.get("id", mob)
                     u_prem = info.get("is_premium", False)
-                    
+                    is_req = info.get("requested_code", False)
+
                     col_u1, col_u2 = st.columns([3, 2])
                     if u_prem:
-                        col_u1.markdown(f"<span class='gold-vip-badge'>👑 VIP: {u_name.upper()}</span>", unsafe_allow_html=True)
+                        col_u1.markdown(f"<span class='gold-vip-badge'>👑 VIP MEMBER: {u_name.upper()}</span>", unsafe_allow_html=True)
+                    elif is_req:
+                        col_u1.markdown(f"#### 👤 **{u_name}** `[🚨 CODE REQUESTED!]`", unsafe_allow_html=True)
                     else:
-                        col_u1.markdown(f"<span class='free-user-badge'>🆓 Free: {u_name.upper()}</span>", unsafe_allow_html=True)
-                    
-                    if col_u2.button(f"👁️ View {u_name}", key=f"vw_{mob}"):
+                        col_u1.markdown(f"<span class='free-user-badge'>🆓 FREE: {u_name.upper()}</span>", unsafe_allow_html=True)
+
+                    if col_u2.button(f"👁️ View / Manage {u_name}", key=f"open_user_win_{mob}"):
                         st.session_state.admin_view = "user_detail"
                         st.session_state.admin_selected_user = mob
                         st.rerun()
                     st.write("---")
             else:
-                st.info("ℹ️ कोणताही युझर नोंदणीकृत नाही.")
+                st.info("ℹ️ डेटाबेसमध्ये सध्या कोणताही सामान्य युझर नाही.")
 
     # 4. Ad Sponsor (Coming Soon)
     elif current_tab == "ads":
