@@ -321,7 +321,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 🛡️ ADMIN PANEL (इन्स्टाग्रामसारखे: यशस्वी लॉगइन झाल्यावर जुनी स्क्रीन गायब होईल आणि नवीन डॅशबोर्ड येईल)
+# 🛡️ ADMIN PANEL (इन्स्टाग्रामसारखे: यशस्वी लॉगिनवर जुनी स्क्रीन गायब होईल)
 # ==========================================
 if st.session_state.is_admin_logged:
     st.markdown("## 👑 ADMIN DASHBOARD (PATIL INFRATECH)")
@@ -391,9 +391,9 @@ if st.session_state.is_admin_logged:
             save_db(user_db)
             st.success("✅ प्रिमियम/फ्री फीचर्स सेटिंग्स यशस्वीरित्या बदलल्या!")
 
-    # 3. User Data (जुनी संपूर्ण युझर माहिती व मॅनेजमेंट)
+    # 3. User Data (पूर्ण युझर मॅनेजमेंट आणि सेफ टाईप चेक)
     elif current_tab == "users":
-        st.markdown("### 📋 User Database Master List (Sorted A-Z)")
+        st.markdown("### 📋 User Database Master List")
         
         if st.session_state.admin_view == "user_detail" and st.session_state.admin_selected_user is not None:
             target_user = st.session_state.admin_selected_user
@@ -403,6 +403,9 @@ if st.session_state.is_admin_logged:
                 st.rerun()
 
             info = user_db.get(target_user, {})
+            if not isinstance(info, dict):
+                info = {}
+            
             u_name = info.get("id", target_user)
             u_comm = info.get("comment", "काही नाही")
             u_prem = info.get("is_premium", False)
@@ -413,7 +416,7 @@ if st.session_state.is_admin_logged:
             assigned_code = None
             if "PREMIUM_CODES" in user_db:
                 for c_code, c_data in user_db["PREMIUM_CODES"].items():
-                    if c_data.get("assigned_to") == u_name and not c_data.get("used", False):
+                    if isinstance(c_data, dict) and c_data.get("assigned_to") == u_name and not c_data.get("used", False):
                         assigned_code = c_code
                         break
 
@@ -509,13 +512,12 @@ if st.session_state.is_admin_logged:
             else:
                 st.info("ℹ️ या युझरने अजून एकही रिपोर्ट जनरेट केलेला नाही.")
         else:
-            all_users_keys = [k for k in user_db.keys() if k not in ["9999999999", "MASTER_MARKET_RATES", "PREMIUM_CODES", "FEATURE_LOCKS"]]
+            all_users_keys = [k for k, v in user_db.items() if k not in ["9999999999", "MASTER_MARKET_RATES", "PREMIUM_CODES", "FEATURE_LOCKS"] and isinstance(v, dict)]
             sorted_user_keys = sorted(all_users_keys, key=lambda x: str(user_db[x].get("id", x)).lower())
 
             if sorted_user_keys:
                 for mob in sorted_user_keys:
                     info = user_db[mob]
-                    if not isinstance(info, dict): continue
                     u_name = info.get("id", mob)
                     u_prem = info.get("is_premium", False)
                     is_req = info.get("requested_code", False)
@@ -874,7 +876,7 @@ elif st.session_state.selected_module == "Rate Analysis":
             with btn_col2:
                 st.markdown('''
                     <button onclick="window.print()" style="width: 100%; background-color: #3b82f6; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px;">
-                        📄 Print / Download A3 PDF
+                        📄 Print / Download A3 Size PDF
                     </button>
                 ''', unsafe_allow_html=True)
 
