@@ -1099,7 +1099,7 @@ elif st.session_state.selected_module == "Rate Analysis":
             msg_text += f"• Bricks: {total_bricks} Nos = ₹{total_brick_cost:.2f}\n"
             msg_text += f"• Cement: {cement_bags} Bags = ₹{total_cement_cost:.2f}\n"
             msg_text += f"• Sand: {sand_m3:.2f} m³ = ₹{total_sand_cost:.2f}\n"
-            msg_text += f"• Labour: `{lab_cost:.2f}\n`"
+            msg_text += f"• Labour: {lab_cost:.2f}\n"
             msg_text += f"--------------------------------\n"
             msg_text += f"💰 *GRAND TOTAL:* ₹{grand_total:.2f}/-\n"
             msg_text += f"--------------------------------\n"
@@ -1399,6 +1399,3 @@ elif st.session_state.selected_module == "BBS":
             }
             user_db[current_user_name]["history"].append(new_report)
             save_db(user_db)
-
-[Gemini API Quickstart Guide](https://www.youtube.com/watch?v=vH2iMV2Y3dI)
-http://googleusercontent.com/youtube_content/1
