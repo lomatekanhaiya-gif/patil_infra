@@ -216,7 +216,7 @@ st.markdown(f"""
         border: 1px solid rgba(255, 255, 255, 0.15);
     }}
 
-    /* 👑 ROYAL GOLD VIP BADGE WITH USER NAME INCLUDED */
+    /* 👑 ROYAL GOLD VIP BADGE */
     .gold-vip-badge {{
         background: linear-gradient(135deg, #FFE082 0%, #FFB300 50%, #FF6F00 100%);
         color: #000000;
@@ -228,6 +228,18 @@ st.markdown(f"""
         box-shadow: 0 0 20px rgba(255, 179, 0, 0.7);
         display: inline-block;
         border: 1px solid #FFF59D;
+    }}
+
+    /* 🆓 STANDARD FREE USER BADGE */
+    .free-user-badge {{
+        background: rgba(31, 41, 55, 0.9);
+        color: #9ca3af;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-weight: 700;
+        font-size: 13px;
+        border: 1px solid #374151;
+        display: inline-block;
     }}
 
     /* 👑 ADMIN PANEL USER CARD STYLING */
@@ -474,13 +486,13 @@ if st.session_state.app_user_name is None:
                             assigned_code = c_code
                             break
 
-                status_badge = f"👑 VIP MEMBER: {u_name.upper()}" if u_prem else ("🚨 CODE REQUESTED!" if is_req else f"🆓 FREE: {u_name.upper()}")
+                status_badge_html = f"<span class='gold-vip-badge'>👑 VIP MEMBER: {u_name.upper()}</span>" if u_prem else (f"<code>[🚨 CODE REQUESTED!]</code>" if is_req else f"<span class='free-user-badge'>🆓 FREE: {u_name.upper()}</span>")
 
                 st.markdown(f"### 👤 MANAGE USER: <span style='color:#60a5fa;'>{u_name.upper()}</span>", unsafe_allow_html=True)
                 
                 st.markdown(f"""
                     <div class="admin-user-card">
-                        <p style="margin:5px 0; font-size:16px;"><b>माहिती/स्टेटस:</b> <span class="gold-vip-badge">{status_badge}</span></p>
+                        <p style="margin:5px 0; font-size:16px;"><b>माहिती/स्टेटस:</b> {status_badge_html}</p>
                         <p style="margin:8px 0 5px 0; font-size:15px;"><b>प्रिमियम मुदत (Expiry):</b> <code>{exp_date}</code></p>
                         <p style="margin:5px 0; font-size:15px;"><b>ॲक्टिव्ह कोड (Unused):</b> <code style="color:#10b981; font-size:16px;">{assigned_code if assigned_code else 'काही नाही'}</code></p>
                         <p style="margin:5px 0; font-size:14px; color:#9ca3af;"><b>युझर कमेंट:</b> {u_comm}</p>
@@ -505,7 +517,7 @@ if st.session_state.app_user_name is None:
                         st.success(f"🎉 {u_name} ला ऑटोमॅटिकली कोड पाठवला: `{new_c}`")
                         st.rerun()
 
-                # ⏱️ 2. CUSTOM TIME SET BY ADMIN (विना कन्हैया उल्लेख)
+                # ⏱️ 2. CUSTOM TIME SET BY ADMIN
                 st.markdown("---")
                 st.markdown("##### ⏱️ प्रिमियम वेळ सेट करा / वाढवा (Custom Expiry):")
                 t_col1, t_col2 = st.columns(2)
@@ -605,7 +617,7 @@ if st.session_state.app_user_name is None:
                         elif is_req:
                             col_u1.markdown(f"#### 👤 **{u_name}** `[🚨 CODE REQUESTED!]`", unsafe_allow_html=True)
                         else:
-                            col_u1.markdown(f"#### 👤 **{u_name}** `[🆓 FREE USER]`", unsafe_allow_html=True)
+                            col_u1.markdown(f"<span class='free-user-badge'>🆓 FREE: {u_name.upper()}</span>", unsafe_allow_html=True)
 
                         if col_u2.button(f"👁️ View / Manage {u_name}", key=f"open_user_win_{mob}"):
                             st.session_state.admin_view = "user_detail"
@@ -631,7 +643,7 @@ col_u, col_lo = st.columns([3.5, 1.5])
 if is_user_premium:
     col_u.markdown(f"<span class='gold-vip-badge'>👑 VIP MEMBER: {current_user_name.upper()} ({status_text_str})</span>", unsafe_allow_html=True)
 else:
-    col_u.success(f"👤 युझर: **{current_user_name}** | [🆓 FREE USER]")
+    col_u.markdown(f"<span class='free-user-badge'>🆓 FREE USER: {current_user_name.upper()}</span>", unsafe_allow_html=True)
 
 if col_lo.button("🔄 नाव बदला"):
     st.session_state.app_user_name = None
@@ -742,7 +754,7 @@ def render_whatsapp_feature(encoded_msg, key_prefix):
                 if st.button("📩 Request Code from Admin", key=f"{key_prefix}_req_btn"):
                     user_db[current_user_name]["requested_code"] = True
                     save_db(user_db)
-                    st.success("✅ Admin ला कोडसाठी रिक्वेस्ट पाठवली आहे!")
+                    st.success("✅ ॲडमीनला कोडसाठी रिक्वेस्ट पाठवली आहे!")
 
 # ==========================================
 # 🎛️ DASHBOARD / ICON SELECTION SCREEN
@@ -860,8 +872,8 @@ elif st.session_state.selected_module == "Rate Analysis":
             profit_pct = st.number_input("कंत्राटदार नफा टक्केवारी (%):", min_value=0.0, value=10.0, key="cc_prof_p")
 
         st.markdown("#### 💬 कमेंट पॅनल (Comment Panel)")
-        user_note = st.text_area("या एस्टिमेशन संदर्भात काही नोट किंवा कमेंट लिहायची असल्यास इथे लिहा:", placeholder="उदा. ग्राउंड फ्लोअर वीटकाम...", key="bw_note")
-        if st.button("💬 कमेंट सेव्ह करा", key="cc_comm_btn"):
+        user_note = st.text_area("कृपया आपला मौल्यवान फीडबॅक अवश्य द्या🙏:", placeholder="अँप मध्ये नवीन फिचर्स हवे असतील तर नक्की कळवा", key="cc_note")
+        if st.button("💬 कमेंट सबमिट करा", key="cc_comm_btn"):
             if user_note.strip():
                 st.session_state.current_comment = user_note.strip()
                 user_db = load_db()
@@ -1342,7 +1354,7 @@ elif st.session_state.selected_module == "BBS":
         with btn_col2:
             st.markdown('''
                 <button onclick="window.print()" style="width: 100%; background-color: #3b82f6; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px;">
-                    📄 Print / Download A3 PDF
+                    📄 Print / Save A3 Size PDF
                 </button>
             ''', unsafe_allow_html=True)
 
