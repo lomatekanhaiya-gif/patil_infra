@@ -334,7 +334,6 @@ if st.session_state.is_admin_logged:
 
     st.write("---")
     
-    # ४ वेगळे कंपार्टमेंट्स (Buttons) एका ओळीत
     ac1, ac2, ac3, ac4 = st.columns(4)
     with ac1:
         if st.button("📈 Update Market Rates", use_container_width=True):
@@ -353,7 +352,6 @@ if st.session_state.is_admin_logged:
     user_db = load_db()
     current_tab = st.session_state.admin_dashboard_tab
 
-    # 1. Update Market Rates
     if current_tab == "rates":
         st.markdown("### 📈 Update Master Market Rates")
         m_rates = user_db.get("MASTER_MARKET_RATES", {"cement": 400.0, "sand": 2500.0, "bricks": 8.0, "aggregate": 2200.0, "steel": 60.0})
@@ -371,7 +369,6 @@ if st.session_state.is_admin_logged:
             save_db(user_db)
             st.success("✅ आजचे मास्टर मार्केट दर डेटाबेसमध्ये यशस्वीरित्या अपडेट झाले!")
 
-    # 2. Feature Lock Manager
     elif current_tab == "locks":
         st.markdown("### ⚙️ Feature Lock Manager")
         cur_locks = user_db.get("FEATURE_LOCKS", {"Rate Analysis": "Free", "BBS": "Free", "WhatsApp Share": "Premium", "Civil AI Assistant": "Premium"})
@@ -391,7 +388,6 @@ if st.session_state.is_admin_logged:
             save_db(user_db)
             st.success("✅ प्रिमियम/फ्री फीचर्स सेटिंग्स यशस्वीरित्या बदलल्या!")
 
-    # 3. User Data (पूर्ण युझर मॅनेजमेंट आणि सेफ टाईप चेक)
     elif current_tab == "users":
         st.markdown("### 📋 User Database Master List (Sorted A-Z)")
         
@@ -489,7 +485,7 @@ if st.session_state.is_admin_logged:
             if st.button(f"✉️ मेसेज सेव्ह करा व पाठवा ({u_name})", key=f"win_btn_msg_{target_user}"):
                 if new_msg.strip():
                     user_db[target_user]["admin_message"] = new_msg.strip()
-                    user_db[target_user]["unread_notification"] = True # नवीन नोटिफिकेशन फ्लॅग
+                    user_db[target_user]["unread_notification"] = True
                     save_db(user_db)
                     st.success(f"✅ '{u_name}' च्या इनबॉक्समध्ये नवीन मेसेज पाठवला (Notification Sent)!")
                     st.rerun()
@@ -539,7 +535,6 @@ if st.session_state.is_admin_logged:
             else:
                 st.info("ℹ️ डेटाबेसमध्ये सध्या कोणताही सामान्य युझर नाही.")
 
-    # 4. Ad Sponsor (Coming Soon)
     elif current_tab == "ads":
         st.markdown("### 📢 Ad Sponsor Manager")
         st.info("🚧 **Coming Soon!** जाहिरात आणि स्पॉन्सरशिप मॅनेज करण्याचे फिचर लवकरच येत आहे.")
@@ -547,52 +542,57 @@ if st.session_state.is_admin_logged:
     st.stop()
 
 # ==========================================
-# 👤 युझर नाव प्रविष्ट करणे किंवा ॲडमीन लॉगिन
+# 👤 युझर नाव प्रविष्ट करणे (कीबोर्डवरील Enter वर चालणारे) व ॲडमीन लॉगिन
 # ==========================================
 if st.session_state.app_user_name is None:
     st.markdown("### 👤 ॲपमध्ये प्रवेश करण्यासाठी नाव प्रविष्ट करा किंवा ॲडमीन लॉगिन करा")
     
-    u_input = st.text_input("तुमचे नाव (Your Name):", placeholder="NAME", key="entry_user_name").strip()
-    
-    if st.button("ॲप उघडा (Enter App) 👉", type="primary"):
-        if u_input:
-            st.session_state.app_user_name = u_input
-            user_db = load_db()
-            
-            if u_input not in user_db:
-                new_welcome_msg = f"Welcome {u_input}! मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
-                user_db[u_input] = {
-                    "id": u_input,
-                    "comment": "काही नाही",
-                    "admin_message": new_welcome_msg,
-                    "unread_notification": False,
-                    "is_premium": False,
-                    "premium_expiry": None,
-                    "requested_code": False,
-                    "seen_popup": False,
-                    "history": []
-                }
-                save_db(user_db)
-            st.rerun()
-        else:
-            st.warning("⚠️ कृपया ॲप वापरण्यासाठी आधी तुमचे नाव टाका!")
+    # Form वापरल्यामुळे कीबोर्डवर Enter दाबले तरी ॲप ओपन होईल
+    with st.form("user_login_form"):
+        u_input = st.text_input("तुमचे नाव (Your Name):", placeholder="NAME").strip()
+        submit_user = st.form_submit_button("ॲप उघडा (Enter App) 👉", type="primary")
+        
+        if submit_user:
+            if u_input:
+                st.session_state.app_user_name = u_input
+                user_db = load_db()
+                
+                if u_input not in user_db:
+                    new_welcome_msg = f"मी {u_input} आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
+                    user_db[u_input] = {
+                        "id": u_input,
+                        "comment": "काही नाही",
+                        "admin_message": new_welcome_msg,
+                        "unread_notification": False,
+                        "is_premium": False,
+                        "premium_expiry": None,
+                        "requested_code": False,
+                        "seen_popup": False,
+                        "history": []
+                    }
+                    save_db(user_db)
+                st.rerun()
+            else:
+                st.warning("⚠️ कृपया ॲप वापरण्यासाठी आधी तुमचे नाव टाका!")
 
     st.write("---")
     
-    # 🛡️ ॲडमीन लॉगिन पॅनल
+    # 🛡️ ॲडमीन लॉगिन पॅनल (Form वापरल्यामुळे कीबोर्डवर Enter दाबले तरी लॉगिन होईल)
     with st.expander("🛡️ Admin Login Panel (Kanhaiya Only)"):
-        admin_id = st.text_input("Admin ID:", key="adm_id")
-        admin_pass = st.text_input("Password:", type="password", key="adm_pass")
-        
-        secret_admin_id = st.secrets.get("ADMIN_ID", "kanha_1p") if hasattr(st, "secrets") else "kanha_1p"
-        secret_admin_pass = st.secrets.get("ADMIN_PASS", "@Dellg15") if hasattr(st, "secrets") else "@Dellg15"
+        with st.form("admin_login_form"):
+            admin_id = st.text_input("Admin ID:")
+            admin_pass = st.text_input("Password:", type="password")
+            submit_admin = st.form_submit_button("🔓 Login to Admin Panel", type="primary")
+            
+            secret_admin_id = st.secrets.get("ADMIN_ID", "kanha_1p") if hasattr(st, "secrets") else "kanha_1p"
+            secret_admin_pass = st.secrets.get("ADMIN_PASS", "@Dellg15") if hasattr(st, "secrets") else "@Dellg15"
 
-        if st.button("🔓 Login to Admin Panel", type="primary"):
-            if admin_id == secret_admin_id and admin_pass == secret_admin_pass:
-                st.session_state.is_admin_logged = True
-                st.rerun()
-            else:
-                st.error("❌ चुकीचा Admin ID किंवा Password!")
+            if submit_admin:
+                if admin_id == secret_admin_id and admin_pass == secret_admin_pass:
+                    st.session_state.is_admin_logged = True
+                    st.rerun()
+                else:
+                    st.error("❌ चुकीचा Admin ID किंवा Password!")
             
     st.stop()
 
@@ -623,7 +623,7 @@ current_user_data = user_db.get(current_user_name, {})
 if not isinstance(current_user_data, dict):
     current_user_data = {}
 
-# जर ॲडमीनने नवीन मेसेज पाठवला असेल (Unread Notification)
+# जर ॲडमीनने नवीन मेसेज पाठवला असेल
 if current_user_data.get("unread_notification", False):
     admin_msg = current_user_data.get("admin_message", "")
     st.markdown(f"""
@@ -634,22 +634,20 @@ if current_user_data.get("unread_notification", False):
     """, unsafe_allow_html=True)
     
     if st.button("✅ Mark as Read & Clear (वाचले आहे)", type="primary"):
-        # मेसेज वाचल्यावर इनबॉक्स रिसेट करून पुन्हा वेलकम मेसेज सेट करणे
         user_db[current_user_name]["unread_notification"] = False
-        user_db[current_user_name]["admin_message"] = f"Welcome {current_user_name}! पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
+        user_db[current_user_name]["admin_message"] = f"मी {current_user_name} आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
         save_db(user_db)
         st.success("✅ मेसेज वाचून क्लियर केला आहे!")
         st.rerun()
 else:
-    # नेहमीचा इनबॉक्स मेसेज किंवा वेलकम मेसेज
-    admin_msg = current_user_data.get("admin_message", f"Welcome {current_user_name}! पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳")
+    admin_msg = current_user_data.get("admin_message", f"मी {current_user_name} आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳")
     st.markdown("### 📥 Admin Message / Code Inbox")
     st.info(f"📢 **Admin:** {admin_msg}")
 
 st.write("---")
 
 # ==========================================
-# 🔑 प्रिमियम कोड इनपुट (कोड वापरल्यावर इनबॉक्समधील कोड गायब होऊन वेलकम मेसेज येणे)
+# 🔑 प्रिमियम कोड इनपुट
 # ==========================================
 if not is_user_premium:
     with st.expander("🔑 प्रिमियम अनलॉक करा (Enter Premium Code)"):
@@ -666,8 +664,8 @@ if not is_user_premium:
                     user_db[current_user_name]["seen_popup"] = False
                     user_db[current_user_name]["activated_by"] = "Kanhaiya (Founder of Patil Infratech)"
                     
-                    # ✅ कोड वापरल्यानंतर इनबॉक्समधील कोड गायब करून वेलकम मेसेज सेट करणे
-                    user_db[current_user_name]["admin_message"] = f"Welcome {current_user_name}! पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
+                    # ✅ कोड वापरल्यावर इनबॉक्समधील कोड गायब होऊन वेलकम मेसेज येणे
+                    user_db[current_user_name]["admin_message"] = f"मी {current_user_name} आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
                     user_db[current_user_name]["unread_notification"] = False
                     
                     save_db(user_db)
@@ -908,7 +906,7 @@ elif st.session_state.selected_module == "Rate Analysis":
             with btn_col2:
                 st.markdown('''
                     <button onclick="window.print()" style="width: 100%; background-color: #3b82f6; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px;">
-                        📄 Print / Download A3 Size PDF
+                        📄 Print / Download A3 PDF
                     </button>
                 ''', unsafe_allow_html=True)
 
@@ -969,7 +967,7 @@ elif st.session_state.selected_module == "Rate Analysis":
                 if current_user_name in user_db:
                     user_db[current_user_name]["comment"] = user_note.strip()
                     save_db(user_db)
-                st.success("✅ कमेंट सेव्ह झाली!")
+                st.success("✅ कमेंट सबमिट करा!")
 
         if st.button("📊 GENERATE RATE ANALYSIS REPORT", type="primary", key="bw_report_btn"):
             total_bricks = math.ceil(volume * 500)
@@ -1162,7 +1160,7 @@ elif st.session_state.selected_module == "BBS":
             if current_user_name in user_db:
                 user_db[current_user_name]["comment"] = user_note.strip()
                 save_db(user_db)
-            st.success("✅ कमेंट सेव्ह झाली!")
+            st.success("✅ कमेंट सबमिट करा!")
 
     if st.button("🧮 CALCULATE BBS REPORT", type="primary", key="bbs_calc_btn"):
         length_mm = length_m * 1000.0
