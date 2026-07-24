@@ -560,7 +560,7 @@ if st.session_state.app_user_name is None:
             user_db = load_db()
             
             if u_input not in user_db:
-                new_welcome_msg = f"Welcome {u_input}! पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
+                new_welcome_msg = f"Welcome {u_input}! मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
                 user_db[u_input] = {
                     "id": u_input,
                     "comment": "काही नाही",
