@@ -43,7 +43,7 @@ def load_db():
             "Rate Analysis": "Free",
             "BBS": "Free",
             "WhatsApp Share": "Premium",
-            "AI Assistant": "Premium"
+            "Civil AI Assistant": "Premium"
         }
     }
     if os.path.exists(DB_FILE):
@@ -418,19 +418,19 @@ if st.session_state.app_user_name is None:
                 st.markdown("### ⚙️ Feature Lock Manager (Free / Premium Selection)")
                 st.caption("💡 इथून तू कोणतेही फीचर फ्री किंवा प्रिमियम करू शकतोस:")
 
-                cur_locks = user_db.get("FEATURE_LOCKS", {"Rate Analysis": "Free", "BBS": "Free", "WhatsApp Share": "Premium", "AI Assistant": "Premium"})
+                cur_locks = user_db.get("FEATURE_LOCKS", {"Rate Analysis": "Free", "BBS": "Free", "WhatsApp Share": "Premium", "Civil AI Assistant": "Premium"})
 
                 fl_ra = st.selectbox("1. Rate Analysis Module Access:", ["Free", "Premium"], index=0 if cur_locks.get("Rate Analysis") == "Free" else 1, key="fl_ra_choice")
                 fl_bbs = st.selectbox("2. BBS Calculator Access:", ["Free", "Premium"], index=0 if cur_locks.get("BBS") == "Free" else 1, key="fl_bbs_choice")
                 fl_wa = st.selectbox("3. WhatsApp Full Report Share:", ["Free", "Premium"], index=0 if cur_locks.get("WhatsApp Share") == "Free" else 1, key="fl_wa_choice")
-                fl_ai = st.selectbox("4. Gemini AI Assistant Access:", ["Free", "Premium"], index=0 if cur_locks.get("AI Assistant") == "Free" else 1, key="fl_ai_choice")
+                fl_ai = st.selectbox("4. Civil AI Assistant Access:", ["Free", "Premium"], index=0 if cur_locks.get("Civil AI Assistant") == "Free" else 1, key="fl_ai_choice")
 
                 if st.button("💾 Save Feature Lock Settings", key="save_locks_btn", type="primary"):
                     user_db["FEATURE_LOCKS"] = {
                         "Rate Analysis": fl_ra,
                         "BBS": fl_bbs,
                         "WhatsApp Share": fl_wa,
-                        "AI Assistant": fl_ai
+                        "Civil AI Assistant": fl_ai
                     }
                     save_db(user_db)
                     st.success("✅ प्रिमियम/फ्री फीचर्स सेटिंग्स यशस्वीरित्या अपडेट झाल्या!")
@@ -721,22 +721,22 @@ def render_whatsapp_feature(encoded_msg, key_prefix):
                     st.success("✅ ॲडमीनला कोडसाठी रिक्वेस्ट पाठवली आहे!")
 
 # ==========================================
-# 🤖 GEMINI AI ASSISTANT (Live Google AI + 5 Sec Thinking Time)
+# 🤖 CIVIL AI ASSISTANT (Live Gemini AI + 5 Sec Thinking Time)
 # ==========================================
 st.markdown("---")
-st.markdown("### 🤖 Patil Infratech Gemini AI Assistant")
+st.markdown("### 🤖 Patil Infratech Civil AI Assistant")
 
 locks_cfg = user_db.get("FEATURE_LOCKS", {})
-ai_lock_setting = locks_cfg.get("AI Assistant", "Premium")
+ai_lock_setting = locks_cfg.get("Civil AI Assistant", "Premium")
 
 if ai_lock_setting == "Free" or is_user_premium:
-    st.caption("💡 Ask any complex construction, estimation, or material question in ANY language or script:")
-    user_ai_query = st.text_input("तुमचे प्रश्न इथे लिहा (Type your query here):", placeholder="उदा. dry volume factor for concrete, 1000 sq.ft slab estimation...", key="gemini_ai_input")
+    st.caption("💡 Ask any construction, estimation, or material question in ANY language or script (Marathi, English, Hindi, etc.):")
+    user_ai_query = st.text_input("तुमचा प्रश्न किंवा शंका इथे लिहा (Type your question here):", placeholder="उदा. 1000 sq.ft slab steel calculation, kiti cement lagel...", key="civil_ai_input")
     
-    if st.button("🚀 Ask Gemini AI", key="ask_gemini_ai_btn"):
+    if st.button("🚀 Ask Civil AI", key="ask_civil_ai_btn"):
         if user_ai_query.strip():
             # 5 Seconds Realistic Thinking Spinner & Delay
-            with st.spinner("🤖 AI is thinking deeply and calculating accurately... (कृपया ५ सेकंद वाट पाहा)"):
+            with st.spinner("🤖 Civil AI is analyzing your question and calculating accurately... (कृपया ५ सेकंद वाट पाहा)"):
                 time.sleep(5.0)
                 
                 api_key = st.secrets.get("GEMINI_API_KEY", os.getenv("GEMINI_API_KEY", ""))
@@ -747,8 +747,8 @@ if ai_lock_setting == "Free" or is_user_premium:
                         client = genai.Client(api_key=api_key)
                         prompt = f"""
                         You are an expert Senior Civil Engineer and Quantity Surveyor for Patil Infratech, founded by Kanhaiya. 
-                        The user is asking a construction/estimation question in any language or script (Marathi, English, Hinglish, etc.). 
-                        Provide an accurate, standard, highly professional engineering response with exact formulas or material quantities if applicable.
+                        The user is asking a construction, estimation, or material calculation question in any language or script (Marathi, English, Hinglish, Hindi, etc.). 
+                        Provide an accurate, standard, highly professional engineering response with exact formulas or material quantities if applicable. Match the user's language/script context.
                         User Query: {user_ai_query}
                         """
                         response = client.models.generate_content(
@@ -775,15 +775,15 @@ if ai_lock_setting == "Free" or is_user_premium:
 
                 st.markdown(f"""
                     <div style="background: rgba(31, 41, 55, 0.95); border-left: 5px solid #FFB300; padding: 18px; border-radius: 14px; color: #f3f4f6; margin-top: 10px; line-height: 1.6;">
-                        <b>🎯 Gemini AI Expert Answer:</b><br><br>{ai_response_text}
+                        <b>🎯 Civil AI Expert Answer:</b><br><br>{ai_response_text}
                     </div>
                 """, unsafe_allow_html=True)
         else:
-            st.warning("⚠️ कृपया आधी तुमचा प्रश्न लिहा / Please type your question first!")
+            st.warning("⚠️ कृपया आधी तुमचा प्रश्न किंवा शंका लिहा / Please type your question first!")
 else:
     st.markdown("""
         <div style="background: rgba(31, 41, 55, 0.6); border: 1px dashed #3b82f6; padding: 15px; border-radius: 14px; text-align: center;">
-            <p style="color: #60a5fa; margin: 0; font-weight: 600;">🔒 Gemini AI Assistant हे फीचर केवळ प्रिमियम (VIP) युझर्ससाठी आहे.</p>
+            <p style="color: #60a5fa; margin: 0; font-weight: 600;">🔒 Civil AI Assistant हे फीचर केवळ प्रिमियम (VIP) युझर्ससाठी आहे.</p>
             <p style="color: #9ca3af; margin: 5px 0 0 0; font-size: 13px;">प्रिमियम कोड टाकून किंवा ॲडमीनकडून कोड मागवून हे फिचर अनलॉक करा.</p>
         </div>
     """, unsafe_allow_html=True)
@@ -1097,9 +1097,9 @@ elif st.session_state.selected_module == "Rate Analysis":
             msg_text += f"📅 *Date:* {datetime.datetime.now().strftime('%d-%m-%Y')}\n\n"
             msg_text += f"📋 *DETAILS:*\n"
             msg_text += f"• Bricks: {total_bricks} Nos = ₹{total_brick_cost:.2f}\n"
-            msg_text += f"• Cement: {cement_bags} Bags = ₹{cement_rate:.2f}\n"
+            msg_text += f"• Cement: {cement_bags} Bags = ₹{total_cement_cost:.2f}\n"
             msg_text += f"• Sand: {sand_m3:.2f} m³ = ₹{total_sand_cost:.2f}\n"
-            msg_text += f"• Labour: ₹{lab_cost:.2f}\n"
+            msg_text += f"• Labour: `{lab_cost:.2f}\n`"
             msg_text += f"--------------------------------\n"
             msg_text += f"💰 *GRAND TOTAL:* ₹{grand_total:.2f}/-\n"
             msg_text += f"--------------------------------\n"
@@ -1399,3 +1399,6 @@ elif st.session_state.selected_module == "BBS":
             }
             user_db[current_user_name]["history"].append(new_report)
             save_db(user_db)
+
+[Gemini API Quickstart Guide](https://www.youtube.com/watch?v=vH2iMV2Y3dI)
+http://googleusercontent.com/youtube_content/1
