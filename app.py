@@ -558,7 +558,7 @@ if st.session_state.app_user_name is None:
                 
                 if u_input not in user_db:
                     # 🟢 कन्हैया (admin) युझरचे स्वागत करतोय
-                    new_welcome_msg = f" "username" मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
+                    new_welcome_msg = f" ("username")मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
                     user_db[u_input] = {
                         "id": u_input,
                         "comment": "काही नाही",
