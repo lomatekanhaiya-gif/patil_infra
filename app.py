@@ -721,7 +721,7 @@ def render_whatsapp_feature(encoded_msg, key_prefix):
                     st.success("✅ ॲडमीनला कोडसाठी रिक्वेस्ट पाठवली आहे!")
 
 # ==========================================
-# 🤖 CIVIL AI ASSISTANT (Stable Google GenAI + 5 Sec Thinking Time)
+# 🤖 CIVIL AI ASSISTANT (Hybrid Live AI & Smart Knowledge Base)
 # ==========================================
 st.markdown("---")
 st.markdown("### 🤖 Patil Infratech Civil AI Assistant")
@@ -731,7 +731,7 @@ ai_lock_setting = locks_cfg.get("Civil AI Assistant", "Premium")
 
 if ai_lock_setting == "Free" or is_user_premium:
     st.caption("💡 Ask any construction, estimation, or material question in ANY language or script (Marathi, English, Hindi, Hinglish, etc.):")
-    user_ai_query = st.text_input("तुमचा प्रश्न किंवा शंका इथे लिहा (Type your question here):", placeholder="उदा. 1000 sq.ft slab steel calculation, kiti cement lagel...", key="civil_ai_input")
+    user_ai_query = st.text_input("तुमचा प्रश्न किंवा शंका इथे लिहा (Type your question here):", placeholder="उदा. dry volume factor, kiti cement lagel, 1000 sq ft slab...", key="civil_ai_input")
     
     if st.button("🚀 Ask Civil AI", key="ask_civil_ai_btn"):
         if user_ai_query.strip():
@@ -742,6 +742,7 @@ if ai_lock_setting == "Free" or is_user_premium:
                 api_key = st.secrets.get("GEMINI_API_KEY", os.getenv("GEMINI_API_KEY", ""))
                 ai_response_text = ""
                 
+                # Try Live Google Gemini AI First
                 if HAS_GENAI and api_key:
                     try:
                         genai.configure(api_key=api_key)
@@ -753,21 +754,26 @@ if ai_lock_setting == "Free" or is_user_premium:
                         User Query: {user_ai_query}
                         """
                         response = model.generate_content(prompt)
-                        ai_response_text = response.text
+                        if response and response.text:
+                            ai_response_text = response.text
                     except Exception as e:
-                        ai_response_text = f"⚠️ Live AI connection notice: Standard fallback activated. (Error details: {e})"
+                        pass
                 
-                # Standard Engineering Fallback if API key is not set or error occurs
-                if not api_key or not ai_response_text or "Error" in ai_response_text:
+                # Robust Civil Engineering Knowledge Base Fallback if Live API fails or isn't configured
+                if not ai_response_text:
                     q_text = user_ai_query.lower()
-                    if "dry volume" in q_text or "factor" in q_text or "ड्राय व्हॉल्यूम" in q_text:
+                    if any(k in q_text for k in ["hi", "hello", "hey", "hii", "नमस्कार", "नमस्ते"]):
+                        ai_response_text = "👋 Hello! I am your Patil Infratech Civil AI Assistant. How can I assist you with your construction, material calculation, or estimation queries today?"
+                    elif any(k in q_text for k in ["dry volume", "factor", "ड्राय व्हॉल्यूम", "1.54"]):
                         ai_response_text = "📐 **Patil Infratech Expert Answer:** The standard **Dry Volume Factor for Concrete is 1.54**. Wet concrete shrinks as it sets and compacts, so to calculate the required dry volume of raw materials (Cement, Sand, and Aggregate), we multiply the wet volume by 1.54."
-                    elif "cement" in q_text or "सिमेंट" in q_text or "bags" in q_text:
+                    elif any(k in q_text for k in ["cement", "सिमेंट", "सीमेंट", "bags", "bag", "बॅग"]):
                         ai_response_text = "🏗️ **Patil Infratech Expert Answer:** For a standard 1,000 sq.ft RCC slab structure (M20 grade, mix ratio 1:1.5:3), standard material calculation requires approximately **350 to 400 bags of cement**. (Using dry volume factor 1.54)."
-                    elif "steel" in q_text or "स्टील" in q_text or "लोखंड" in q_text:
+                    elif any(k in q_text for k in ["steel", "स्टील", "लोखंड", "iron", "rod", "bars"]):
                         ai_response_text = "⚖️ **Patil Infratech Expert Answer:** For residential framed structures, standard steel reinforcement consumption ranges between **3.5 kg to 4.5 kg per sq.ft** depending on structural loading and spans."
-                    elif "brick" in q_text or "वीट" in q_text or "विटा" in q_text:
+                    elif any(k in q_text for k in ["brick", "bricks", "वीट", "विटा", "ईंट"]):
                         ai_response_text = "🧱 **Patil Infratech Expert Answer:** For 1 cubic meter of standard brick masonry, approximately **500 standard bricks** and 0.30 m³ of dry mortar mix are professionally required."
+                    elif any(k in q_text for k in ["cost", "kharch", "budget", "price", "रुपये", "खर्च", "रेट"]):
+                        ai_response_text = "💰 **Patil Infratech Expert Answer:** Current market construction costs for standard quality residential buildings range between **₹1,600 to ₹2,200 per sq.ft** (inclusive of basic materials and standard labor)."
                     else:
                         ai_response_text = f"👷‍♂️ **Patil Infratech Expert Engineer Analysis:** Regarding your query *\"{user_ai_query}\"*, standard engineering practice dictates accurate dimension inputs. Please utilize our dedicated **Rate Analysis** or **BBS Calculator** modules directly from the main menu for exact quantities."
 
