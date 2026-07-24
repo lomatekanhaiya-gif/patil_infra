@@ -633,12 +633,12 @@ if current_user_data.get("unread_notification", False):
     
     if st.button("✅ Mark as Read & Clear (वाचले आहे)", type="primary"):
         user_db[current_user_name]["unread_notification"] = False
-        user_db[current_user_name]["admin_message"] = f"मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
+        user_db[current_user_name]["admin_message"] = f"मी {current_user_name} आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
         save_db(user_db)
         st.success("✅ मेसेज वाचून क्लियर केला आहे!")
         st.rerun()
 else:
-    admin_msg = current_user_data.get("admin_message", f"मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳")
+    admin_msg = current_user_data.get("admin_message", f"मी {current_user_name} आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳")
     st.markdown("### 📥 Admin Message / Code Inbox")
     st.info(f"📢 **Admin:** {admin_msg}")
 
@@ -663,7 +663,7 @@ if not is_user_premium:
                     user_db[current_user_name]["seen_popup"] = False
                     user_db[current_user_name]["activated_by"] = "Master Code"
                     
-                    user_db[current_user_name]["admin_message"] = f"मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
+                    user_db[current_user_name]["admin_message"] = f"मी {current_user_name} आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
                     user_db[current_user_name]["unread_notification"] = False
                     
                     save_db(user_db)
@@ -677,7 +677,7 @@ if not is_user_premium:
                     user_db[current_user_name]["seen_popup"] = False
                     user_db[current_user_name]["activated_by"] = "Patil Infratech"
                     
-                    user_db[current_user_name]["admin_message"] = f"मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
+                    user_db[current_user_name]["admin_message"] = f" {current_user_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
                     user_db[current_user_name]["unread_notification"] = False
                     
                     save_db(user_db)
