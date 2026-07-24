@@ -423,7 +423,7 @@ if st.session_state.app_user_name is None:
                 fl_ra = st.selectbox("1. Rate Analysis Module Access:", ["Free", "Premium"], index=0 if cur_locks.get("Rate Analysis") == "Free" else 1, key="fl_ra_choice")
                 fl_bbs = st.selectbox("2. BBS Calculator Access:", ["Free", "Premium"], index=0 if cur_locks.get("BBS") == "Free" else 1, key="fl_bbs_choice")
                 fl_wa = st.selectbox("3. WhatsApp Full Report Share:", ["Free", "Premium"], index=0 if cur_locks.get("WhatsApp Share") == "Free" else 1, key="fl_wa_choice")
-                fl_ai = st.selectbox("4. Smart AI Assistant Access:", ["Free", "Premium"], index=0 if cur_locks.get("AI Assistant") == "Free" else 1, key="fl_ai_choice")
+                fl_ai = st.selectbox("4. Gemini AI Assistant Access:", ["Free", "Premium"], index=0 if cur_locks.get("AI Assistant") == "Free" else 1, key="fl_ai_choice")
 
                 if st.button("💾 Save Feature Lock Settings", key="save_locks_btn", type="primary"):
                     user_db["FEATURE_LOCKS"] = {
@@ -721,43 +721,61 @@ def render_whatsapp_feature(encoded_msg, key_prefix):
                     st.success("✅ ॲडमीनला कोडसाठी रिक्वेस्ट पाठवली आहे!")
 
 # ==========================================
-# 🤖 SMART STANDARD CIVIL ENGINEERING AI ASSISTANT (5 Sec Thinking)
+# 🤖 GEMINI AI ASSISTANT (Live Google AI + 5 Sec Thinking Time)
 # ==========================================
 st.markdown("---")
-st.markdown("### 🤖 Patil Infratech Smart AI Assistant")
+st.markdown("### 🤖 Patil Infratech Gemini AI Assistant")
 
 locks_cfg = user_db.get("FEATURE_LOCKS", {})
 ai_lock_setting = locks_cfg.get("AI Assistant", "Premium")
 
 if ai_lock_setting == "Free" or is_user_premium:
     st.caption("💡 Ask any complex construction, estimation, or material question in ANY language or script:")
-    user_ai_query = st.text_input("तुमचा प्रश्न इथे लिहा (Type your query here):", placeholder="उदा. dry volume factor for concrete, 1000 sq.ft slab estimation...", key="smart_ai_input")
+    user_ai_query = st.text_input("तुमचे प्रश्न इथे लिहा (Type your query here):", placeholder="उदा. dry volume factor for concrete, 1000 sq.ft slab estimation...", key="gemini_ai_input")
     
-    if st.button("🚀 Ask Smart AI", key="ask_smart_ai_btn"):
+    if st.button("🚀 Ask Gemini AI", key="ask_gemini_ai_btn"):
         if user_ai_query.strip():
             # 5 Seconds Realistic Thinking Spinner & Delay
             with st.spinner("🤖 AI is thinking deeply and calculating accurately... (कृपया ५ सेकंद वाट पाहा)"):
                 time.sleep(5.0)
                 
-                q_text = user_ai_query.lower()
+                api_key = st.secrets.get("GEMINI_API_KEY", os.getenv("GEMINI_API_KEY", ""))
+                ai_response_text = ""
                 
-                # Standard Civil Engineering Professional Logic Engine
-                if "dry volume" in q_text or "factor" in q_text or "ड्राय व्हॉल्यूम" in q_text:
-                    ai_reply = "📐 **Patil Infratech Expert Answer:** The standard **Dry Volume Factor for Concrete is 1.54**. Wet concrete shrinks as it sets and compacts, so to calculate the required dry volume of raw materials (Cement, Sand, and Aggregate), we multiply the wet volume by 1.54."
-                elif "cement" in q_text or "सिमेंट" in q_text or "bags" in q_text:
-                    ai_reply = "🏗️ **Patil Infratech Expert Answer:** For a standard 1,000 sq.ft RCC slab structure (M20 grade, mix ratio 1:1.5:3), standard material calculation requires approximately **350 to 400 bags of cement**. (Using dry volume factor 1.54)."
-                elif "steel" in q_text or "स्टील" in q_text or "लोखंड" in q_text:
-                    ai_reply = "⚖️ **Patil Infratech Expert Answer:** For residential framed structures, standard steel reinforcement consumption ranges between **3.5 kg to 4.5 kg per sq.ft** depending on structural loading and spans."
-                elif "brick" in q_text or "वीट" in q_text or "विटा" in q_text:
-                    ai_reply = "🧱 **Patil Infratech Expert Answer:** For 1 cubic meter of standard brick masonry, approximately **500 standard bricks** and 0.30 m³ of dry mortar mix are professionally required."
-                elif "cost" in q_text or "kharch" in q_text or "budget" in q_text or "खर्च" in q_text:
-                    ai_reply = "💰 **Patil Infratech Expert Answer:** Current market construction costs for standard quality residential buildings range between **₹1,600 to ₹2,200 per sq.ft** (inclusive of basic materials and standard labor)."
-                else:
-                    ai_reply = f"👷‍♂️ **Patil Infratech Expert Engineer Analysis:** Regarding your query *\"{user_ai_query}\"*, standard engineering practice dictates accurate dimension inputs. Please utilize our dedicated **Rate Analysis** or **BBS Calculator** modules directly from the main menu for exact quantities."
+                if HAS_GENAI and api_key:
+                    try:
+                        client = genai.Client(api_key=api_key)
+                        prompt = f"""
+                        You are an expert Senior Civil Engineer and Quantity Surveyor for Patil Infratech, founded by Kanhaiya. 
+                        The user is asking a construction/estimation question in any language or script (Marathi, English, Hinglish, etc.). 
+                        Provide an accurate, standard, highly professional engineering response with exact formulas or material quantities if applicable.
+                        User Query: {user_ai_query}
+                        """
+                        response = client.models.generate_content(
+                            model='gemini-2.5-flash',
+                            contents=prompt,
+                        )
+                        ai_response_text = response.text
+                    except Exception as e:
+                        ai_response_text = f"⚠️ Live AI connection notice: Standard fallback activated. (Error details: {e})"
+                
+                # Fallback standard calculation engine if API key is missing or encounters issue
+                if not api_key or not ai_response_text or "Error" in ai_response_text:
+                    q_text = user_ai_query.lower()
+                    if "dry volume" in q_text or "factor" in q_text or "ड्राय व्हॉल्यूम" in q_text:
+                        ai_response_text = "📐 **Patil Infratech Expert Answer:** The standard **Dry Volume Factor for Concrete is 1.54**. Wet concrete shrinks as it sets and compacts, so to calculate the required dry volume of raw materials (Cement, Sand, and Aggregate), we multiply the wet volume by 1.54."
+                    elif "cement" in q_text or "सिमेंट" in q_text or "bags" in q_text:
+                        ai_response_text = "🏗️ **Patil Infratech Expert Answer:** For a standard 1,000 sq.ft RCC slab structure (M20 grade, mix ratio 1:1.5:3), standard material calculation requires approximately **350 to 400 bags of cement**. (Using dry volume factor 1.54)."
+                    elif "steel" in q_text or "स्टील" in q_text or "लोखंड" in q_text:
+                        ai_response_text = "⚖️ **Patil Infratech Expert Answer:** For residential framed structures, standard steel reinforcement consumption ranges between **3.5 kg to 4.5 kg per sq.ft** depending on structural loading and spans."
+                    elif "brick" in q_text or "वीट" in q_text or "विटा" in q_text:
+                        ai_response_text = "🧱 **Patil Infratech Expert Answer:** For 1 cubic meter of standard brick masonry, approximately **500 standard bricks** and 0.30 m³ of dry mortar mix are professionally required."
+                    else:
+                        ai_response_text = f"👷‍♂️ **Patil Infratech Expert Engineer Analysis:** Regarding your query *\"{user_ai_query}\"*, standard engineering practice dictates accurate dimension inputs. Please utilize our dedicated **Rate Analysis** or **BBS Calculator** modules directly from the main menu for exact quantities."
 
                 st.markdown(f"""
                     <div style="background: rgba(31, 41, 55, 0.95); border-left: 5px solid #FFB300; padding: 18px; border-radius: 14px; color: #f3f4f6; margin-top: 10px; line-height: 1.6;">
-                        <b>🎯 Expert AI Answer:</b><br><br>{ai_reply}
+                        <b>🎯 Gemini AI Expert Answer:</b><br><br>{ai_response_text}
                     </div>
                 """, unsafe_allow_html=True)
         else:
@@ -765,7 +783,7 @@ if ai_lock_setting == "Free" or is_user_premium:
 else:
     st.markdown("""
         <div style="background: rgba(31, 41, 55, 0.6); border: 1px dashed #3b82f6; padding: 15px; border-radius: 14px; text-align: center;">
-            <p style="color: #60a5fa; margin: 0; font-weight: 600;">🔒 Smart AI Assistant हे फीचर केवळ प्रिमियम (VIP) युझर्ससाठी आहे.</p>
+            <p style="color: #60a5fa; margin: 0; font-weight: 600;">🔒 Gemini AI Assistant हे फीचर केवळ प्रिमियम (VIP) युझर्ससाठी आहे.</p>
             <p style="color: #9ca3af; margin: 5px 0 0 0; font-size: 13px;">प्रिमियम कोड टाकून किंवा ॲडमीनकडून कोड मागवून हे फिचर अनलॉक करा.</p>
         </div>
     """, unsafe_allow_html=True)
@@ -1080,7 +1098,7 @@ elif st.session_state.selected_module == "Rate Analysis":
             msg_text += f"📋 *DETAILS:*\n"
             msg_text += f"• Bricks: {total_bricks} Nos = ₹{total_brick_cost:.2f}\n"
             msg_text += f"• Cement: {cement_bags} Bags = ₹{cement_rate:.2f}\n"
-            msg_text += f"• Sand: {sand_m3:.2f} m³ = ₹{sand_rate:.2f}\n"
+            msg_text += f"• Sand: {sand_m3:.2f} m³ = ₹{total_sand_cost:.2f}\n"
             msg_text += f"• Labour: ₹{lab_cost:.2f}\n"
             msg_text += f"--------------------------------\n"
             msg_text += f"💰 *GRAND TOTAL:* ₹{grand_total:.2f}/-\n"
@@ -1367,7 +1385,7 @@ elif st.session_state.selected_module == "BBS":
         with btn_col2:
             st.markdown('''
                 <button onclick="window.print()" style="width: 100%; background-color: #3b82f6; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px;">
-                    📄 Print / Download A3 Size PDF
+                    📄 Print / Save A3 Size PDF
                 </button>
             ''', unsafe_allow_html=True)
 
