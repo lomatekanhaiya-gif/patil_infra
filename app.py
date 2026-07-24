@@ -14,6 +14,246 @@ import string
 st.set_page_config(page_title="PATIL INFRATECH", page_icon="🏗️", layout="centered")
 
 # ==========================================
+# 📂 फाईल डेटाबेस मॅनेजमेंट
+# ==========================================
+DB_FILE = "users_db.json"
+
+def load_db():
+    db = {
+        "9999999999": {
+            "id": "kanha", 
+            "password": "patiladmin123",
+            "comment": "मास्टर ॲडमीन अकाउंट",
+            "admin_message": "मास्टर ॲडमीन",
+            "is_premium": True,
+            "premium_expiry": "2099-12-31 23:59:59",
+            "requested_code": False,
+            "seen_popup": True,
+            "history": []
+        },
+        "PREMIUM_CODES": {},
+        "FEATURE_LOCKS": {
+            "Rate Analysis": "Free",
+            "BBS": "Free",
+            "WhatsApp Share": "Premium"
+        }
+    }
+    if os.path.exists(DB_FILE):
+        try:
+            with open(DB_FILE, "r", encoding="utf-8") as f:
+                old_db = json.load(f)
+                if isinstance(old_db, dict):
+                    for key, val in old_db.items():
+                        if key != "9999999999":
+                            db[key] = val
+        except:
+            pass
+    return db
+
+def save_db(db):
+    with open(DB_FILE, "w", encoding="utf-8") as f:
+        json.dump(db, f, ensure_ascii=False, indent=4)
+
+user_db = load_db()
+
+# Session State Initialization
+if "app_user_name" not in st.session_state:
+    st.session_state.app_user_name = None
+if "current_comment" not in st.session_state:
+    st.session_state.current_comment = "काही नाही"
+if "selected_module" not in st.session_state:
+    st.session_state.selected_module = None
+if "admin_view" not in st.session_state:
+    st.session_state.admin_view = "main"
+if "admin_selected_user" not in st.session_state:
+    st.session_state.admin_selected_user = None
+
+current_user_name = st.session_state.app_user_name
+
+# ⏳ प्रिमियम स्टेटस व अचूक एक्सपायरी तपासणी
+def check_user_premium_status(username):
+    if not username: return False, "Free"
+    db = load_db()
+    user_info = db.get(username, {})
+    if isinstance(user_info, dict) and user_info.get("is_premium", False):
+        exp_date_str = user_info.get("premium_expiry")
+        if exp_date_str:
+            try:
+                exp_datetime = datetime.datetime.strptime(exp_date_str, "%Y-%m-%d %H:%M:%S")
+                now_datetime = datetime.datetime.now()
+                
+                if now_datetime > exp_datetime:
+                    user_info["is_premium"] = False
+                    user_info["premium_expiry"] = None
+                    save_db(db)
+                    return False, "Expired"
+                else:
+                    diff = exp_datetime - now_datetime
+                    if diff.days > 0:
+                        return True, f"{diff.days} Days Left"
+                    elif diff.seconds >= 3600:
+                        hrs = diff.seconds // 3600
+                        return True, f"{hrs} Hours Left"
+                    else:
+                        mins = max(1, diff.seconds // 60)
+                        return True, f"{mins} Mins Left"
+            except:
+                pass
+        return True, "Active"
+    return False, "Free"
+
+is_curr_premium, _ = check_user_premium_status(current_user_name)
+
+# ==========================================
+# 🎨 ULTRA-PREMIUM TOUCH GLOW & DYNAMIC CSS STYLING
+# ==========================================
+# 👑 प्रिमियम युझरसाठी गोल्डन ग्लो, तर फ्री युझरसाठी थीम ब्ल्यू ग्लो!
+touch_glow_color = "rgba(255, 215, 0, 0.35)" if is_curr_premium else "rgba(59, 130, 246, 0.25)"
+touch_border_color = "#ffd700" if is_curr_premium else "#3b82f6"
+
+st.markdown(f"""
+    <style>
+    /* 🔒 Hide Streamlit Branding & Controls */
+    #MainMenu {{ visibility: hidden; }}
+    header[data-testid="stHeader"] {{ visibility: hidden; height: 0%; display: none !important; }}
+    footer {{ visibility: hidden; display: none !important; }}
+    .stAppHeader {{ display: none !important; }}
+    [data-testid="stToolbar"] {{ visibility: hidden !important; display: none !important; }}
+    [data-testid="stDecoration"] {{ display: none !important; }}
+    [data-testid="stStatusWidget"] {{ visibility: hidden !important; }}
+    
+    /* Hide Step Up/Down buttons in Number Inputs */
+    button[title="Increment"], button[title="Decrement"] {{ display: none !important; }}
+    div[data-testid="stNumberInputStepUp"], div[data-testid="stNumberInputStepDown"] {{ display: none !important; }}
+
+    /* Modern Dark Background */
+    .stApp {{
+        background: linear-gradient(135deg, #0b0f19 0%, #111827 100%);
+        color: #f3f4f6;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }}
+
+    /* 🌟 UNIVERSAL SCREEN TOUCH GLOW (GOLDEN FOR PREMIUM, BLUE FOR FREE) */
+    .stApp:active {{
+        box-shadow: inset 0 0 60px {touch_glow_color} !important;
+    }}
+
+    /* Table Mobile Responsive Scroll */
+    .stMarkdown table {{
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+        width: 100%;
+        border-collapse: collapse;
+    }}
+    .stMarkdown th, .stMarkdown td {{
+        padding: 10px 14px !important;
+        border: 1px solid #374151 !important;
+    }}
+
+    /* Card Styling */
+    div.stForm, div[data-testid="stExpander"] {{
+        background: rgba(17, 24, 39, 0.75) !important;
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(59, 130, 246, 0.25) !important;
+        border-radius: 20px !important;
+        padding: 18px !important;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }}
+
+    /* 💎 PREMIUM INPUTS & DROPDOWNS STYLING WITH TOUCH GLOW */
+    div[data-baseweb="select"] > div,
+    div[data-baseweb="input"] > div,
+    div[data-baseweb="base-input"],
+    input, select, textarea {{
+        border-color: #374151 !important;
+        border-radius: 14px !important;
+        background-color: #161e2e !important;
+        color: #ffffff !important;
+        outline: none !important;
+        font-weight: 500 !important;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4) !important;
+        transition: all 0.25s ease-in-out !important;
+    }}
+
+    /* 🌟 ACTIVE TOUCH / FOCUS GLOW EFFECT ON INPUTS */
+    div[data-baseweb="select"]:focus-within > div,
+    div[data-baseweb="input"]:focus-within > div,
+    div[data-baseweb="base-input"]:focus-within,
+    input:focus, select:focus, textarea:focus {{
+        border-color: {touch_border_color} !important;
+        background-color: #1f2937 !important;
+        box-shadow: 0 0 0 3px {touch_glow_color}, inset 0 1px 2px rgba(0,0,0,0.2) !important;
+    }}
+
+    label, div[data-testid="stWidgetLabel"] p {{
+        color: #9ca3af !important;
+        font-weight: 600 !important;
+        font-size: 13px !important;
+    }}
+
+    /* Primary Buttons Red Gradient */
+    div.stButton > button[kind="primary"] {{
+        background: linear-gradient(90deg, #dc2626 0%, #ef4444 100%) !important;
+        color: white !important;
+        font-weight: 700 !important;
+        border-radius: 14px !important;
+        border: none !important;
+        padding: 12px 20px !important;
+        box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4);
+        width: 100%;
+    }}
+
+    /* Mobile Header Banner */
+    .main-header {{
+        background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+        padding: 22px 15px;
+        border-radius: 20px;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(37, 99, 235, 0.35);
+        margin-bottom: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+    }}
+
+    /* 👑 ADMIN PANEL USER CARD STYLING */
+    .admin-user-card {{
+        background: rgba(31, 41, 55, 0.85);
+        border: 1px solid #3b82f6;
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 15px;
+    }}
+
+    /* 🖨️ A3 PRINT STYLING CONTROL */
+    @media print {{
+        @page {{
+            size: A3 landscape;
+            margin: 10mm;
+        }}
+        body * {{
+            visibility: hidden;
+        }}
+        .print-container, .print-container * {{
+            visibility: visible;
+        }}
+        .print-container {{
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            background: white !important;
+            color: black !important;
+            padding: 15px;
+        }}
+    }}
+    </style>
+""", unsafe_allow_html=True)
+
+# 🔑 रँडम ५ अक्षरी युनिक कोड जनरेटर
+def generate_random_code():
+    return "PATIL-" + ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
+
+# ==========================================
 # --- १. वेलकम स्क्रीन ॲनिमेशन (Always Play) ---
 # ==========================================
 welcome_placeholder = st.empty()
@@ -61,257 +301,27 @@ if not st.session_state.welcome_completed:
     welcome_placeholder.empty()
     st.session_state.welcome_completed = True
 
-
 # ==========================================
-# 🎨 ULTRA-PREMIUM INPUT & CLEAN THEME STYLING (CSS)
+# 🛑 USER FIRST-TIME PREMIUM POPUP CHECK (फक्त युझरलाच १ दा दिसेल)
 # ==========================================
-st.markdown("""
-    <style>
-    /* 🔒 Hide Streamlit Branding, GitHub Logo & Main Menu */
-    #MainMenu { visibility: hidden; }
-    header[data-testid="stHeader"] { visibility: hidden; height: 0%; display: none !important; }
-    footer { visibility: hidden; display: none !important; }
-    .stAppHeader { display: none !important; }
-    [data-testid="stToolbar"] { visibility: hidden !important; display: none !important; }
-    [data-testid="stDecoration"] { display: none !important; }
-    [data-testid="stStatusWidget"] { visibility: hidden !important; }
-    
-    /* Number Input +/- Hide */
-    button[title="Increment"], button[title="Decrement"] { display: none !important; }
-    div[data-testid="stNumberInputStepUp"], div[data-testid="stNumberInputStepDown"] { display: none !important; }
-
-    /* Modern Dark Background */
-    .stApp {
-        background: linear-gradient(135deg, #0b0f19 0%, #111827 100%);
-        color: #f3f4f6;
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    }
-
-    /* Table Mobile Responsive Scroll */
-    .stMarkdown table {
-        display: block;
-        overflow-x: auto;
-        white-space: nowrap;
-        width: 100%;
-        border-collapse: collapse;
-    }
-    .stMarkdown th, .stMarkdown td {
-        padding: 10px 14px !important;
-        border: 1px solid #374151 !important;
-    }
-
-    /* Card Styling */
-    div.stForm, div[data-testid="stExpander"] {
-        background: rgba(17, 24, 39, 0.75) !important;
-        backdrop-filter: blur(16px);
-        border: 1px solid rgba(59, 130, 246, 0.25) !important;
-        border-radius: 20px !important;
-        padding: 18px !important;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-    }
-
-    /* 💎 PREMIUM INPUTS & DROPDOWNS STYLING */
-    div[data-baseweb="select"] > div,
-    div[data-baseweb="input"] > div,
-    div[data-baseweb="base-input"],
-    input, select, textarea {
-        border-color: #374151 !important;
-        border-radius: 14px !important;
-        background-color: #161e2e !important;
-        color: #ffffff !important;
-        outline: none !important;
-        font-weight: 500 !important;
-        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4) !important;
-        transition: all 0.25s ease-in-out !important;
-    }
-
-    /* 🌟 PREMIUM FOCUS GLOW EFFECT */
-    div[data-baseweb="select"]:focus-within > div,
-    div[data-baseweb="input"]:focus-within > div,
-    div[data-baseweb="base-input"]:focus-within,
-    input:focus, select:focus, textarea:focus {
-        border-color: #3b82f6 !important;
-        background-color: #1f2937 !important;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3), inset 0 1px 2px rgba(0,0,0,0.2) !important;
-    }
-
-    label, div[data-testid="stWidgetLabel"] p {
-        color: #9ca3af !important;
-        font-weight: 600 !important;
-        font-size: 13px !important;
-    }
-
-    /* Primary Buttons Red Gradient */
-    div.stButton > button[kind="primary"] {
-        background: linear-gradient(90deg, #dc2626 0%, #ef4444 100%) !important;
-        color: white !important;
-        font-weight: 700 !important;
-        border-radius: 14px !important;
-        border: none !important;
-        padding: 12px 20px !important;
-        box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4);
-        width: 100%;
-    }
-
-    /* Mobile Header Banner */
-    .main-header {
-        background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
-        padding: 22px 15px;
-        border-radius: 20px;
-        text-align: center;
-        box-shadow: 0 10px 30px rgba(37, 99, 235, 0.35);
-        margin-bottom: 20px;
-        border: 1px solid rgba(255, 255, 255, 0.15);
-    }
-
-    /* 👑 ADMIN PANEL USER CARD STYLING */
-    .admin-user-card {
-        background: rgba(31, 41, 55, 0.85);
-        border: 1px solid #3b82f6;
-        border-radius: 16px;
-        padding: 20px;
-        margin-bottom: 15px;
-    }
-
-    /* 🖨️ A3 PRINT STYLING CONTROL */
-    @media print {
-        @page {
-            size: A3 landscape;
-            margin: 10mm;
-        }
-        body * {
-            visibility: hidden;
-        }
-        .print-container, .print-container * {
-            visibility: visible;
-        }
-        .print-container {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            background: white !important;
-            color: black !important;
-            padding: 15px;
-        }
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-# 📂 फाईल डेटाबेस मॅनेजमेंट
-DB_FILE = "users_db.json"
-
-def load_db():
-    db = {
-        "9999999999": {
-            "id": "kanha", 
-            "password": "patiladmin123",
-            "comment": "मास्टर ॲडमीन अकाउंट",
-            "admin_message": "मास्टर ॲडमीन",
-            "is_premium": True,
-            "premium_expiry": "2099-12-31 23:59:59",
-            "requested_code": False,
-            "history": []
-        },
-        "PREMIUM_CODES": {},
-        "FEATURE_LOCKS": {
-            "Rate Analysis": "Free",
-            "BBS": "Free",
-            "WhatsApp Share": "Premium"
-        }
-    }
-    if os.path.exists(DB_FILE):
-        try:
-            with open(DB_FILE, "r", encoding="utf-8") as f:
-                old_db = json.load(f)
-                if isinstance(old_db, dict):
-                    for key, val in old_db.items():
-                        if key != "9999999999":
-                            db[key] = val
-        except:
-            pass
-    return db
-
-def save_db(db):
-    with open(DB_FILE, "w", encoding="utf-8") as f:
-        json.dump(db, f, ensure_ascii=False, indent=4)
-
-user_db = load_db()
-
-# 🔑 रँडम ५ अक्षरी युनिक कोड जनरेटर
-def generate_random_code():
-    return "PATIL-" + ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
-
-# 🎉 ३ सेकंदांचा पूर्ण ऑपेक प्रिमियम सेलिब्रेशन ओव्हरले
-def show_premium_celebration(username, duration_str="28 Days"):
-    st.session_state["show_pop_overlay"] = True
-    st.session_state["pop_user"] = username
-    st.session_state["pop_dur"] = duration_str
-
-# ⏳ प्रिमियम स्टेटस व अचूक एक्सपायरी तपासणी
-def check_user_premium_status(username):
-    db = load_db()
-    user_info = db.get(username, {})
-    if isinstance(user_info, dict) and user_info.get("is_premium", False):
-        exp_date_str = user_info.get("premium_expiry")
-        if exp_date_str:
-            try:
-                exp_datetime = datetime.datetime.strptime(exp_date_str, "%Y-%m-%d %H:%M:%S")
-                now_datetime = datetime.datetime.now()
-                
-                if now_datetime > exp_datetime:
-                    user_info["is_premium"] = False
-                    user_info["premium_expiry"] = None
-                    save_db(db)
-                    return False, "Expired"
-                else:
-                    diff = exp_datetime - now_datetime
-                    if diff.days > 0:
-                        return True, f"{diff.days} Days Left"
-                    elif diff.seconds >= 3600:
-                        hrs = diff.seconds // 3600
-                        return True, f"{hrs} Hours Left"
-                    else:
-                        mins = max(1, diff.seconds // 60)
-                        return True, f"{mins} Mins Left"
-            except:
-                pass
-        return True, "Active"
-    return False, "Free"
-
-# सेशन स्टेट इनिशियलायझेशन
-if "app_user_name" not in st.session_state:
-    st.session_state.app_user_name = None
-if "current_comment" not in st.session_state:
-    st.session_state.current_comment = "काही नाही"
-if "selected_module" not in st.session_state:
-    st.session_state.selected_module = None
-if "admin_view" not in st.session_state:
-    st.session_state.admin_view = "main" # 'main', 'rates', 'locks', 'user_detail'
-if "admin_selected_user" not in st.session_state:
-    st.session_state.admin_selected_user = None
-
-# ==========================================
-# 🛑 FULL SCREEN ISOLATED POP-UP OVERLAY
-# ==========================================
-if st.session_state.get("show_pop_overlay", False):
-    username = st.session_state.get("pop_user", "User")
-    duration_str = st.session_state.get("pop_dur", "28 Days")
-    
-    st.markdown(f"""
-        <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
-                    background-color: #0b0f19; background: linear-gradient(135deg, #0b0f19 0%, #1e3a8a 100%);
-                    z-index: 9999999; display: flex; flex-direction: column; 
-                    justify-content: center; align-items: center; text-align: center; padding: 20px;">
-            <h1 style="font-size: 90px; margin: 0;">👑 🎉</h1>
-            <h1 style="color: #60a5fa; font-size: 36px; font-weight: 800; margin-top: 15px;">CONGRATULATIONS {username.upper()}!</h1>
-            <h2 style="color: #f3f4f6; font-size: 24px; margin-top: 10px;">YOU ARE NOW A PREMIUM MEMBER OF PATIL INFRATECH!</h2>
-            <p style="color: #93c5fd; font-size: 20px; margin-top: 10px;">Your WhatsApp Sharing & Premium Features are Active for <b>{duration_str}</b>! 🚀</p>
-        </div>
-    """, unsafe_allow_html=True)
-    time.sleep(3)
-    st.session_state["show_pop_overlay"] = False
-    st.rerun()
+if current_user_name:
+    u_info = user_db.get(current_user_name, {})
+    if isinstance(u_info, dict) and u_info.get("is_premium", False) and not u_info.get("seen_popup", False):
+        st.markdown(f"""
+            <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
+                        background-color: #0b0f19; background: linear-gradient(135deg, #0b0f19 0%, #1e3a8a 100%);
+                        z-index: 9999999; display: flex; flex-direction: column; 
+                        justify-content: center; align-items: center; text-align: center; padding: 20px;">
+                <h1 style="font-size: 90px; margin: 0;">👑 🎉</h1>
+                <h1 style="color: #60a5fa; font-size: 36px; font-weight: 800; margin-top: 15px;">CONGRATULATIONS {current_user_name.upper()}!</h1>
+                <h2 style="color: #f3f4f6; font-size: 24px; margin-top: 10px;">YOU ARE NOW A PREMIUM MEMBER OF PATIL INFRATECH!</h2>
+                <p style="color: #93c5fd; font-size: 20px; margin-top: 10px;">Your WhatsApp Sharing & Premium Features are Active! 🚀</p>
+            </div>
+        """, unsafe_allow_html=True)
+        time.sleep(3)
+        user_db[current_user_name]["seen_popup"] = True
+        save_db(user_db)
+        st.rerun()
 
 # मुख्य टायटल बॅनर
 st.markdown("""
@@ -344,6 +354,7 @@ if st.session_state.app_user_name is None:
                     "is_premium": False,
                     "premium_expiry": None,
                     "requested_code": False,
+                    "seen_popup": False,
                     "history": []
                 }
                 save_db(user_db)
@@ -495,9 +506,9 @@ if st.session_state.app_user_name is None:
                     user_db[target_user]["is_premium"] = True
                     user_db[target_user]["premium_expiry"] = exp_time.strftime("%Y-%m-%d %H:%M:%S")
                     user_db[target_user]["requested_code"] = False
+                    user_db[target_user]["seen_popup"] = False # Reset for user first login popup
                     save_db(user_db)
                     st.success(f"✅ {u_name} साठी {time_val} {time_unit} सेव्ह केले!")
-                    show_premium_celebration(u_name, f"{time_val} {time_unit}")
                     st.rerun()
 
                 if u_prem:
@@ -526,14 +537,13 @@ if st.session_state.app_user_name is None:
                     st.error(f"❌ युझर '{u_name}' डिलीट केला आहे!")
                     st.rerun()
                 
-                # 📜 USER REPORTS DISPLAY (१, २, ३ क्रमाने आणि क्लिक केल्यावरच उघडतील)
+                # 📜 USER REPORTS DISPLAY
                 st.markdown("---")
                 st.markdown(f"##### 📜 {u_name} चे जनरेट केलेले एस्टिमेशन रिपोर्ट्स ({len(u_hist)})")
                 if u_hist:
                     for idx, hist in enumerate(u_hist, 1):
                         if isinstance(hist, dict):
                             ts = hist.get('timestamp', 'N/A')
-                            # 🎯 Clickable Collapsible Report Box (1, 2, 3 sequence)
                             with st.expander(f"🗓️ रिपोर्ट #{idx} | तारीख व वेळ: `{ts}`"):
                                 st.markdown(hist.get("report_data", "डेटा उपलब्ध नाही"))
                 else:
@@ -636,19 +646,16 @@ if not is_user_premium:
                         exp_datetime = datetime.datetime.now() + datetime.timedelta(days=28)
                         user_db[current_user_name]["is_premium"] = True
                         user_db[current_user_name]["premium_expiry"] = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
+                        user_db[current_user_name]["seen_popup"] = False # Enable first-time popup for user
 
-                        # 🔄 ३. इनबॉक्स मेसेज ऑटो-रिसेट करून जुन्या मूळ वेलकम मेसेजवर आणणे!
+                        # 🔄 ३. इनबॉक्स मेसेज ऑटो-रिसेट करणे
                         user_db[current_user_name]["admin_message"] = f"Welcome {current_user_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये हार्दिक स्वागत🥳"
                         save_db(user_db)
-
-                        # 🎉 ३ सेकंदांचा १००% ऑपेक प्रिमियम ओव्हरले ॲनिमेशन दाखवणे
-                        show_premium_celebration(current_user_name, "28 Days")
                         st.rerun()
                 else:
                     st.error("❌ चुकीचा कोड! कृपया ॲडमीनकडून आलेला अचूक कोड टाका.")
 
         with c_btn2:
-            # 📩 USER REQUEST CODE BUTTON FOR ADMIN
             if st.button("📩 Request Code from Admin", key="req_code_btn"):
                 user_db[current_user_name]["requested_code"] = True
                 save_db(user_db)
@@ -663,7 +670,6 @@ def render_whatsapp_feature(encoded_msg, key_prefix):
     locks_cfg = user_db.get("FEATURE_LOCKS", {})
     wa_lock_setting = locks_cfg.get("WhatsApp Share", "Premium")
 
-    # जर ॲडमीनने 'WhatsApp Share' फ्री ठेवले असेल किंवा युझर प्रिमियम असेल
     if wa_lock_setting == "Free" or is_prem:
         st.markdown(f'''
             <a href="https://wa.me/?text={encoded_msg}" target="_blank">
@@ -673,7 +679,6 @@ def render_whatsapp_feature(encoded_msg, key_prefix):
             </a>
         ''', unsafe_allow_html=True)
     else:
-        # 🔒 फ्री युझरला लॉक दिसेल व युनिक कोड टाकायचा बॉक्स दिसेल
         with st.expander("🔒 WhatsApp Report Sharing - Unlock Premium"):
             st.warning("⚠️ व्हॉट्सॲपवर पूर्ण रिपोर्ट शेअर करण्याचे फीचर प्रिमियम युझर्ससाठी आहे.")
             st.caption("💡 अनलॉक करण्यासाठी कन्हैया (Admin) कडून आलेला प्रिमियम कोड खाली टाका:")
@@ -696,11 +701,10 @@ def render_whatsapp_feature(encoded_msg, key_prefix):
                             exp_datetime = datetime.datetime.now() + datetime.timedelta(days=28)
                             user_db[current_user_name]["is_premium"] = True
                             user_db[current_user_name]["premium_expiry"] = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
+                            user_db[current_user_name]["seen_popup"] = False
                             
                             user_db[current_user_name]["admin_message"] = f"Welcome {current_user_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये हार्दिक स्वागत🥳"
                             save_db(user_db)
-
-                            show_premium_celebration(current_user_name, "28 Days")
                             st.rerun()
                     else:
                         st.error("❌ चुकीचा प्रिमियम कोड! कृपया अचूक कोड टाका.")
