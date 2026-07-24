@@ -745,7 +745,8 @@ if ai_lock_setting == "Free" or is_user_premium:
                 if HAS_GENAI and api_key:
                     try:
                         genai.configure(api_key=api_key)
-                        model = genai.GenerativeModel('gemini-1.5-flash')
+                        # Updated to use gemini-2.5-flash for maximum reliability
+                        model = genai.GenerativeModel('gemini-2.5-flash')
                         prompt = f"""
                         You are an expert Senior Civil Engineer and Quantity Surveyor for Patil Infratech, founded by Kanhaiya. 
                         The user is asking a construction, estimation, or material calculation question in any language or script (Marathi, English, Hinglish, Hindi, etc.). 
@@ -756,7 +757,14 @@ if ai_lock_setting == "Free" or is_user_premium:
                         if response and response.text:
                             ai_response_text = response.text
                     except Exception as e:
-                        ai_response_text = f"⚠️ Error communicating with Gemini API: {e}"
+                        # Fallback to gemini-1.5-flash if 2.5 is not available in environment
+                        try:
+                            model = genai.GenerativeModel('gemini-1.5-flash')
+                            response = model.generate_content(prompt)
+                            if response and response.text:
+                                ai_response_text = response.text
+                        except Exception as e2:
+                            ai_response_text = f"⚠️ Error communicating with Gemini API: {e2}"
                 else:
                     ai_response_text = "⚠️ GEMINI_API_KEY is missing from Streamlit Secrets or google-generativeai is not installed."
 
@@ -1100,7 +1108,7 @@ elif st.session_state.selected_module == "Rate Analysis":
             with btn_col2:
                 st.markdown('''
                     <button onclick="window.print()" style="width: 100%; background-color: #3b82f6; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px;">
-                        📄 Print / Download A3 Size PDF
+                        📄 Print / Download A3 PDF
                     </button>
                 ''', unsafe_allow_html=True)
 
