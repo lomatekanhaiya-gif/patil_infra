@@ -168,9 +168,9 @@ st.markdown("""
     .admin-user-card {
         background: rgba(31, 41, 55, 0.85);
         border: 1px solid #3b82f6;
-        border-radius: 14px;
-        padding: 15px;
-        margin-bottom: 12px;
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 15px;
     }
 
     /* 🖨️ A3 PRINT STYLING CONTROL */
@@ -293,6 +293,8 @@ if "current_comment" not in st.session_state:
     st.session_state.current_comment = "काही नाही"
 if "selected_module" not in st.session_state:
     st.session_state.selected_module = None
+if "admin_selected_user" not in st.session_state:
+    st.session_state.admin_selected_user = None
 
 # मुख्य टायटल बॅनर
 st.markdown("""
@@ -344,40 +346,25 @@ if st.session_state.app_user_name is None:
         if admin_id == secret_admin_id and admin_pass == secret_admin_pass:
             st.success("🔓 डेटाबेस अनलॉक झाला!")
             user_db = load_db()
-            
-            st.markdown("### 📈 Update Master Market Rates (Today's Live Rates)")
-            m_rates = user_db.get("MASTER_MARKET_RATES", {"cement": 400.0, "sand": 2500.0, "bricks": 8.0, "aggregate": 2200.0, "steel": 60.0})
-            
-            adm_cem = st.number_input("cement (par bag ₹):", min_value=0.0, value=float(m_rates.get("cement", 400.0)), step=1.0, key="adm_cem_inp_fixed")
-            adm_snd = st.number_input("sand (par m³ ₹):", min_value=0.0, value=float(m_rates.get("sand", 2500.0)), step=1.0, key="adm_snd_inp_fixed")
-            adm_brk = st.number_input("brick (nos ₹):", min_value=0.0, value=float(m_rates.get("bricks", 8.0)), step=0.1, key="adm_brk_inp_fixed")
-            adm_agg = st.number_input("aggregate (par m³ ₹):", min_value=0.0, value=float(m_rates.get("aggregate", 2200.0)), step=1.0, key="adm_agg_inp_fixed")
-            adm_ste = st.number_input("steel दर (per kg ₹):", min_value=0.0, value=float(m_rates.get("steel", 60.0)), step=1.0, key="adm_ste_inp_fixed")
-            
-            if st.button("💾 Save Master Market Rates", key="save_master_rates_fixed"):
-                user_db["MASTER_MARKET_RATES"] = {
-                    "cement": adm_cem, "sand": adm_snd, "bricks": adm_brk, "aggregate": adm_agg, "steel": adm_ste
-                }
-                save_db(user_db)
-                st.success("✅ आजचे मास्टर मार्केट दर (स्टीलसहित) डेटाबेसमध्ये यशस्वीरित्या अपडेट झाले!")
-            
-            st.markdown("---")
-            st.markdown("### 📋 युझर डेटाबेस MASTER LIST (Super Clean UI)")
-            
-            # 🧹 CLEAN & LARGE USER CARDS IN ADMIN PANEL
-            for mob in list(user_db.keys()):
-                if mob in ["9999999999", "MASTER_MARKET_RATES", "PREMIUM_CODES"]: continue
-                info = user_db[mob]
-                if not isinstance(info, dict): continue
-                    
-                u_name = info.get("id", mob)
+
+            # 🛑 window switcher logic for admin user management
+            if st.session_state.admin_selected_user is not None:
+                target_user = st.session_state.admin_selected_user
+                
+                # Back button to user list
+                if st.button("⬅️ Back to All Users List", key="btn_back_admin_list"):
+                    st.session_state.admin_selected_user = None
+                    st.rerun()
+
+                st.write("---")
+                info = user_db.get(target_user, {})
+                u_name = info.get("id", target_user)
                 u_comm = info.get("comment", "काही नाही")
                 u_prem = info.get("is_premium", False)
                 exp_date = info.get("premium_expiry", "N/A")
                 is_req = info.get("requested_code", False)
                 u_hist = info.get("history", [])
-                
-                # युझरचा एकमेव अनयुझ्ड कोड शोधणे
+
                 assigned_code = None
                 if "PREMIUM_CODES" in user_db:
                     for c_code, c_data in user_db["PREMIUM_CODES"].items():
@@ -386,101 +373,137 @@ if st.session_state.app_user_name is None:
                             break
 
                 status_badge = "👑 PREMIUM" if u_prem else ("🚨 CODE REQUESTED!" if is_req else "🆓 FREE USER")
+
+                st.markdown(f"### 👤 MANAGE USER: <span style='color:#60a5fa;'>{u_name.upper()}</span>", unsafe_allow_html=True)
                 
-                # 👤 SINGLE USER EXPANDER HEADER
-                with st.expander(f"👤 {u_name.upper()} ➔ [{status_badge}]"):
-                    
-                    # 🖥️ LARGE & BOLD DETAILS DISPLAY (मोठी आणि स्पष्ट माहिती)
-                    st.markdown(f"""
-                        <div class="admin-user-card">
-                            <h3 style="margin:0; color:#60a5fa;">👤 {u_name}</h3>
-                            <p style="margin:5px 0; font-size:16px;"><b>माहिती/स्टेटस:</b> <span style="color:#f59e0b;">{status_badge}</span></p>
-                            <p style="margin:5px 0; font-size:15px;"><b>प्रिमियम मुदत (Expiry):</b> <code>{exp_date}</code></p>
-                            <p style="margin:5px 0; font-size:15px;"><b>ॲक्टिव्ह कोड (Unused):</b> <code style="color:#10b981; font-size:16px;">{assigned_code if assigned_code else 'काही नाही'}</code></p>
-                            <p style="margin:5px 0; font-size:14px; color:#9ca3af;"><b>युझर कमेंट:</b> {u_comm}</p>
-                        </div>
-                    """, unsafe_allow_html=True)
-                    
-                    # 🚀 1. ONE-CLICK CODE GENERATE & SEND BUTTON
-                    if assigned_code:
-                        st.info(f"💡 {u_name} साठी आधीच एक कोड तयार आहे: `{assigned_code}` (युझर इनबॉक्समध्ये उपलब्ध)")
-                    else:
-                        if st.button(f"🚀 Generate & Send Code to {u_name}", key=f"gen_send_{mob}"):
-                            new_c = generate_random_code()
-                            if "PREMIUM_CODES" not in user_db: user_db["PREMIUM_CODES"] = {}
-                            user_db["PREMIUM_CODES"][new_c] = {
-                                "assigned_to": u_name,
-                                "used": False,
-                                "created_at": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                            }
-                            user_db[mob]["admin_message"] = f"तुमचा प्रिमियम कोड: {new_c} (ॲपमध्ये टाकून प्रिमियम अनलॉक करा)"
-                            user_db[mob]["requested_code"] = False
-                            save_db(user_db)
-                            st.success(f"🎉 {u_name} ला ऑटोमॅटिकली कोड पाठवला: `{new_c}`")
-                            st.rerun()
+                st.markdown(f"""
+                    <div class="admin-user-card">
+                        <p style="margin:5px 0; font-size:16px;"><b>माहिती/स्टेटस:</b> <span style="color:#f59e0b; font-weight:bold;">{status_badge}</span></p>
+                        <p style="margin:5px 0; font-size:15px;"><b>प्रिमियम मुदत (Expiry):</b> <code>{exp_date}</code></p>
+                        <p style="margin:5px 0; font-size:15px;"><b>ॲक्टिव्ह कोड (Unused):</b> <code style="color:#10b981; font-size:16px;">{assigned_code if assigned_code else 'काही नाही'}</code></p>
+                        <p style="margin:5px 0; font-size:14px; color:#9ca3af;"><b>युझर कमेंट:</b> {u_comm}</p>
+                    </div>
+                """, unsafe_allow_html=True)
 
-                    # ⏱️ 2. CUSTOM TIME EXPAND / SET BY ADMIN
-                    st.markdown("---")
-                    st.markdown("##### ⏱️ प्रिमियम वेळ सेट करा / वाढवा (Custom Expiry):")
-                    t_col1, t_col2 = st.columns(2)
-                    with t_col1:
-                        time_val = st.number_input("संख्या (Value):", min_value=1, value=28, key=f"t_val_{mob}")
-                    with t_col2:
-                        time_unit = st.selectbox("युनिट (Unit):", ["Minutes", "Hours", "Days"], index=2, key=f"t_unit_{mob}")
-
-                    if st.button(f"⚡ Set Premium Time ({time_val} {time_unit})", key=f"btn_custom_{mob}"):
-                        now = datetime.datetime.now()
-                        if time_unit == "Minutes":
-                            exp_time = now + datetime.timedelta(minutes=time_val)
-                        elif time_unit == "Hours":
-                            exp_time = now + datetime.timedelta(hours=time_val)
-                        else:  # Days
-                            exp_time = now + datetime.timedelta(days=time_val)
-
-                        user_db[mob]["is_premium"] = True
-                        user_db[mob]["premium_expiry"] = exp_time.strftime("%Y-%m-%d %H:%M:%S")
-                        user_db[mob]["requested_code"] = False
+                # 🚀 1. ONE-CLICK CODE GENERATE & SEND BUTTON
+                if assigned_code:
+                    st.info(f"💡 {u_name} साठी आधीच एक कोड तयार आहे: `{assigned_code}` (युझर इनबॉक्समध्ये उपलब्ध)")
+                else:
+                    if st.button(f"🚀 Generate & Send Unique Code to {u_name}", key=f"win_gen_send_{target_user}"):
+                        new_c = generate_random_code()
+                        if "PREMIUM_CODES" not in user_db: user_db["PREMIUM_CODES"] = {}
+                        user_db["PREMIUM_CODES"][new_c] = {
+                            "assigned_to": u_name,
+                            "used": False,
+                            "created_at": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        }
+                        user_db[target_user]["admin_message"] = f"तुमचा प्रिमियम कोड: {new_c} (ॲपमध्ये टाकून प्रिमियम अनलॉक करा)"
+                        user_db[target_user]["requested_code"] = False
                         save_db(user_db)
-                        st.success(f"✅ {u_name} साठी {time_val} {time_unit} सेव्ह केले!")
-                        show_premium_celebration(u_name, f"{time_val} {time_unit}")
+                        st.success(f"🎉 {u_name} ला ऑटोमॅटिकली कोड पाठवला: `{new_c}`")
                         st.rerun()
 
-                    if u_prem:
-                        if st.button(f"🔻 Revoke Premium: {u_name}", key=f"rev_{mob}"):
-                            user_db[mob]["is_premium"] = False
-                            user_db[mob]["premium_expiry"] = None
-                            save_db(user_db)
-                            st.warning(f"❌ {u_name} चे प्रिमियम काढले आहे.")
-                            st.rerun()
+                # ⏱️ 2. CUSTOM TIME EXPAND / SET BY ADMIN
+                st.markdown("---")
+                st.markdown("##### ⏱️ प्रिमियम वेळ सेट करा / वाढवा (Custom Expiry):")
+                t_col1, t_col2 = st.columns(2)
+                with t_col1:
+                    time_val = st.number_input("संख्या (Value):", min_value=1, value=28, key=f"win_t_val_{target_user}")
+                with t_col2:
+                    time_unit = st.selectbox("युनिट (Unit):", ["Minutes", "Hours", "Days"], index=2, key=f"win_t_unit_{target_user}")
 
-                    st.markdown("---")
-                    current_msg = info.get("admin_message", "ॲडमीन कडून सध्या कोणताही मेसेज नाही.")
-                    new_msg = st.text_input(f"✍️ {u_name} साठी इनबॉक्स मेसेज बदलणे:", value=current_msg, key=f"msg_{mob}")
-                    if st.button(f"✉️ मेसेज सेव्ह करा ({u_name})", key=f"btn_msg_{mob}"):
-                        if new_msg.strip():
-                            user_db[mob]["admin_message"] = new_msg.strip()
-                            save_db(user_db)
-                            st.success(f"✅ '{u_name}' चा इनबॉक्स मेसेज अपडेट झाला!")
-                            st.rerun()
+                if st.button(f"⚡ Set Premium Time ({time_val} {time_unit})", key=f"win_btn_custom_{target_user}"):
+                    now = datetime.datetime.now()
+                    if time_unit == "Minutes":
+                        exp_time = now + datetime.timedelta(minutes=time_val)
+                    elif time_unit == "Hours":
+                        exp_time = now + datetime.timedelta(hours=time_val)
+                    else:  # Days
+                        exp_time = now + datetime.timedelta(days=time_val)
 
-                    if st.button(f"🗑️ Delete User: {u_name}", key=f"del_{mob}"):
-                        del user_db[mob]
+                    user_db[target_user]["is_premium"] = True
+                    user_db[target_user]["premium_expiry"] = exp_time.strftime("%Y-%m-%d %H:%M:%S")
+                    user_db[target_user]["requested_code"] = False
+                    save_db(user_db)
+                    st.success(f"✅ {u_name} साठी {time_val} {time_unit} सेव्ह केले!")
+                    show_premium_celebration(u_name, f"{time_val} {time_unit}")
+                    st.rerun()
+
+                if u_prem:
+                    if st.button(f"🔻 Revoke Premium: {u_name}", key=f"win_rev_{target_user}"):
+                        user_db[target_user]["is_premium"] = False
+                        user_db[target_user]["premium_expiry"] = None
                         save_db(user_db)
-                        st.error(f"❌ युझर '{u_name}' डिलीट केला आहे!")
+                        st.warning(f"❌ {u_name} चे प्रिमियम काढले आहे.")
                         st.rerun()
-                    
-                    # 📜 USER REPORTS DISPLAY (टीप/नोट्स पूर्णपणे बंद!)
-                    st.markdown("---")
-                    st.markdown(f"##### 📜 {u_name} चे जनरेट केलेले एस्टिमेशन रिपोर्ट्स ({len(u_hist)})")
-                    if u_hist:
-                        for idx, hist in enumerate(u_hist, 1):
-                            if isinstance(hist, dict):
-                                st.markdown(f"🗓️ **रिपोर्ट क्रमांक {idx} | वेळ: `{hist.get('timestamp', 'N/A')}`**")
-                                # विनाकारण दिसणाऱ्या नोट्स पूर्णपणे काढून टाकल्या आहेत!
-                                st.markdown(hist.get("report_data", "डेटा उपलब्ध नाही"))
-                                st.write("---")
-                    else:
-                        st.info("ℹ️ या युझरने अजून एकही रिपोर्ट जनरेट केलेला नाही.")
+
+                st.markdown("---")
+                current_msg = info.get("admin_message", "ॲडमीन कडून सध्या कोणताही मेसेज नाही.")
+                new_msg = st.text_input(f"✍️ {u_name} साठी इनबॉक्स मेसेज बदलणे:", value=current_msg, key=f"win_msg_{target_user}")
+                if st.button(f"✉️ मेसेज सेव्ह करा ({u_name})", key=f"win_btn_msg_{target_user}"):
+                    if new_msg.strip():
+                        user_db[target_user]["admin_message"] = new_msg.strip()
+                        save_db(user_db)
+                        st.success(f"✅ '{u_name}' चा इनबॉक्स मेसेज अपडेट झाला!")
+                        st.rerun()
+
+                if st.button(f"🗑️ Delete User: {u_name}", key=f"win_del_{target_user}"):
+                    del user_db[target_user]
+                    save_db(user_db)
+                    st.session_state.admin_selected_user = None
+                    st.error(f"❌ युझर '{u_name}' डिलीट केला आहे!")
+                    st.rerun()
+                
+                # 📜 USER REPORTS DISPLAY (विनाकारण दिसणाऱ्या नोट्स पूर्ण बंद)
+                st.markdown("---")
+                st.markdown(f"##### 📜 {u_name} चे जनरेट केलेले एस्टिमेशन रिपोर्ट्स ({len(u_hist)})")
+                if u_hist:
+                    for idx, hist in enumerate(u_hist, 1):
+                        if isinstance(hist, dict):
+                            st.markdown(f"🗓️ **रिपोर्ट क्रमांक {idx} | वेळ: `{hist.get('timestamp', 'N/A')}`**")
+                            st.markdown(hist.get("report_data", "डेटा उपलब्ध नाही"))
+                            st.write("---")
+                else:
+                    st.info("ℹ️ या युझरने अजून एकही रिपोर्ट जनरेट केलेला नाही.")
+
+            else:
+                # 🖥️ MASTER CLEAN LIST VIEW FOR ALL USERS
+                st.markdown("### 📈 Update Master Market Rates (Today's Live Rates)")
+                m_rates = user_db.get("MASTER_MARKET_RATES", {"cement": 400.0, "sand": 2500.0, "bricks": 8.0, "aggregate": 2200.0, "steel": 60.0})
+                
+                adm_cem = st.number_input("cement (par bag ₹):", min_value=0.0, value=float(m_rates.get("cement", 400.0)), step=1.0, key="adm_cem_inp_fixed")
+                adm_snd = st.number_input("sand (par m³ ₹):", min_value=0.0, value=float(m_rates.get("sand", 2500.0)), step=1.0, key="adm_snd_inp_fixed")
+                adm_brk = st.number_input("brick (nos ₹):", min_value=0.0, value=float(m_rates.get("bricks", 8.0)), step=0.1, key="adm_brk_inp_fixed")
+                adm_agg = st.number_input("aggregate (par m³ ₹):", min_value=0.0, value=float(m_rates.get("aggregate", 2200.0)), step=1.0, key="adm_agg_inp_fixed")
+                adm_ste = st.number_input("steel दर (per kg ₹):", min_value=0.0, value=float(m_rates.get("steel", 60.0)), step=1.0, key="adm_ste_inp_fixed")
+                
+                if st.button("💾 Save Master Market Rates", key="save_master_rates_fixed"):
+                    user_db["MASTER_MARKET_RATES"] = {
+                        "cement": adm_cem, "sand": adm_snd, "bricks": adm_brk, "aggregate": adm_agg, "steel": adm_ste
+                    }
+                    save_db(user_db)
+                    st.success("✅ आजचे मास्टर मार्केट दर डेटाबेसमध्ये सेव्ह झाले!")
+
+                st.markdown("---")
+                st.markdown("### 📋 युझर डेटाबेस MASTER LIST (Select User)")
+                
+                for mob in list(user_db.keys()):
+                    if mob in ["9999999999", "MASTER_MARKET_RATES", "PREMIUM_CODES"]: continue
+                    info = user_db[mob]
+                    if not isinstance(info, dict): continue
+                        
+                    u_name = info.get("id", mob)
+                    u_prem = info.get("is_premium", False)
+                    is_req = info.get("requested_code", False)
+                    status_badge = "👑 PREMIUM" if u_prem else ("🚨 CODE REQUESTED!" if is_req else "🆓 FREE USER")
+
+                    col_u1, col_u2 = st.columns([3, 2])
+                    col_u1.markdown(f"#### 👤 **{u_name}** `[{status_badge}]`")
+                    if col_u2.button(f"👁️ View / Manage {u_name}", key=f"open_user_win_{mob}"):
+                        st.session_state.admin_selected_user = mob
+                        st.rerun()
+                    st.write("---")
+
         elif admin_id or admin_pass:
             st.error("❌ चुकीचा Admin ID किंवा Password!")
             
