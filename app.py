@@ -105,11 +105,11 @@ def check_user_premium_status(username):
 is_curr_premium, _ = check_user_premium_status(current_user_name)
 
 # ==========================================
-# 🎨 ULTRA-PREMIUM TOUCH GLOW & DYNAMIC CSS STYLING
+# 🎨 ULTRA-PREMIUM ROYAL METALLIC GOLD & GLOW STYLING
 # ==========================================
-# 👑 प्रिमियम युझरसाठी गोल्डन ग्लो, तर फ्री युझरसाठी थीम ब्ल्यू ग्लो!
-touch_glow_color = "rgba(255, 215, 0, 0.35)" if is_curr_premium else "rgba(59, 130, 246, 0.25)"
-touch_border_color = "#ffd700" if is_curr_premium else "#3b82f6"
+# 👑 प्रिमियम युझरसाठी लक्झरी मेटॅलिक गोल्ड, फ्री युझरसाठी थीम ब्ल्यू
+touch_glow_color = "rgba(255, 179, 0, 0.45)" if is_curr_premium else "rgba(59, 130, 246, 0.25)"
+touch_border_color = "#FFD54F" if is_curr_premium else "#3b82f6"
 
 st.markdown(f"""
     <style>
@@ -128,14 +128,14 @@ st.markdown(f"""
 
     /* Modern Dark Background */
     .stApp {{
-        background: linear-gradient(135deg, #0b0f19 0%, #111827 100%);
+        background: linear-gradient(135deg, #070a12 0%, #0d1322 100%);
         color: #f3f4f6;
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }}
 
-    /* 🌟 UNIVERSAL SCREEN TOUCH GLOW (GOLDEN FOR PREMIUM, BLUE FOR FREE) */
+    /* 🌟 UNIVERSAL SCREEN TOUCH GLOW (ROYAL GOLD FOR PREMIUM) */
     .stApp:active {{
-        box-shadow: inset 0 0 60px {touch_glow_color} !important;
+        box-shadow: inset 0 0 80px {touch_glow_color} !important;
     }}
 
     /* Table Mobile Responsive Scroll */
@@ -153,7 +153,7 @@ st.markdown(f"""
 
     /* Card Styling */
     div.stForm, div[data-testid="stExpander"] {{
-        background: rgba(17, 24, 39, 0.75) !important;
+        background: rgba(17, 24, 39, 0.8) !important;
         backdrop-filter: blur(16px);
         border: 1px solid rgba(59, 130, 246, 0.25) !important;
         border-radius: 20px !important;
@@ -161,14 +161,14 @@ st.markdown(f"""
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     }}
 
-    /* 💎 PREMIUM INPUTS & DROPDOWNS STYLING WITH TOUCH GLOW */
+    /* 💎 PREMIUM INPUTS & DROPDOWNS STYLING */
     div[data-baseweb="select"] > div,
     div[data-baseweb="input"] > div,
     div[data-baseweb="base-input"],
     input, select, textarea {{
         border-color: #374151 !important;
         border-radius: 14px !important;
-        background-color: #161e2e !important;
+        background-color: #121929 !important;
         color: #ffffff !important;
         outline: none !important;
         font-weight: 500 !important;
@@ -182,8 +182,8 @@ st.markdown(f"""
     div[data-baseweb="base-input"]:focus-within,
     input:focus, select:focus, textarea:focus {{
         border-color: {touch_border_color} !important;
-        background-color: #1f2937 !important;
-        box-shadow: 0 0 0 3px {touch_glow_color}, inset 0 1px 2px rgba(0,0,0,0.2) !important;
+        background-color: #1a233a !important;
+        box-shadow: 0 0 18px {touch_glow_color}, inset 0 1px 2px rgba(0,0,0,0.2) !important;
     }}
 
     label, div[data-testid="stWidgetLabel"] p {{
@@ -213,6 +213,19 @@ st.markdown(f"""
         box-shadow: 0 10px 30px rgba(37, 99, 235, 0.35);
         margin-bottom: 20px;
         border: 1px solid rgba(255, 255, 255, 0.15);
+    }}
+
+    /* 👑 ROYAL GOLD VIP BADGE & CARD STYLING */
+    .gold-vip-badge {{
+        background: linear-gradient(135deg, #FFE082 0%, #FFB300 50%, #FF6F00 100%);
+        color: #000000;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-weight: 800;
+        font-size: 13px;
+        letter-spacing: 0.5px;
+        box-shadow: 0 0 15px rgba(255, 179, 0, 0.6);
+        display: inline-block;
     }}
 
     /* 👑 ADMIN PANEL USER CARD STYLING */
@@ -302,20 +315,21 @@ if not st.session_state.welcome_completed:
     st.session_state.welcome_completed = True
 
 # ==========================================
-# 🛑 USER FIRST-TIME PREMIUM POPUP CHECK (फक्त युझरलाच १ दा दिसेल)
+# 🛑 USER FIRST-TIME ROYAL GOLD POPUP CHECK (फक्त युझरलाच १ दा दिसेल)
 # ==========================================
 if current_user_name:
     u_info = user_db.get(current_user_name, {})
     if isinstance(u_info, dict) and u_info.get("is_premium", False) and not u_info.get("seen_popup", False):
         st.markdown(f"""
             <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
-                        background-color: #0b0f19; background: linear-gradient(135deg, #0b0f19 0%, #1e3a8a 100%);
+                        background: radial-gradient(circle, #1a1500 0%, #070a12 100%);
+                        border: 8px solid #FFD54F;
                         z-index: 9999999; display: flex; flex-direction: column; 
                         justify-content: center; align-items: center; text-align: center; padding: 20px;">
-                <h1 style="font-size: 90px; margin: 0;">👑 🎉</h1>
-                <h1 style="color: #60a5fa; font-size: 36px; font-weight: 800; margin-top: 15px;">CONGRATULATIONS {current_user_name.upper()}!</h1>
-                <h2 style="color: #f3f4f6; font-size: 24px; margin-top: 10px;">YOU ARE NOW A PREMIUM MEMBER OF PATIL INFRATECH!</h2>
-                <p style="color: #93c5fd; font-size: 20px; margin-top: 10px;">Your WhatsApp Sharing & Premium Features are Active! 🚀</p>
+                <h1 style="font-size: 100px; margin: 0; text-shadow: 0 0 30px #FFB300;">👑</h1>
+                <h1 style="background: linear-gradient(135deg, #FFE082 0%, #FFB300 50%, #FF6F00 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 38px; font-weight: 900; margin-top: 15px;">WELCOME VIP MEMBER {current_user_name.upper()}!</h1>
+                <h2 style="color: #f3f4f6; font-size: 24px; margin-top: 10px;">YOU ARE NOW A ROYAL PREMIUM MEMBER OF PATIL INFRATECH!</h2>
+                <p style="color: #FFE082; font-size: 20px; margin-top: 15px;">✨ Unlimited WhatsApp Sharing & Full Feature Access Unlocked! 🚀</p>
             </div>
         """, unsafe_allow_html=True)
         time.sleep(3)
@@ -346,7 +360,7 @@ if st.session_state.app_user_name is None:
             user_db = load_db()
             
             if u_input not in user_db:
-                new_welcome_msg = f"Welcome {u_input} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये हार्दिक स्वागत🥳"
+                new_welcome_msg = f"Welcome {u_input}! पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
                 user_db[u_input] = {
                     "id": u_input,
                     "comment": "काही नाही",
@@ -506,7 +520,7 @@ if st.session_state.app_user_name is None:
                     user_db[target_user]["is_premium"] = True
                     user_db[target_user]["premium_expiry"] = exp_time.strftime("%Y-%m-%d %H:%M:%S")
                     user_db[target_user]["requested_code"] = False
-                    user_db[target_user]["seen_popup"] = False # Reset for user first login popup
+                    user_db[target_user]["seen_popup"] = False # Enable popup for user
                     save_db(user_db)
                     st.success(f"✅ {u_name} साठी {time_val} {time_unit} सेव्ह केले!")
                     st.rerun()
@@ -603,8 +617,10 @@ user_db = load_db()
 is_user_premium, status_text_str = check_user_premium_status(current_user_name)
 
 col_u, col_lo = st.columns([3.5, 1.5])
-badge = f"👑 PREMIUM ({status_text_str})" if is_user_premium else "🆓 FREE USER"
-col_u.success(f"👤 युझर: **{current_user_name}** | [{badge}]")
+if is_user_premium:
+    col_u.markdown(f"👤 युझर: **{current_user_name}** | <span class='gold-vip-badge'>👑 VIP PREMIUM ({status_text_str})</span>", unsafe_allow_html=True)
+else:
+    col_u.success(f"👤 युझर: **{current_user_name}** | [🆓 FREE USER]")
 
 if col_lo.button("🔄 नाव बदला"):
     st.session_state.app_user_name = None
@@ -616,8 +632,8 @@ if col_lo.button("🔄 नाव बदला"):
 current_user_data = user_db.get(current_user_name, {})
 admin_msg = current_user_data.get("admin_message", None)
 if admin_msg:
-    st.markdown("### 📥 ॲडमीन कडून आलेला मेसेज / प्रिमियम कोड (Inbox)")
-    st.info(f"📢 **kanha:** {admin_msg}")
+    st.markdown("### 📥 Admin Message / Code Inbox")
+    st.info(f"📢 **Admin:** {admin_msg}")
     st.write("---")
 
 # ==========================================
@@ -646,10 +662,10 @@ if not is_user_premium:
                         exp_datetime = datetime.datetime.now() + datetime.timedelta(days=28)
                         user_db[current_user_name]["is_premium"] = True
                         user_db[current_user_name]["premium_expiry"] = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
-                        user_db[current_user_name]["seen_popup"] = False # Enable first-time popup for user
+                        user_db[current_user_name]["seen_popup"] = False # Trigger popup for user
 
                         # 🔄 ३. इनबॉक्स मेसेज ऑटो-रिसेट करणे
-                        user_db[current_user_name]["admin_message"] = f"Welcome {current_user_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये हार्दिक स्वागत🥳"
+                        user_db[current_user_name]["admin_message"] = f"Welcome {current_user_name}! पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
                         save_db(user_db)
                         st.rerun()
                 else:
@@ -659,7 +675,7 @@ if not is_user_premium:
             if st.button("📩 Request Code from Admin", key="req_code_btn"):
                 user_db[current_user_name]["requested_code"] = True
                 save_db(user_db)
-                st.success("✅ कन्हैया (Admin) ला कोडसाठी रिक्वेस्ट पाठवली आहे! लवकरच इनबॉक्समध्ये कोड दिसेल.")
+                st.success("✅ Admin ला कोडसाठी रिक्वेस्ट पाठवली आहे! लवकरच इनबॉक्समध्ये कोड दिसेल.")
 
 # ==========================================
 # 🔐 ॲप व्हॉट्सॲप फीचर अनलॉक/प्रीमियम फंक्शन
@@ -674,14 +690,14 @@ def render_whatsapp_feature(encoded_msg, key_prefix):
         st.markdown(f'''
             <a href="https://wa.me/?text={encoded_msg}" target="_blank">
                 <button style="width: 100%; background-color: #25D366; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px;">
-                    📱 Share Full Report on WhatsApp {'(🆓 Free Access)' if wa_lock_setting == 'Free' else '(👑 Premium Active)'}
+                    📱 Share Full Report on WhatsApp {'(🆓 Free Access)' if wa_lock_setting == 'Free' else '(👑 VIP Premium Active)'}
                 </button>
             </a>
         ''', unsafe_allow_html=True)
     else:
         with st.expander("🔒 WhatsApp Report Sharing - Unlock Premium"):
             st.warning("⚠️ व्हॉट्सॲपवर पूर्ण रिपोर्ट शेअर करण्याचे फीचर प्रिमियम युझर्ससाठी आहे.")
-            st.caption("💡 अनलॉक करण्यासाठी कन्हैया (Admin) कडून आलेला प्रिमियम कोड खाली टाका:")
+            st.caption("💡 अनलॉक करण्यासाठी Admin कडून आलेला प्रिमियम कोड खाली टाका:")
             
             p_code = st.text_input("Enter Activation Code:", key=f"{key_prefix}_code_input").strip()
             
@@ -703,7 +719,7 @@ def render_whatsapp_feature(encoded_msg, key_prefix):
                             user_db[current_user_name]["premium_expiry"] = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
                             user_db[current_user_name]["seen_popup"] = False
                             
-                            user_db[current_user_name]["admin_message"] = f"Welcome {current_user_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये हार्दिक स्वागत🥳"
+                            user_db[current_user_name]["admin_message"] = f"Welcome {current_user_name}! पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
                             save_db(user_db)
                             st.rerun()
                     else:
