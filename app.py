@@ -628,7 +628,7 @@ if current_user_data.get("unread_notification", False):
     admin_msg = current_user_data.get("admin_message", "")
     st.markdown(f"""
         <div style="background: linear-gradient(135deg, #047857 0%, #065f46 100%); padding: 16px 20px; border-radius: 16px; margin-bottom: 15px; border: 1px solid #34d399; box-shadow: 0 4px 20px rgba(52, 211, 153, 0.3);">
-            <h4 style="color: #6ee7b7; margin: 0 0 5px 0;">🔔 New Notification from Admin</h4>
+            <h4 style="color: #6ee7b7; margin: 0 0 5px 0;">🔔 New Notification from Kanhaiya</h4>
             <p style="color: #ffffff; font-size: 16px; margin: 0;">{admin_msg}</p>
         </div>
     """, unsafe_allow_html=True)
@@ -642,7 +642,7 @@ if current_user_data.get("unread_notification", False):
 else:
     admin_msg = current_user_data.get("admin_message", f"मी {current_user_name} आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳")
     st.markdown("### 📥 Admin Message / Code Inbox")
-    st.info(f"📢 **Admin:** {admin_msg}")
+    st.info(f"📢 **Admin (कन्हैया):** {admin_msg}")
 
 st.write("---")
 
@@ -906,7 +906,7 @@ elif st.session_state.selected_module == "Rate Analysis":
             with btn_col2:
                 st.markdown('''
                     <button onclick="window.print()" style="width: 100%; background-color: #3b82f6; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px;">
-                        📄 Print / Download A3 PDF
+                        📄 Print / Download A3 Size PDF
                     </button>
                 ''', unsafe_allow_html=True)
 
