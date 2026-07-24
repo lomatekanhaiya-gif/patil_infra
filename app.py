@@ -730,12 +730,11 @@ if ai_lock_setting == "Free" or is_user_premium:
         if user_ai_query.strip():
             q_lower = user_ai_query.lower()
             with st.spinner("🤖 AI उत्तर तयार करत आहे..."):
-                time.sleep(0.8) # Realistic thinking delay
+                time.sleep(0.8)
                 
-                # Built-in smart civil engineering response logic
                 if "cement" in q_lower or "सिमेंट" in q_lower or "bags" in q_lower:
                     ai_reply = "🏗️ **Patil Infratech AI उत्तर:** साधारणपणे 1000 sq.ft च्या आरसीसी स्लैबसाठी (Slab) अंदाजे **350 ते 400 बॅग सिमेंट** लागते (M20 ग्रेडनुसार). फाऊंडेशन आणि विटांच्या कामासाठी अतिरिक्त सिमेंट मोजावे लागते."
-                elif "steel" in q_lower, "स्टील" in q_lower or "लोखंड" in q_lower:
+                elif "steel" in q_lower or "स्टील" in q_lower or "लोखंड" in q_lower:
                     ai_reply = "⚖️ **Patil Infratech AI उत्तर:** रेसिडेन्शियल इमारतीसाठी (Residential Building) प्रती sq.ft अंदाजे **3.5 ते 4.5 किलो स्टील** वापरले जाते. त्यानुसार 1000 sq.ft ला सुमारे 3.5 ते 4 टन स्टील लागते."
                 elif "brick" in q_lower or "वीट" in q_lower or "विटा" in q_lower:
                     ai_reply = "🧱 **Patil Infratech AI उत्तर:** 1 घनमीटर (m³) वीटकामासाठी (Brickwork) सुमारे **500 विटा** आणि 0.30 m³ ड्राय मॉर्टर (सिमेंट-वाळू पेस्ट) लागते."
@@ -765,7 +764,6 @@ else:
 if st.session_state.selected_module is None:
     st.markdown("### 🚀 तुम्हाला काय करायचे आहे ते निवडा:")
     
-    locks_cfg = user_db.get("FEATURE_LOCKS", {})
     ra_lock = locks_cfg.get("Rate Analysis", "Free")
     bbs_lock = locks_cfg.get("BBS", "Free")
 
