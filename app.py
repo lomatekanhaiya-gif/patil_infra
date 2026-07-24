@@ -107,7 +107,6 @@ is_curr_premium, _ = check_user_premium_status(current_user_name)
 # ==========================================
 # 🎨 ULTRA-PREMIUM ROYAL METALLIC GOLD & GLOW STYLING
 # ==========================================
-# 👑 प्रिमियम युझरसाठी लक्झरी मेटॅलिक गोल्ड, फ्री युझरसाठी थीम ब्ल्यू
 touch_glow_color = "rgba(255, 179, 0, 0.45)" if is_curr_premium else "rgba(59, 130, 246, 0.25)"
 touch_border_color = "#FFD54F" if is_curr_premium else "#3b82f6"
 
@@ -133,7 +132,7 @@ st.markdown(f"""
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }}
 
-    /* 🌟 UNIVERSAL SCREEN TOUCH GLOW (ROYAL GOLD FOR PREMIUM) */
+    /* 🌟 UNIVERSAL SCREEN TOUCH GLOW */
     .stApp:active {{
         box-shadow: inset 0 0 80px {touch_glow_color} !important;
     }}
@@ -215,17 +214,18 @@ st.markdown(f"""
         border: 1px solid rgba(255, 255, 255, 0.15);
     }}
 
-    /* 👑 ROYAL GOLD VIP BADGE & CARD STYLING */
+    /* 👑 ROYAL GOLD VIP BADGE WITH USER NAME INCLUDED */
     .gold-vip-badge {{
         background: linear-gradient(135deg, #FFE082 0%, #FFB300 50%, #FF6F00 100%);
         color: #000000;
-        padding: 6px 14px;
+        padding: 8px 16px;
         border-radius: 20px;
-        font-weight: 800;
-        font-size: 13px;
+        font-weight: 900;
+        font-size: 14px;
         letter-spacing: 0.5px;
-        box-shadow: 0 0 15px rgba(255, 179, 0, 0.6);
+        box-shadow: 0 0 20px rgba(255, 179, 0, 0.7);
         display: inline-block;
+        border: 1px solid #FFF59D;
     }}
 
     /* 👑 ADMIN PANEL USER CARD STYLING */
@@ -315,7 +315,7 @@ if not st.session_state.welcome_completed:
     st.session_state.welcome_completed = True
 
 # ==========================================
-# 🛑 USER FIRST-TIME ROYAL GOLD POPUP CHECK (फक्त युझरलाच १ दा दिसेल)
+# 🛑 USER FIRST-TIME ROYAL GOLD POPUP CHECK
 # ==========================================
 if current_user_name:
     u_info = user_db.get(current_user_name, {})
@@ -415,7 +415,7 @@ if st.session_state.app_user_name is None:
                     st.success("✅ आजचे मास्टर मार्केट दर डेटाबेसमध्ये यशस्वीरित्या अपडेट झाले!")
 
             # ----------------------------------------------------
-            # 🛑 2. ADMIN SUB-WINDOW: FEATURE LOCK MANAGER (Free / Premium Control)
+            # 🛑 2. ADMIN SUB-WINDOW: FEATURE LOCK MANAGER
             # ----------------------------------------------------
             elif st.session_state.admin_view == "locks":
                 if st.button("⬅️ Back to Admin Main Menu", key="btn_back_from_locks"):
@@ -468,14 +468,14 @@ if st.session_state.app_user_name is None:
                             assigned_code = c_code
                             break
 
-                status_badge = "👑 PREMIUM" if u_prem else ("🚨 CODE REQUESTED!" if is_req else "🆓 FREE USER")
+                status_badge = f"👑 VIP MEMBER: {u_name.upper()}" if u_prem else ("🚨 CODE REQUESTED!" if is_req else f"🆓 FREE: {u_name.upper()}")
 
                 st.markdown(f"### 👤 MANAGE USER: <span style='color:#60a5fa;'>{u_name.upper()}</span>", unsafe_allow_html=True)
                 
                 st.markdown(f"""
                     <div class="admin-user-card">
-                        <p style="margin:5px 0; font-size:16px;"><b>माहिती/स्टेटस:</b> <span style="color:#f59e0b; font-weight:bold;">{status_badge}</span></p>
-                        <p style="margin:5px 0; font-size:15px;"><b>प्रिमियम मुदत (Expiry):</b> <code>{exp_date}</code></p>
+                        <p style="margin:5px 0; font-size:16px;"><b>माहिती/स्टेटस:</b> <span class="gold-vip-badge">{status_badge}</span></p>
+                        <p style="margin:8px 0 5px 0; font-size:15px;"><b>प्रिमियम मुदत (Expiry):</b> <code>{exp_date}</code></p>
                         <p style="margin:5px 0; font-size:15px;"><b>ॲक्टिव्ह कोड (Unused):</b> <code style="color:#10b981; font-size:16px;">{assigned_code if assigned_code else 'काही नाही'}</code></p>
                         <p style="margin:5px 0; font-size:14px; color:#9ca3af;"><b>युझर कमेंट:</b> {u_comm}</p>
                     </div>
@@ -520,7 +520,7 @@ if st.session_state.app_user_name is None:
                     user_db[target_user]["is_premium"] = True
                     user_db[target_user]["premium_expiry"] = exp_time.strftime("%Y-%m-%d %H:%M:%S")
                     user_db[target_user]["requested_code"] = False
-                    user_db[target_user]["seen_popup"] = False # Enable popup for user
+                    user_db[target_user]["seen_popup"] = False
                     save_db(user_db)
                     st.success(f"✅ {u_name} साठी {time_val} {time_unit} सेव्ह केले!")
                     st.rerun()
@@ -580,7 +580,6 @@ if st.session_state.app_user_name is None:
                 st.markdown("---")
                 st.markdown("### 📋 युझर डेटाबेस MASTER LIST (Sorted A-Z)")
                 
-                # 🔤 ALL USERS SORTED ALPHABETICALLY (A-Z Order)
                 all_users_keys = [k for k in user_db.keys() if k not in ["9999999999", "MASTER_MARKET_RATES", "PREMIUM_CODES", "FEATURE_LOCKS"]]
                 sorted_user_keys = sorted(all_users_keys, key=lambda x: str(user_db[x].get("id", x)).lower())
 
@@ -592,10 +591,15 @@ if st.session_state.app_user_name is None:
                         u_name = info.get("id", mob)
                         u_prem = info.get("is_premium", False)
                         is_req = info.get("requested_code", False)
-                        status_badge = "👑 PREMIUM" if u_prem else ("🚨 CODE REQUESTED!" if is_req else "🆓 FREE USER")
 
                         col_u1, col_u2 = st.columns([3, 2])
-                        col_u1.markdown(f"#### 👤 **{u_name}** `[{status_badge}]`")
+                        if u_prem:
+                            col_u1.markdown(f"<span class='gold-vip-badge'>👑 VIP MEMBER: {u_name.upper()}</span>", unsafe_allow_html=True)
+                        elif is_req:
+                            col_u1.markdown(f"#### 👤 **{u_name}** `[🚨 CODE REQUESTED!]`", unsafe_allow_html=True)
+                        else:
+                            col_u1.markdown(f"#### 👤 **{u_name}** `[🆓 FREE USER]`", unsafe_allow_html=True)
+
                         if col_u2.button(f"👁️ View / Manage {u_name}", key=f"open_user_win_{mob}"):
                             st.session_state.admin_view = "user_detail"
                             st.session_state.admin_selected_user = mob
@@ -618,7 +622,8 @@ is_user_premium, status_text_str = check_user_premium_status(current_user_name)
 
 col_u, col_lo = st.columns([3.5, 1.5])
 if is_user_premium:
-    col_u.markdown(f"👤 युझर: **{current_user_name}** | <span class='gold-vip-badge'>👑 VIP PREMIUM ({status_text_str})</span>", unsafe_allow_html=True)
+    # 👑 सुवर्ण रंगाच्या बॅजमध्येच युझरचे नाव समाविष्ट केले आहे!
+    col_u.markdown(f"<span class='gold-vip-badge'>👑 VIP MEMBER: {current_user_name.upper()} ({status_text_str})</span>", unsafe_allow_html=True)
 else:
     col_u.success(f"👤 युझर: **{current_user_name}** | [🆓 FREE USER]")
 
@@ -662,7 +667,7 @@ if not is_user_premium:
                         exp_datetime = datetime.datetime.now() + datetime.timedelta(days=28)
                         user_db[current_user_name]["is_premium"] = True
                         user_db[current_user_name]["premium_expiry"] = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
-                        user_db[current_user_name]["seen_popup"] = False # Trigger popup for user
+                        user_db[current_user_name]["seen_popup"] = False
 
                         # 🔄 ३. इनबॉक्स मेसेज ऑटो-रिसेट करणे
                         user_db[current_user_name]["admin_message"] = f"Welcome {current_user_name}! पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
