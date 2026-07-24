@@ -105,10 +105,12 @@ def check_user_premium_status(username):
 is_curr_premium, _ = check_user_premium_status(current_user_name)
 
 # ==========================================
-# 🎨 ULTRA-PREMIUM ROYAL METALLIC GOLD & GLOW STYLING
+# 🎨 ULTRA-PREMIUM ROYAL METALLIC GOLD & AESTHETIC STYLING
 # ==========================================
 touch_glow_color = "rgba(255, 179, 0, 0.45)" if is_curr_premium else "rgba(59, 130, 246, 0.25)"
 touch_border_color = "#FFD54F" if is_curr_premium else "#3b82f6"
+card_border_color = "rgba(255, 179, 0, 0.45)" if is_curr_premium else "rgba(59, 130, 246, 0.25)"
+input_inner_shadow = "inset 0 0 10px rgba(255, 179, 0, 0.3)" if is_curr_premium else "inset 0 2px 4px rgba(0, 0, 0, 0.4)"
 
 st.markdown(f"""
     <style>
@@ -154,10 +156,10 @@ st.markdown(f"""
     div.stForm, div[data-testid="stExpander"] {{
         background: rgba(17, 24, 39, 0.8) !important;
         backdrop-filter: blur(16px);
-        border: 1px solid rgba(59, 130, 246, 0.25) !important;
+        border: 1px solid {card_border_color} !important;
         border-radius: 20px !important;
         padding: 18px !important;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), {input_inner_shadow};
     }}
 
     /* 💎 PREMIUM INPUTS & DROPDOWNS STYLING */
@@ -165,13 +167,13 @@ st.markdown(f"""
     div[data-baseweb="input"] > div,
     div[data-baseweb="base-input"],
     input, select, textarea {{
-        border-color: #374151 !important;
+        border-color: {touch_border_color} !important;
         border-radius: 14px !important;
         background-color: #121929 !important;
         color: #ffffff !important;
         outline: none !important;
         font-weight: 500 !important;
-        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4) !important;
+        box-shadow: {input_inner_shadow} !important;
         transition: all 0.25s ease-in-out !important;
     }}
 
@@ -182,7 +184,7 @@ st.markdown(f"""
     input:focus, select:focus, textarea:focus {{
         border-color: {touch_border_color} !important;
         background-color: #1a233a !important;
-        box-shadow: 0 0 18px {touch_glow_color}, inset 0 1px 2px rgba(0,0,0,0.2) !important;
+        box-shadow: 0 0 18px {touch_glow_color}, {input_inner_shadow} !important;
     }}
 
     label, div[data-testid="stWidgetLabel"] p {{
@@ -315,28 +317,28 @@ if not st.session_state.welcome_completed:
     st.session_state.welcome_completed = True
 
 # ==========================================
-# 🛑 USER FIRST-TIME ROYAL GOLD POPUP CHECK (by Kanhaiya)
+# 🛑 USER FIRST-TIME AESTHETIC VIP POPUP CHECK
 # ==========================================
 if current_user_name:
     u_info = user_db.get(current_user_name, {})
     if isinstance(u_info, dict) and u_info.get("is_premium", False) and not u_info.get("seen_popup", False):
+        activated_by_text = u_info.get("activated_by", "Kanhaiya (Founder of Patil Infratech)")
         st.markdown(f"""
             <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
-                        background: radial-gradient(circle, #1a1500 0%, #070a12 100%);
-                        border: 8px solid #FFD54F;
+                        background: radial-gradient(circle at center, #141b2d 0%, #070a12 100%);
                         z-index: 9999999; display: flex; flex-direction: column; 
-                        justify-content: center; align-items: center; text-align: center; padding: 20px;">
-                <h1 style="font-size: 100px; margin: 0; text-shadow: 0 0 30px #FFB300;">👑</h1>
-                <h1 style="background: linear-gradient(135deg, #FFE082 0%, #FFB300 50%, #FF6F00 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 38px; font-weight: 900; margin-top: 15px;">WELCOME VIP MEMBER {current_user_name.upper()}!</h1>
-                <h2 style="color: #f3f4f6; font-size: 24px; margin-top: 10px;">YOU ARE NOW A ROYAL PREMIUM MEMBER OF PATIL INFRATECH!</h2>
-                <p style="color: #FFE082; font-size: 20px; margin-top: 15px;">✨ Unlimited WhatsApp Sharing & Full Feature Access Unlocked! 🚀</p>
-                <br>
-                <div style="background: rgba(255, 213, 79, 0.15); border: 1px dashed #FFD54F; padding: 10px 20px; border-radius: 12px; margin-top: 10px;">
-                    <p style="color: #FFF59D; font-size: 16px; margin:0; font-weight: 700;">✨ Approved & Activated By: Kanhaiya (Founder of Patil Infratech)</p>
+                        justify-content: center; align-items: center; text-align: center; padding: 25px;">
+                <div style="background: rgba(255, 215, 0, 0.05); backdrop-filter: blur(25px); border-radius: 30px; padding: 40px; box-shadow: 0 0 50px rgba(255, 179, 0, 0.25); max-width: 500px; width: 100%;">
+                    <h1 style="font-size: 70px; margin: 0; text-shadow: 0 0 25px #FFB300;">👑</h1>
+                    <h1 style="background: linear-gradient(135deg, #FFE082 0%, #FFB300 50%, #FF6F00 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 28px; font-weight: 900; margin-top: 15px; letter-spacing: 0.5px;">WELCOME VIP MEMBER<br>{current_user_name.upper()}</h1>
+                    <h2 style="color: #e2e8f0; font-size: 18px; font-weight: 500; margin-top: 15px; line-height: 1.4;">YOU ARE NOW A ROYAL PREMIUM MEMBER OF PATIL INFRATECH!</h2>
+                    <p style="color: #93c5fd; font-size: 15px; margin-top: 12px;">✨ Unlimited WhatsApp Sharing & Full Feature Access Unlocked! 🚀</p>
+                    <hr style="border: 0; height: 1px; background: rgba(255,255,255,0.15); margin: 20px 0;">
+                    <p style="color: #FFE082; font-size: 14px; margin: 0; font-weight: 600; letter-spacing: 0.3px;">✨ Approved & Activated By: {activated_by_text}</p>
                 </div>
             </div>
         """, unsafe_allow_html=True)
-        time.sleep(3.5)
+        time.sleep(4.0)
         user_db[current_user_name]["seen_popup"] = True
         save_db(user_db)
         st.rerun()
@@ -503,7 +505,7 @@ if st.session_state.app_user_name is None:
                         st.success(f"🎉 {u_name} ला ऑटोमॅटिकली कोड पाठवला: `{new_c}`")
                         st.rerun()
 
-                # ⏱️ 2. CUSTOM TIME SET BY ADMIN
+                # ⏱️ 2. CUSTOM TIME SET BY ADMIN (विना कन्हैया उल्लेख)
                 st.markdown("---")
                 st.markdown("##### ⏱️ प्रिमियम वेळ सेट करा / वाढवा (Custom Expiry):")
                 t_col1, t_col2 = st.columns(2)
@@ -525,6 +527,7 @@ if st.session_state.app_user_name is None:
                     user_db[target_user]["premium_expiry"] = exp_time.strftime("%Y-%m-%d %H:%M:%S")
                     user_db[target_user]["requested_code"] = False
                     user_db[target_user]["seen_popup"] = False # Enable popup for user
+                    user_db[target_user]["activated_by"] = "Kanhaiya (Founder of Patil Infratech)"
                     save_db(user_db)
                     st.success(f"✅ {u_name} साठी {time_val} {time_unit} सेव्ह केले!")
                     st.rerun()
@@ -538,7 +541,7 @@ if st.session_state.app_user_name is None:
                         st.rerun()
 
                 st.markdown("---")
-                current_msg = info.get("admin_message", "ॲडमीन कडून सध्या कोणताही मेसेज नाही.")
+                current_msg = info.get("admin_message", "Admin message...")
                 new_msg = st.text_input(f"✍️ {u_name} साठी इनबॉक्स मेसेज बदलणे:", value=current_msg, key=f"win_msg_{target_user}")
                 if st.button(f"✉️ मेसेज सेव्ह करा ({u_name})", key=f"win_btn_msg_{target_user}"):
                     if new_msg.strip():
@@ -671,13 +674,14 @@ if not is_user_premium:
                         user_db[current_user_name]["is_premium"] = True
                         user_db[current_user_name]["premium_expiry"] = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
                         user_db[current_user_name]["seen_popup"] = False
+                        user_db[current_user_name]["activated_by"] = "Kanhaiya (Founder of Patil Infratech)"
 
                         # 🔄 ३. इनबॉक्स मेसेज ऑटो-रिसेट करणे
                         user_db[current_user_name]["admin_message"] = f"Welcome {current_user_name}! पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
                         save_db(user_db)
                         st.rerun()
                 else:
-                    st.error("❌ चुकीचा कोड! कृपया ॲडमीनकडून आलेला अचूक कोड टाका.")
+                    st.error("❌ चुकीचा कोड! कृपया Admin कडून आलेला अचूक कोड टाका.")
 
         with c_btn2:
             if st.button("📩 Request Code from Admin", key="req_code_btn"):
@@ -726,6 +730,7 @@ def render_whatsapp_feature(encoded_msg, key_prefix):
                             user_db[current_user_name]["is_premium"] = True
                             user_db[current_user_name]["premium_expiry"] = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
                             user_db[current_user_name]["seen_popup"] = False
+                            user_db[current_user_name]["activated_by"] = "Kanhaiya (Founder of Patil Infratech)"
                             
                             user_db[current_user_name]["admin_message"] = f"Welcome {current_user_name}! पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
                             save_db(user_db)
@@ -737,7 +742,7 @@ def render_whatsapp_feature(encoded_msg, key_prefix):
                 if st.button("📩 Request Code from Admin", key=f"{key_prefix}_req_btn"):
                     user_db[current_user_name]["requested_code"] = True
                     save_db(user_db)
-                    st.success("✅ ॲडमीनला कोडसाठी रिक्वेस्ट पाठवली आहे!")
+                    st.success("✅ Admin ला कोडसाठी रिक्वेस्ट पाठवली आहे!")
 
 # ==========================================
 # 🎛️ DASHBOARD / ICON SELECTION SCREEN
@@ -855,8 +860,8 @@ elif st.session_state.selected_module == "Rate Analysis":
             profit_pct = st.number_input("कंत्राटदार नफा टक्केवारी (%):", min_value=0.0, value=10.0, key="cc_prof_p")
 
         st.markdown("#### 💬 कमेंट पॅनल (Comment Panel)")
-        user_note = st.text_area("कृपया आपला मौल्यवान फीडबॅक अवश्य द्या🙏:", placeholder="अँप मध्ये नवीन फिचर्स हवे असतील तर नक्की कळवा", key="cc_note")
-        if st.button("💬 कमेंट सबमिट करा", key="cc_comm_btn"):
+        user_note = st.text_area("या एस्टिमेशन संदर्भात काही नोट किंवा कमेंट लिहायची असल्यास इथे लिहा:", placeholder="उदा. ग्राउंड फ्लोअर वीटकाम...", key="bw_note")
+        if st.button("💬 कमेंट सेव्ह करा", key="cc_comm_btn"):
             if user_note.strip():
                 st.session_state.current_comment = user_note.strip()
                 user_db = load_db()
@@ -1337,7 +1342,7 @@ elif st.session_state.selected_module == "BBS":
         with btn_col2:
             st.markdown('''
                 <button onclick="window.print()" style="width: 100%; background-color: #3b82f6; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px;">
-                    📄 Print / Save A3 Size PDF
+                    📄 Print / Download A3 PDF
                 </button>
             ''', unsafe_allow_html=True)
 
