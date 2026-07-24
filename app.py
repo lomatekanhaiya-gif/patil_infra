@@ -721,7 +721,7 @@ def render_whatsapp_feature(encoded_msg, key_prefix):
                     st.success("✅ ॲडमीनला कोडसाठी रिक्वेस्ट पाठवली आहे!")
 
 # ==========================================
-# 🤖 CIVIL AI ASSISTANT (Live Google Gemini AI Engine)
+# 🤖 CIVIL AI ASSISTANT (Live Google Gemini AI Engine - gemini-3.6-flash)
 # ==========================================
 st.markdown("---")
 st.markdown("### 🤖 Patil Infratech Civil AI Assistant")
@@ -745,7 +745,8 @@ if ai_lock_setting == "Free" or is_user_premium:
                 if HAS_GENAI and api_key:
                     try:
                         genai.configure(api_key=api_key)
-                        model = genai.GenerativeModel('gemini-2.5-flash')
+                        # Updated to the latest stable gemini-3.6-flash model
+                        model = genai.GenerativeModel('gemini-3.6-flash')
                         prompt = f"""
                         You are an expert Senior Civil Engineer and Quantity Surveyor for Patil Infratech, founded by Kanhaiya. 
                         The user is asking a construction, estimation, or material calculation question in any language or script (Marathi, English, Hinglish, Hindi, etc.). 
@@ -756,7 +757,14 @@ if ai_lock_setting == "Free" or is_user_premium:
                         if response and response.text:
                             ai_response_text = response.text
                     except Exception as e:
-                        ai_response_text = f"⚠️ Error communicating with Gemini API: {e}"
+                        try:
+                            # Fallback to gemini-3.5-flash if needed
+                            model = genai.GenerativeModel('gemini-3.5-flash')
+                            response = model.generate_content(prompt)
+                            if response and response.text:
+                                ai_response_text = response.text
+                        except Exception as e2:
+                            ai_response_text = f"⚠️ Error communicating with Gemini API: {e2}"
                 else:
                     ai_response_text = "⚠️ GEMINI_API_KEY is missing from Streamlit Secrets or google-generativeai is not installed."
 
