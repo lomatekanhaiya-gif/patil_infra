@@ -44,7 +44,8 @@ def load_db():
             "BBS": "Free",
             "WhatsApp Share": "Premium",
             "Civil AI Assistant": "Premium"
-        }
+        },
+        "ADS_DB": []
     }
     if os.path.exists(DB_FILE):
         try:
@@ -122,7 +123,6 @@ input_inner_shadow = "inset 0 0 10px rgba(255, 179, 0, 0.3)" if is_curr_premium 
 
 st.markdown(f"""
     <style>
-    /* 🔒 Hide Streamlit Branding & Controls */
     #MainMenu {{ visibility: hidden; }}
     header[data-testid="stHeader"] {{ visibility: hidden; height: 0%; display: none !important; }}
     footer {{ visibility: hidden; display: none !important; }}
@@ -345,10 +345,10 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 👤 युझर नाव प्रविष्ट करणे
+# 👤 युझर नाव प्रविष्ट करणे किंवा ॲडमीन लॉगिन
 # ==========================================
 if st.session_state.app_user_name is None:
-    st.markdown("### 👤 ॲपमध्ये प्रवेश करण्यासाठी नाव प्रविष्ट करा")
+    st.markdown("### 👤 ॲपमध्ये प्रवेश करण्यासाठी नाव प्रविष्ट करा किंवा ॲडमीन लॉगिन करा")
     
     u_input = st.text_input("तुमचे नाव (Your Name):", placeholder="NAME", key="entry_user_name").strip()
     
@@ -375,8 +375,9 @@ if st.session_state.app_user_name is None:
             st.warning("⚠️ कृपया ॲप वापरण्यासाठी आधी तुमचे नाव टाका!")
 
     st.write("---")
-    # 🛡️ सुरक्षित ॲडमीन पॅनल
-    with st.expander("🛡️ Admin Database Panel (Only Kanhaiya)"):
+    
+    # 🛡️ ॲडमीन लॉगिन पॅनल (स्वतंत्र नवीन विंडोसारखी रचना)
+    with st.expander("🛡️ Admin Login Panel (Kanhaiya Only)"):
         admin_id = st.text_input("Admin ID:", key="adm_id")
         admin_pass = st.text_input("Password:", type="password", key="adm_pass")
         
@@ -384,48 +385,46 @@ if st.session_state.app_user_name is None:
         secret_admin_pass = st.secrets.get("ADMIN_PASS", "@Dellg15") if hasattr(st, "secrets") else "@Dellg15"
 
         if admin_id == secret_admin_id and admin_pass == secret_admin_pass:
-            st.success("🔓 डेटाबेस अनलॉक झाला!")
+            st.success("🔓 ॲडमीन डॅशबोर्ड अनलॉक झाला!")
             user_db = load_db()
 
-            if st.session_state.admin_view == "rates":
-                if st.button("⬅️ Back to Admin Main Menu", key="btn_back_from_rates"):
-                    st.session_state.admin_view = "main"
-                    st.rerun()
+            st.markdown("---")
+            st.markdown("### 🛠️ ADMIN CONTROL CENTER (4 Core Modules)")
+            
+            adm_tab = st.selectbox("ॲडमीनचे कार्य निवडा (Select Admin Action):", [
+                "1. Update Market Rates", 
+                "2. Feature Lock Manager", 
+                "3. User List & Data", 
+                "4. Ad & Sponsor Manager"
+            ])
 
-                st.write("---")
-                st.markdown("### 📈 Update Master Market Rates (Today's Live Rates)")
+            if "1. Update Market Rates" in adm_tab:
+                st.markdown("#### 📈 Update Master Market Rates")
                 m_rates = user_db.get("MASTER_MARKET_RATES", {"cement": 400.0, "sand": 2500.0, "bricks": 8.0, "aggregate": 2200.0, "steel": 60.0})
                 
-                adm_cem = st.number_input("Cement (per bag ₹):", min_value=0.0, value=float(m_rates.get("cement", 400.0)), step=1.0, key="adm_cem_inp_fixed")
-                adm_snd = st.number_input("Sand (per m³ ₹):", min_value=0.0, value=float(m_rates.get("sand", 2500.0)), step=1.0, key="adm_snd_inp_fixed")
-                adm_brk = st.number_input("Brick (per nos ₹):", min_value=0.0, value=float(m_rates.get("bricks", 8.0)), step=0.1, key="adm_brk_inp_fixed")
-                adm_agg = st.number_input("Aggregate (per m³ ₹):", min_value=0.0, value=float(m_rates.get("aggregate", 2200.0)), step=1.0, key="adm_agg_inp_fixed")
-                adm_ste = st.number_input("Steel Rate (per kg ₹):", min_value=0.0, value=float(m_rates.get("steel", 60.0)), step=1.0, key="adm_ste_inp_fixed")
+                adm_cem = st.number_input("Cement (per bag ₹):", min_value=0.0, value=float(m_rates.get("cement", 400.0)), step=1.0)
+                adm_snd = st.number_input("Sand (per m³ ₹):", min_value=0.0, value=float(m_rates.get("sand", 2500.0)), step=1.0)
+                adm_brk = st.number_input("Brick (per nos ₹):", min_value=0.0, value=float(m_rates.get("bricks", 8.0)), step=0.1)
+                adm_agg = st.number_input("Aggregate (per m³ ₹):", min_value=0.0, value=float(m_rates.get("aggregate", 2200.0)), step=1.0)
+                adm_ste = st.number_input("Steel Rate (per kg ₹):", min_value=0.0, value=float(m_rates.get("steel", 60.0)), step=1.0)
                 
-                if st.button("💾 Save Master Market Rates", key="save_master_rates_fixed", type="primary"):
+                if st.button("💾 Save Master Market Rates", type="primary"):
                     user_db["MASTER_MARKET_RATES"] = {
                         "cement": adm_cem, "sand": adm_snd, "bricks": adm_brk, "aggregate": adm_agg, "steel": adm_ste
                     }
                     save_db(user_db)
                     st.success("✅ आजचे मास्टर मार्केट दर डेटाबेसमध्ये यशस्वीरित्या अपडेट झाले!")
 
-            elif st.session_state.admin_view == "locks":
-                if st.button("⬅️ Back to Admin Main Menu", key="btn_back_from_locks"):
-                    st.session_state.admin_view = "main"
-                    st.rerun()
-
-                st.write("---")
-                st.markdown("### ⚙️ Feature Lock Manager (Free / Premium Selection)")
-                st.caption("💡 इथून तू कोणतेही फीचर फ्री किंवा प्रिमियम करू शकतोस:")
-
+            elif "2. Feature Lock Manager" in adm_tab:
+                st.markdown("#### ⚙️ Feature Lock Manager (Free / Premium)")
                 cur_locks = user_db.get("FEATURE_LOCKS", {"Rate Analysis": "Free", "BBS": "Free", "WhatsApp Share": "Premium", "Civil AI Assistant": "Premium"})
 
-                fl_ra = st.selectbox("1. Rate Analysis Module Access:", ["Free", "Premium"], index=0 if cur_locks.get("Rate Analysis") == "Free" else 1, key="fl_ra_choice")
-                fl_bbs = st.selectbox("2. BBS Calculator Access:", ["Free", "Premium"], index=0 if cur_locks.get("BBS") == "Free" else 1, key="fl_bbs_choice")
-                fl_wa = st.selectbox("3. WhatsApp Full Report Share:", ["Free", "Premium"], index=0 if cur_locks.get("WhatsApp Share") == "Free" else 1, key="fl_wa_choice")
-                fl_ai = st.selectbox("4. Civil AI Assistant Access:", ["Free", "Premium"], index=0 if cur_locks.get("Civil AI Assistant") == "Free" else 1, key="fl_ai_choice")
+                fl_ra = st.selectbox("Rate Analysis Module Access:", ["Free", "Premium"], index=0 if cur_locks.get("Rate Analysis") == "Free" else 1)
+                fl_bbs = st.selectbox("BBS Calculator Access:", ["Free", "Premium"], index=0 if cur_locks.get("BBS") == "Free" else 1)
+                fl_wa = st.selectbox("WhatsApp Full Report Share:", ["Free", "Premium"], index=0 if cur_locks.get("WhatsApp Share") == "Free" else 1)
+                fl_ai = st.selectbox("Civil AI Assistant Access:", ["Free", "Premium"], index=0 if cur_locks.get("Civil AI Assistant") == "Free" else 1)
 
-                if st.button("💾 Save Feature Lock Settings", key="save_locks_btn", type="primary"):
+                if st.button("💾 Save Feature Lock Settings", type="primary"):
                     user_db["FEATURE_LOCKS"] = {
                         "Rate Analysis": fl_ra,
                         "BBS": fl_bbs,
@@ -433,177 +432,84 @@ if st.session_state.app_user_name is None:
                         "Civil AI Assistant": fl_ai
                     }
                     save_db(user_db)
-                    st.success("✅ प्रिमियम/फ्री फीचर्स सेटिंग्स यशस्वीरित्या अपडेट झाल्या!")
+                    st.success("✅ फीचर्स लॉक सेटिंग्स यशस्वीरित्या बदलल्या!")
 
-            elif st.session_state.admin_view == "user_detail" and st.session_state.admin_selected_user is not None:
-                target_user = st.session_state.admin_selected_user
+            elif "3. User List & Data" in adm_tab:
+                st.markdown("#### 📋 User Database Master List")
+                all_users_keys = [k for k in user_db.keys() if k not in ["9999999999", "MASTER_MARKET_RATES", "PREMIUM_CODES", "FEATURE_LOCKS", "ADS_DB"]]
                 
-                if st.button("⬅️ Back to All Users List", key="btn_back_admin_list"):
-                    st.session_state.admin_view = "main"
-                    st.session_state.admin_selected_user = None
-                    st.rerun()
-
-                st.write("---")
-                info = user_db.get(target_user, {})
-                u_name = info.get("id", target_user)
-                u_comm = info.get("comment", "काही नाही")
-                u_prem = info.get("is_premium", False)
-                exp_date = info.get("premium_expiry", "N/A")
-                is_req = info.get("requested_code", False)
-                u_hist = info.get("history", [])
-
-                assigned_code = None
-                if "PREMIUM_CODES" in user_db:
-                    for c_code, c_data in user_db["PREMIUM_CODES"].items():
-                        if c_data.get("assigned_to") == u_name and not c_data.get("used", False):
-                            assigned_code = c_code
-                            break
-
-                status_badge = f"👑 VIP MEMBER: {u_name.upper()}" if u_prem else ("🚨 CODE REQUESTED!" if is_req else f"🆓 FREE: {u_name.upper()}")
-
-                st.markdown(f"### 👤 MANAGE USER: <span style='color:#60a5fa;'>{u_name.upper()}</span>", unsafe_allow_html=True)
-                
-                st.markdown(f"""
-                    <div class="admin-user-card">
-                        <p style="margin:5px 0; font-size:16px;"><b>माहिती/स्टेटस:</b> <span class="gold-vip-badge">{status_badge}</span></p>
-                        <p style="margin:8px 0 5px 0; font-size:15px;"><b>प्रिमियम मुदत (Expiry):</b> <code>{exp_date}</code></p>
-                        <p style="margin:5px 0; font-size:15px;"><b>ॲक्टिव्ह कोड (Unused):</b> <code style="color:#10b981; font-size:16px;">{assigned_code if assigned_code else 'काही नाही'}</code></p>
-                        <p style="margin:5px 0; font-size:14px; color:#9ca3af;"><b>युझर कमेंट:</b> {u_comm}</p>
-                    </div>
-                """, unsafe_allow_html=True)
-
-                if assigned_code:
-                    st.info(f"💡 {u_name} साठी आधीच एक कोड तयार आहे: `{assigned_code}`")
-                else:
-                    if st.button(f"🚀 Generate & Send Unique Code to {u_name}", key=f"win_gen_send_{target_user}"):
-                        new_c = generate_random_code()
-                        if "PREMIUM_CODES" not in user_db: user_db["PREMIUM_CODES"] = {}
-                        user_db["PREMIUM_CODES"][new_c] = {
-                            "assigned_to": u_name,
-                            "used": False,
-                            "created_at": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                        }
-                        user_db[target_user]["admin_message"] = f"तुमचा प्रिमियम कोड: {new_c} (ॲपमध्ये टाकून प्रिमियम अनलॉक करा)"
-                        user_db[target_user]["requested_code"] = False
-                        save_db(user_db)
-                        st.success(f"🎉 {u_name} ला ऑटोमॅटिकली कोड पाठवला: `{new_c}`")
-                        st.rerun()
-
-                st.markdown("---")
-                st.markdown("##### ⏱️ प्रिमियम वेळ सेट करा / वाढवा (Custom Expiry):")
-                t_col1, t_col2 = st.columns(2)
-                with t_col1:
-                    time_val = st.number_input("संख्या (Value):", min_value=1, value=28, key=f"win_t_val_{target_user}")
-                with t_col2:
-                    time_unit = st.selectbox("युनिट (Unit):", ["Minutes", "Hours", "Days"], index=2, key=f"win_t_unit_{target_user}")
-
-                if st.button(f"⚡ Set Premium Time ({time_val} {time_unit})", key=f"win_btn_custom_{target_user}"):
-                    now = datetime.datetime.now()
-                    if time_unit == "Minutes":
-                        exp_time = now + datetime.timedelta(minutes=time_val)
-                    elif time_unit == "Hours":
-                        exp_time = now + datetime.timedelta(hours=time_val)
-                    else:
-                        exp_time = now + datetime.timedelta(days=time_val)
-
-                    user_db[target_user]["is_premium"] = True
-                    user_db[target_user]["premium_expiry"] = exp_time.strftime("%Y-%m-%d %H:%M:%S")
-                    user_db[target_user]["requested_code"] = False
-                    user_db[target_user]["seen_popup"] = False
-                    user_db[target_user]["activated_by"] = "Kanhaiya (Founder of Patil Infratech)"
-                    save_db(user_db)
-                    st.success(f"✅ {u_name} साठी {time_val} {time_unit} सेव्ह केले!")
-                    st.rerun()
-
-                if u_prem:
-                    if st.button(f"🔻 Revoke Premium: {u_name}", key=f"win_rev_{target_user}"):
-                        user_db[target_user]["is_premium"] = False
-                        user_db[target_user]["premium_expiry"] = None
-                        save_db(user_db)
-                        st.warning(f"❌ {u_name} चे प्रिमियम काढले आहे.")
-                        st.rerun()
-
-                st.markdown("---")
-                current_msg = info.get("admin_message", "Admin message...")
-                new_msg = st.text_input(f"✍️ {u_name} साठी इनबॉक्स मेसेज बदलणे:", value=current_msg, key=f"win_msg_{target_user}")
-                if st.button(f"✉️ मेसेज सेव्ह करा ({u_name})", key=f"win_btn_msg_{target_user}"):
-                    if new_msg.strip():
-                        user_db[target_user]["admin_message"] = new_msg.strip()
-                        save_db(user_db)
-                        st.success(f"✅ '{u_name}' चा इनबॉक्स मेसेज अपडेट झाला!")
-                        st.rerun()
-
-                if st.button(f"🗑️ Delete User: {u_name}", key=f"win_del_{target_user}"):
-                    del user_db[target_user]
-                    save_db(user_db)
-                    st.session_state.admin_view = "main"
-                    st.session_state.admin_selected_user = None
-                    st.error(f"❌ युझर '{u_name}' डिलीट केला आहे!")
-                    st.rerun()
-                
-                st.markdown("---")
-                st.markdown(f"##### 📜 {u_name} चे जनरेट केलेले एस्टिमेशन रिपोर्ट्स ({len(u_hist)})")
-                if u_hist:
-                    for idx, hist in enumerate(u_hist, 1):
-                        if isinstance(hist, dict):
-                            ts = hist.get('timestamp', 'N/A')
-                            with st.expander(f"🗓️ रिपोर्ट #{idx} | तारीख व वेळ: `{ts}`"):
-                                st.markdown(hist.get("report_data", "डेटा उपलब्ध नाही"))
-                else:
-                    st.info("ℹ️ या युझरने अजून एकही रिपोर्ट जनरेट केलेला नाही.")
-
-            else:
-                col_m1, col_m2 = st.columns(2)
-                with col_m1:
-                    if st.button("📈 Update Master Market Rates", key="btn_open_rates", use_container_width=True):
-                        st.session_state.admin_view = "rates"
-                        st.rerun()
-                with col_m2:
-                    if st.button("⚙️ Feature Lock Manager", key="btn_open_locks", use_container_width=True):
-                        st.session_state.admin_view = "locks"
-                        st.rerun()
-
-                st.markdown("---")
-                st.markdown("### 📋 युझर डेटाबेस MASTER LIST (Sorted A-Z)")
-                
-                all_users_keys = [k for k in user_db.keys() if k not in ["9999999999", "MASTER_MARKET_RATES", "PREMIUM_CODES", "FEATURE_LOCKS"]]
-                sorted_user_keys = sorted(all_users_keys, key=lambda x: str(user_db[x].get("id", x)).lower())
-
-                if sorted_user_keys:
-                    for mob in sorted_user_keys:
+                if all_users_keys:
+                    for mob in all_users_keys:
                         info = user_db[mob]
                         if not isinstance(info, dict): continue
-                            
                         u_name = info.get("id", mob)
                         u_prem = info.get("is_premium", False)
-                        is_req = info.get("requested_code", False)
-
+                        
                         col_u1, col_u2 = st.columns([3, 2])
                         if u_prem:
-                            col_u1.markdown(f"<span class='gold-vip-badge'>👑 VIP MEMBER: {u_name.upper()}</span>", unsafe_allow_html=True)
-                        elif is_req:
-                            col_u1.markdown(f"#### 👤 **{u_name}** `[🚨 CODE REQUESTED!]`", unsafe_allow_html=True)
+                            col_u1.markdown(f"<span class='gold-vip-badge'>👑 {u_name.upper()} (VIP)</span>", unsafe_allow_html=True)
                         else:
-                            col_u1.markdown(f"<span class='free-user-badge'>🆓 FREE: {u_name.upper()}</span>", unsafe_allow_html=True)
-
-                        if col_u2.button(f"👁️ View / Manage {u_name}", key=f"open_user_win_{mob}"):
-                            st.session_state.admin_view = "user_detail"
-                            st.session_state.admin_selected_user = mob
+                            col_u1.markdown(f"<span class='free-user-badge'>🆓 {u_name.upper()} (Free)</span>", unsafe_allow_html=True)
+                        
+                        if col_u2.button(f"⚡ Make VIP / Gen Code", key=f"adm_code_{mob}"):
+                            new_c = generate_random_code()
+                            if "PREMIUM_CODES" not in user_db: user_db["PREMIUM_CODES"] = {}
+                            user_db["PREMIUM_CODES"][new_c] = {"assigned_to": u_name, "used": False}
+                            user_db[mob]["admin_message"] = f"तुमचा प्रिमियम कोड: {new_c}"
+                            save_db(user_db)
+                            st.success(f"Generated Code for {u_name}: `{new_c}`")
                             st.rerun()
                         st.write("---")
                 else:
-                    st.info("ℹ️ डेटाबेसमध्ये सध्या कोणताही सामान्य युझर नाही.")
+                    st.info("ℹ️ कोणताही युझर नोंदणीकृत नाही.")
+
+            elif "4. Ad & Sponsor Manager" in adm_tab:
+                st.markdown("#### 📢 Ad & Sponsor Manager (जाहिरात व्यवस्थापन)")
+                st.caption("💡 युझर्सनी पाठवलेल्या किंवा ॲडमिनने सेट केलेल्या जाहिराती इथे मॅनेज करा:")
+                
+                if "ADS_DB" not in user_db: user_db["ADS_DB"] = []
+                
+                new_ad_title = st.text_input("Ad / Sponsor Title:")
+                new_ad_desc = st.text_area("Ad Description / Offer:")
+                new_ad_link = st.text_input("Target Link or WhatsApp Number:")
+                
+                if st.button("🚀 Publish New Ad to App", type="primary"):
+                    if new_ad_title.strip():
+                        ad_item = {
+                            "title": new_ad_title,
+                            "desc": new_ad_desc,
+                            "link": new_ad_link,
+                            "active": True,
+                            "date": datetime.datetime.now().strftime("%Y-%m-%d")
+                        }
+                        user_db["ADS_DB"].append(ad_item)
+                        save_db(user_db)
+                        st.success("✅ जाहिरात यशस्वीरित्या ॲपवर लाईव्ह झाली!")
+                        st.rerun()
+
+                st.markdown("---")
+                st.markdown("##### 📋 सध्या चालू असलेल्या जाहिराती (Active Ads):")
+                if user_db["ADS_DB"]:
+                    for idx, ad in enumerate(user_db["ADS_DB"]):
+                        st.info(f"**{ad['title']}** - {ad['desc']}")
+                        if st.button(f"🗑️ Delete Ad #{idx+1}", key=f"del_ad_{idx}"):
+                            user_db["ADS_DB"].pop(idx)
+                            save_db(user_db)
+                            st.rerun()
+                else:
+                    st.info("ℹ️ सध्या कोणतीही ॲड लाईव्ह नाही.")
 
         elif admin_id or admin_pass:
             st.error("❌ चुकीचा Admin ID किंवा Password!")
             
     st.stop()
 
-# सध्याचा ॲक्टिव्ह युझर
+# ==========================================
+# 🚀 MAIN DASHBOARD (USER LOGGED IN)
+# ==========================================
 current_user_name = st.session_state.app_user_name
 user_db = load_db()
 
-# युझर हेडर व प्रिमियम व्हॅलिडिटी तपासणी
 is_user_premium, status_text_str = check_user_premium_status(current_user_name)
 
 col_u, col_lo = st.columns([3.5, 1.5])
@@ -612,13 +518,25 @@ if is_user_premium:
 else:
     col_u.markdown(f"<span class='free-user-badge'>🆓 FREE USER: {current_user_name.upper()}</span>", unsafe_allow_html=True)
 
-if col_lo.button("🔄 नाव बदला"):
+if col_lo.button("🔄 Logout / ॲप बदला"):
     st.session_state.app_user_name = None
     st.session_state.current_comment = "काही नाही"
     st.session_state.selected_module = None
     st.rerun()
 
-# 🔄 इनबॉक्स मेसेज नेहमी लेटेस्ट डेटाबेसमधून लोड करणे
+# 📢 ॲपवर चालू असलेली ॲड किंवा स्पॉन्सरशिप बॅनर्स दाखवणे
+if "ADS_DB" in user_db and user_db["ADS_DB"]:
+    for ad in user_db["ADS_DB"]:
+        if ad.get("active", False):
+            st.markdown(f"""
+                <div style="background: linear-gradient(135deg, #b45309 0%, #d97706 100%); padding: 12px 18px; border-radius: 14px; margin-bottom: 15px; border: 1px solid #fbbf24; color: #fff;">
+                    <b>📢 SPONSORED / AD: {ad['title']}</b><br>
+                    <span>{ad['desc']}</span><br>
+                    <a href="{ad['link']}" target="_blank" style="color: #fef08a; font-weight: bold; text-decoration: underline;">👉 अधिक माहितीसाठी इथे क्लिक करा</a>
+                </div>
+            """, unsafe_allow_html=True)
+
+# 🔄 इनबॉक्स मेसेज लोड करणे
 current_user_data = user_db.get(current_user_name, {})
 admin_msg = current_user_data.get("admin_message", None)
 if admin_msg:
@@ -627,169 +545,66 @@ if admin_msg:
     st.write("---")
 
 # ==========================================
-# 🔑 १. युझरसाठी प्रिमियम कोड रिक्वेस्ट व इनपुट (FREE USER ONLY)
+# 🔑 प्रिमियम कोड इनपुट
 # ==========================================
 if not is_user_premium:
     with st.expander("🔑 प्रिमियम अनलॉक करा (Enter Premium Code)"):
-        st.markdown("##### 🎁 तुम्हाला मिळालेला प्रिमियम कोड इथे प्रविष्ट करा:")
         input_code = st.text_input("Enter Code (e.g. PATIL-XXXXX):", key="home_code_input").strip()
-        
         c_btn1, c_btn2 = st.columns(2)
         with c_btn1:
-            if st.button("🔓 Activate Premium Now", key="home_activate_btn", type="primary"):
+            if st.button("🔓 Activate Premium", type="primary"):
                 codes_db = user_db.get("PREMIUM_CODES", {})
-                if input_code in codes_db:
-                    c_info = codes_db[input_code]
-                    if c_info.get("used", False):
-                        st.error("❌ हा कोड आधीच वापरला गेला आहे! तो आता व्हॅलिड नाही.")
-                    else:
-                        user_db["PREMIUM_CODES"][input_code]["used"] = True
-                        user_db["PREMIUM_CODES"][input_code]["used_by"] = current_user_name
-                        user_db["PREMIUM_CODES"][input_code]["used_date"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-                        exp_datetime = datetime.datetime.now() + datetime.timedelta(days=28)
-                        user_db[current_user_name]["is_premium"] = True
-                        user_db[current_user_name]["premium_expiry"] = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
-                        user_db[current_user_name]["seen_popup"] = False
-                        user_db[current_user_name]["activated_by"] = "Kanhaiya (Founder of Patil Infratech)"
-
-                        user_db[current_user_name]["admin_message"] = f"Welcome {current_user_name}! पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
-                        save_db(user_db)
-                        st.rerun()
+                if input_code in codes_db and not codes_db[input_code].get("used", False):
+                    user_db["PREMIUM_CODES"][input_code]["used"] = True
+                    exp_datetime = datetime.datetime.now() + datetime.timedelta(days=28)
+                    user_db[current_user_name]["is_premium"] = True
+                    user_db[current_user_name]["premium_expiry"] = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
+                    user_db[current_user_name]["seen_popup"] = False
+                    user_db[current_user_name]["activated_by"] = "Kanhaiya (Founder of Patil Infratech)"
+                    save_db(user_db)
+                    st.rerun()
                 else:
-                    st.error("❌ चुकीचा कोड! कृपया Admin कडून आलेला अचूक कोड टाका.")
-
+                    st.error("❌ चुकीचा किंवा आधीच वापरलेला कोड!")
         with c_btn2:
-            if st.button("📩 Request Code from Admin", key="req_code_btn"):
+            if st.button("📩 Request Code"):
                 user_db[current_user_name]["requested_code"] = True
                 save_db(user_db)
-                st.success("✅ Admin ला कोडसाठी रिक्वेस्ट पाठवली आहे! लवकरच इनबॉक्समध्ये कोड दिसेल.")
+                st.success("✅ ॲडमीनला रिक्वेस्ट पाठवली!")
 
 # ==========================================
-# 🔐 ॲप व्हॉट्सॲप फीचर अनलॉक/प्रीमियम फंक्शन
+# 🤖 CIVIL AI ASSISTANT (थेट फायनल आणि अचूक उत्तर)
 # ==========================================
-def render_whatsapp_feature(encoded_msg, key_prefix):
-    user_db = load_db()
-    is_prem, status_str = check_user_premium_status(current_user_name)
-    locks_cfg = user_db.get("FEATURE_LOCKS", {})
-    wa_lock_setting = locks_cfg.get("WhatsApp Share", "Premium")
-
-    if wa_lock_setting == "Free" or is_prem:
-        st.markdown(f'''
-            <a href="https://wa.me/?text={encoded_msg}" target="_blank">
-                <button style="width: 100%; background-color: #25D366; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px;">
-                    📱 Share Full Report on WhatsApp {'(🆓 Free Access)' if wa_lock_setting == 'Free' else '(👑 VIP Premium Active)'}
-                </button>
-            </a>
-        ''', unsafe_allow_html=True)
-    else:
-        with st.expander("🔒 WhatsApp Report Sharing - Unlock Premium"):
-            st.warning("⚠️ व्हॉट्सॲपवर पूर्ण रिपोर्ट शेअर करण्याचे फीचर प्रिमियम युझर्ससाठी आहे.")
-            st.caption("💡 अनलॉक करण्यासाठी Admin कडून आलेला प्रिमियम कोड खाली टाका:")
-            
-            p_code = st.text_input("Enter Activation Code:", key=f"{key_prefix}_code_input").strip()
-            
-            w_col1, w_col2 = st.columns(2)
-            with w_col1:
-                if st.button("🔓 Unlock WhatsApp Share Now", key=f"{key_prefix}_unlock_btn"):
-                    codes_db = user_db.get("PREMIUM_CODES", {})
-                    if p_code in codes_db:
-                        c_info = codes_db[p_code]
-                        if c_info.get("used", False):
-                            st.error("❌ हा कोड आधीच वापरला गेला आहे! तो आता व्हॅलिड नाही.")
-                        else:
-                            user_db["PREMIUM_CODES"][p_code]["used"] = True
-                            user_db["PREMIUM_CODES"][p_code]["used_by"] = current_user_name
-                            user_db["PREMIUM_CODES"][p_code]["used_date"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-                            exp_datetime = datetime.datetime.now() + datetime.timedelta(days=28)
-                            user_db[current_user_name]["is_premium"] = True
-                            user_db[current_user_name]["premium_expiry"] = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
-                            user_db[current_user_name]["seen_popup"] = False
-                            user_db[current_user_name]["activated_by"] = "Kanhaiya (Founder of Patil Infratech)"
-                            
-                            user_db[current_user_name]["admin_message"] = f"Welcome {current_user_name}! पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
-                            save_db(user_db)
-                            st.rerun()
-                    else:
-                        st.error("❌ चुकीचा प्रिमियम कोड! कृपया अचूक कोड टाका.")
-
-            with w_col2:
-                if st.button("📩 Request Code from Admin", key=f"{key_prefix}_req_btn"):
-                    user_db[current_user_name]["requested_code"] = True
-                    save_db(user_db)
-                    st.success("✅ ॲडमीनला कोडसाठी रिक्वेस्ट पाठवली आहे!")
-
-# ==========================================
-# 🤖 CIVIL AI ASSISTANT (Official Google GenAI SDK - gemini-3.6-flash)
-# ==========================================
-st.markdown("---")
-st.markdown("### 🤖 Patil Infratech Civil AI Assistant")
-
 locks_cfg = user_db.get("FEATURE_LOCKS", {})
 ai_lock_setting = locks_cfg.get("Civil AI Assistant", "Premium")
 
 if ai_lock_setting == "Free" or is_user_premium:
-    st.caption("💡 Ask any construction, estimation, or material question in ANY language or script (Marathi, English, Hindi, Hinglish, etc.):")
-    user_ai_query = st.text_input("तुमचा प्रश्न किंवा शंका इथे लिहा (Type your question here):", placeholder="उदा. 1000 sq.ft slab steel calculation, kiti cement lagel...", key="civil_ai_input")
-    
-    if st.button("🚀 Ask Civil AI", key="ask_civil_ai_btn"):
-        if user_ai_query.strip():
-            # 5 Seconds Realistic Thinking Spinner & Delay
-            with st.spinner("🤖 Civil AI is analyzing your question and calculating accurately... (कृपया ५ सेकंद वाट पाहा)"):
-                time.sleep(5.0)
-                
-                api_key = st.secrets.get("GEMINI_API_KEY", os.getenv("GEMINI_API_KEY", ""))
-                ai_response_text = ""
-                
-                if HAS_GENAI and api_key:
-                    try:
-                        client = genai.Client(api_key=api_key)
-                        prompt = f"""
-                        You are an expert Senior Civil Engineer and Quantity Surveyor for Patil Infratech, founded by Kanhaiya. 
-                        The user is asking a construction, estimation, or material calculation question in any language or script (Marathi, English, Hinglish, Hindi, etc.). 
-                        Provide an accurate, standard, highly professional engineering response with exact formulas or material quantities if applicable. Match the user's language/script context.
-                        User Query: {user_ai_query}
-                        """
-                        # Using latest frontier model gemini-3.6-flash
-                        response = client.models.generate_content(
-                            model='gemini-3.6-flash',
-                            contents=prompt,
-                        )
-                        if response and response.text:
-                            ai_response_text = response.text
-                    except Exception as e:
+    with st.expander("🤖 Patil Infratech Civil AI Assistant (Ask Anything)"):
+        user_ai_query = st.text_input("तुमचा प्रश्न किंवा शंका इथे लिहा:", placeholder="उदा. dry volume factor for concrete...", key="civil_ai_input")
+        if st.button("🚀 Ask Civil AI"):
+            if user_ai_query.strip():
+                with st.spinner("🤖 Civil AI is analyzing... (कृपया ५ सेकंद वाट पाहा)"):
+                    time.sleep(5.0)
+                    api_key = st.secrets.get("GEMINI_API_KEY", os.getenv("GEMINI_API_KEY", ""))
+                    ai_response_text = ""
+                    if HAS_GENAI and api_key:
                         try:
-                            # Fallback to gemini-3.5-flash
                             client = genai.Client(api_key=api_key)
-                            response = client.models.generate_content(
-                                model='gemini-3.5-flash',
-                                contents=prompt,
-                            )
-                            if response and response.text:
-                                ai_response_text = response.text
-                        except Exception as e2:
-                            ai_response_text = f"⚠️ Error communicating with Gemini API: {e2}"
-                else:
-                    ai_response_text = "⚠️ GEMINI_API_KEY is missing from Streamlit Secrets or google-genai is not installed."
-
-                st.markdown(f"""
-                    <div style="background: rgba(31, 41, 55, 0.95); border-left: 5px solid #FFB300; padding: 18px; border-radius: 14px; color: #f3f4f6; margin-top: 10px; line-height: 1.6;">
-                        <b>🎯 Civil AI Expert Answer:</b><br><br>{ai_response_text}
-                    </div>
-                """, unsafe_allow_html=True)
-        else:
-            st.warning("⚠️ कृपया आधी तुमचा प्रश्न किंवा शंका लिहा / Please type your question first!")
-else:
-    st.markdown("""
-        <div style="background: rgba(31, 41, 55, 0.6); border: 1px dashed #3b82f6; padding: 15px; border-radius: 14px; text-align: center;">
-            <p style="color: #60a5fa; margin: 0; font-weight: 600;">🔒 Civil AI Assistant हे फीचर केवळ प्रिमियम (VIP) युझर्ससाठी आहे.</p>
-            <p style="color: #9ca3af; margin: 5px 0 0 0; font-size: 13px;">प्रिमियम कोड टाकून किंवा ॲडमीनकडून कोड मागवून हे फिचर अनलॉक करा.</p>
-        </div>
-    """, unsafe_allow_html=True)
+                            prompt = f"You are a Senior Civil Engineer for Patil Infratech. Provide a direct, professional, final answer to the user query without showing calculation steps: {user_ai_query}"
+                            response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
+                            if response and response.text: ai_response_text = response.text
+                        except Exception as e:
+                            ai_response_text = f"⚠️ AI Error: {e}"
+                    if not ai_response_text or "Error" in ai_response_text:
+                        ai_response_text = f"👷‍♂️ **Patil Infratech Expert Engineer Analysis:** Regarding your query *\"{user_ai_query}\"*, please use our Rate Analysis or BBS Calculator modules."
+                    
+                    st.markdown(f"""
+                        <div style="background: rgba(31, 41, 55, 0.95); border-left: 5px solid #FFB300; padding: 15px; border-radius: 12px; margin-top: 10px;">
+                            <b>🎯 Civil AI Answer:</b><br><br>{ai_response_text}
+                        </div>
+                    """, unsafe_allow_html=True)
 
 # ==========================================
-# 🎛️ DASHBOARD / ICON SELECTION SCREEN
+# 🎛️ DASHBOARD / MODULE SELECTION SCREEN
 # ==========================================
 if st.session_state.selected_module is None:
     st.markdown("### 🚀 तुम्हाला काय करायचे आहे ते निवडा:")
@@ -805,12 +620,12 @@ if st.session_state.selected_module is None:
             <div style="text-align: center; background: rgba(31, 41, 55, 0.8); padding: 20px; border-radius: 18px; border: 1px solid rgba(59, 130, 246, 0.3);">
                 <h1 style="font-size: 50px; margin:0;">📊</h1>
                 <h3 style="margin: 10px 0 5px 0; color: #f3f4f6;">Rate Analysis</h3>
-                <p style="font-size: 12px; color: #9ca3af;">दर विश्लेषण (काँक्रीट व वीटकाम) [{ra_badge}]</p>
+                <p style="font-size: 12px; color: #9ca3af;">दर विश्लेषण [{ra_badge}]</p>
             </div>
         """, unsafe_allow_html=True)
         if st.button("📊 Open Rate Analysis", key="btn_open_ra", use_container_width=True):
             if ra_lock == "Premium" and not is_user_premium:
-                st.error("🔒 हे फीचर प्रिमियम युझर्ससाठी आहे! कृपया आधी प्रिमियम अनलॉक करा.")
+                st.error("🔒 हे फीचर प्रिमियम युझर्ससाठी आहे!")
             else:
                 st.session_state.selected_module = "Rate Analysis"
                 st.rerun()
@@ -826,7 +641,7 @@ if st.session_state.selected_module is None:
         """, unsafe_allow_html=True)
         if st.button("🏗️ Open BBS", key="btn_open_bbs", use_container_width=True):
             if bbs_lock == "Premium" and not is_user_premium:
-                st.error("🔒 हे फीचर प्रिमियम युझर्ससाठी आहे! कृपया आधी प्रिमियम अनलॉक करा.")
+                st.error("🔒 हे फीचर प्रिमियम युझर्ससाठी आहे!")
             else:
                 st.session_state.selected_module = "BBS"
                 st.rerun()
