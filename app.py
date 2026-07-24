@@ -237,23 +237,11 @@ user_db = load_db()
 def generate_random_code():
     return "PATIL-" + ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
 
-# 🎉 ३ सेकंदांचा पूर्ण ऑपेक (100% Solid Color) प्रिमियम सेलिब्रेशन ओव्हरले
+# 🎉 ३ सेकंदांचा पूर्ण ऑपेक (100% Solid Color & Clean Screen) प्रिमियम सेलिब्रेशन ओव्हरले
 def show_premium_celebration(username, duration_str="28 Days"):
-    placeholder = st.empty()
-    with placeholder.container():
-        st.markdown(f"""
-            <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
-                        background-color: #0b0f19; background: linear-gradient(135deg, #0b0f19 0%, #1e3a8a 100%);
-                        z-index: 9999999; display: flex; flex-direction: column; 
-                        justify-content: center; align-items: center; text-align: center; padding: 20px;">
-                <h1 style="font-size: 80px; margin: 0;">👑 🎉</h1>
-                <h1 style="color: #60a5fa; font-size: 34px; font-weight: 800; margin-top: 15px;">CONGRATULATIONS {username.upper()}!</h1>
-                <h2 style="color: #f3f4f6; font-size: 22px; margin-top: 10px;">YOU ARE NOW A PREMIUM MEMBER OF PATIL INFRATECH!</h2>
-                <p style="color: #93c5fd; font-size: 18px; margin-top: 10px;">Your WhatsApp Sharing & Premium Features are Active for <b>{duration_str}</b>! 🚀</p>
-            </div>
-        """, unsafe_allow_html=True)
-        time.sleep(3)
-    placeholder.empty()
+    st.session_state["show_pop_overlay"] = True
+    st.session_state["pop_user"] = username
+    st.session_state["pop_dur"] = duration_str
 
 # ⏳ प्रिमियम स्टेटस व अचूक एक्सपायरी तपासणी
 def check_user_premium_status(username):
@@ -295,6 +283,28 @@ if "selected_module" not in st.session_state:
     st.session_state.selected_module = None
 if "admin_selected_user" not in st.session_state:
     st.session_state.admin_selected_user = None
+
+# ==========================================
+# 🛑 FULL SCREEN ISOLATED POP-UP OVERLAY (मागचे काहीही न दिसण्यासाठी)
+# ==========================================
+if st.session_state.get("show_pop_overlay", False):
+    username = st.session_state.get("pop_user", "User")
+    duration_str = st.session_state.get("pop_dur", "28 Days")
+    
+    st.markdown(f"""
+        <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
+                    background-color: #0b0f19; background: linear-gradient(135deg, #0b0f19 0%, #1e3a8a 100%);
+                    z-index: 9999999; display: flex; flex-direction: column; 
+                    justify-content: center; align-items: center; text-align: center; padding: 20px;">
+            <h1 style="font-size: 90px; margin: 0;">👑 🎉</h1>
+            <h1 style="color: #60a5fa; font-size: 36px; font-weight: 800; margin-top: 15px;">CONGRATULATIONS {username.upper()}!</h1>
+            <h2 style="color: #f3f4f6; font-size: 24px; margin-top: 10px;">YOU ARE NOW A PREMIUM MEMBER OF PATIL INFRATECH!</h2>
+            <p style="color: #93c5fd; font-size: 20px; margin-top: 10px;">Your WhatsApp Sharing & Premium Features are Active for <b>{duration_str}</b>! 🚀</p>
+        </div>
+    """, unsafe_allow_html=True)
+    time.sleep(3)
+    st.session_state["show_pop_overlay"] = False
+    st.rerun()
 
 # मुख्य टायटल बॅनर
 st.markdown("""
@@ -347,7 +357,7 @@ if st.session_state.app_user_name is None:
             st.success("🔓 डेटाबेस अनलॉक झाला!")
             user_db = load_db()
 
-            # 🛑 window switcher logic for admin user management
+            # 🛑 DEDICATED WINDOW LOGIC FOR ADMIN USER MANAGEMENT (स्वतंत्र स्क्रीन)
             if st.session_state.admin_selected_user is not None:
                 target_user = st.session_state.admin_selected_user
                 
@@ -454,7 +464,7 @@ if st.session_state.app_user_name is None:
                     st.error(f"❌ युझर '{u_name}' डिलीट केला आहे!")
                     st.rerun()
                 
-                # 📜 USER REPORTS DISPLAY (विनाकारण दिसणाऱ्या नोट्स पूर्ण बंद)
+                # 📜 USER REPORTS DISPLAY
                 st.markdown("---")
                 st.markdown(f"##### 📜 {u_name} चे जनरेट केलेले एस्टिमेशन रिपोर्ट्स ({len(u_hist)})")
                 if u_hist:
@@ -467,7 +477,7 @@ if st.session_state.app_user_name is None:
                     st.info("ℹ️ या युझरने अजून एकही रिपोर्ट जनरेट केलेला नाही.")
 
             else:
-                # 🖥️ MASTER CLEAN LIST VIEW FOR ALL USERS
+                # 🖥️ MASTER CLEAN USER LIST
                 st.markdown("### 📈 Update Master Market Rates (Today's Live Rates)")
                 m_rates = user_db.get("MASTER_MARKET_RATES", {"cement": 400.0, "sand": 2500.0, "bricks": 8.0, "aggregate": 2200.0, "steel": 60.0})
                 
