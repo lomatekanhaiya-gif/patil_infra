@@ -21,7 +21,7 @@ except ImportError:
 st.set_page_config(page_title="PATIL INFRATECH", page_icon="🏗️", layout="centered")
 
 # ==========================================
-# 📂 फाईल डेटाबेस मॅनेजमेंट
+# 📂 फाईल डेटाबेस मॅनेजमेंट (Permanent Data Saving)
 # ==========================================
 DB_FILE = "users_db.json"
 
@@ -47,6 +47,7 @@ def load_db():
         },
         "ADS_DB": []
     }
+    # 🟢 ॲप कितीही वेळा अपडेट किंवा रीस्टार्ट झाले तरी जुना युझर डेटा कधीही उडणार नाही
     if os.path.exists(DB_FILE):
         try:
             with open(DB_FILE, "r", encoding="utf-8") as f:
@@ -395,7 +396,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 🛡️ ADMIN PANEL (4 Compartments with Ad Sponsor Manager)
+# 🛡️ ADMIN PANEL
 # ==========================================
 if st.session_state.is_admin_logged:
     st.markdown("## 👑 ADMIN DASHBOARD (PATIL INFRATECH)")
@@ -463,7 +464,7 @@ if st.session_state.is_admin_logged:
             st.success("✅ प्रिमियम/फ्री फीचर्स सेटिंग्स यशस्वीरित्या बदलल्या!")
 
     elif current_tab == "users":
-        st.markdown("### 📋 User Database Master List (Sorted A-Z)")
+        st.markdown("### 📋 User Database Master List")
         
         if st.session_state.admin_view == "user_detail" and st.session_state.admin_selected_user is not None:
             target_user = st.session_state.admin_selected_user
@@ -477,6 +478,8 @@ if st.session_state.is_admin_logged:
                 info = {}
             
             u_name = info.get("id", target_user)
+            u_uid = info.get("uid", "N/A")
+            u_mob = info.get("mobile", "N/A")
             u_comm = info.get("comment", "काही नाही")
             u_prem = info.get("is_premium", False)
             exp_date = info.get("premium_expiry", "N/A")
@@ -496,6 +499,7 @@ if st.session_state.is_admin_logged:
             st.markdown(f"""
                 <div class="admin-user-card">
                     <p style="margin:5px 0; font-size:16px;"><b>माहिती/स्टेटस:</b> <span class="gold-vip-badge">{status_badge}</span></p>
+                    <p style="margin:5px 0; font-size:15px;"><b>UID:</b> <code style="color:#60a5fa; font-size:15px;">{u_uid}</code> | <b>Mobile:</b> <code>{u_mob}</code></p>
                     <p style="margin:8px 0 5px 0; font-size:15px;"><b>प्रिमियम मुदत (Expiry):</b> <code>{exp_date}</code></p>
                     <p style="margin:5px 0; font-size:15px;"><b>ॲक्टिव्ह कोड (Unused):</b> <code style="color:#10b981; font-size:16px;">{assigned_code if assigned_code else 'काही नाही'}</code></p>
                     <p style="margin:5px 0; font-size:14px; color:#9ca3af;"><b>युझर कमेंट:</b> {u_comm}</p>
@@ -590,16 +594,17 @@ if st.session_state.is_admin_logged:
                 for mob in sorted_user_keys:
                     info = user_db[mob]
                     u_name = info.get("id", mob)
+                    u_uid = info.get("uid", "N/A")
                     u_prem = info.get("is_premium", False)
                     is_req = info.get("requested_code", False)
 
                     col_u1, col_u2 = st.columns([3, 2])
                     if u_prem:
-                        col_u1.markdown(f"<span class='gold-vip-badge'>👑 VIP MEMBER: {u_name.upper()}</span>", unsafe_allow_html=True)
+                        col_u1.markdown(f"<span class='gold-vip-badge'>👑 VIP MEMBER: {u_name.upper()}</span> (UID: <code>{u_uid}</code>)", unsafe_allow_html=True)
                     elif is_req:
-                        col_u1.markdown(f"#### 👤 **{u_name}** `[🚨 CODE REQUESTED!]`", unsafe_allow_html=True)
+                        col_u1.markdown(f"#### 👤 **{u_name}** `[🚨 CODE REQUESTED!]` (UID: `{u_uid}`)", unsafe_allow_html=True)
                     else:
-                        col_u1.markdown(f"<span class='free-user-badge'>🆓 FREE: {u_name.upper()}</span>", unsafe_allow_html=True)
+                        col_u1.markdown(f"<span class='free-user-badge'>🆓 FREE: {u_name.upper()}</span> (UID: <code>{u_uid}</code>)", unsafe_allow_html=True)
 
                     if col_u2.button(f"👁️ View / Manage {u_name}", key=f"open_user_win_{mob}"):
                         st.session_state.admin_view = "user_detail"
@@ -665,37 +670,102 @@ if st.session_state.is_admin_logged:
     st.stop()
 
 # ==========================================
-# 👤 युझर नाव प्रविष्ट करणे (कीबोर्डवरील Enter वर चालणारे) व ॲडमीन लॉगिन
+# 👤 UID & SECURE PIN LOGIN / SIGNUP SYSTEM
 # ==========================================
 if st.session_state.app_user_name is None:
-    st.markdown("### 👤 ॲपमध्ये प्रवेश करण्यासाठी नाव प्रविष्ट करा किंवा ॲडमीन लॉगिन करा")
+    st.markdown("### 🏗️ PATIL INFRATECH - SECURE LOGIN")
     
-    with st.form("user_login_form"):
-        u_input = st.text_input("तुमचे नाव (Your Name):", placeholder="NAME").strip()
-        submit_user = st.form_submit_button("ॲप उघडा (Enter App) 👉", type="primary")
-        
-        if submit_user:
-            if u_input:
-                st.session_state.app_user_name = u_input
-                user_db = load_db()
-                
-                if u_input not in user_db:
-                    new_welcome_msg = f"{u_input} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
-                    user_db[u_input] = {
-                        "id": u_input,
-                        "comment": "काही नाही",
-                        "admin_message": new_welcome_msg,
-                        "unread_notification": False,
-                        "is_premium": False,
-                        "premium_expiry": None,
-                        "requested_code": False,
-                        "seen_popup": False,
-                        "history": []
-                    }
-                    save_db(user_db)
-                st.rerun()
-            else:
-                st.warning("⚠️ कृपया ॲप वापरण्यासाठी आधी तुमचे नाव टाका!")
+    auth_mode = st.radio("निवडा (Select Option):", ["🔑 UID & PIN Login (लॉगिन करा)", "✨ Register (नवीन अकाउंट)", "❓ Forgot UID/PIN (आयडी/पिन विसरलात?)"], horizontal=True)
+    user_db = load_db()
+
+    # 1. LOGIN WITH UID & PIN
+    if "Login" in auth_mode:
+        with st.form("uid_login_form"):
+            input_uid = st.text_input("Enter your UID (उदा. ROHAN-3210):").strip().upper()
+            input_pin = st.text_input("Enter 4-Digit PIN:", type="password").strip()
+            submit_login = st.form_submit_button("🚀 Login Now", type="primary")
+
+            if submit_login:
+                found_user = None
+                for u_key, u_data in user_db.items():
+                    if isinstance(u_data, dict) and u_data.get("uid") == input_uid:
+                        found_user = u_key
+                        break
+
+                if found_user and user_db[found_user].get("pin") == input_pin:
+                    st.session_state.app_user_name = found_user
+                    st.success("🎉 यशस्वीरित्या लॉगिन झाले!")
+                    st.rerun()
+                else:
+                    st.error("❌ चुकीचा UID किंवा 4-Digit PIN!")
+
+    # 2. REGISTER NEW ACCOUNT
+    elif "Register" in auth_mode:
+        with st.form("uid_reg_form"):
+            reg_name = st.text_input("पूर्ण नाव (Full Name):", placeholder="उदा. Rohan Patil").strip()
+            reg_mob = st.text_input("मोबाईल नंबर (Mobile Number):", placeholder="१० अंकी नंबर").strip()
+            reg_pin = st.text_input("4-Digit सिक्रेट पिन सेट करा (Set PIN):", type="password", max_chars=4, placeholder="1234").strip()
+            submit_reg = st.form_submit_button("✨ Create Account & Get UID", type="primary")
+
+            if submit_reg:
+                if reg_name and len(reg_mob) >= 10 and len(reg_pin) == 4:
+                    first_name = reg_name.split()[0].upper()
+                    last_4_mob = reg_mob[-4:]
+                    generated_uid = f"{first_name}-{last_4_mob}"
+
+                    uid_exists = False
+                    for u_key, u_data in user_db.items():
+                        if isinstance(u_data, dict) and u_data.get("uid") == generated_uid:
+                            uid_exists = True
+                            break
+
+                    if uid_exists:
+                        generated_uid = f"{first_name}-{random.randint(1000, 9999)}"
+
+                    if reg_name not in user_db:
+                        new_welcome_msg = f"{reg_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
+                        user_db[reg_name] = {
+                            "id": reg_name,
+                            "uid": generated_uid,
+                            "pin": reg_pin,
+                            "mobile": reg_mob,
+                            "comment": "काही नाही",
+                            "admin_message": new_welcome_msg,
+                            "unread_notification": False,
+                            "is_premium": False,
+                            "premium_expiry": None,
+                            "requested_code": False,
+                            "seen_popup": False,
+                            "history": []
+                        }
+                        save_db(user_db)
+                        st.success(f"🎉 अकाउंट यशस्वीरित्या तयार झाले! तुमचा युनिक UID हा आहे: **{generated_uid}** (हा UID आणि PIN लक्षात ठेवा!)")
+                        st.session_state.app_user_name = reg_name
+                        time.sleep(2)
+                        st.rerun()
+                    else:
+                        st.error("❌ या नावाने आधीच अकाउंट आहे! कृपया दुसरे नाव वापरून रजिस्टर करा.")
+                else:
+                    st.warning("⚠️ कृपया सर्व माहिती अचूक भरा आणि अचूक ४ अंकी पिन (PIN) टाकल्याची खात्री करा!")
+
+    # 3. FORGOT UID/PIN
+    else:
+        with st.form("forgot_uid_form"):
+            forgot_mob = st.text_input("तुमचा नोंदणीकृत मोबाईल नंबर टाका (Registered Mobile):").strip()
+            submit_forgot = st.form_submit_button("🔍 Find My UID & PIN", type="primary")
+
+            if submit_forgot:
+                matched_users = []
+                for u_key, u_data in user_db.items():
+                    if isinstance(u_data, dict) and u_data.get("mobile") == forgot_mob:
+                        matched_users.append((u_data.get("id"), u_data.get("uid"), u_data.get("pin")))
+
+                if matched_users:
+                    st.success("✅ तुमचे अकाउंट तपशील खालीलप्रमाणे आहेत:")
+                    for name, uid_val, pin_val in matched_users:
+                        st.info(f"👤 नाव: **{name}** | 🔑 UID: **{uid_val}** | 🔒 PIN: **{pin_val}**")
+                else:
+                    st.error("❌ या मोबाईल नंबरशी संबंधित कोणतेही अकाउंट सापडले नाही.")
 
     st.write("---")
     
@@ -831,7 +901,7 @@ if not is_user_premium:
                 st.success("✅ ॲडमीनला रिक्वेस्ट पाठवली!")
 
 # ==========================================
-# 🤖 CIVIL AI ASSISTANT (थेट फायनल आणि अचूक उत्तर)
+# 🤖 CIVIL AI ASSISTANT
 # ==========================================
 locks_cfg = user_db.get("FEATURE_LOCKS", {})
 ai_lock_setting = locks_cfg.get("Civil AI Assistant", "Premium")
@@ -1118,7 +1188,7 @@ elif st.session_state.selected_module == "Rate Analysis":
                 if current_user_name in user_db:
                     user_db[current_user_name]["comment"] = user_note.strip()
                     save_db(user_db)
-                st.success("✅ कमेंट सबमिट झाली!")
+                st.success("✅ कमेंट सेव्ह झाली!")
 
         if st.button("📊 GENERATE RATE ANALYSIS REPORT", type="primary", key="bw_report_btn"):
             total_bricks = math.ceil(volume * 500)
@@ -1203,7 +1273,7 @@ elif st.session_state.selected_module == "Rate Analysis":
                 save_db(user_db)
 
 # ==========================================
-# 🛑 MODULE 2: BBS (BAR BENDING SCHEDULE) MODULE
+# 🛑 MODULE 2: BBS MODULE
 # ==========================================
 elif st.session_state.selected_module == "BBS":
     if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_to_main_bbs"):
