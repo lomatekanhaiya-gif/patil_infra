@@ -762,7 +762,7 @@ if st.session_state.app_user_name is None:
             reg_name = st.text_input("नाव (Name):", placeholder="उदा. Rohan").strip()
             reg_mob = st.text_input("मोबाईल नंबर (Mobile Number):", placeholder="१० अंकी नंबर").strip()
             reg_pin = st.text_input("4-Digit सिक्रेट पिन सेट करा (Set PIN):", type="password", max_chars=4, placeholder="1234").strip()
-            remember_me_reg = st.checkbox("📌 या डिव्हाइसवर अकाउंट सेव्ह ठेवा (Remember Me)", value=True, key="reg_rem")
+            remember_me_reg = st.checkbox("📌 या डिव्हाइसवर अकाउंट सेव्ह ठेवा (Remember Me)", value=false, key="reg_rem")
             submit_reg = st.form_submit_button("✨ Create Account & Get UID", type="primary")
 
             if submit_reg:
