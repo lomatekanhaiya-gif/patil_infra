@@ -21,6 +21,15 @@ except ImportError:
 st.set_page_config(page_title="PATIL INFRATECH", page_icon="🏗️", layout="centered")
 
 # ==========================================
+# 🕒 भारतीय वेळ (IST - Indian Standard Time) मिळवण्याचे फंक्शन
+# ==========================================
+def get_ist_time():
+    # UTC वेळेत ५ तास ३० मिनिटे पुढे करून अचूक IST वेळ काढणे
+    utc_now = datetime.datetime.utcnow()
+    ist_now = utc_now + datetime.timedelta(hours=5, minutes=30)
+    return ist_now
+
+# ==========================================
 # 📂 फाईल डेटाबेस मॅनेजमेंट (Permanent Data Saving)
 # ==========================================
 DB_FILE = "users_db.json"
@@ -94,7 +103,7 @@ def check_user_premium_status(username):
         if exp_date_str:
             try:
                 exp_datetime = datetime.datetime.strptime(exp_date_str, "%Y-%m-%d %H:%M:%S")
-                now_datetime = datetime.datetime.now()
+                now_datetime = get_ist_time()
                 
                 if now_datetime > exp_datetime:
                     user_info["is_premium"] = False
@@ -119,7 +128,7 @@ def check_user_premium_status(username):
 is_curr_premium, _ = check_user_premium_status(current_user_name)
 
 # ==========================================
-# 🎨 ULTRA-PREMIUM ROYAL METALLIC GOLD & EXECUTIVE ADMIN STYLING
+# 🎨 ULTRA-PREMIUM ROYAL METALLIC GOLD & AESTHETIC STYLING
 # ==========================================
 touch_glow_color = "rgba(255, 179, 0, 0.45)" if is_curr_premium else "rgba(59, 130, 246, 0.25)"
 touch_border_color = "#FFD54F" if is_curr_premium else "#3b82f6"
@@ -311,9 +320,9 @@ def render_whatsapp_feature(encoded_msg, key_prefix):
                         else:
                             user_db["PREMIUM_CODES"][p_code]["used"] = True
                             user_db["PREMIUM_CODES"][p_code]["used_by"] = current_user_name
-                            user_db["PREMIUM_CODES"][p_code]["used_date"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                            user_db["PREMIUM_CODES"][p_code]["used_date"] = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
 
-                            exp_datetime = datetime.datetime.now() + datetime.timedelta(days=28)
+                            exp_datetime = get_ist_time() + datetime.timedelta(days=28)
                             user_db[current_user_name]["is_premium"] = True
                             user_db[current_user_name]["premium_expiry"] = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
                             user_db[current_user_name]["seen_popup"] = False
@@ -532,7 +541,7 @@ if st.session_state.is_admin_logged:
                     user_db["PREMIUM_CODES"][new_c] = {
                         "assigned_to": u_name,
                         "used": False,
-                        "created_at": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        "created_at": get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
                     }
                     user_db[target_user]["admin_message"] = f"तुमचा प्रिमियम कोड: {new_c} (ॲपमध्ये टाकून प्रिमियम अनलॉक करा)"
                     user_db[target_user]["requested_code"] = False
@@ -549,7 +558,7 @@ if st.session_state.is_admin_logged:
                 time_unit = st.selectbox("युनिट (Unit):", ["Minutes", "Hours", "Days"], index=2, key=f"win_t_unit_{target_user}")
 
             if st.button(f"⚡ Set Premium Time ({time_val} {time_unit})", key=f"win_btn_custom_{target_user}"):
-                now = datetime.datetime.now()
+                now = get_ist_time()
                 if time_unit == "Minutes":
                     exp_time = now + datetime.timedelta(minutes=time_val)
                 elif time_unit == "Hours":
@@ -661,7 +670,7 @@ if st.session_state.is_admin_logged:
                         "media_url": media_url.strip(),
                         "position": position,
                         "active": is_active,
-                        "date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        "date": get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
                     }
                     user_db["ADS_DB"].append(new_ad)
                     save_db(user_db)
@@ -888,7 +897,7 @@ if not is_user_premium:
                 codes_db = user_db.get("PREMIUM_CODES", {})
                 
                 if input_code == "kanha_1p":
-                    exp_datetime = datetime.datetime.now() + datetime.timedelta(days=1)
+                    exp_datetime = get_ist_time() + datetime.timedelta(days=1)
                     user_db[current_user_name]["is_premium"] = True
                     user_db[current_user_name]["premium_expiry"] = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
                     user_db[current_user_name]["seen_popup"] = False
@@ -903,7 +912,7 @@ if not is_user_premium:
                     st.rerun()
                 elif input_code in codes_db and not codes_db[input_code].get("used", False):
                     user_db["PREMIUM_CODES"][input_code]["used"] = True
-                    exp_datetime = datetime.datetime.now() + datetime.timedelta(days=28)
+                    exp_datetime = get_ist_time() + datetime.timedelta(days=28)
                     user_db[current_user_name]["is_premium"] = True
                     user_db[current_user_name]["premium_expiry"] = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
                     user_db[current_user_name]["seen_popup"] = False
@@ -1130,7 +1139,7 @@ elif st.session_state.selected_module == "Rate Analysis":
             msg_text = f"🏗️ *PATIL INFRATECH - RATE ANALYSIS REPORT*\n"
             msg_text += f"👤 *Prepared For:* {current_user_name}\n"
             msg_text += f"🧱 *Work:* Concrete Work ({component.split(' ')[0]})\n"
-            msg_text += f"📅 *Date:* {datetime.datetime.now().strftime('%d-%m-%Y')}\n\n"
+            msg_text += f"📅 *Date:* {get_ist_time().strftime('%d-%m-%Y')}\n\n"
             msg_text += f"📋 *DETAILS:*\n"
             msg_text += f"• Cement: {c_bags} Bags @ ₹{cement_rate} = ₹{total_cement_cost:.2f}\n"
             msg_text += f"• Sand: {s_m3:.2f} m³ @ ₹{sand_rate} = ₹{total_sand_cost:.2f}\n"
@@ -1157,7 +1166,7 @@ elif st.session_state.selected_module == "Rate Analysis":
 
             user_db = load_db()
             if current_user_name in user_db:
-                timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                timestamp = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
                 new_report = {
                     "timestamp": timestamp,
                     "user_note": st.session_state.current_comment,
@@ -1262,7 +1271,7 @@ elif st.session_state.selected_module == "Rate Analysis":
             msg_text = f"🏗️ *PATIL INFRATECH - BRICKWORK REPORT*\n"
             msg_text += f"👤 *Prepared For:* {current_user_name}\n"
             msg_text += f"🧱 *Ratio:* {mortar_choice.split(' ')[0]} | *Vol:* {volume} m³\n"
-            msg_text += f"📅 *Date:* {datetime.datetime.now().strftime('%d-%m-%Y')}\n\n"
+            msg_text += f"📅 *Date:* {get_ist_time().strftime('%d-%m-%Y')}\n\n"
             msg_text += f"📋 *DETAILS:*\n"
             msg_text += f"• Bricks: {total_bricks} Nos = ₹{total_brick_cost:.2f}\n"
             msg_text += f"• Cement: {cement_bags} Bags = ₹{total_cement_cost:.2f}\n"
@@ -1287,7 +1296,7 @@ elif st.session_state.selected_module == "Rate Analysis":
 
             user_db = load_db()
             if current_user_name in user_db:
-                timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                timestamp = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
                 new_report = {
                     "timestamp": timestamp,
                     "user_note": st.session_state.current_comment,
@@ -1507,7 +1516,7 @@ elif st.session_state.selected_module == "BBS":
         report_table = f"""
 <div class="print-container">
 <h2>🏗️ PATIL INFRATECH - BAR BENDING SCHEDULE (BBS)</h2>
-<p><strong>Prepared For:</strong> {current_user_name} | <strong>Component:</strong> {rcc_comp} | <strong>Date:</strong> {datetime.datetime.now().strftime('%d-%m-%Y')}</p>
+<p><strong>Prepared For:</strong> {current_user_name} | <strong>Component:</strong> {rcc_comp} | <strong>Date:</strong> {get_ist_time().strftime('%d-%m-%Y')}</p>
 
 | DESCRIPTION | NOS | DIA | LENGTH | TOTAL LENGTH | WEIGHT | TOTAL WEIGHT |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -1526,7 +1535,7 @@ elif st.session_state.selected_module == "BBS":
         msg_text = f"🏗️ *PATIL INFRATECH - BAR BENDING SCHEDULE (BBS)*\n"
         msg_text += f"👤 *Prepared For:* {current_user_name}\n"
         msg_text += f"📐 *Component:* {rcc_comp}\n"
-        msg_text += f"📅 *Date:* {datetime.datetime.now().strftime('%d-%m-%Y')}\n"
+        msg_text += f"📅 *Date:* {get_ist_time().strftime('%d-%m-%Y')}\n"
         msg_text += f"📐 *Size:* {length_m:.2f}m x {width_m:.2f}m x {height_m:.2f}m\n\n"
         msg_text += f"📊 *DETAILED BAR SCHEDULE:*\n"
         msg_text += f"--------------------------------\n"
@@ -1559,7 +1568,7 @@ elif st.session_state.selected_module == "BBS":
 
         user_db = load_db()
         if current_user_name in user_db:
-            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            timestamp = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
             new_report = {
                 "timestamp": timestamp,
                 "user_note": st.session_state.current_comment,
