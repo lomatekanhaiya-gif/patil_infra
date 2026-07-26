@@ -679,7 +679,7 @@ if st.session_state.app_user_name is None:
                 user_db = load_db()
                 
                 if u_input not in user_db:
-                    new_welcome_msg = f" {current_user_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
+                    new_welcome_msg = f" {u_input} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
                     user_db[u_input] = {
                         "id": u_input,
                         "comment": "काही नाही",
@@ -768,12 +768,12 @@ if current_user_data.get("unread_notification", False):
     
     if st.button("✅ Mark as Read & Clear (वाचले आहे)", type="primary"):
         user_db[current_user_name]["unread_notification"] = False
-        user_db[current_user_name]["admin_message"] = f" {current_user_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
+        user_db[current_user_name]["admin_message"] = f" {u_input} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
         save_db(user_db)
         st.success("✅ मेसेज वाचून क्लियर केला आहे!")
         st.rerun()
 else:
-    admin_msg = current_user_data.get("admin_message", f" {current_user_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳")
+    admin_msg = current_user_data.get("admin_message", f" {u_input} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳")
     st.markdown("### 📥 Admin Message / Code Inbox")
     st.info(f"📢 **Admin:** {admin_msg}")
 
