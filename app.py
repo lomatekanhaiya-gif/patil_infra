@@ -670,15 +670,15 @@ if st.session_state.is_admin_logged:
     st.stop()
 
 # ==========================================
-# 👤 UID & NO-HYPHEN LOGIN / SIGNUP SYSTEM
+# 👤 UID & PIN SECURE LOGIN / SIGNUP SYSTEM
 # ==========================================
 if st.session_state.app_user_name is None:
     st.markdown("### 🏗️ PATIL INFRATECH - SECURE LOGIN")
     
-    auth_mode = st.radio("निवडा (Select Option):", ["🔑 UID Login (लॉगिन करा)", "✨ Register (नवीन अकाउंट)", "❓ Forgot UID (आयडी विसरलात?)"], horizontal=True)
+    auth_mode = st.radio("निवडा (Select Option):", ["🔑 UID Login (लॉगिन करा)", "✨ Register (नवीन अकाउंट)", "❓ Forgot UID/PIN (आयडी/पिन रिकव्हर करा)"], horizontal=True)
     user_db = load_db()
 
-    # 1. LOGIN WITH UID ONLY (No PIN, No Hyphen)
+    # 1. LOGIN WITH UID ONLY (No Hyphen)
     if "Login" in auth_mode:
         with st.form("uid_login_form"):
             input_uid = st.text_input("Enter your UID (उदा. ROHAN3210):").strip().upper()
@@ -696,71 +696,83 @@ if st.session_state.app_user_name is None:
                     st.success("🎉 यशस्वीरित्या लॉगिन झाले!")
                     st.rerun()
                 else:
-                    st.error("❌ चुकीचा UID! कृपया बरोबर UID टाка.")
+                    st.error("❌ चुकीचा UID! कृपया बरोबर UID टाका.")
 
-    # 2. REGISTER NEW ACCOUNT (Generate No-Hyphen UID)
+    # 2. REGISTER NEW ACCOUNT (UID & 4-Digit PIN)
     elif "Register" in auth_mode:
         with st.form("uid_reg_form"):
-            reg_name = st.text_input("पूर्ण नाव (Full Name):", placeholder="उदा. Rohan Patil").strip()
+            reg_name = st.text_input("नाव (Name):", placeholder="उदा. Rohan").strip()
             reg_mob = st.text_input("मोबाईल नंबर (Mobile Number):", placeholder="१० अंकी नंबर").strip()
+            reg_pin = st.text_input("4-Digit सिक्रेट पिन सेट करा (Set PIN):", type="password", max_chars=4, placeholder="1234").strip()
             submit_reg = st.form_submit_button("✨ Create Account & Get UID", type="primary")
 
             if submit_reg:
-                if reg_name and len(reg_mob) >= 10:
-                    first_name = reg_name.split()[0].upper()
-                    last_4_mob = reg_mob[-4:]
-                    # 🟢 No Hyphen format: ROHAN3210
-                    generated_uid = f"{first_name}{last_4_mob}"
-
-                    uid_exists = False
+                if reg_name and len(reg_mob) >= 10 and len(reg_pin) == 4:
+                    # 🟢 Check if mobile number already exists
+                    mob_exists = False
                     for u_key, u_data in user_db.items():
-                        if isinstance(u_data, dict) and u_data.get("uid") == generated_uid:
-                            uid_exists = True
+                        if isinstance(u_data, dict) and u_data.get("mobile") == reg_mob:
+                            mob_exists = True
                             break
 
-                    if uid_exists:
-                        generated_uid = f"{first_name}{random.randint(1000, 9999)}"
-
-                    if reg_name not in user_db:
-                        new_welcome_msg = f"{reg_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
-                        user_db[reg_name] = {
-                            "id": reg_name,
-                            "uid": generated_uid,
-                            "mobile": reg_mob,
-                            "comment": "काही नाही",
-                            "admin_message": new_welcome_msg,
-                            "unread_notification": False,
-                            "is_premium": False,
-                            "premium_expiry": None,
-                            "requested_code": False,
-                            "seen_popup": False,
-                            "history": []
-                        }
-                        save_db(user_db)
-                        st.success(f"🎉 अकाउंट यशस्वीरित्या तयार झाले! तुमचा युनिक UID हा आहे: **{generated_uid}** (हा UID लक्षात ठेवा, आता याने लॉगिन करा!)")
+                    if mob_exists:
+                        st.error("❌ या मोबाईल नंबरवर आधीच अकाउंट तयार आहे!")
                     else:
-                        st.error("❌ या नावाने आधीच अकाउंट आहे! कृपया दुसरे नाव वापरून रजिस्टर करा.")
-                else:
-                    st.warning("⚠️ कृपया पूर्ण नाव आणि १० अंकी मोबाईल नंबर टाका!")
+                        first_name = reg_name.split()[0].upper()
+                        last_4_mob = reg_mob[-4:]
+                        generated_uid = f"{first_name}{last_4_mob}"
 
-    # 3. FORGOT UID
+                        uid_exists = False
+                        for u_key, u_data in user_db.items():
+                            if isinstance(u_data, dict) and u_data.get("uid") == generated_uid:
+                                uid_exists = True
+                                break
+
+                        if uid_exists:
+                            generated_uid = f"{first_name}{random.randint(1000, 9999)}"
+
+                        if reg_name not in user_db:
+                            new_welcome_msg = f"{reg_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
+                            user_db[reg_name] = {
+                                "id": reg_name,
+                                "uid": generated_uid,
+                                "pin": reg_pin,
+                                "mobile": reg_mob,
+                                "comment": "काही नाही",
+                                "admin_message": new_welcome_msg,
+                                "unread_notification": False,
+                                "is_premium": False,
+                                "premium_expiry": None,
+                                "requested_code": False,
+                                "seen_popup": False,
+                                "history": []
+                            }
+                            save_db(user_db)
+                            st.success(f"🎉 अकाउंट यशस्वीरित्या तयार झाले! तुमचा युनिक UID हा आहे: **{generated_uid}** (हा UID आणि PIN लक्षात ठेवा, आता याने लॉगिन करा!)")
+                        else:
+                            st.error("❌ या नावाने आधीच अकाउंट आहे! कृपया दुसरे नाव वापरून रजिस्टर करा.")
+                else:
+                    st.warning("⚠️ कृपया नाव, १० अंकी मोबाईल नंबर आणि अचूक ४ अंकी पिन (PIN) टाकल्याची खात्री करा!")
+
+    # 3. FORGOT UID/PIN (Using Mobile & PIN)
     else:
         with st.form("forgot_uid_form"):
-            forgot_mob = st.text_input("तुमचा नोंदणीकृत मोबाईल नंबर टाका (Registered Mobile):").strip()
-            submit_forgot = st.form_submit_button("🔍 Find My UID", type="primary")
+            forgot_mob = st.text_input("नोंदणीकृत मोबाईल नंबर (Registered Mobile):").strip()
+            forgot_pin = st.text_input("तुमचा 4-Digit सिक्रेट पिन (Secret PIN):", type="password", max_chars=4).strip()
+            submit_forgot = st.form_submit_button("🔍 Recover My UID", type="primary")
 
             if submit_forgot:
                 matched_users = []
                 for u_key, u_data in user_db.items():
-                    if isinstance(u_data, dict) and u_data.get("mobile") == forgot_mob:
+                    if isinstance(u_data, dict) and u_data.get("mobile") == forgot_mob and u_data.get("pin") == forgot_pin:
                         matched_users.append((u_data.get("id"), u_data.get("uid")))
 
                 if matched_users:
-                    st.success("✅ तुमचे अकाउंट तपशील खालीलप्रमाणे आहेत:")
+                    st.success("✅ तुमचे अकाउंट तपशील सापडले आहेत:")
                     for name, uid_val in matched_users:
-                        st.info(f"👤 नाव: **{name}** | 🔑 UID: **{uid_val}**")
+                        st.info(f"👤 नाव: **{name}** | 🔑 UID: **{uid_val}** (आता या UID ने लॉगिन करा)")
                 else:
-                    st.error("❌ या मोबाईल नंबरशी संबंधित कोणतेही अकाउंट सापडले नाही.")
+                    st.error("❌ चुकीचा मोबाईल नंबर किंवा PIN! तपशील जुळत नाहीत.")
 
     st.write("---")
     
