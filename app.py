@@ -24,7 +24,6 @@ st.set_page_config(page_title="PATIL INFRATECH", page_icon="🏗️", layout="ce
 # 🕒 भारतीय वेळ (IST - Indian Standard Time) मिळवण्याचे फंक्शन
 # ==========================================
 def get_ist_time():
-    # UTC वेळेत ५ तास ३० मिनिटे पुढे करून अचूक IST वेळ काढणे
     utc_now = datetime.datetime.utcnow()
     ist_now = utc_now + datetime.timedelta(hours=5, minutes=30)
     return ist_now
@@ -75,9 +74,19 @@ def save_db(db):
 
 user_db = load_db()
 
-# Session State Initialization
+# Session State & Query Params Initialization (Auto-Login Support)
 if "app_user_name" not in st.session_state:
     st.session_state.app_user_name = None
+
+# ब्राउझरच्या query parameters मधून saved UID तपासून ऑटो-लॉगिन करणे
+query_params = st.query_params
+if st.session_state.app_user_name is None and "saved_uid" in query_params:
+    saved_uid = query_params["saved_uid"]
+    for u_key, u_data in user_db.items():
+        if isinstance(u_data, dict) and u_data.get("uid") == saved_uid:
+            st.session_state.app_user_name = u_key
+            break
+
 if "is_admin_logged" not in st.session_state:
     st.session_state.is_admin_logged = False
 if "admin_dashboard_tab" not in st.session_state:
@@ -128,7 +137,7 @@ def check_user_premium_status(username):
 is_curr_premium, _ = check_user_premium_status(current_user_name)
 
 # ==========================================
-# 🎨 ULTRA-PREMIUM ROYAL METALLIC GOLD & AESTHETIC STYLING
+# 🎨 ULTRA-PREMIUM ROYAL METALLIC GOLD & EXECUTIVE ADMIN STYLING
 # ==========================================
 touch_glow_color = "rgba(255, 179, 0, 0.45)" if is_curr_premium else "rgba(59, 130, 246, 0.25)"
 touch_border_color = "#FFD54F" if is_curr_premium else "#3b82f6"
@@ -696,7 +705,7 @@ if st.session_state.is_admin_logged:
     st.stop()
 
 # ==========================================
-# 👤 UID & PIN SECURE LOGIN / SIGNUP SYSTEM
+# 👤 UID & PIN SECURE LOGIN / SIGNUP SYSTEM (With Auto-Login / Remember Me)
 # ==========================================
 if st.session_state.app_user_name is None:
     st.markdown("### 🏗️ PATIL INFRATECH - SECURE LOGIN")
@@ -708,6 +717,7 @@ if st.session_state.app_user_name is None:
     if "Login" in auth_mode:
         with st.form("uid_login_form"):
             input_uid = st.text_input("Enter your UID (उदा. ROHAN3210):").strip().upper()
+            remember_me = st.checkbox("📌 या डिव्हाइसवर अकाउंट सेव्ह ठेवा (Remember Me)", value=True)
             submit_login = st.form_submit_button("🚀 Login Now", type="primary")
 
             if submit_login:
@@ -719,6 +729,8 @@ if st.session_state.app_user_name is None:
 
                 if found_user:
                     st.session_state.app_user_name = found_user
+                    if remember_me:
+                        st.query_params["saved_uid"] = input_uid
                     st.success("🎉 यशस्वीरित्या लॉगिन झाले!")
                     st.rerun()
                 else:
@@ -730,11 +742,11 @@ if st.session_state.app_user_name is None:
             reg_name = st.text_input("नाव (Name):", placeholder="उदा. Rohan").strip()
             reg_mob = st.text_input("मोबाईल नंबर (Mobile Number):", placeholder="१० अंकी नंबर").strip()
             reg_pin = st.text_input("4-Digit सिक्रेट पिन सेट करा (Set PIN):", type="password", max_chars=4, placeholder="1234").strip()
+            remember_me_reg = st.checkbox("📌 या डिव्हाइसवर अकाउंट सेव्ह ठेवा (Remember Me)", value=True, key="reg_rem")
             submit_reg = st.form_submit_button("✨ Create Account & Get UID", type="primary")
 
             if submit_reg:
                 if reg_name and len(reg_mob) >= 10 and len(reg_pin) == 4:
-                    # 🟢 Check if mobile number already exists
                     mob_exists = False
                     for u_key, u_data in user_db.items():
                         if isinstance(u_data, dict) and u_data.get("mobile") == reg_mob:
@@ -774,7 +786,12 @@ if st.session_state.app_user_name is None:
                                 "history": []
                             }
                             save_db(user_db)
-                            st.success(f"🎉 अकाउंट यशस्वीरित्या तयार झाले! तुमचा युनिक UID हा आहे: **{generated_uid}** (हा UID आणि PIN लक्षात ठेवा, आता याने लॉगिन करा!)")
+                            st.success(f"🎉 अकाउंट यशस्वीरित्या तयार झाले! तुमचा युनिक UID हा आहे: **{generated_uid}** (हा UID आणि PIN लक्षात ठेवा!)")
+                            st.session_state.app_user_name = reg_name
+                            if remember_me_reg:
+                                st.query_params["saved_uid"] = generated_uid
+                            time.sleep(2)
+                            st.rerun()
                         else:
                             st.error("❌ या नावाने आधीच अकाउंट आहे! कृपया दुसरे नाव वापरून रजिस्टर करा.")
                 else:
@@ -850,6 +867,9 @@ else:
 
 if col_lo.button("🔄 Logout / ॲप बदला"):
     st.session_state.app_user_name = None
+    # 🟢 Logout करताना सेव्ह केलेले query params क्लिअर करणे
+    if "saved_uid" in st.query_params:
+        del st.query_params["saved_uid"]
     st.session_state.current_comment = "काही नाही"
     st.session_state.selected_module = None
     st.rerun()
