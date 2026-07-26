@@ -307,7 +307,7 @@ def render_whatsapp_feature(encoded_msg, key_prefix):
                             user_db[current_user_name]["seen_popup"] = False
                             user_db[current_user_name]["activated_by"] = "Kanhaiya (Founder of Patil Infratech)"
                             
-                            user_db[current_user_name]["admin_message"] = f"मी {current_user_name} आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
+                            user_db[current_user_name]["admin_message"] = f"{current_user_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
                             user_db[current_user_name]["unread_notification"] = False
                             save_db(user_db)
                             st.rerun()
