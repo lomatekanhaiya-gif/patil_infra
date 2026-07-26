@@ -321,7 +321,7 @@ def render_whatsapp_feature(encoded_msg, key_prefix):
                     st.success("✅ ॲडमीनला कोडसाठी रिक्वेस्ट पाठवली आहे!")
 
 # ==========================================
-# --- १. वेलकम स्क्रीन ॲनिमेशन (Title Sponsor Displayed Here) ---
+# --- १. वेलकम स्क्रीन ॲनिमेशन (Loading Page with Title Sponsor) ---
 # ==========================================
 welcome_placeholder = st.empty()
 
@@ -348,19 +348,18 @@ if not st.session_state.welcome_completed:
         st.markdown("<h1 style='text-align: center; color: #60a5fa;'>🏗️ WELCOME TO PATIL INFRATECH...</h1>", unsafe_allow_html=True)
         st.markdown("<h3 style='text-align: center; color: #9ca3af;'>तुमचे स्वप्न, आमचे एस्टिमेशन!</h3>", unsafe_allow_html=True)
         
-        # 🟢 1st Sponsor: Title Sponsor on Loading Page
+        # 🟢 Loading Page वर तळाशी रिकाम्या जागेत दिसणारी लहान Ad (Title Sponsor)
         db_temp = load_db()
         ads_list = db_temp.get("ADS_DB", [])
         for ad in ads_list:
             if ad.get("active", False) and ad.get("position") == "Loading Page (Title Sponsor)":
                 st.markdown(f"""
-                    <div style="background: rgba(30, 58, 138, 0.7); border: 1px solid #60a5fa; padding: 12px; border-radius: 14px; text-align: center; margin: 20px auto; max-width: 450px;">
-                        <span style="font-size: 12px; color: #93c5fd; font-weight: bold;">⭐ TITLE SPONSOR</span><br>
-                        <b style="color: #ffffff; font-size: 16px;">{ad.get('title')}</b><br>
-                        <p style="color: #cbd5e1; font-size: 13px; margin: 5px 0;">{ad.get('desc')}</p>
-                        {"<img src='" + ad.get('media_url') + "' style='max-width:100%; border-radius:10px; margin-top:8px;'/>" if ad.get('media_type') == 'Photo (PNG/JPG)' and ad.get('media_url') else ""}
-                        {"<video controls autoplay loop style='max-width:100%; border-radius:10px; margin-top:8px;'><source src='" + ad.get('media_url') + "' type='video/mp4'></video>" if ad.get('media_type') == 'Video Ad' and ad.get('media_url') else ""}
-                        <br><a href="{ad.get('link')}" target="_blank" style="color: #fbbf24; font-weight: bold; text-decoration: underline; font-size: 14px;">👉 Visit Sponsor Link</a>
+                    <div style="background: rgba(17, 24, 39, 0.7); border: 1px solid rgba(59, 130, 246, 0.3); padding: 6px 10px; border-radius: 10px; text-align: center; margin: 15px auto; max-width: 280px;">
+                        <span style="font-size: 9px; color: #93c5fd; font-weight: bold;">⭐ SPONSOR</span><br>
+                        <b style="color: #ffffff; font-size: 12px;">{ad.get('title')}</b>
+                        <p style="color: #9ca3af; font-size: 10px; margin: 2px 0;">{ad.get('desc')}</p>
+                        {"<img src='" + ad.get('media_url') + "' style='max-height:50px; border-radius:6px; margin-top:3px;'/>" if ad.get('media_type') == 'Photo (PNG/JPG)' and ad.get('media_url') else ""}
+                        <br><a href="{ad.get('link')}" target="_blank" style="color: #fbbf24; font-weight: bold; text-decoration: underline; font-size: 11px;">👉 Visit Link</a>
                     </div>
                 """, unsafe_allow_html=True)
 
@@ -384,6 +383,15 @@ if not st.session_state.welcome_completed:
 
     welcome_placeholder.empty()
     st.session_state.welcome_completed = True
+
+# मुख्य टायटल बॅनर
+st.markdown("""
+    <div class="main-header">
+        <h1 style='color: white; margin:0; font-size: 26px;'>🏗️ PATIL INFRATECH</h1>
+        <p style='color: #e0e7ff; margin:5px 0 0 0; font-size: 14px;'>📐 Quantity Surveyor & Cost Estimator</p>
+        <small style='color: #93c5fd;'>Concept & Logic by: Kanhaiya (Founder of Patil Infratech)</small>
+    </div>
+""", unsafe_allow_html=True)
 
 # ==========================================
 # 🛡️ ADMIN PANEL (4 Compartments with Ad Sponsor Manager)
@@ -600,7 +608,6 @@ if st.session_state.is_admin_logged:
             else:
                 st.info("ℹ️ डेटाबेसमध्ये सध्या कोणताही सामान्य युझर नाही.")
 
-    # 4. Ad Sponsor Manager (2 Sponsors: Title Sponsor & Main App Sponsor)
     elif current_tab == "ads":
         st.markdown("### 📢 Ad & Sponsor Manager")
         st.caption("💡 इथून तू दोन प्रकारचे स्पॉन्सरशिप्स (Ads) मॅनेज करू शकतोस:")
@@ -645,7 +652,7 @@ if st.session_state.is_admin_logged:
         ads_list = user_db.get("ADS_DB", [])
         if ads_list:
             for idx, ad in enumerate(ads_list):
-                st.info(f"**#{idx+1} | {ad.get('title')}** ({ad.get('position')})\n- *Desc:* {ad.get('desc')}\n- *Status:* {'🟢 Active' if ad.get('active') else '🔴 Inactive'}")
+                st.info(f"**#{idx+1} | {ad.get('title')}** ({ad.get('position')})\n- *Status:* {'🟢 Active' if ad.get('active') else '🔴 Inactive'}")
                 if st.button(f"🗑️ Delete Ad #{idx+1}", key=f"del_ad_{idx}"):
                     user_db["ADS_DB"].pop(idx)
                     save_db(user_db)
@@ -718,17 +725,16 @@ user_db = load_db()
 
 is_user_premium, status_text_str = check_user_premium_status(current_user_name)
 
-# 🟢 2nd Sponsor: Main App Sponsor (PATIL INFRATECH टायटलच्या वर दिसणारा बॅनर्स)
+# 🟢 Main App Dashboard वर अगदी लहान जागेत दिसणारी Ad (Top Banner)
 ads_list = user_db.get("ADS_DB", [])
 for ad in ads_list:
     if ad.get("active", False) and ad.get("position") == "Main App Header (Top Banner)":
         st.markdown(f"""
-            <div style="background: linear-gradient(135deg, #b45309 0%, #d97706 100%); padding: 12px 18px; border-radius: 14px; margin-bottom: 15px; border: 1px solid #fbbf24; color: #fff; text-align: center;">
-                <b>📢 SPONSOR / AD: {ad.get('title')}</b><br>
-                <span>{ad.get('desc')}</span><br>
-                {"<img src='" + ad.get('media_url') + "' style='max-width:100%; border-radius:10px; margin-top:8px;'/>" if ad.get('media_type') == 'Photo (PNG/JPG)' and ad.get('media_url') else ""}
-                {"<video controls autoplay loop style='max-width:100%; border-radius:10px; margin-top:8px;'><source src='" + ad.get('media_url') + "' type='video/mp4'></video>" if ad.get('media_type') == 'Video Ad' and ad.get('media_url') else ""}
-                <br><a href="{ad.get('link')}" target="_blank" style="color: #fef08a; font-weight: bold; text-decoration: underline;">👉 अधिक माहितीसाठी इथे क्लिक करा</a>
+            <div style="background: rgba(17, 24, 39, 0.7); border: 1px solid rgba(59, 130, 246, 0.3); padding: 6px 10px; border-radius: 10px; text-align: center; margin-bottom: 15px;">
+                <span style="font-size: 9px; color: #93c5fd; font-weight: bold;">📢 SPONSOR AD</span><br>
+                <b style="color: #fff; font-size: 12px;">{ad.get('title')}</b> — <span style="color: #cbd5e1; font-size: 11px;">{ad.get('desc')}</span>
+                {"<img src='" + ad.get('media_url') + "' style='max-height:50px; border-radius:6px; margin-top:3px;'/>" if ad.get('media_type') == 'Photo (PNG/JPG)' and ad.get('media_url') else ""}
+                <a href="{ad.get('link')}" target="_blank" style="color: #fbbf24; font-weight: bold; text-decoration: underline; font-size: 11px; margin-left: 6px;">[Visit]</a>
             </div>
         """, unsafe_allow_html=True)
 
