@@ -37,9 +37,12 @@ def load_db():
     db = {
         "9999999999": {
             "id": "kanha", 
+            "uid": "KANHA_1P",
+            "pin": "1234",
+            "mobile": "9999999999",
             "password": "patiladmin123",
             "comment": "मास्टर ॲडमीन अकाउंट",
-            "admin_message": "मास्टर ॲडमीन",
+            "admin_message": "स्वागत आहे मास्टर कन्हैया! आपले पाटील इन्फ्राटेक मध्ये सर्व अधिकार अनलॉक्ड आहेत ⚡",
             "is_premium": True,
             "premium_expiry": "2099-12-31 23:59:59",
             "requested_code": False,
@@ -106,9 +109,12 @@ if current_user_name and current_user_name in user_db:
     user_db[current_user_name]["last_active"] = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
     save_db(user_db)
 
-# ⏳ प्रिमियम स्टेटस व अचूक एक्सपायरी तपासणी
+# ⏳ प्रिमियम स्टेटस व अचूक एक्सपायरी तपासणी (Master Account KANHA_1P साठी सदाबहार प्रिमियम)
 def check_user_premium_status(username):
     if not username: return False, "Free"
+    if username.lower() == "kanha" or username == "9999999999":
+        return True, "Master Lifetime VIP"
+    
     db = load_db()
     user_info = db.get(username, {})
     if isinstance(user_info, dict) and user_info.get("is_premium", False):
@@ -734,7 +740,7 @@ if st.session_state.app_user_name is None:
 
     if "Login" in auth_mode:
         with st.form("uid_login_form"):
-            input_uid = st.text_input("Enter your UID (उदा. ROHAN3210):").strip().upper()
+            input_uid = st.text_input("Enter your UID (उदा. KANHA_1P):").strip().upper()
             remember_me = st.checkbox("📌 या डिव्हाइसवर अकाउंट सेव्ह ठेवा (Remember Me)", value=False)
             submit_login = st.form_submit_button("🚀 Login Now", type="primary")
 
@@ -803,7 +809,7 @@ if st.session_state.app_user_name is None:
                                 "history": []
                             }
                             save_db(user_db)
-                            st.success(f"🎉 अकाउंट यशस्वीरित्या तयार झाले! तुमचा युनिक UID हा आहे: **{generated_uid}** (हा UID आणि PIN लक्षात ठेवा!)")
+                            st.success(f"🎉 अकाउंट यशस्वीरित्या तयार झाले! तुमचा युनिक UID हा आहे: **{generated_uid}** (हा UID आणि पिन लक्षात ठेवा!)")
                             st.session_state.app_user_name = reg_name
                             if remember_me_reg:
                                 st.query_params["saved_uid"] = generated_uid
@@ -1073,12 +1079,11 @@ elif st.session_state.selected_module == "Civil Calculator":
         unit_from = st.selectbox("मूळ युनिट (From Unit):", ["Cubic Meter (m³)", "Cubic Feet (CFT)", "Brass"])
 
         if st.button("⚡ Convert Now", type="primary", key="btn_conv_vol"):
-            # सर्व युनिट्स m³ मध्ये कन्व्हर्ट करणे
             if "Cubic Meter" in unit_from:
                 m3 = val
             elif "Cubic Feet" in unit_from:
                 m3 = val / 35.3147
-            else: # Brass
+            else:
                 m3 = val * 2.83168
 
             brass = m3 / 2.83168
@@ -1101,7 +1106,6 @@ elif st.session_state.selected_module == "Civil Calculator":
         unit_from = st.selectbox("मूळ युनिट (From Unit):", ["Meters", "Feet", "Inches", "Millimeters (mm)", "Centimeters (cm)"])
 
         if st.button("⚡ Convert Now", type="primary", key="btn_conv_len"):
-            # सर्व युनिट्स Meters मध्ये कन्व्हर्ट करणे
             if "Meters" in unit_from:
                 meters = val
             elif "Feet" in unit_from:
@@ -1110,7 +1114,7 @@ elif st.session_state.selected_module == "Civil Calculator":
                 meters = val / 39.3701
             elif "Millimeters" in unit_from:
                 meters = val / 1000.0
-            else: # cm
+            else:
                 meters = val / 100.0
 
             feet = meters * 3.28084
@@ -1135,14 +1139,13 @@ elif st.session_state.selected_module == "Civil Calculator":
         unit_from = st.selectbox("मूळ युनिट (From Unit):", ["Sq. Meters (m²)", "Sq. Feet (Sq. Ft.)", "Guntha", "Acre"])
 
         if st.button("⚡ Convert Now", type="primary", key="btn_conv_area"):
-            # सर्व युनिट्स Sq. Feet मध्ये कन्व्हर्ट करणे
             if "Sq. Feet" in unit_from:
                 sqft = val
             elif "Sq. Meters" in unit_from:
                 sqft = val * 10.7639
             elif "Guntha" in unit_from:
                 sqft = val * 1089.0
-            else: # Acre
+            else:
                 sqft = val * 43560.0
 
             sqm = sqft / 10.7639
