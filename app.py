@@ -48,6 +48,7 @@ def load_db():
         },
         "PREMIUM_CODES": {},
         "FEATURE_LOCKS": {
+            "Civil Calculator": "Free",
             "Rate Analysis": "Free",
             "BBS": "Free",
             "WhatsApp Share": "Premium",
@@ -482,8 +483,9 @@ if st.session_state.is_admin_logged:
 
     elif current_tab == "locks":
         st.markdown("### ⚙️ Feature Lock Manager")
-        cur_locks = user_db.get("FEATURE_LOCKS", {"Rate Analysis": "Free", "BBS": "Free", "WhatsApp Share": "Premium", "Civil AI Assistant": "Premium"})
+        cur_locks = user_db.get("FEATURE_LOCKS", {"Civil Calculator": "Free", "Rate Analysis": "Free", "BBS": "Free", "WhatsApp Share": "Premium", "Civil AI Assistant": "Premium"})
 
+        fl_calc = st.selectbox("Civil Calculator Access:", ["Free", "Premium"], index=0 if cur_locks.get("Civil Calculator", "Free") == "Free" else 1)
         fl_ra = st.selectbox("Rate Analysis Module Access:", ["Free", "Premium"], index=0 if cur_locks.get("Rate Analysis") == "Free" else 1)
         fl_bbs = st.selectbox("BBS Calculator Access:", ["Free", "Premium"], index=0 if cur_locks.get("BBS") == "Free" else 1)
         fl_wa = st.selectbox("WhatsApp Full Report Share:", ["Free", "Premium"], index=0 if cur_locks.get("WhatsApp Share") == "Free" else 1)
@@ -491,6 +493,7 @@ if st.session_state.is_admin_logged:
 
         if st.button("💾 Save Feature Lock Settings", type="primary"):
             user_db["FEATURE_LOCKS"] = {
+                "Civil Calculator": fl_calc,
                 "Rate Analysis": fl_ra,
                 "BBS": fl_bbs,
                 "WhatsApp Share": fl_wa,
@@ -729,7 +732,6 @@ if st.session_state.app_user_name is None:
     auth_mode = st.radio("निवडा (Select Option):", ["🔑 UID Login (लॉगिन करा)", "✨ Register (नवीन अकाउंट)", "❓ Forgot UID/PIN (आयडी/पिन रिकव्हर करा)"], horizontal=True)
     user_db = load_db()
 
-    # 1. LOGIN WITH UID ONLY (No Hyphen)
     if "Login" in auth_mode:
         with st.form("uid_login_form"):
             input_uid = st.text_input("Enter your UID (उदा. ROHAN3210):").strip().upper()
@@ -752,7 +754,6 @@ if st.session_state.app_user_name is None:
                 else:
                     st.error("❌ चुकीचा UID! कृपया बरोबर UID टाका.")
 
-    # 2. REGISTER NEW ACCOUNT (UID & 4-Digit PIN)
     elif "Register" in auth_mode:
         with st.form("uid_reg_form"):
             reg_name = st.text_input("नाव (Name):", placeholder="उदा. Rohan").strip()
@@ -813,7 +814,6 @@ if st.session_state.app_user_name is None:
                 else:
                     st.warning("⚠️ कृपया नाव, १० अंकी मोबाईल नंबर आणि अचूक ४ अंकी पिन (PIN) टाकल्याची खात्री करा!")
 
-    # 3. FORGOT UID/PIN (Using Mobile & PIN)
     else:
         with st.form("forgot_uid_form"):
             forgot_mob = st.text_input("नोंदणीकृत मोबाईल नंबर (Registered Mobile):").strip()
@@ -835,7 +835,6 @@ if st.session_state.app_user_name is None:
 
     st.write("---")
     
-    # 🛡️ ॲडमीन लॉगिन पॅनल
     with st.expander("🛡️ Admin Login Panel"):
         with st.form("admin_login_form"):
             admin_id = st.text_input("Admin ID:")
@@ -862,7 +861,6 @@ user_db = load_db()
 
 is_user_premium, status_text_str = check_user_premium_status(current_user_name)
 
-# 🟢 Main App Dashboard वर अगदी लहान जागेत दिसणारी Ad (Top Banner)
 ads_list = user_db.get("ADS_DB", [])
 for ad in ads_list:
     if ad.get("active", False) and ad.get("position") == "Main App Header (Top Banner)":
@@ -889,9 +887,6 @@ if col_lo.button("🔄 Logout / ॲप बदला"):
     st.session_state.selected_module = None
     st.rerun()
 
-# ==========================================
-# 🔔 WHATSAPP-LIKE NOTIFICATION & INBOX SYSTEM
-# ==========================================
 current_user_data = user_db.get(current_user_name, {})
 if not isinstance(current_user_data, dict):
     current_user_data = {}
@@ -920,9 +915,6 @@ else:
 
 st.write("---")
 
-# ==========================================
-# 🔑 प्रिमियम कोड इनपुट
-# ==========================================
 if not is_user_premium:
     with st.expander("🔑 प्रिमियम अनलॉक करा (Enter Premium Code)"):
         input_code = st.text_input("Enter Code (e.g. PATIL-XXXXX):", key="home_code_input").strip()
@@ -968,9 +960,6 @@ if not is_user_premium:
                 save_db(user_db)
                 st.success("✅ ॲडमीनला रिक्वेस्ट पाठवली!")
 
-# ==========================================
-# 🤖 CIVIL AI ASSISTANT
-# ==========================================
 locks_cfg = user_db.get("FEATURE_LOCKS", {})
 ai_lock_setting = locks_cfg.get("Civil AI Assistant", "Premium")
 
@@ -1006,18 +995,35 @@ if ai_lock_setting == "Free" or is_user_premium:
 if st.session_state.selected_module is None:
     st.markdown("### 🚀 तुम्हाला काय करायचे आहे ते निवडा:")
     
+    calc_lock = locks_cfg.get("Civil Calculator", "Free")
     ra_lock = locks_cfg.get("Rate Analysis", "Free")
     bbs_lock = locks_cfg.get("BBS", "Free")
 
-    col_icon1, col_icon2 = st.columns(2)
+    col_icon1, col_icon2, col_icon3 = st.columns(3)
     
     with col_icon1:
+        calc_badge = "🆓 Free" if calc_lock == "Free" else "👑 Premium"
+        st.markdown(f"""
+            <div style="text-align: center; background: rgba(31, 41, 55, 0.8); padding: 15px; border-radius: 18px; border: 1px solid rgba(59, 130, 246, 0.3);">
+                <h1 style="font-size: 40px; margin:0;">🧮</h1>
+                <h4 style="margin: 8px 0 4px 0; color: #f3f4f6;">Calculator</h4>
+                <p style="font-size: 11px; color: #9ca3af;">युनिट कनव्हर्टर [{calc_badge}]</p>
+            </div>
+        """, unsafe_allow_html=True)
+        if st.button("🧮 Open Calculator", key="btn_open_calc", use_container_width=True):
+            if calc_lock == "Premium" and not is_user_premium:
+                st.error("🔒 हे फीचर प्रिमियम युझर्ससाठी आहे!")
+            else:
+                st.session_state.selected_module = "Civil Calculator"
+                st.rerun()
+
+    with col_icon2:
         ra_badge = "🆓 Free" if ra_lock == "Free" else "👑 Premium"
         st.markdown(f"""
-            <div style="text-align: center; background: rgba(31, 41, 55, 0.8); padding: 20px; border-radius: 18px; border: 1px solid rgba(59, 130, 246, 0.3);">
-                <h1 style="font-size: 50px; margin:0;">📊</h1>
-                <h3 style="margin: 10px 0 5px 0; color: #f3f4f6;">Rate Analysis</h3>
-                <p style="font-size: 12px; color: #9ca3af;">दर विश्लेषण [{ra_badge}]</p>
+            <div style="text-align: center; background: rgba(31, 41, 55, 0.8); padding: 15px; border-radius: 18px; border: 1px solid rgba(59, 130, 246, 0.3);">
+                <h1 style="font-size: 40px; margin:0;">📊</h1>
+                <h4 style="margin: 8px 0 4px 0; color: #f3f4f6;">Rate Analysis</h4>
+                <p style="font-size: 11px; color: #9ca3af;">दर विश्लेषण [{ra_badge}]</p>
             </div>
         """, unsafe_allow_html=True)
         if st.button("📊 Open Rate Analysis", key="btn_open_ra", use_container_width=True):
@@ -1027,13 +1033,13 @@ if st.session_state.selected_module is None:
                 st.session_state.selected_module = "Rate Analysis"
                 st.rerun()
 
-    with col_icon2:
+    with col_icon3:
         bbs_badge = "🆓 Free" if bbs_lock == "Free" else "👑 Premium"
         st.markdown(f"""
-            <div style="text-align: center; background: rgba(31, 41, 55, 0.8); padding: 20px; border-radius: 18px; border: 1px solid rgba(59, 130, 246, 0.3);">
-                <h1 style="font-size: 50px; margin:0;">🏗️</h1>
-                <h3 style="margin: 10px 0 5px 0; color: #f3f4f6;">BBS</h3>
-                <p style="font-size: 12px; color: #9ca3af;">Bar Bending Schedule [{bbs_badge}]</p>
+            <div style="text-align: center; background: rgba(31, 41, 55, 0.8); padding: 15px; border-radius: 18px; border: 1px solid rgba(59, 130, 246, 0.3);">
+                <h1 style="font-size: 40px; margin:0;">🏗️</h1>
+                <h4 style="margin: 8px 0 4px 0; color: #f3f4f6;">BBS</h4>
+                <p style="font-size: 11px; color: #9ca3af;">Bar Bending [{bbs_badge}]</p>
             </div>
         """, unsafe_allow_html=True)
         if st.button("🏗️ Open BBS", key="btn_open_bbs", use_container_width=True):
@@ -1042,6 +1048,71 @@ if st.session_state.selected_module is None:
             else:
                 st.session_state.selected_module = "BBS"
                 st.rerun()
+
+# ==========================================
+# 🧮 MODULE 0: CIVIL CALCULATOR & UNIT CONVERTER
+# ==========================================
+elif st.session_state.selected_module == "Civil Calculator":
+    if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_to_main_calc"):
+        st.session_state.selected_module = None
+        st.rerun()
+        
+    st.write("---")
+    st.subheader("🧮 Civil Calculator & Unit Converter")
+    st.caption("💡 कन्स्ट्रक्शन साईटवरील सोपे आणि अचूक युनिट कनव्हर्शन व ब्रास कॅल्क्युलेटर.")
+
+    calc_choice = st.radio("कन्व्हर्टर निवडा:", ["📦 m³ to Brass Converter (मीटर क्युब ते ब्रास)", "📏 Length Unit Converter (लांबी युनिट कनव्हर्टर)", "📐 Area Unit Converter (क्षेत्रफळ कनव्हर्टर)"])
+
+    if "m³ to Brass" in calc_choice:
+        st.markdown("#### 📦 Cubic Meter (m³) to Brass Converter")
+        st.caption("💡 1 Brass = 2.83168 m³ (किंवा 1 m³ = 0.35315 Brass)")
+        
+        m3_val = st.number_input("घनफळ भरा (Volume in m³):", min_value=0.0, value=2.83168, step=0.1, key="conv_m3")
+        if st.button("🔄 Convert to Brass", type="primary", key="btn_m3_brass"):
+            brass_val = m3_val / 2.83168
+            ft3_val = m3_val * 35.3147
+            st.success(f"✅ निकाल (Result):")
+            st.markdown(f"""
+                <div style="background: rgba(31, 41, 55, 0.95); padding: 15px; border-radius: 12px; border-left: 5px solid #10b981;">
+                    <p style="margin: 4px 0; font-size: 16px;"><b>📦 एकूण ब्रास (Brass):</b> <span style="color:#fbbf24; font-size:18px;">{brass_val:.4f} Brass</span></p>
+                    <p style="margin: 4px 0; font-size: 15px;"><b>📐 घन फूट (Cubic Feet / CFT):</b> <code>{ft3_val:.2f} CFT</code></p>
+                </div>
+            """, unsafe_allow_html=True)
+
+    elif "Length Unit" in calc_choice:
+        st.markdown("#### 📏 Length Unit Converter (लांबी कनव्हर्टर)")
+        l_val = st.number_input("मोजमाप भरा (Value):", min_value=0.0, value=1.0, step=0.1, key="conv_l_val")
+        l_type = st.selectbox("युनिट निवडा:", ["Meters to Feet", "Feet to Meters", "Inches to mm", "Meters to mm"])
+        
+        if st.button("🔄 Convert Length", type="primary", key="btn_conv_len"):
+            if "Meters to Feet" in l_type:
+                res = l_val * 3.28084
+                st.info(f"📌 {l_val} Meters = **{res:.4f} Feet**")
+            elif "Feet to Meters" in l_type:
+                res = l_val / 3.28084
+                st.info(f"📌 {l_val} Feet = **{res:.4f} Meters**")
+            elif "Inches to mm" in l_type:
+                res = l_val * 25.4
+                st.info(f"📌 {l_val} Inches = **{res:.2f} mm**")
+            else:
+                res = l_val * 1000.0
+                st.info(f"📌 {l_val} Meters = **{res:.2f} mm**")
+
+    else:
+        st.markdown("#### 📐 Area Unit Converter (क्षेत्रफळ कनव्हर्टर)")
+        a_val = st.number_input("क्षेत्रफळ भरा (Area Value):", min_value=0.0, value=100.0, step=10.0, key="conv_a_val")
+        a_type = st.selectbox("क्षेत्रफळ युनिट निवडा:", ["Sq. Meters to Sq. Feet", "Sq. Feet to Sq. Meters", "Sq. Feet to Guntha"])
+        
+        if st.button("🔄 Convert Area", type="primary", key="btn_conv_area"):
+            if "Sq. Meters to Sq. Feet" in a_type:
+                res = a_val * 10.7639
+                st.info(f"📌 {a_val} m² = **{res:.2f} Sq. Ft.**")
+            elif "Sq. Feet to Sq. Meters" in a_type:
+                res = a_val / 10.7639
+                st.info(f"📌 {a_val} Sq. Ft. = **{res:.2f} m²**")
+            else:
+                res = a_val / 1089.0  # 1 Guntha = 1089 sq ft approx
+                st.info(f"📌 {a_val} Sq. Ft. = **{res:.4f} Guntha**")
 
 # ==========================================
 # 🛑 MODULE 1: RATE ANALYSIS MODULE (Concrete Work, Brickwork & Plaster Work)
@@ -1408,7 +1479,6 @@ elif st.session_state.selected_module == "Rate Analysis":
             total_cement_cost = cement_bags * cement_rate
             total_sand_cost = sand_m3 * sand_rate
 
-            # वॉटरप्रूफिंगचे प्रमाण: साधारणपणे प्रति सिमेंट बॅग २०० ग्रॅम (०.२ किलो) किंवा १ लिटर प्रति बॅग कंपनीच्या निर्देशानुसार धरले जाते
             wp_qty_kg = cement_bags * 1.0 if use_waterproofing else 0.0
             total_wp_cost = wp_qty_kg * wp_rate
 
