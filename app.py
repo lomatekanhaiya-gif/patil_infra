@@ -1,4 +1,4 @@
-# KANHA_1p - पाटील इन्फ्राटेक (Streamlit Web Application)
+# KANHA_1p - पाटील इन्फ्राटेक (Streamlit Web Application with PWA Custom Branding)
 import streamlit as st
 import math
 import json
@@ -19,6 +19,58 @@ except ImportError:
 
 # 🚨 Streamlit नियम: set_page_config नेहमी सर्वात आधी असावे!
 st.set_page_config(page_title="PATIL INFRATECH", page_icon="🏗️", layout="centered")
+
+# ==========================================
+# 🌐 PWA (Progressive Web App) & Custom Logo Branding
+# ==========================================
+pwa_manifest_code = """
+{
+  "name": "Patil Infratech",
+  "short_name": "Patil Infratech",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#070a12",
+  "theme_color": "#1e3a8a",
+  "icons": [
+    {
+      "src": "https://img.icons8.com/color/512/building.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
+"""
+
+service_worker_code = """
+self.addEventListener('fetch', function (event) {
+  // PWA Service Worker Active
+});
+"""
+
+try:
+    with open("manifest.json", "w", encoding="utf-8") as f:
+        f.write(pwa_manifest_code)
+    with open("sw.js", "w", encoding="utf-8") as f:
+        f.write(service_worker_code)
+except:
+    pass
+
+st.markdown("""
+    <head>
+        <link rel="manifest" href="manifest.json">
+        <meta name="theme-color" content="#1e3a8a">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+        <meta name="apple-mobile-web-app-title" content="Patil Infratech">
+        <link rel="apple-touch-icon" href="https://img.icons8.com/color/512/building.png">
+        <script>
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('sw.js');
+            }
+        </script>
+    </head>
+""", unsafe_allow_html=True)
 
 # ==========================================
 # 🕒 भारतीय वेळ (IST - Indian Standard Time) मिळवण्याचे फंक्शन
@@ -272,7 +324,6 @@ st.markdown(f"""
         display: inline-block;
     }}
 
-    /* 👑 ॲडमीन स्पेशल रॉयल एक्झिक्युटिव्ह ऑफिस थीम */
     .admin-command-center {{
         background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%) !important;
         border: 2px solid #FFD54F !important;
@@ -303,6 +354,15 @@ st.markdown(f"""
 # 🔑 रँडम ५ अक्षरी युनिक कोड जनरेटर
 def generate_random_code():
     return "PATIL-" + ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
+
+# ==========================================
+# 📱 ॲप इन्स्टॉल गाइड बॅनर (PWA Install Banner)
+# ==========================================
+with st.expander("📲 मोबाईलच्या होम स्क्रीनवर ॲप कसे इन्स्टॉल करावे? (Click Here)"):
+    st.markdown("""
+    * **टीप:** जुना Streamlit लोगो काढण्यासाठी आधी मोबाईलवर असलेले जुने ॲप (Home Screen Shortcut) **Un-install (Delete)** करा. 
+    * त्यानंतर हा नवीन कोड टाकून ॲप पुन्हा ब्राऊझरमधून **"Add to Home Screen"** करा, म्हणजे नवीन लोगो दिसेल!
+    """)
 
 # ==========================================
 # 🔐 ॲप व्हॉट्सॲप फीचर अनलॉक/प्रीमियम फंक्शन
@@ -811,10 +871,9 @@ if st.session_state.app_user_name is None:
                             }
                             save_db(user_db)
                             
-                            # 🟢 नवीन लॉजिक: अकाउंट तयार झाल्यावर युझरला थेट लॉगिन न करता फक्त त्याचा UID दाखवणे आणि लॉगिन करायला सांगणे
                             st.success(f"🎉 अकाउंट यशस्वीरित्या तयार झाले! तुमचा युनिक UID हा आहे: **{generated_uid} and pin {reg_pin}**")
                             st.info("💡 कृपया हा UID लक्षात ठेवा आणि वर 'UID Login' वर क्लिक करून लॉगिन करा!")
-                            st.stop()  # इथे ॲप थांबेल, जेणेकरून युझर स्वतः UID टाकून लॉगिन करेल
+                            st.stop() 
                         else:
                             st.error("❌ या नावाने आधीच अकाउंट आहे! कृपया दुसरे नाव वापरून रजिस्टर करा.")
                 else:
@@ -946,7 +1005,7 @@ if not is_user_premium:
                         user_db[current_user_name]["unread_notification"] = False
                         
                         save_db(user_db)
-                        st.success("{disp_name_act} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳")
+                        st.success("🎉 मास्टर कोडद्वारे प्रिमियम यशस्वीरित्या सुरू झाले!")
                         st.rerun()
 
                 elif input_code == "kanha_1p":
