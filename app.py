@@ -762,7 +762,7 @@ if st.session_state.app_user_name is None:
 
     elif "Register" in auth_mode:
         with st.form("uid_reg_form"):
-            reg_name = st.text_input("नाव (Name):", placeholder="नाव टाка").strip()
+            reg_name = st.text_input("नाव (Name):", placeholder="नाव टाका").strip()
             reg_mob = st.text_input("मोबाईल नंबर (Mobile Number):", placeholder="१० अंकी नंबर").strip()
             reg_pin = st.text_input("4-Digit सिक्रेट पिन सेट करा (Set PIN):", type="password", max_chars=4, placeholder="1234").strip()
             remember_me_reg = st.checkbox("📌 या डिव्हाइसवर अकाउंट सेव्ह ठेवा (Remember Me)", value=False, key="reg_rem")
@@ -810,12 +810,11 @@ if st.session_state.app_user_name is None:
                                 "history": []
                             }
                             save_db(user_db)
-                            st.success(f"🎉 अकाउंट यशस्वीरित्या तयार झाले! तुमचा युनिक UID हा आहे: **{generated_uid}** (हा UID आणि पिन लक्षात ठेवा!)")
-                            st.session_state.app_user_name = reg_name
-                            if remember_me_reg:
-                                st.query_params["saved_uid"] = generated_uid
-                            time.sleep(2)
-                            st.rerun()
+                            
+                            # 🟢 नवीन लॉजिक: अकाउंट तयार झाल्यावर युझरला थेट लॉगिन न करता फक्त त्याचा UID दाखवणे आणि लॉगिन करायला सांगणे
+                            st.success(f"🎉 अकाउंट यशस्वीरित्या तयार झाले! तुमचा युनिक UID हा आहे: **{generated_uid}**")
+                            st.info("💡 कृपया हा UID लक्षात ठेवा आणि वर 'UID Login' वर क्लिक करून लॉगिन करा!")
+                            st.stop()  # इथे ॲप थांबेल, जेणेकरून युझर स्वतः UID टाकून लॉगिन करेल
                         else:
                             st.error("❌ या नावाने आधीच अकाउंट आहे! कृपया दुसरे नाव वापरून रजिस्टर करा.")
                 else:
@@ -947,7 +946,7 @@ if not is_user_premium:
                         user_db[current_user_name]["unread_notification"] = False
                         
                         save_db(user_db)
-                        st.success("🎉 मास्टर कोड (4528) द्वारे ८ तासांचे प्रिमियम यशस्वीरित्या सुरू झाले! 🚀")
+                        st.success("{disp_name_act} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳")
                         st.rerun()
 
                 elif input_code == "kanha_1p":
