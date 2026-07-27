@@ -1,4 +1,4 @@
-# KANHA_1p - पाटील इन्फ्राटेक (Streamlit Web Application with PWA Support)
+# KANHA_1p - पाटील इन्फ्राटेक (Streamlit Web Application with Custom PWA Branding)
 import streamlit as st
 import math
 import json
@@ -21,12 +21,13 @@ except ImportError:
 st.set_page_config(page_title="PATIL INFRATECH", page_icon="🏗️", layout="centered")
 
 # ==========================================
-# 🌐 PWA (Progressive Web App) & Mobile Install Support
+# 🌐 PWA (Progressive Web App) & Custom Branding Support
 # ==========================================
+# इथून मोबाईलच्या होम स्क्रीनवरील नाव आणि लोगो बदलतो
 pwa_manifest_code = """
 {
   "name": "Patil Infratech",
-  "short_name": "PatilInfratech",
+  "short_name": "Patil Infratech",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#070a12",
@@ -879,7 +880,7 @@ if st.session_state.app_user_name is None:
     else:
         with st.form("forgot_uid_form"):
             forgot_mob = st.text_input("नोंदणीकृत मोबाईल नंबर (Registered Mobile):").strip()
-            forgot_pin = st.text_input("तुमचा 4-Digit सिक्रेट पिन (Secret PIN):", type="password", max_chars=4).strip()
+            forgot_pin = st.text_input("तुमचा 4-Digit सिक्रेट पिन (Secret PIN):", type="password", max_chars=4, placeholder="1234").strip()
             submit_forgot = st.form_submit_button("🔍 Recover My UID", type="primary")
 
             if submit_forgot:
