@@ -109,7 +109,7 @@ if current_user_name and current_user_name in user_db:
     user_db[current_user_name]["last_active"] = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
     save_db(user_db)
 
-# ⏳ प्रिमियम स्टेटस व अचूक एक्सपायरी तपासणी (Master Account KANHA_1P साठी सदाबहार प्रिमियम)
+# ⏳ प्रिमियम स्टेटस व अचूक एक्सपायरी तपासणी
 def check_user_premium_status(username):
     if not username: return False, "Free"
     if username.lower() == "kanha" or username == "9999999999":
@@ -806,6 +806,7 @@ if st.session_state.app_user_name is None:
                                 "premium_expiry": None,
                                 "requested_code": False,
                                 "seen_popup": False,
+                                "master_code_uses": 0,  # 🟢 मास्टर कोड वापरण्याची मर्यादा (जास्तीत जास्त ३ वेळा)
                                 "history": []
                             }
                             save_db(user_db)
@@ -921,6 +922,9 @@ else:
 
 st.write("---")
 
+# ==========================================
+# 🔑 प्रिमियम कोड इनपुट (Master Code 4528 Logic Included)
+# ==========================================
 if not is_user_premium:
     with st.expander("🔑 प्रिमियम अनलॉक करा (Enter Premium Code)"):
         input_code = st.text_input("Enter Code (e.g. PATIL-XXXXX):", key="home_code_input").strip()
@@ -929,7 +933,28 @@ if not is_user_premium:
             if st.button("🔓 Activate Premium", type="primary"):
                 codes_db = user_db.get("PREMIUM_CODES", {})
                 
-                if input_code == "kanha_1p":
+                # 🟢 स्पेशल मास्टर कोड लॉजिक (4528) - प्रत्येक युझर ३ वेळा वापरू शकतो, ८ तासांसाठी प्रिमियम मिळतो
+                if input_code == "4528":
+                    u_info = user_db.get(current_user_name, {})
+                    uses_count = u_info.get("master_code_uses", 0)
+                    
+                    if uses_count >= 3:
+                        st.error("❌ हा मास्टर कोड तुम्ही आधीच ३ वेळा वापरला आहे! मर्यादा संपली आहे.")
+                    else:
+                        user_db[current_user_name]["master_code_uses"] = uses_count + 1
+                        exp_datetime = get_ist_time() + datetime.timedelta(hours=8)
+                        user_db[current_user_name]["is_premium"] = True
+                        user_db[current_user_name]["premium_expiry"] = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
+                        user_db[current_user_name]["seen_popup"] = False
+                        user_db[current_user_name]["activated_by"] = "Master Code 4528 (8 Hours VIP)"
+                        user_db[current_user_name]["admin_message"] = f"🎉 मास्टर कोड 4528 द्वारे तुला ८ तासांचे प्रिमियम मिळाले आहे! (वापर: {user_db[current_user_name]['master_code_uses']}/3)"
+                        user_db[current_user_name]["unread_notification"] = False
+                        
+                        save_db(user_db)
+                        st.success("🎉 मास्टर कोड (4528) द्वारे ८ तासांचे प्रिमियम यशस्वीरित्या सुरू झाले! 🚀")
+                        st.rerun()
+
+                elif input_code == "kanha_1p":
                     exp_datetime = get_ist_time() + datetime.timedelta(days=1)
                     user_db[current_user_name]["is_premium"] = True
                     user_db[current_user_name]["premium_expiry"] = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
