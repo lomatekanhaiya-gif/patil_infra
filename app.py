@@ -1341,23 +1341,9 @@ elif st.session_state.selected_module == "Rate Analysis":
                 save_db(user_db)
 
     else:  # Plaster Work
-        st.subheader("🎨 Plaster Work Estimation (Internal & External)")
+        st.subheader("🎨 Plaster Work Estimation")
         
-        plaster_type = st.selectbox("प्लास्टरचा प्रकार निवडा:", [
-            "Internal Plaster (आतील प्लास्टर)", 
-            "External Plaster (बाहेरील प्लास्टर)",
-            "Custom Plaster (इतर / कस्टमाइझ्ड प्लास्टर)"
-        ])
-        
-        # जाडी ठरवण्यासाठी युझरला ऑप्शन देणे
-        if "Internal" in plaster_type:
-            default_thick = 12.0
-        elif "External" in plaster_type:
-            default_thick = 20.0
-        else:
-            default_thick = 15.0
-
-        thickness_mm = st.number_input("प्लास्टरची जाडी (Thickness in mm):", min_value=5.0, max_value=50.0, value=default_thick, step=1.0, key="pl_thick")
+        thickness_mm = st.number_input("प्लास्टरची जाडी (Thickness in mm):", min_value=5.0, max_value=50.0, value=12.0, step=1.0, key="pl_thick")
 
         plaster_mortar = st.selectbox("मॉर्टर मिक्स गुणोत्तर (Mortar Mix Ratio):", [
             "1:3 (सिमेंट : वाळू)",
@@ -1371,14 +1357,15 @@ elif st.session_state.selected_module == "Rate Analysis":
         elif "1:5" in plaster_mortar: p_c_part, p_s_part = 1, 5
         else: p_c_part, p_s_part = 1, 6
 
-        st.markdown("#### [A] साहित्याची माहिती आणि दर (क्षेत्रफळ आणि दर थेट भरा)")
+        st.markdown("#### [A] साहित्याची माहिती आणि दर (क्षेत्रफळ, दर व वॉटरप्रूफिंग)")
         p_col1, p_col2 = st.columns(2)
         with p_col1:
             plaster_area = st.number_input("प्लास्टरचे एकूण क्षेत्रफळ (Area in m²):", min_value=0.0, value=10.0, key="pl_area")
             cement_rate = st.number_input("सिमेंट दर प्रति बॅग (₹):", min_value=0.0, value=float(master_rates.get("cement", 400.0)), key="pl_cem_r")
+            use_waterproofing = st.checkbox("💧 वॉटरप्रूफिंग कंपाउंड ॲड करा (Waterproofing Compound)", value=False)
         with p_col2:
             sand_rate = st.number_input("वाळूचा दर प्रति m³ (₹):", min_value=0.0, value=float(master_rates.get("sand", 2500.0)), key="pl_snd_r")
-            plaster_rate_sqm = st.number_input("अतिरिक्त मजुरी दर प्रति m² (₹ - वैकल्पिक):", min_value=0.0, value=0.0, key="pl_rate")
+            wp_rate = st.number_input("वाटरप्रूफिंग दर (प्रति किलोग्रॅम/लिटर ₹):", min_value=0.0, value=150.0, key="pl_wp_r") if use_waterproofing else 0.0
 
         st.markdown("#### [B] लेबर खर्च (दिवसानुसार किंवा लांप सम)")
         pl_l1, pl_l2 = st.columns(2)
@@ -1420,10 +1407,13 @@ elif st.session_state.selected_module == "Rate Analysis":
 
             total_cement_cost = cement_bags * cement_rate
             total_sand_cost = sand_m3 * sand_rate
-            add_labour_amt = plaster_area * plaster_rate_sqm
 
-            mat_cost = total_cement_cost + total_sand_cost
-            lab_cost = (pl_mason_qty * pl_mason_rate) + (pl_mazdoor_qty * pl_mazdoor_rate) + add_labour_amt
+            # वॉटरप्रूफिंगचे प्रमाण: साधारणपणे प्रति सिमेंट बॅग २०० ग्रॅम (०.२ किलो) किंवा १ लिटर प्रति बॅग कंपनीच्या निर्देशानुसार धरले जाते
+            wp_qty_kg = cement_bags * 1.0 if use_waterproofing else 0.0
+            total_wp_cost = wp_qty_kg * wp_rate
+
+            mat_cost = total_cement_cost + total_sand_cost + total_wp_cost
+            lab_cost = (pl_mason_qty * pl_mason_rate) + (pl_mazdoor_qty * pl_mazdoor_rate)
             base_total = mat_cost + lab_cost + scaffolding_cost + contingency_cost
             
             w_amt = base_total * (water_pct / 100)
@@ -1432,18 +1422,19 @@ elif st.session_state.selected_module == "Rate Analysis":
 
             st.success("🎉 प्लास्टर काम रिपोर्ट यशस्वीरित्या तयार झाला आहे!")
             st.markdown(f"### 📊 RATE ANALYSIS SHEET - PLASTER WORK")
-            st.info(f"👤 **Prepared For:** {current_user_name} | **प्रकार:** {plaster_type.split(' ')[0]} | **जाडी:** {thickness_mm} mm | **क्षेत्रफळ:** {plaster_area} m²")
+            st.info(f"👤 **Prepared For:** {current_user_name} | **जाडी:** {thickness_mm} mm | **क्षेत्रफळ:** {plaster_area} m² | **गुणोत्तर:** {plaster_mortar.split(' ')[0]}")
             
+            wp_row_table = f"| Waterproofing Compound | {wp_qty_kg:.2f} | Kg/Ltr | {wp_rate:.2f} | {total_wp_cost:.2f} |\n" if use_waterproofing else ""
+
             report_table = f"""
 | Description | Quantity | Unit | Rate (₹) | Amount (₹) |
 | :--- | :--- | :--- | :--- | :--- |
 | **[A] MATERIAL** | | | | |
 | Cement | {cement_bags} | Bags | {cement_rate:.2f} | {total_cement_cost:.2f} |
 | Sand | {sand_m3:.2f} | m³ | {sand_rate:.2f} | {total_sand_cost:.2f} |
-| **[B] LABOUR** | | | | |
+{wp_row_table}| **[B] LABOUR** | | | | |
 | Mason | {pl_mason_qty} | Nos | {pl_mason_rate:.2f} | {pl_mason_qty*pl_mason_rate:.2f} |
 | Mazdoor | {pl_mazdoor_qty} | Nos | {pl_mazdoor_rate:.2f} | {pl_mazdoor_qty*pl_mazdoor_rate:.2f} |
-| Extra Labour / Rate Work | {plaster_area} | m² | {plaster_rate_sqm:.2f} | {add_labour_amt:.2f} |
 | **[C] OTHER EXPENSES** | | | | |
 | Scaffolding / Centering | - | L.S. | - | {scaffolding_cost:.2f} |
 | Contingencies | - | L.S. | - | {contingency_cost:.2f} |
@@ -1456,11 +1447,13 @@ elif st.session_state.selected_module == "Rate Analysis":
 
             msg_text = f"🏗️ *PATIL INFRATECH - PLASTER REPORT*\n"
             msg_text += f"👤 *Prepared For:* {current_user_name}\n"
-            msg_text += f"🎨 *Type:* {plaster_type.split(' ')[0]} ({thickness_mm}mm) | *Area:* {plaster_area} m²\n"
+            msg_text += f"🎨 *Thickness:* {thickness_mm}mm | *Area:* {plaster_area} m²\n"
             msg_text += f"📅 *Date:* {get_ist_time().strftime('%d-%m-%Y')}\n\n"
             msg_text += f"📋 *DETAILS:*\n"
             msg_text += f"• Cement: {cement_bags} Bags = ₹{total_cement_cost:.2f}\n"
             msg_text += f"• Sand: {sand_m3:.2f} m³ = ₹{total_sand_cost:.2f}\n"
+            if use_waterproofing:
+                msg_text += f"• Waterproofing: {wp_qty_kg:.2f} Kg = ₹{total_wp_cost:.2f}\n"
             msg_text += f"• Labour: {lab_cost:.2f}\n"
             msg_text += f"--------------------------------\n"
             msg_text += f"💰 *GRAND TOTAL:* ₹{grand_total:.2f}/-\n"
