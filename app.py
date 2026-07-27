@@ -55,7 +55,6 @@ def load_db():
         },
         "ADS_DB": []
     }
-    # 🟢 ॲप कितीही वेळा अपडेट किंवा रीस्टार्ट झाले तरी जुना युझर डेटा कधीही उडणार नाही
     if os.path.exists(DB_FILE):
         try:
             with open(DB_FILE, "r", encoding="utf-8") as f:
@@ -78,7 +77,6 @@ user_db = load_db()
 if "app_user_name" not in st.session_state:
     st.session_state.app_user_name = None
 
-# ब्राउझरच्या query parameters मधून saved UID तपासून ऑटो-लॉगिन करणे
 query_params = st.query_params
 if st.session_state.app_user_name is None and "saved_uid" in query_params:
     saved_uid = query_params["saved_uid"]
@@ -384,7 +382,6 @@ if not st.session_state.welcome_completed:
         st.markdown("<h1 style='text-align: center; color: #60a5fa;'>🏗️ WELCOME TO PATIL INFRATECH...</h1>", unsafe_allow_html=True)
         st.markdown("<h3 style='text-align: center; color: #9ca3af;'>तुमचे स्वप्न, आमचे एस्टिमेशन!</h3>", unsafe_allow_html=True)
         
-        # 🟢 Loading Page वर तळाशी रिकाम्या जागेत दिसणारी लहान Ad (Title Sponsor)
         db_temp = load_db()
         ads_list = db_temp.get("ADS_DB", [])
         for ad in ads_list:
@@ -640,13 +637,12 @@ if st.session_state.is_admin_logged:
                     is_req = info.get("requested_code", False)
                     last_active_str = info.get("last_active", None)
 
-                    # 🟢 लाईव्ह स्टेटस तपासणी (जर २ मिनिटांपेक्षा कमी वेळ असेल तर Active, अन्यथा Inactive)
                     is_online = False
                     if last_active_str:
                         try:
                             last_active_dt = datetime.datetime.strptime(last_active_str, "%Y-%m-%d %H:%M:%S")
                             diff_seconds = (now_time - last_active_dt).total_seconds()
-                            if diff_seconds <= 120:  # 120 सेकंद म्हणजेच २ मिनिटे
+                            if diff_seconds <= 120:
                                 is_online = True
                         except:
                             pass
@@ -887,7 +883,6 @@ else:
 
 if col_lo.button("🔄 Logout / ॲप बदला"):
     st.session_state.app_user_name = None
-    # 🟢 Logout करताना सेव्ह केलेले query params क्लिअर करणे
     if "saved_uid" in st.query_params:
         del st.query_params["saved_uid"]
     st.session_state.current_comment = "काही नाही"
@@ -1049,7 +1044,7 @@ if st.session_state.selected_module is None:
                 st.rerun()
 
 # ==========================================
-# 🛑 MODULE 1: RATE ANALYSIS MODULE
+# 🛑 MODULE 1: RATE ANALYSIS MODULE (Concrete Work, Brickwork & Plaster Work)
 # ==========================================
 elif st.session_state.selected_module == "Rate Analysis":
     if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_to_main"):
@@ -1066,7 +1061,7 @@ elif st.session_state.selected_module == "Rate Analysis":
         unsafe_allow_html=True
     )
 
-    main_choice = st.radio("**काय काम करायचे आहे ते निवडा :**", ["Concrete Work (काँक्रीट काम)", "Brickwork (वीटकाम)"])
+    main_choice = st.radio("**काय काम करायचे आहे ते निवडा :**", ["Concrete Work (काँक्रीट काम)", "Brickwork (वीटकाम)", "Plaster Work (प्लास्टर काम)"])
 
     if "Concrete Work" in main_choice:
         st.subheader("🧱 Concrete Work Estimation")
@@ -1092,11 +1087,11 @@ elif st.session_state.selected_module == "Rate Analysis":
         v_col1, v_col2 = st.columns(2)
         with v_col1:
             volume = st.number_input("एकूण काँक्रीट घनफळ भरा (Volume in m³):", min_value=0.0, value=1.0, key="cc_vol")
-            cement_rate = st.number_input("सिमेंट दर प्रति बॅग (₹):", min_value=0.0, value=400.0, key="cc_cem_r")
-            sand_rate = st.number_input("वाळूचा दर प्रति m³ (₹):", min_value=0.0, value=2500.0, key="cc_snd_r")
+            cement_rate = st.number_input("सिमेंट दर प्रति बॅग (₹):", min_value=0.0, value=float(master_rates.get("cement", 400.0)), key="cc_cem_r")
+            sand_rate = st.number_input("वाळूचा दर प्रति m³ (₹):", min_value=0.0, value=float(master_rates.get("sand", 2500.0)), key="cc_snd_r")
         with v_col2:
-            aggregate_rate = st.number_input("खडीचा दर प्रति m³ (₹):", min_value=0.0, value=2200.0, key="cc_agg_r")
-            steel_rate = st.number_input("स्टीलचा दर प्रति किलो (₹/Kg):", min_value=0.0, value=65.0, key="cc_stl_r") if steel_percentage > 0 else 0.0
+            aggregate_rate = st.number_input("खडीचा दर प्रति m³ (₹):", min_value=0.0, value=float(master_rates.get("aggregate", 2200.0)), key="cc_agg_r")
+            steel_rate = st.number_input("स्टीलचा दर प्रति किलो (₹/Kg):", min_value=0.0, value=float(master_rates.get("steel", 60.0)), key="cc_stl_r") if steel_percentage > 0 else 0.0
 
         st.markdown("#### [B] लेबर खर्च (नसल्यास ० ठेवा)")
         l_col1, l_col2, l_col3 = st.columns(3)
@@ -1120,7 +1115,7 @@ elif st.session_state.selected_module == "Rate Analysis":
             profit_pct = st.number_input("कंत्राटदार नफा टक्केवारी (%):", min_value=0.0, value=10.0, key="cc_prof_p")
 
         st.markdown("#### 💬 कमेंट पॅनल (Comment Panel)")
-        user_note = st.text_area("या एस्टिमेशन संदर्भात काही नोट किंवा कमेंट लिहायची असल्यास इथे लिहा:", placeholder="उदा. ग्राउंड फ्लोअर वीटकाम...", key="bw_note")
+        user_note = st.text_area("या एस्टिमेशन संदर्भात काही नोट किंवा कमेंट लिहायची असल्यास इथे लिहा:", placeholder="उदा. ग्राउंड फ्लोअर काम...", key="cc_note")
         if st.button("💬 कमेंट सबमिट करा", key="cc_comm_btn"):
             if user_note.strip():
                 st.session_state.current_comment = user_note.strip()
@@ -1215,7 +1210,7 @@ elif st.session_state.selected_module == "Rate Analysis":
                 user_db[current_user_name]["history"].append(new_report)
                 save_db(user_db)
 
-    else:
+    elif "Brickwork" in main_choice:
         st.subheader("🧱 Brickwork Estimation")
         mortar_choice = st.selectbox("मॉर्टर मिक्स गुणोत्तर (Mortar Mix Ratio) निवडा:", 
                                      ["1:3 (सिमेंट : वाळू)", "1:4 (सिमेंट : वाळू)", "1:5 (सिमेंट : वाळू)", "1:6 (सिमेंट : वाळू)"])
@@ -1231,8 +1226,8 @@ elif st.session_state.selected_module == "Rate Analysis":
             volume = st.number_input("वीटकामाचे एकूण घनफळ भरा (Volume in m³):", min_value=0.0, value=1.0, key="bw_vol")
             brick_rate = st.number_input("विटांचा दर प्रति हजार नग (₹ per 1000 Bricks):", min_value=0.0, value=8000.0, key="bw_br")
         with bm_col2:
-            cement_rate = st.number_input("सिमेंट दर प्रति बॅग (₹):", min_value=0.0, value=400.0, key="bw_cr")
-            sand_rate = st.number_input("वाळूचा दर प्रति m³ (₹):", min_value=0.0, value=2500.0, key="bw_sr")
+            cement_rate = st.number_input("सिमेंट दर प्रति बॅग (₹):", min_value=0.0, value=float(master_rates.get("cement", 400.0)), key="bw_cr")
+            sand_rate = st.number_input("वाळूचा दर प्रति m³ (₹):", min_value=0.0, value=float(master_rates.get("sand", 2500.0)), key="bw_sr")
 
         st.markdown("#### [B] लेबर खर्च (नसल्यास ० ठेवा)")
         bl_col1, bl_col2 = st.columns(2)
@@ -1327,6 +1322,147 @@ elif st.session_state.selected_module == "Rate Analysis":
             btn_col1, btn_col2 = st.columns(2)
             with btn_col1:
                 render_whatsapp_feature(encoded_msg, "ra_bw")
+            with btn_col2:
+                st.markdown('''
+                    <button onclick="window.print()" style="width: 100%; background-color: #3b82f6; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px;">
+                        📄 Print / Download A3 Size PDF
+                    </button>
+                ''', unsafe_allow_html=True)
+
+            user_db = load_db()
+            if current_user_name in user_db:
+                timestamp = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
+                new_report = {
+                    "timestamp": timestamp,
+                    "user_note": st.session_state.current_comment,
+                    "report_data": report_table
+                }
+                user_db[current_user_name]["history"].append(new_report)
+                save_db(user_db)
+
+    else:  # Plaster Work
+        st.subheader("🎨 Plaster Work Estimation (Internal & External)")
+        
+        plaster_type = st.selectbox("प्लास्टरचा प्रकार निवडा:", [
+            "Internal Plaster (आतील प्लास्टर - जाडी 12 मिमी)", 
+            "External Plaster (बाहेरील प्लास्टर - जाडी 20 मिमी)"
+        ])
+        
+        plaster_mortar = st.selectbox("मॉर्टर मिक्स गुणोत्तर (Mortar Mix Ratio):", [
+            "1:4 (सिमेंट : वाळू)", 
+            "1:6 (सिमेंट : वाळू)"
+        ])
+
+        if "1:4" in plaster_mortar: p_c_part, p_s_part = 1, 4
+        else: p_c_part, p_s_part = 1, 6
+
+        if "Internal" in plaster_type:
+            thickness_mm = 12.0
+        else:
+            thickness_mm = 20.0
+
+        st.markdown("#### [A] साहित्याची माहिती आणि दर (क्षेत्रफळ आणि दर थेट भरा)")
+        p_col1, p_col2 = st.columns(2)
+        with p_col1:
+            plaster_area = st.number_input("प्लास्टरचे एकूण क्षेत्रफळ (Area in m²):", min_value=0.0, value=10.0, key="pl_area")
+            cement_rate = st.number_input("सिमेंट दर प्रति बॅग (₹):", min_value=0.0, value=float(master_rates.get("cement", 400.0)), key="pl_cem_r")
+        with p_col2:
+            sand_rate = st.number_input("वाळूचा दर प्रति m³ (₹):", min_value=0.0, value=float(master_rates.get("sand", 2500.0)), key="pl_snd_r")
+            plaster_rate_sqm = st.number_input("अतिरिक्त मजुरी दर प्रति m² (₹ - वैकल्पिक):", min_value=0.0, value=0.0, key="pl_rate")
+
+        st.markdown("#### [B] लेबर खर्च (दिवसानुसार किंवा लांप सम)</s-form>")
+        pl_l1, pl_l2 = st.columns(2)
+        with pl_l1:
+            pl_mason_qty = st.number_input("मेसन संख्या (Days):", min_value=0.0, value=0.0, key="pl_mq")
+            pl_mason_rate = st.number_input("मेसन दर (₹/Day):", min_value=0.0, value=650.0, key="pl_mr")
+        with pl_l2:
+            pl_mazdoor_qty = st.number_input("मजदूर संख्या (Days):", min_value=0.0, value=0.0, key="pl_mzq")
+            pl_mazdoor_rate = st.number_input("मजदूर दर (₹/Day):", min_value=0.0, value=400.0, key="pl_mzr")
+
+        st.markdown("#### [C] अवांतर खर्च व टक्केवारी")
+        po_c1, po_c2 = st.columns(2)
+        with po_c1:
+            scaffolding_cost = st.number_input("स्कॅफोल्डिंग/पाळत खर्च (₹):", min_value=0.0, value=0.0, key="pl_sc")
+            contingency_cost = st.number_input("आकस्मिक खर्च (₹):", min_value=0.0, value=0.0, key="pl_cc")
+        with po_c2:
+            water_pct = st.number_input("वॉटर charge (%):", min_value=0.0, value=1.0, key="pl_wp")
+            profit_pct = st.number_input("कंत्राटदार नफा (%):", min_value=0.0, value=10.0, key="pl_pp")
+
+        st.markdown("#### 💬 कमेंट पॅनल (Comment Panel)")
+        user_note = st.text_area("या प्लास्टर एस्टिमेशन संदर्भात काही नोंद लिहायची असल्यास इथे लिहा:", placeholder="उदा. फ्रंट वॉल प्लास्टर...", key="pl_note")
+        if st.button("💬 कमेंट सबमिट करा", key="pl_comm_btn"):
+            if user_note.strip():
+                st.session_state.current_comment = user_note.strip()
+                user_db = load_db()
+                if current_user_name in user_db:
+                    user_db[current_user_name]["comment"] = user_note.strip()
+                    save_db(user_db)
+                st.success("✅ कमेंट सेव्ह झाली!")
+
+        if st.button("📊 GENERATE PLASTER REPORT", type="primary", key="pl_report_btn"):
+            # व्हॉल्यूम = क्षेत्रफळ * जाडी (मिटरमध्ये)
+            wet_volume = plaster_area * (thickness_mm / 1000.0)
+            dry_volume = wet_volume * 1.33 # कोरड्या मसाल्याचा फॅक्टर
+            total_parts = p_c_part + p_s_part
+
+            cement_vol = (p_c_part / total_parts) * dry_volume if total_parts > 0 else 0.0
+            sand_m3 = (p_s_part / total_parts) * dry_volume if total_parts > 0 else 0.0
+            cement_bags = math.ceil(cement_vol * 28.8)
+
+            total_cement_cost = cement_bags * cement_rate
+            total_sand_cost = sand_m3 * sand_rate
+            add_labour_amt = plaster_area * plaster_rate_sqm
+
+            mat_cost = total_cement_cost + total_sand_cost
+            lab_cost = (pl_mason_qty * pl_mason_rate) + (pl_mazdoor_qty * pl_mazdoor_rate) + add_labour_amt
+            base_total = mat_cost + lab_cost + scaffolding_cost + contingency_cost
+            
+            w_amt = base_total * (water_pct / 100)
+            p_amt = base_total * (profit_pct / 100)
+            grand_total = base_total + w_amt + p_amt
+
+            st.success("🎉 प्लास्टर काम रिपोर्ट यशस्वीरित्या तयार झाला आहे!")
+            st.markdown(f"### 📊 RATE ANALYSIS SHEET - PLASTER WORK")
+            st.info(f"👤 **Prepared For:** {current_user_name} | **प्रकार:** {plaster_type.split(' ')[0]} | **जाडी:** {thickness_mm} mm | **क्षेत्रफळ:** {plaster_area} m²")
+            
+            report_table = f"""
+| Description | Quantity | Unit | Rate (₹) | Amount (₹) |
+| :--- | :--- | :--- | :--- | :--- |
+| **[A] MATERIAL** | | | | |
+| Cement | {cement_bags} | Bags | {cement_rate:.2f} | {total_cement_cost:.2f} |
+| Sand | {sand_m3:.2f} | m³ | {sand_rate:.2f} | {total_sand_cost:.2f} |
+| **[B] LABOUR** | | | | |
+| Mason | {pl_mason_qty} | Nos | {pl_mason_rate:.2f} | {pl_mason_qty*pl_mason_rate:.2f} |
+| Mazdoor | {pl_mazdoor_qty} | Nos | {pl_mazdoor_rate:.2f} | {pl_mazdoor_qty*pl_mazdoor_rate:.2f} |
+| Extra Labour / Rate Work | {plaster_area} | m² | {plaster_rate_sqm:.2f} | {add_labour_amt:.2f} |
+| **[C] OTHER EXPENSES** | | | | |
+| Scaffolding / Centering | - | L.S. | - | {scaffolding_cost:.2f} |
+| Contingencies | - | L.S. | - | {contingency_cost:.2f} |
+| **TOTAL (A + B + C)** | | | | **{base_total:.2f}** |
+| Water Charge ({water_pct}%) | | | | {w_amt:.2f} |
+| Contractor Profit ({profit_pct}%) | | | | {p_amt:.2f} |
+| **GRAND TOTAL** | | | | **₹ {grand_total:.2f}/-** |
+"""
+            st.markdown(report_table)
+
+            msg_text = f"🏗️ *PATIL INFRATECH - PLASTER REPORT*\n"
+            msg_text += f"👤 *Prepared For:* {current_user_name}\n"
+            msg_text += f"🎨 *Type:* {plaster_type.split(' ')[0]} ({thickness_mm}mm) | *Area:* {plaster_area} m²\n"
+            msg_text += f"📅 *Date:* {get_ist_time().strftime('%d-%m-%Y')}\n\n"
+            msg_text += f"📋 *DETAILS:*\n"
+            msg_text += f"• Cement: {cement_bags} Bags = ₹{total_cement_cost:.2f}\n"
+            msg_text += f"• Sand: {sand_m3:.2f} m³ = ₹{total_sand_cost:.2f}\n"
+            msg_text += f"• Labour: {lab_cost:.2f}\n"
+            msg_text += f"--------------------------------\n"
+            msg_text += f"💰 *GRAND TOTAL:* ₹{grand_total:.2f}/-\n"
+            msg_text += f"--------------------------------\n"
+            msg_text += f"_Generated by Patil Infratech_"
+
+            encoded_msg = urllib.parse.quote(msg_text)
+            
+            btn_col1, btn_col2 = st.columns(2)
+            with btn_col1:
+                render_whatsapp_feature(encoded_msg, "ra_pl")
             with btn_col2:
                 st.markdown('''
                     <button onclick="window.print()" style="width: 100%; background-color: #3b82f6; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px;">
