@@ -1050,7 +1050,7 @@ if st.session_state.selected_module is None:
                 st.rerun()
 
 # ==========================================
-# 🧮 MODULE 0: CIVIL CALCULATOR & UNIT CONVERTER
+# 🧮 MODULE 0: CIVIL CALCULATOR & UNIT CONVERTER (Google Style Smart Converter)
 # ==========================================
 elif st.session_state.selected_module == "Civil Calculator":
     if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_to_main_calc"):
@@ -1058,61 +1058,106 @@ elif st.session_state.selected_module == "Civil Calculator":
         st.rerun()
         
     st.write("---")
-    st.subheader("🧮 Civil Calculator & Unit Converter")
-    st.caption("💡 कन्स्ट्रक्शन साईटवरील सोपे आणि अचूक युनिट कनव्हर्शन व ब्रास कॅल्क्युलेटर.")
+    st.subheader("🧮 Civil Smart Unit Converter")
+    st.caption("💡 एकाच बॉक्समध्ये मूल्य भरा आणि सर्व युनिट्समधील अचूक हिशोब एकाच झटक्यात मिळवा!")
 
-    calc_choice = st.radio("कन्व्हर्टर निवडा:", ["📦 m³ to Brass Converter (मीटर क्युब ते ब्रास)", "📏 Length Unit Converter (लांबी युनिट कनव्हर्टर)", "📐 Area Unit Converter (क्षेत्रफळ कनव्हर्टर)"])
+    conv_category = st.selectbox("कनव्हर्शन प्रकार निवडा:", [
+        "📦 Volume / Brass Converter (घनफळ आणि ब्रास)", 
+        "📏 Length Converter (लांबी मोजमाप)", 
+        "📐 Area Converter (क्षेत्रफळ मोजमाप)"
+    ])
 
-    if "m³ to Brass" in calc_choice:
-        st.markdown("#### 📦 Cubic Meter (m³) to Brass Converter")
-        st.caption("💡 1 Brass = 2.83168 m³ (किंवा 1 m³ = 0.35315 Brass)")
-        
-        m3_val = st.number_input("घनफळ भरा (Volume in m³):", min_value=0.0, value=2.83168, step=0.1, key="conv_m3")
-        if st.button("🔄 Convert to Brass", type="primary", key="btn_m3_brass"):
-            brass_val = m3_val / 2.83168
-            ft3_val = m3_val * 35.3147
-            st.success(f"✅ निकाल (Result):")
+    if "Volume / Brass" in conv_category:
+        st.markdown("#### 📦 Volume & Brass Converter")
+        val = st.number_input("मूल्य भरा (Value):", min_value=0.0, value=1.0, step=0.1, key="v_val")
+        unit_from = st.selectbox("मूळ युनिट (From Unit):", ["Cubic Meter (m³)", "Cubic Feet (CFT)", "Brass"])
+
+        if st.button("⚡ Convert Now", type="primary", key="btn_conv_vol"):
+            # सर्व युनिट्स m³ मध्ये कन्व्हर्ट करणे
+            if "Cubic Meter" in unit_from:
+                m3 = val
+            elif "Cubic Feet" in unit_from:
+                m3 = val / 35.3147
+            else: # Brass
+                m3 = val * 2.83168
+
+            brass = m3 / 2.83168
+            cft = m3 * 35.3147
+            liters = m3 * 1000.0
+
+            st.success("✅ कनव्हर्शन निकाल (Results):")
             st.markdown(f"""
-                <div style="background: rgba(31, 41, 55, 0.95); padding: 15px; border-radius: 12px; border-left: 5px solid #10b981;">
-                    <p style="margin: 4px 0; font-size: 16px;"><b>📦 एकूण ब्रास (Brass):</b> <span style="color:#fbbf24; font-size:18px;">{brass_val:.4f} Brass</span></p>
-                    <p style="margin: 4px 0; font-size: 15px;"><b>📐 घन फूट (Cubic Feet / CFT):</b> <code>{ft3_val:.2f} CFT</code></p>
+                <div style="background: rgba(31, 41, 55, 0.95); padding: 18px; border-radius: 16px; border-left: 5px solid #3b82f6;">
+                    <p style="margin: 6px 0; font-size: 16px;"><b>📦 एकूण ब्रास (Brass):</b> <span style="color:#fbbf24; font-size:18px; font-weight:bold;">{brass:.4f} Brass</span></p>
+                    <p style="margin: 6px 0; font-size: 15px;"><b>📐 घन फूट (Cubic Feet / CFT):</b> <code>{cft:.2f} CFT</code></p>
+                    <p style="margin: 6px 0; font-size: 15px;"><b>📏 घन मीटर (Cubic Meter / m³):</b> <code>{m3:.4f} m³</code></p>
+                    <p style="margin: 6px 0; font-size: 15px;"><b>💧 लिटर (Liters):</b> <code>{liters:.2f} Ltrs</code></p>
                 </div>
             """, unsafe_allow_html=True)
 
-    elif "Length Unit" in calc_choice:
-        st.markdown("#### 📏 Length Unit Converter (लांबी कनव्हर्टर)")
-        l_val = st.number_input("मोजमाप भरा (Value):", min_value=0.0, value=1.0, step=0.1, key="conv_l_val")
-        l_type = st.selectbox("युनिट निवडा:", ["Meters to Feet", "Feet to Meters", "Inches to mm", "Meters to mm"])
-        
-        if st.button("🔄 Convert Length", type="primary", key="btn_conv_len"):
-            if "Meters to Feet" in l_type:
-                res = l_val * 3.28084
-                st.info(f"📌 {l_val} Meters = **{res:.4f} Feet**")
-            elif "Feet to Meters" in l_type:
-                res = l_val / 3.28084
-                st.info(f"📌 {l_val} Feet = **{res:.4f} Meters**")
-            elif "Inches to mm" in l_type:
-                res = l_val * 25.4
-                st.info(f"📌 {l_val} Inches = **{res:.2f} mm**")
-            else:
-                res = l_val * 1000.0
-                st.info(f"📌 {l_val} Meters = **{res:.2f} mm**")
+    elif "Length Converter" in conv_category:
+        st.markdown("#### 📏 Length Converter")
+        val = st.number_input("लांबी भरा (Length Value):", min_value=0.0, value=1.0, step=0.1, key="l_val")
+        unit_from = st.selectbox("मूळ युनिट (From Unit):", ["Meters", "Feet", "Inches", "Millimeters (mm)", "Centimeters (cm)"])
+
+        if st.button("⚡ Convert Now", type="primary", key="btn_conv_len"):
+            # सर्व युनिट्स Meters मध्ये कन्व्हर्ट करणे
+            if "Meters" in unit_from:
+                meters = val
+            elif "Feet" in unit_from:
+                meters = val / 3.28084
+            elif "Inches" in unit_from:
+                meters = val / 39.3701
+            elif "Millimeters" in unit_from:
+                meters = val / 1000.0
+            else: # cm
+                meters = val / 100.0
+
+            feet = meters * 3.28084
+            inches = meters * 39.3701
+            mm = meters * 1000.0
+            cm = meters * 100.0
+
+            st.success("✅ कनव्हर्शन निकाल (Results):")
+            st.markdown(f"""
+                <div style="background: rgba(31, 41, 55, 0.95); padding: 18px; border-radius: 16px; border-left: 5px solid #3b82f6;">
+                    <p style="margin: 6px 0; font-size: 15px;"><b>📏 मीटर (Meters):</b> <span style="color:#fbbf24; font-weight:bold;">{meters:.4f} m</span></p>
+                    <p style="margin: 6px 0; font-size: 15px;"><b>🦶 फूट (Feet):</b> <code>{feet:.4f} ft</code></p>
+                    <p style="margin: 6px 0; font-size: 15px;"><b>📐 इंच (Inches):</b> <code>{inches:.2f} inches</code></p>
+                    <p style="margin: 6px 0; font-size: 15px;"><b>🔍 मिलिमीटर (mm):</b> <code>{mm:.2f} mm</code></p>
+                    <p style="margin: 6px 0; font-size: 15px;"><b>📍 सेंटीमीटर (cm):</b> <code>{cm:.2f} cm</code></p>
+                </div>
+            """, unsafe_allow_html=True)
 
     else:
-        st.markdown("#### 📐 Area Unit Converter (क्षेत्रफळ कनव्हर्टर)")
-        a_val = st.number_input("क्षेत्रफळ भरा (Area Value):", min_value=0.0, value=100.0, step=10.0, key="conv_a_val")
-        a_type = st.selectbox("क्षेत्रफळ युनिट निवडा:", ["Sq. Meters to Sq. Feet", "Sq. Feet to Sq. Meters", "Sq. Feet to Guntha"])
-        
-        if st.button("🔄 Convert Area", type="primary", key="btn_conv_area"):
-            if "Sq. Meters to Sq. Feet" in a_type:
-                res = a_val * 10.7639
-                st.info(f"📌 {a_val} m² = **{res:.2f} Sq. Ft.**")
-            elif "Sq. Feet to Sq. Meters" in a_type:
-                res = a_val / 10.7639
-                st.info(f"📌 {a_val} Sq. Ft. = **{res:.2f} m²**")
-            else:
-                res = a_val / 1089.0  # 1 Guntha = 1089 sq ft approx
-                st.info(f"📌 {a_val} Sq. Ft. = **{res:.4f} Guntha**")
+        st.markdown("#### 📐 Area Converter")
+        val = st.number_input("क्षेत्रफळ भरा (Area Value):", min_value=0.0, value=100.0, step=10.0, key="a_val")
+        unit_from = st.selectbox("मूळ युनिट (From Unit):", ["Sq. Meters (m²)", "Sq. Feet (Sq. Ft.)", "Guntha", "Acre"])
+
+        if st.button("⚡ Convert Now", type="primary", key="btn_conv_area"):
+            # सर्व युनिट्स Sq. Feet मध्ये कन्व्हर्ट करणे
+            if "Sq. Feet" in unit_from:
+                sqft = val
+            elif "Sq. Meters" in unit_from:
+                sqft = val * 10.7639
+            elif "Guntha" in unit_from:
+                sqft = val * 1089.0
+            else: # Acre
+                sqft = val * 43560.0
+
+            sqm = sqft / 10.7639
+            guntha = sqft / 1089.0
+            acre = sqft / 43560.0
+
+            st.success("✅ कनव्हर्शन निकाल (Results):")
+            st.markdown(f"""
+                <div style="background: rgba(31, 41, 55, 0.95); padding: 18px; border-radius: 16px; border-left: 5px solid #3b82f6;">
+                    <p style="margin: 6px 0; font-size: 15px;"><b>📐 स्क्वेअर फूट (Sq. Ft.):</b> <span style="color:#fbbf24; font-weight:bold;">{sqft:.2f} sq.ft.</span></p>
+                    <p style="margin: 6px 0; font-size: 15px;"><b>📏 स्क्वेअर मीटर (m²):</b> <code>{sqm:.2f} m²</code></p>
+                    <p style="margin: 6px 0; font-size: 15px;"><b>🌾 गुंठा (Guntha):</b> <code>{guntha:.4f} Guntha</code></p>
+                    <p style="margin: 6px 0; font-size: 15px;"><b>🌳 हेक्टर/एकर (Acre):</b> <code>{acre:.4f} Acre</code></p>
+                </div>
+            """, unsafe_allow_html=True)
 
 # ==========================================
 # 🛑 MODULE 1: RATE ANALYSIS MODULE (Concrete Work, Brickwork & Plaster Work)
