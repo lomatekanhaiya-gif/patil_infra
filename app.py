@@ -740,7 +740,7 @@ if st.session_state.app_user_name is None:
 
     if "Login" in auth_mode:
         with st.form("uid_login_form"):
-            input_uid = st.text_input("Enter your UID (उदा. KANHA_1P):").strip().upper()
+            input_uid = st.text_input("Enter your UID:").strip().upper()
             remember_me = st.checkbox("📌 या डिव्हाइसवर अकाउंट सेव्ह ठेवा (Remember Me)", value=False)
             submit_login = st.form_submit_button("🚀 Login Now", type="primary")
 
@@ -762,7 +762,7 @@ if st.session_state.app_user_name is None:
 
     elif "Register" in auth_mode:
         with st.form("uid_reg_form"):
-            reg_name = st.text_input("नाव (Name):", placeholder="उदा. Rohan").strip()
+            reg_name = st.text_input("नाव (Name):", placeholder="नाव टाка").strip()
             reg_mob = st.text_input("मोबाईल नंबर (Mobile Number):", placeholder="१० अंकी नंबर").strip()
             reg_pin = st.text_input("4-Digit सिक्रेट पिन सेट करा (Set PIN):", type="password", max_chars=4, placeholder="1234").strip()
             remember_me_reg = st.checkbox("📌 या डिव्हाइसवर अकाउंट सेव्ह ठेवा (Remember Me)", value=False, key="reg_rem")
@@ -806,7 +806,7 @@ if st.session_state.app_user_name is None:
                                 "premium_expiry": None,
                                 "requested_code": False,
                                 "seen_popup": False,
-                                "master_code_uses": 0,  # 🟢 मास्टर कोड वापरण्याची मर्यादा (जास्तीत जास्त ३ वेळा)
+                                "master_code_uses": 0,
                                 "history": []
                             }
                             save_db(user_db)
@@ -922,9 +922,6 @@ else:
 
 st.write("---")
 
-# ==========================================
-# 🔑 प्रिमियम कोड इनपुट (Master Code 4528 Logic Included)
-# ==========================================
 if not is_user_premium:
     with st.expander("🔑 प्रिमियम अनलॉक करा (Enter Premium Code)"):
         input_code = st.text_input("Enter Code (e.g. PATIL-XXXXX):", key="home_code_input").strip()
@@ -933,7 +930,6 @@ if not is_user_premium:
             if st.button("🔓 Activate Premium", type="primary"):
                 codes_db = user_db.get("PREMIUM_CODES", {})
                 
-                # 🟢 स्पेशल मास्टर कोड लॉजिक (4528) - प्रत्येक युझर ३ वेळा वापरू शकतो, ८ तासांसाठी प्रिमियम मिळतो
                 if input_code == "4528":
                     u_info = user_db.get(current_user_name, {})
                     uses_count = u_info.get("master_code_uses", 0)
