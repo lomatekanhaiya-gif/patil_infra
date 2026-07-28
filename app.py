@@ -2061,7 +2061,7 @@ elif st.session_state.selected_module == "Quantity Surveying":
         
     st.write("---")
     st.subheader("📈 Quantity Surveying & Abstract Sheet Master")
-    st.caption("💡 DESCRIPTION | L | B | H | QUANTITY | MATERIAL फॉर्मेटनुसार खाली दिलेल्या टेबलमध्ये थेट व्हॅल्यू टाका!")
+    st.caption("💡 ज्या कामाची व्हॅल्यू टाकाल, फक्त त्याचाच हिशोब आणि मटेरियल रिपोर्ट तयार होईल!")
 
     # 1. Camera / Blueprint Section
     with st.expander("📷 2D Plan / Blueprint / Camera Reference"):
@@ -2104,102 +2104,108 @@ elif st.session_state.selected_module == "Quantity Surveying":
         st.markdown(f"#### 🔹 {stg_name}")
         sc1, sc2, sc3, sc4 = st.columns(4)
         with sc1:
-            l_val = st.number_input(f"Length L (m) #{idx}", min_value=0.0, value=5.0, step=0.1, key=f"qs_l_{idx}")
+            l_val = st.number_input(f"Length L (m) #{idx}", min_value=0.0, value=0.0, step=0.1, key=f"qs_l_{idx}")
         with sc2:
-            b_val = st.number_input(f"Width B (m) #{idx}", min_value=0.0, value=4.0, step=0.1, key=f"qs_b_{idx}")
+            b_val = st.number_input(f"Width B (m) #{idx}", min_value=0.0, value=0.0, step=0.1, key=f"qs_b_{idx}")
         with sc3:
             if is_area_unit:
                 h_val = 1.0
                 st.caption("📏 (Area m²)")
             else:
-                h_val = st.number_input(f"Height H (m) #{idx}", min_value=0.0, value=1.0, step=0.05, key=f"qs_h_{idx}")
+                h_val = st.number_input(f"Height H (m) #{idx}", min_value=0.0, value=0.0, step=0.05, key=f"qs_h_{idx}")
         with sc4:
-            nos_val = st.number_input(f"Nos #{idx}", min_value=1, value=1, step=1, key=f"qs_nos_{idx}")
+            nos_val = st.number_input(f"Nos #{idx}", min_value=0, value=0, step=1, key=f"qs_nos_{idx}")
 
-        # Quantity Calculation
-        if is_area_unit:
-            qty = l_val * b_val * nos_val
-            unit_label = "m²"
-        else:
-            qty = l_val * b_val * h_val * nos_val
-            unit_label = "m³"
+        # If user has entered valid dimensions and nos
+        if l_val > 0 and b_val > 0 and nos_val > 0:
+            if is_area_unit:
+                qty = l_val * b_val * nos_val
+                unit_label = "m²"
+            else:
+                qty = l_val * b_val * h_val * nos_val
+                unit_label = "m³"
 
-        st.markdown(f"**📐 QTY: `{qty:.3f} {unit_label}`**")
+            st.markdown(f"**📐 QTY: `{qty:.3f} {unit_label}`**")
 
-        # Material calculation using Rate Analysis standard formulas
-        mat_summary = "मटेरियल लागू नाही"
-        item_cost = 0.0
+            mat_summary = "मटेरियल लागू नाही"
+            item_cost = 0.0
 
-        if "P.C.C." in stg_name:
-            dry_vol = qty * 1.54
-            c_bags = math.ceil((1 / 13) * dry_vol * 28.8)
-            sand_m3 = (4 / 13) * dry_vol
-            agg_m3 = (8 / 13) * dry_vol
-            item_cost = (c_bags * c_rate) + (sand_m3 * s_rate) + (agg_m3 * a_rate)
-            mat_summary = f"Cement: {c_bags} Bags, Sand: {sand_m3:.2f} m³, Aggregate: {agg_m3:.2f} m³"
-            st.info(f"• **Cement:** {c_bags} Bags | **Sand:** {sand_m3:.2f} m³ | **Aggregate:** {agg_m3:.2f} m³ | **Cost:** ₹ {item_cost:.2f}")
+            if "P.C.C." in stg_name:
+                dry_vol = qty * 1.54
+                c_bags = math.ceil((1 / 13) * dry_vol * 28.8)
+                sand_m3 = (4 / 13) * dry_vol
+                agg_m3 = (8 / 13) * dry_vol
+                item_cost = (c_bags * c_rate) + (sand_m3 * s_rate) + (agg_m3 * a_rate)
+                mat_summary = f"Cement: {c_bags} Bags, Sand: {sand_m3:.2f} m³, Aggregate: {agg_m3:.2f} m³"
+                st.info(f"• **Cement:** {c_bags} Bags | **Sand:** {sand_m3:.2f} m³ | **Aggregate:** {agg_m3:.2f} m³ | **Cost:** ₹ {item_cost:.2f}")
 
-        elif "RCC" in stg_name or "Column" in stg_name or "Slab" in stg_name or "Footing" in stg_name:
-            dry_vol = qty * 1.54
-            c_bags = math.ceil((1 / 5.5) * dry_vol * 28.8)
-            sand_m3 = (1.5 / 5.5) * dry_vol
-            agg_m3 = (3 / 5.5) * dry_vol
-            steel_kg = qty * 80.0
-            item_cost = (c_bags * c_rate) + (sand_m3 * s_rate) + (agg_m3 * a_rate) + (steel_kg * st_rate)
-            mat_summary = f"Cement: {c_bags} Bags, Sand: {sand_m3:.2f} m³, Aggregate: {agg_m3:.2f} m³, Steel: {steel_kg:.1f} Kg"
-            st.info(f"• **Cement:** {c_bags} Bags | **Sand:** {sand_m3:.2f} m³ | **Aggregate:** {agg_m3:.2f} m³ | **Steel:** {steel_kg:.1f} Kg | **Cost:** ₹ {item_cost:.2f}")
+            elif "RCC" in stg_name or "Column" in stg_name or "Slab" in stg_name or "Footing" in stg_name:
+                dry_vol = qty * 1.54
+                c_bags = math.ceil((1 / 5.5) * dry_vol * 28.8)
+                sand_m3 = (1.5 / 5.5) * dry_vol
+                agg_m3 = (3 / 5.5) * dry_vol
+                steel_kg = qty * 80.0
+                item_cost = (c_bags * c_rate) + (sand_m3 * s_rate) + (agg_m3 * a_rate) + (steel_kg * st_rate)
+                mat_summary = f"Cement: {c_bags} Bags, Sand: {sand_m3:.2f} m³, Aggregate: {agg_m3:.2f} m³, Steel: {steel_kg:.1f} Kg"
+                st.info(f"• **Cement:** {c_bags} Bags | **Sand:** {sand_m3:.2f} m³ | **Aggregate:** {agg_m3:.2f} m³ | **Steel:** {steel_kg:.1f} Kg | **Cost:** ₹ {item_cost:.2f}")
 
-        elif "Brickwork" in stg_name:
-            bricks = math.ceil(qty * 500)
-            mortar_vol = qty * 0.30
-            c_bags = math.ceil((1 / 5) * mortar_vol * 28.8)
-            sand_m3 = (4 / 5) * mortar_vol
-            item_cost = (bricks * (b_rate/1000.0)) + (c_bags * c_rate) + (sand_m3 * s_rate)
-            mat_summary = f"Bricks: {bricks} Nos, Cement: {c_bags} Bags, Sand: {sand_m3:.2f} m³"
-            st.info(f"• **Bricks:** {bricks} Nos | **Cement:** {c_bags} Bags | **Sand:** {sand_m3:.2f} m³ | **Cost:** ₹ {item_cost:.2f}")
+            elif "Brickwork" in stg_name:
+                bricks = math.ceil(qty * 500)
+                mortar_vol = qty * 0.30
+                c_bags = math.ceil((1 / 5) * mortar_vol * 28.8)
+                sand_m3 = (4 / 5) * mortar_vol
+                item_cost = (bricks * (b_rate/1000.0)) + (c_bags * c_rate) + (sand_m3 * s_rate)
+                mat_summary = f"Bricks: {bricks} Nos, Cement: {c_bags} Bags, Sand: {sand_m3:.2f} m³"
+                st.info(f"• **Bricks:** {bricks} Nos | **Cement:** {c_bags} Bags | **Sand:** {sand_m3:.2f} m³ | **Cost:** ₹ {item_cost:.2f}")
 
-        elif "Plaster" in stg_name:
-            thickness = 0.012 # 12mm
-            wet_vol = qty * thickness
-            dry_vol = wet_vol * 1.33
-            c_bags = math.ceil((1 / 5) * dry_vol * 28.8)
-            sand_m3 = (4 / 5) * dry_vol
-            item_cost = (c_bags * c_rate) + (sand_m3 * s_rate)
-            mat_summary = f"Cement: {c_bags} Bags, Sand: {sand_m3:.2f} m³"
-            st.info(f"• **Cement (12mm):** {c_bags} Bags | **Sand:** {sand_m3:.2f} m³ | **Cost:** ₹ {item_cost:.2f}")
+            elif "Plaster" in stg_name:
+                thickness = 0.012 # 12mm
+                wet_vol = qty * thickness
+                dry_vol = wet_vol * 1.33
+                c_bags = math.ceil((1 / 5) * dry_vol * 28.8)
+                sand_m3 = (4 / 5) * dry_vol
+                item_cost = (c_bags * c_rate) + (sand_m3 * s_rate)
+                mat_summary = f"Cement: {c_bags} Bags, Sand: {sand_m3:.2f} m³"
+                st.info(f"• **Cement (12mm):** {c_bags} Bags | **Sand:** {sand_m3:.2f} m³ | **Cost:** ₹ {item_cost:.2f}")
 
-        stage_results.append({
-            "Stage": stg_name,
-            "Dimensions": f"{l_val} x {b_val} x {h_val if not is_area_unit else 1.0}",
-            "Nos": nos_val,
-            "Quantity": f"{qty:.3f} {unit_label}",
-            "Material": mat_summary,
-            "Cost": item_cost
-        })
+            stage_results.append({
+                "Stage": stg_name,
+                "Dimensions": f"{l_val} x {b_val} x {h_val if not is_area_unit else 1.0}",
+                "Nos": nos_val,
+                "Quantity": f"{qty:.3f} {unit_label}",
+                "Material": mat_summary,
+                "Cost": item_cost
+            })
         st.write("---")
 
-    # Deduction Manager
-    st.markdown("#### 🚪 Window & Door Deductions Manager")
+    # Deduction Manager (m³)
+    st.markdown("#### 🚪 Door & Window Deductions Manager (for Brickwork & Plaster in m³)")
     if "deduction_count" not in st.session_state:
         st.session_state.deduction_count = 1
 
     def add_deduction():
         st.session_state.deduction_count += 1
 
-    st.button("➕ Add Door / Window Deduction (+ Icon)", on_click=add_deduction)
+    st.button("➕ Add Deduction Item (+ Icon)", on_click=add_deduction)
 
-    deductions = []
+    total_deduction_vol = 0.0
     for d_idx in range(st.session_state.deduction_count):
-        dc1, dc2, dc3, dc4 = st.columns(4)
+        dc1, dc2, dc3, dc4, dc5 = st.columns(5)
         with dc1:
             d_type = st.selectbox(f"Type #{d_idx}", ["Door", "Window", "Ventilator"], key=f"d_type_{d_idx}")
         with dc2:
-            dl = st.number_input(f"Length (m) #{d_idx}", min_value=0.0, value=1.0, step=0.1, key=f"d_l_{d_idx}")
+            dl = st.number_input(f"L (m) #{d_idx}", min_value=0.0, value=0.0, step=0.1, key=f"d_l_{d_idx}")
         with dc3:
-            db = st.number_input(f"Height (m) #{d_idx}", min_value=0.0, value=1.2, step=0.1, key=f"d_b_{d_idx}")
+            db = st.number_input(f"B/Thick #{d_idx}", min_value=0.0, value=0.23, step=0.05, key=f"d_b_{d_idx}")
         with dc4:
-            dnos = st.number_input(f"Nos #{d_idx}", min_value=1, value=1, step=1, key=f"d_nos_{d_idx}")
-        deductions.append({"type": d_type, "L": dl, "B": db, "Nos": dnos})
+            dh = st.number_input(f"H (m) #{d_idx}", min_value=0.0, value=0.0, step=0.1, key=f"d_h_{d_idx}")
+        with dc5:
+            dnos = st.number_input(f"Nos #{d_idx}", min_value=0, value=0, step=1, key=f"d_nos_{d_idx}")
+        
+        if dl > 0 and db > 0 and dh > 0 and dnos > 0:
+            total_deduction_vol += dl * db * dh * dnos
+
+    st.markdown(f"**🔴 Total Deductions Volume: `{total_deduction_vol:.3f} m³`**")
 
     st.markdown("#### 💬 कमेंट पॅनल (Comment Panel)")
     user_note = st.text_area("Abstract Sheet संदर्भात विशेष नोंद:", placeholder="उदा. Ground floor estimation...", key="qs_note")
@@ -2214,57 +2220,59 @@ elif st.session_state.selected_module == "Quantity Surveying":
             st.success("✅ कमेंट सेव्ह झाली!")
 
     if st.button("📈 GENERATE ABSTRACT SHEET & MATERIAL REPORT", type="primary", key="qs_gen_btn"):
-        total_deduction_area = sum(d["L"] * d["B"] * d["Nos"] for d in deductions)
-        grand_total_cost = sum(r["Cost"] for r in stage_results)
+        if not stage_results:
+            st.warning("⚠️ कृपया कमीत कमी एका स्टेजसाठी L, B, H आणि Nos ची व्हॅल्यू भरा!")
+        else:
+            grand_total_cost = sum(r["Cost"] for r in stage_results)
 
-        st.success("🎉 Abstract Sheet & Material Report यशस्वीरित्या तयार झाला आहे!")
-        st.markdown(f"### 📊 ABSTRACT SHEET & MATERIAL REPORT")
-        st.info(f"👤 **Prepared For:** {current_user_name} | **Total Deductions Area:** {total_deduction_area:.2f} m²")
+            st.success("🎉 Abstract Sheet & Material Report यशस्वीरित्या तयार झाला आहे!")
+            st.markdown(f"### 📊 ABSTRACT SHEET & MATERIAL REPORT")
+            st.info(f"👤 **Prepared For:** {current_user_name} | **Total Deductions:** {total_deduction_vol:.3f} m³")
 
-        table_rows = ""
-        for r in stage_results:
-            table_rows += f"| {r['Stage']} | {r['Dimensions']} | {r['Nos']} | {r['Quantity']} | {r['Material']} | ₹ {r['Cost']:.2f} |\n"
+            table_rows = ""
+            for r in stage_results:
+                table_rows += f"| {r['Stage']} | {r['Dimensions']} | {r['Nos']} | {r['Quantity']} | {r['Material']} | ₹ {r['Cost']:.2f} |\n"
 
-        final_report_html = f"""
+            final_report_html = f"""
 <div class="print-container">
 <h2>📊 PATIL INFRATECH - ABSTRACT SHEET & QUANTITY SURVEY</h2>
 <p><strong>Prepared For:</strong> {current_user_name} | <strong>Date:</strong> {get_ist_time().strftime('%d-%m-%Y')}</p>
 
 | DESCRIPTION | L x B x H | NOS | QUANTITY | MATERIAL | AMOUNT (₹) |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **DEDUCTIONS (Doors/Windows)** | Total Area: {total_deduction_area:.2f} m² | - | - | Wall/Plaster Deductions | - |
+| **DEDUCTIONS (Openings)** | Brick/Plaster Deduction | - | {total_deduction_vol:.3f} m³ | Volume Deducted | - |
 {table_rows}
 
 ---
 ### 📌 SUMMARY DETAILS
-* **Total Deductions Area:** {total_deduction_area:.2f} m²
+* **Total Deductions Volume:** {total_deduction_vol:.3f} m³
 * **GRAND TOTAL ESTIMATED COST:** **₹ {grand_total_cost:.2f}/-**
 </div>
 """
-        st.markdown(final_report_html, unsafe_allow_html=True)
+            st.markdown(final_report_html, unsafe_allow_html=True)
 
-        msg_text = f"📊 *PATIL INFRATECH - ABSTRACT SHEET*\n"
-        msg_text += f"👤 *Prepared For:* {current_user_name}\n"
-        msg_text += f"📅 *Date:* {get_ist_time().strftime('%d-%m-%Y')}\n\n"
-        msg_text += f"💰 *GRAND TOTAL ESTIMATED COST:* ₹ {grand_total_cost:.2f}/-\n"
-        msg_text += f"_Generated by Patil Infratech_"
+            msg_text = f"📊 *PATIL INFRATECH - ABSTRACT SHEET*\n"
+            msg_text += f"👤 *Prepared For:* {current_user_name}\n"
+            msg_text += f"📅 *Date:* {get_ist_time().strftime('%d-%m-%Y')}\n\n"
+            msg_text += f"💰 *GRAND TOTAL ESTIMATED COST:* ₹ {grand_total_cost:.2f}/-\n"
+            msg_text += f"_Generated by Patil Infratech_"
 
-        encoded_msg = urllib.parse.quote(msg_text)
+            encoded_msg = urllib.parse.quote(msg_text)
 
-        btn_col1, btn_col2 = st.columns(2)
-        with btn_col1:
-            render_whatsapp_feature(encoded_msg, "qs_main")
-        with btn_col2:
-            st.markdown('''
-                <button onclick="window.print()" style="width: 100%; background-color: #3b82f6; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px;">
-                    📄 Print / Save A3 Size PDF
-                </button>
-            ''', unsafe_allow_html=True)
+            btn_col1, btn_col2 = st.columns(2)
+            with btn_col1:
+                render_whatsapp_feature(encoded_msg, "qs_main")
+            with btn_col2:
+                st.markdown('''
+                    <button onclick="window.print()" style="width: 100%; background-color: #3b82f6; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px;">
+                        📄 Print / Save A3 Size PDF
+                    </button>
+                ''', unsafe_allow_html=True)
 
-        if current_user_name:
-            conn = get_db_connection()
-            cursor = conn.cursor()
-            now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
-            cursor.execute("INSERT INTO history (user_key, timestamp, user_note, report_data) VALUES (?, ?, ?, ?)", (current_user_name, now_str, st.session_state.current_comment, final_report_html))
-            conn.commit()
-            conn.close()
+            if current_user_name:
+                conn = get_db_connection()
+                cursor = conn.cursor()
+                now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
+                cursor.execute("INSERT INTO history (user_key, timestamp, user_note, report_data) VALUES (?, ?, ?, ?)", (current_user_name, now_str, st.session_state.current_comment, final_report_html))
+                conn.commit()
+                conn.close()
