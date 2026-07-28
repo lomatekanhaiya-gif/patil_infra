@@ -1,8 +1,7 @@
-# KANHA_1p - पाटील इन्फ्राटेक (PostgreSQL Database & Streamlit Web Application)
+# KANHA_1p - पाटील इन्फ्राटेक (SQLite Database & Streamlit Web Application)
 import streamlit as st
 import math
-import psycopg2
-import psycopg2.extras
+import sqlite3
 import os
 import datetime
 import pandas as pd
@@ -30,18 +29,13 @@ def get_ist_time():
     return ist_now
 
 # ==========================================
-# 🗄️ POSTGRESQL DATABASE MANAGEMENT
+# 🗄️ SQLITE DATABASE MANAGEMENT
 # ==========================================
+DB_FILE = "patil_infratech.db"
+
 def get_db_connection():
-    # Streamlit secrets मधून किंवा Environment Variables मधून PostgreSQL URL घेणे
-    # उदाहरणार्थ st.secrets["postgres"]["url"] किंवा छुट्टा पॅरामीटर्स वापरू शकता
-    if hasattr(st, "secrets") and "postgres" in st.secrets:
-        db_url = st.secrets["postgres"]["url"]
-        conn = psycopg2.connect(db_url, cursor_factory=psycopg2.extras.RealDictCursor)
-    else:
-        # Local fallback किंवा Environment Variable
-        db_url = os.getenv("DATABASE_URL", "postgres://user:password@localhost:5432/patil_infratech")
-        conn = psycopg2.connect(db_url, cursor_factory=psycopg2.extras.RealDictCursor)
+    conn = sqlite3.connect(DB_FILE, check_same_thread=False)
+    conn.row_factory = sqlite3.Row
     return conn
 
 def init_db():
@@ -73,7 +67,7 @@ def init_db():
     # 2. History Table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS history (
-            id SERIAL PRIMARY KEY,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_key TEXT,
             timestamp TEXT,
             user_note TEXT,
@@ -113,7 +107,7 @@ def init_db():
     # 6. Ads Table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS ads (
-            id SERIAL PRIMARY KEY,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT,
             desc TEXT,
             link TEXT,
@@ -126,14 +120,14 @@ def init_db():
     ''')
 
     # Master Admin Default Entry
-    cursor.execute("SELECT * FROM users WHERE user_key = %s", ("9999999999",))
+    cursor.execute("SELECT * FROM users WHERE user_key = ?", ("9999999999",))
     if not cursor.fetchone():
         cursor.execute('''
             INSERT INTO users (user_key, id, uid, pin, mobile, password, comment, admin_message, unread_notification, is_premium, premium_expiry, requested_code, seen_popup, master_code_uses, last_active, activated_by)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', ("9999999999", "kanha", "KANHA_1P", "1234", "9999999999", "patiladmin123", "मास्टर ॲडमीन अकाउंट", "स्वागत आहे मास्टर कन्हैया! आपले पाटील इन्फ्राटेक मध्ये सर्व अधिकार अनलॉक्ड आहेत ⚡", 0, 1, "2099-12-31 23:59:59", 0, 1, 0, get_ist_time().strftime("%Y-%m-%d %H:%M:%S"), "Master Admin"))
 
-    # Default Feature Locks
+    # Default Feature Locks (Quantity Surveying Included)
     default_locks = {
         "Civil Calculator": "Free",
         "Rate Analysis": "Free",
@@ -143,15 +137,14 @@ def init_db():
         "Civil AI Assistant": "Premium"
     }
     for f_name, f_lvl in default_locks.items():
-        cursor.execute("INSERT INTO feature_locks (feature_name, access_level) VALUES (%s, %s) ON CONFLICT (feature_name) DO NOTHING", (f_name, f_lvl))
+        cursor.execute("INSERT OR IGNORE INTO feature_locks (feature_name, access_level) VALUES (?, ?)", (f_name, f_lvl))
 
     # Default Market Rates
     default_rates = {"cement": 400.0, "sand": 2500.0, "bricks": 8.0, "aggregate": 2200.0, "steel": 60.0}
     for mat, rat in default_rates.items():
-        cursor.execute("INSERT INTO market_rates (material, rate) VALUES (%s, %s) ON CONFLICT (material) DO NOTHING", (mat, rat))
+        cursor.execute("INSERT OR IGNORE INTO market_rates (material, rate) VALUES (?, ?)", (mat, rat))
 
     conn.commit()
-    cursor.close()
     conn.close()
 
 init_db()
@@ -161,9 +154,8 @@ def get_user_data(user_key):
     if not user_key: return None
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM users WHERE user_key = %s", (user_key,))
+    cursor.execute("SELECT * FROM users WHERE user_key = ?", (user_key,))
     row = cursor.fetchone()
-    cursor.close()
     conn.close()
     if row:
         return dict(row)
@@ -174,7 +166,6 @@ def get_market_rates():
     cursor = conn.cursor()
     cursor.execute("SELECT material, rate FROM market_rates")
     rows = cursor.fetchall()
-    cursor.close()
     conn.close()
     return {row["material"]: row["rate"] for row in rows}
 
@@ -183,7 +174,6 @@ def get_feature_locks():
     cursor = conn.cursor()
     cursor.execute("SELECT feature_name, access_level FROM feature_locks")
     rows = cursor.fetchall()
-    cursor.close()
     conn.close()
     return {row["feature_name"]: row["access_level"] for row in rows}
 
@@ -196,9 +186,8 @@ if st.session_state.app_user_name is None and "saved_uid" in query_params:
     saved_uid = query_params["saved_uid"]
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT user_key FROM users WHERE uid = %s", (saved_uid,))
+    cursor.execute("SELECT user_key FROM users WHERE uid = ?", (saved_uid,))
     row = cursor.fetchone()
-    cursor.close()
     conn.close()
     if row:
         st.session_state.app_user_name = row["user_key"]
@@ -222,9 +211,8 @@ current_user_name = st.session_state.app_user_name
 if current_user_name:
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("UPDATE users SET last_active = %s WHERE user_key = %s", (get_ist_time().strftime("%Y-%m-%d %H:%M:%S"), current_user_name))
+    cursor.execute("UPDATE users SET last_active = ? WHERE user_key = ?", (get_ist_time().strftime("%Y-%m-%d %H:%M:%S"), current_user_name))
     conn.commit()
-    cursor.close()
     conn.close()
 
 # ⏳ प्रिमियम स्टेटस व अचूक एक्सपायरी तपासणी
@@ -244,9 +232,8 @@ def check_user_premium_status(username):
                 if now_datetime > exp_datetime:
                     conn = get_db_connection()
                     cursor = conn.cursor()
-                    cursor.execute("UPDATE users SET is_premium = 0, premium_expiry = NULL WHERE user_key = %s", (username,))
+                    cursor.execute("UPDATE users SET is_premium = 0, premium_expiry = NULL WHERE user_key = ?", (username,))
                     conn.commit()
-                    cursor.close()
                     conn.close()
                     return False, "Expired"
                 else:
@@ -450,37 +437,34 @@ def render_whatsapp_feature(encoded_msg, key_prefix):
                 if st.button("🔓 Unlock WhatsApp Share Now", key=f"{key_prefix}_unlock_btn"):
                     conn = get_db_connection()
                     cursor = conn.cursor()
-                    cursor.execute("SELECT * FROM premium_codes WHERE code = %s", (p_code,))
+                    cursor.execute("SELECT * FROM premium_codes WHERE code = ?", (p_code,))
                     row = cursor.fetchone()
                     
                     if row:
                         c_info = dict(row)
                         if c_info.get("used") == 1:
                             st.error("❌ हा कोड आधीच वापरला गेला आहे! तो आता व्हॅलिड नाही.")
-                            cursor.close()
                             conn.close()
                         else:
                             exp_datetime = get_ist_time() + datetime.timedelta(days=28)
                             exp_str = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
                             now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
 
-                            cursor.execute("UPDATE premium_codes SET used = 1, used_by = %s, used_date = %s WHERE code = %s", (current_user_name, now_str, p_code))
+                            cursor.execute("UPDATE premium_codes SET used = 1, used_by = ?, used_date = ? WHERE code = ?", (current_user_name, now_str, p_code))
                             
                             disp_name = current_user_name if current_user_name else ""
                             welcome_msg = f"{disp_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
                             
                             cursor.execute('''
                                 UPDATE users 
-                                SET is_premium = 1, premium_expiry = %s, seen_popup = 0, activated_by = ?, admin_message = ?, unread_notification = 0
-                                WHERE user_key = %s
+                                SET is_premium = 1, premium_expiry = ?, seen_popup = 0, activated_by = ?, admin_message = ?, unread_notification = 0
+                                WHERE user_key = ?
                             ''', (exp_str, "Kanhaiya (Founder of Patil Infratech)", welcome_msg, current_user_name))
                             
                             conn.commit()
-                            cursor.close()
                             conn.close()
                             st.rerun()
                     else:
-                        cursor.close()
                         conn.close()
                         st.error("❌ चुकीचा प्रिमियम कोड! कृपया अचूक कोड टाका.")
 
@@ -488,9 +472,8 @@ def render_whatsapp_feature(encoded_msg, key_prefix):
                 if st.button("📩 Request Code from Admin", key=f"{key_prefix}_req_btn"):
                     conn = get_db_connection()
                     cursor = conn.cursor()
-                    cursor.execute("UPDATE users SET requested_code = 1 WHERE user_key = %s", (current_user_name,))
+                    cursor.execute("UPDATE users SET requested_code = 1 WHERE user_key = ?", (current_user_name,))
                     conn.commit()
-                    cursor.close()
                     conn.close()
                     st.success("✅ ॲडमीनला कोडसाठी रिक्वेस्ट पाठवली आहे!")
 
@@ -526,7 +509,6 @@ if not st.session_state.welcome_completed:
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM ads WHERE active = 1 AND position = 'Loading Page (Title Sponsor)'")
         ads_rows = cursor.fetchall()
-        cursor.close()
         conn.close()
 
         for ad in ads_rows:
@@ -622,9 +604,8 @@ if st.session_state.is_admin_logged:
             cursor = conn.cursor()
             updated_rates = {"cement": adm_cem, "sand": adm_snd, "bricks": adm_brk, "aggregate": adm_agg, "steel": adm_ste}
             for mat, rat in updated_rates.items():
-                cursor.execute("INSERT INTO market_rates (material, rate) VALUES (%s, %s) ON CONFLICT (material) DO UPDATE SET rate = EXCLUDED.rate", (mat, rat))
+                cursor.execute("REPLACE INTO market_rates (material, rate) VALUES (?, ?)", (mat, rat))
             conn.commit()
-            cursor.close()
             conn.close()
             st.success("✅ आजचे मास्टर मार्केट दर डेटाबेसमध्ये यशस्वीरित्या अपडेट झाले!")
 
@@ -651,9 +632,8 @@ if st.session_state.is_admin_logged:
                 "Civil AI Assistant": fl_ai
             }
             for f_name, f_lvl in new_locks.items():
-                cursor.execute("INSERT INTO feature_locks (feature_name, access_level) VALUES (%s, %s) ON CONFLICT (feature_name) DO UPDATE SET access_level = EXCLUDED.access_level", (f_name, f_lvl))
+                cursor.execute("REPLACE INTO feature_locks (feature_name, access_level) VALUES (?, ?)", (f_name, f_lvl))
             conn.commit()
-            cursor.close()
             conn.close()
             st.success("✅ प्रिमियम/फ्री फीचर्स सेटिंग्स यशस्वीरित्या बदलल्या!")
 
@@ -679,12 +659,11 @@ if st.session_state.is_admin_logged:
             
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM history WHERE user_key = %s ORDER BY id DESC", (target_user,))
+            cursor.execute("SELECT * FROM history WHERE user_key = ? ORDER BY id DESC", (target_user,))
             u_hist = [dict(r) for r in cursor.fetchall()]
 
-            cursor.execute("SELECT code FROM premium_codes WHERE assigned_to = %s AND used = 0", (u_name,))
+            cursor.execute("SELECT code FROM premium_codes WHERE assigned_to = ? AND used = 0", (u_name,))
             c_row = cursor.fetchone()
-            cursor.close()
             conn.close()
             assigned_code = c_row["code"] if c_row else None
 
@@ -709,11 +688,10 @@ if st.session_state.is_admin_logged:
                     now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
                     conn = get_db_connection()
                     cursor = conn.cursor()
-                    cursor.execute("INSERT INTO premium_codes (code, assigned_to, used, created_at) VALUES (%s, %s, 0, %s)", (new_c, u_name, now_str))
+                    cursor.execute("INSERT INTO premium_codes (code, assigned_to, used, created_at) VALUES (?, ?, 0, ?)", (new_c, u_name, now_str))
                     msg = f"तुमचा प्रिमियम कोड: {new_c} (ॲपमध्ये टाकून प्रिमियम अनलॉक करा)"
-                    cursor.execute("UPDATE users SET admin_message = %s, requested_code = 0 WHERE user_key = %s", (msg, target_user))
+                    cursor.execute("UPDATE users SET admin_message = ?, requested_code = 0 WHERE user_key = ?", (msg, target_user))
                     conn.commit()
-                    cursor.close()
                     conn.close()
                     st.success(f"🎉 {u_name} ला ऑटोमॅटिकली कोड पाठवला: `{new_c}`")
                     st.rerun()
@@ -739,11 +717,10 @@ if st.session_state.is_admin_logged:
                 cursor = conn.cursor()
                 cursor.execute('''
                     UPDATE users 
-                    SET is_premium = 1, premium_expiry = %s, requested_code = 0, seen_popup = 0, activated_by = %s
-                    WHERE user_key = %s
+                    SET is_premium = 1, premium_expiry = ?, requested_code = 0, seen_popup = 0, activated_by = ?
+                    WHERE user_key = ?
                 ''', (exp_time.strftime("%Y-%m-%d %H:%M:%S"), "Kanhaiya (Founder of Patil Infratech)", target_user))
                 conn.commit()
-                cursor.close()
                 conn.close()
                 st.success(f"✅ {u_name} साठी {time_val} {time_unit} सेव्ह केले!")
                 st.rerun()
@@ -752,9 +729,8 @@ if st.session_state.is_admin_logged:
                 if st.button(f"🔻 Revoke Premium: {u_name}", key=f"win_rev_{target_user}"):
                     conn = get_db_connection()
                     cursor = conn.cursor()
-                    cursor.execute("UPDATE users SET is_premium = 0, premium_expiry = NULL WHERE user_key = %s", (target_user,))
+                    cursor.execute("UPDATE users SET is_premium = 0, premium_expiry = NULL WHERE user_key = ?", (target_user,))
                     conn.commit()
-                    cursor.close()
                     conn.close()
                     st.warning(f"❌ {u_name} चे प्रिमियम काढले आहे.")
                     st.rerun()
@@ -766,9 +742,8 @@ if st.session_state.is_admin_logged:
                 if new_msg.strip():
                     conn = get_db_connection()
                     cursor = conn.cursor()
-                    cursor.execute("UPDATE users SET admin_message = %s, unread_notification = 1 WHERE user_key = %s", (new_msg.strip(), target_user))
+                    cursor.execute("UPDATE users SET admin_message = ?, unread_notification = 1 WHERE user_key = ?", (new_msg.strip(), target_user))
                     conn.commit()
-                    cursor.close()
                     conn.close()
                     st.success(f"✅ '{u_name}' च्या इनबॉक्समध्ये नवीन मेसेज पाठवला (Notification Sent)!")
                     st.rerun()
@@ -776,10 +751,9 @@ if st.session_state.is_admin_logged:
             if st.button(f"🗑️ Delete User: {u_name}", key=f"win_del_{target_user}"):
                 conn = get_db_connection()
                 cursor = conn.cursor()
-                cursor.execute("DELETE FROM users WHERE user_key = %s", (target_user,))
-                cursor.execute("DELETE FROM history WHERE user_key = %s", (target_user,))
+                cursor.execute("DELETE FROM users WHERE user_key = ?", (target_user,))
+                cursor.execute("DELETE FROM history WHERE user_key = ?", (target_user,))
                 conn.commit()
-                cursor.close()
                 conn.close()
                 st.session_state.admin_view = "main"
                 st.session_state.admin_selected_user = None
@@ -800,7 +774,6 @@ if st.session_state.is_admin_logged:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM users WHERE user_key != '9999999999' ORDER BY id ASC")
             all_users = [dict(r) for r in cursor.fetchall()]
-            cursor.close()
             conn.close()
 
             if all_users:
@@ -865,10 +838,9 @@ if st.session_state.is_admin_logged:
                     now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
                     cursor.execute('''
                         INSERT INTO ads (title, desc, link, media_type, media_url, position, active, date)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                     ''', (ad_title.strip(), ad_desc.strip(), ad_link.strip(), media_type, media_url.strip(), position, 1 if is_active else 0, now_str))
                     conn.commit()
-                    cursor.close()
                     conn.close()
                     st.success("✅ स्पॉन्सर ॲड यशस्वीरित्या पब्लिश झाली!")
                     st.rerun()
@@ -881,7 +853,6 @@ if st.session_state.is_admin_logged:
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM ads ORDER BY id DESC")
         ads_list = [dict(r) for r in cursor.fetchall()]
-        cursor.close()
         conn.close()
 
         if ads_list:
@@ -891,9 +862,8 @@ if st.session_state.is_admin_logged:
                 if st.button(f"🗑️ Delete Ad #{ad_id}", key=f"del_ad_{ad_id}"):
                     conn = get_db_connection()
                     cursor = conn.cursor()
-                    cursor.execute("DELETE FROM ads WHERE id = %s", (ad_id,))
+                    cursor.execute("DELETE FROM ads WHERE id = ?", (ad_id,))
                     conn.commit()
-                    cursor.close()
                     conn.close()
                     st.success("🗑️ ॲड डिलीट केली!")
                     st.rerun()
@@ -918,9 +888,8 @@ if st.session_state.app_user_name is None:
             if submit_login:
                 conn = get_db_connection()
                 cursor = conn.cursor()
-                cursor.execute("SELECT user_key FROM users WHERE uid = %s", (input_uid,))
+                cursor.execute("SELECT user_key FROM users WHERE uid = ?", (input_uid,))
                 row = cursor.fetchone()
-                cursor.close()
                 conn.close()
 
                 if row:
@@ -945,11 +914,10 @@ if st.session_state.app_user_name is None:
                 if reg_name and len(reg_mob) >= 10 and len(reg_pin) == 4:
                     conn = get_db_connection()
                     cursor = conn.cursor()
-                    cursor.execute("SELECT user_key FROM users WHERE mobile = %s", (reg_mob,))
+                    cursor.execute("SELECT user_key FROM users WHERE mobile = ?", (reg_mob,))
                     mob_exists = cursor.fetchone()
 
                     if mob_exists:
-                        cursor.close()
                         conn.close()
                         st.error("❌ या मोबाईल नंबरवर आधीच अकाउंट तयार आहे!")
                     else:
@@ -957,29 +925,27 @@ if st.session_state.app_user_name is None:
                         last_4_mob = reg_mob[-4:]
                         generated_uid = f"{first_name}{last_4_mob}"
 
-                        cursor.execute("SELECT user_key FROM users WHERE uid = %s", (generated_uid,))
+                        cursor.execute("SELECT user_key FROM users WHERE uid = ?", (generated_uid,))
                         if cursor.fetchone():
                             generated_uid = f"{first_name}{random.randint(1000, 9999)}"
 
-                        cursor.execute("SELECT user_key FROM users WHERE user_key = %s", (reg_name,))
+                        cursor.execute("SELECT user_key FROM users WHERE user_key = ?", (reg_name,))
                         if not cursor.fetchone():
                             new_welcome_msg = f"{reg_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
                             now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
                             
                             cursor.execute('''
                                 INSERT INTO users (user_key, id, uid, pin, mobile, password, comment, admin_message, unread_notification, is_premium, premium_expiry, requested_code, seen_popup, master_code_uses, last_active, activated_by)
-                                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 0, 0, NULL, 0, 0, 0, %s, %s)
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, 0, NULL, 0, 0, 0, ?, ?)
                             ''', (reg_name, reg_name, generated_uid, reg_pin, reg_mob, "user123", "काही नाही", new_welcome_msg, now_str, "Free User"))
                             
                             conn.commit()
-                            cursor.close()
                             conn.close()
                             
                             st.success(f"🎉 अकाउंट यशस्वीरित्या तयार झाले! तुमचा युनिक UID हा आहे: **{generated_uid} and pin {reg_pin}**")
                             st.info("💡 कृपया हा UID लक्षात ठेवा आणि वर 'UID Login' वर क्लिक करून लॉगिन करा!")
                             st.stop()
                         else:
-                            cursor.close()
                             conn.close()
                             st.error("❌ या नावाने आधीच अकाउंट आहे! कृपया दुसरे नाव वापरून रजिस्टर करा.")
                 else:
@@ -994,9 +960,8 @@ if st.session_state.app_user_name is None:
             if submit_forgot:
                 conn = get_db_connection()
                 cursor = conn.cursor()
-                cursor.execute("SELECT id, uid FROM users WHERE mobile = %s AND pin = %s", (forgot_mob, forgot_pin))
+                cursor.execute("SELECT id, uid FROM users WHERE mobile = ? AND pin = ?", (forgot_mob, forgot_pin))
                 matched_users = cursor.fetchall()
-                cursor.close()
                 conn.close()
 
                 if matched_users:
@@ -1036,7 +1001,6 @@ conn = get_db_connection()
 cursor = conn.cursor()
 cursor.execute("SELECT * FROM ads WHERE active = 1 AND position = 'Main App Header (Top Banner)'")
 ads_list = [dict(r) for r in cursor.fetchall()]
-cursor.close()
 conn.close()
 
 for ad in ads_list:
@@ -1078,9 +1042,8 @@ if current_user_data.get("unread_notification") == 1:
     if st.button("✅ Mark as Read & Clear (वाचले आहे)", type="primary"):
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("UPDATE users SET unread_notification = 0, admin_message = %s WHERE user_key = %s", (f"{disp_name_inbox} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳", current_user_name))
+        cursor.execute("UPDATE users SET unread_notification = 0, admin_message = ? WHERE user_key = ?", (f"{disp_name_inbox} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳", current_user_name))
         conn.commit()
-        cursor.close()
         conn.close()
         st.success("✅ मेसेज वाचून क्लियर केला आहे!")
         st.rerun()
@@ -1111,12 +1074,11 @@ if not is_user_premium:
                         cursor = conn.cursor()
                         cursor.execute('''
                             UPDATE users 
-                            SET master_code_uses = %s, is_premium = 1, premium_expiry = %s, seen_popup = 0,
-                                activated_by = %s, admin_message = %s, unread_notification = 0
-                            WHERE user_key = %s
+                            SET master_code_uses = ?, is_premium = 1, premium_expiry = ?, seen_popup = 0,
+                                activated_by = ?, admin_message = ?, unread_notification = 0
+                            WHERE user_key = ?
                         ''', (uses_count + 1, exp_str, "Master Code 4528 (8 Hours VIP)", f"🎉 मास्टर कोड 4528 द्वारे तुला ८ तासांचे प्रिमियम मिळाले आहे! (वापर: {uses_count + 1}/3)", current_user_name))
                         conn.commit()
-                        cursor.close()
                         conn.close()
                         
                         st.success("🎉 मास्टर कोड द्वारे ८ तासांचे प्रिमियम अनलॉक झाले!")
@@ -1130,12 +1092,11 @@ if not is_user_premium:
                     cursor = conn.cursor()
                     cursor.execute('''
                         UPDATE users 
-                        SET is_premium = 1, premium_expiry = %s, seen_popup = 0, activated_by = %s,
-                            admin_message = %s, unread_notification = 0
-                        WHERE user_key = %s
+                        SET is_premium = 1, premium_expiry = ?, seen_popup = 0, activated_by = ?,
+                            admin_message = ?, unread_notification = 0
+                        WHERE user_key = ?
                     ''', (exp_str, "Master Code", f"{current_user_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳", current_user_name))
                     conn.commit()
-                    cursor.close()
                     conn.close()
                     
                     st.success("🎉 मास्टर कोडद्वारे प्रिमियम यशस्वीरित्या सुरू झाले!")
@@ -1143,7 +1104,7 @@ if not is_user_premium:
                 else:
                     conn = get_db_connection()
                     cursor = conn.cursor()
-                    cursor.execute("SELECT * FROM premium_codes WHERE code = %s", (input_code,))
+                    cursor.execute("SELECT * FROM premium_codes WHERE code = ?", (input_code,))
                     c_row = cursor.fetchone()
                     
                     if c_row and dict(c_row).get("used") == 0:
@@ -1151,29 +1112,26 @@ if not is_user_premium:
                         exp_str = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
                         now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
 
-                        cursor.execute("UPDATE premium_codes SET used = 1, used_by = %s, used_date = %s WHERE code = %s", (current_user_name, now_str, input_code))
+                        cursor.execute("UPDATE premium_codes SET used = 1, used_by = ?, used_date = ? WHERE code = ?", (current_user_name, now_str, input_code))
                         cursor.execute('''
                             UPDATE users 
-                            SET is_premium = 1, premium_expiry = %s, seen_popup = 0, activated_by = %s,
-                                admin_message = %s, unread_notification = 0
-                            WHERE user_key = %s
+                            SET is_premium = 1, premium_expiry = ?, seen_popup = 0, activated_by = ?,
+                                admin_message = ?, unread_notification = 0
+                            WHERE user_key = ?
                         ''', (exp_str, "Patil Infratech", f"{current_user_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳", current_user_name))
                         conn.commit()
-                        cursor.close()
                         conn.close()
                         st.success("🎉 प्रिमियम यशस्वीरित्या सुरू झाले!")
                         st.rerun()
                     else:
-                        cursor.close()
                         conn.close()
                         st.error("❌ चुकीचा किंवा आधीच वापरलेला कोड!")
         with c_btn2:
             if st.button("📩 Request Code"):
                 conn = get_db_connection()
                 cursor = conn.cursor()
-                cursor.execute("UPDATE users SET requested_code = 1 WHERE user_key = %s", (current_user_name,))
+                cursor.execute("UPDATE users SET requested_code = 1 WHERE user_key = ?", (current_user_name,))
                 conn.commit()
-                cursor.close()
                 conn.close()
                 st.success("✅ ॲडमीनला रिक्वेस्ट पाठवली!")
 
@@ -1468,9 +1426,8 @@ elif st.session_state.selected_module == "Rate Analysis":
                 st.session_state.current_comment = user_note.strip()
                 conn = get_db_connection()
                 cursor = conn.cursor()
-                cursor.execute("UPDATE users SET comment = %s WHERE user_key = %s", (user_note.strip(), current_user_name))
+                cursor.execute("UPDATE users SET comment = ? WHERE user_key = ?", (user_note.strip(), current_user_name))
                 conn.commit()
-                cursor.close()
                 conn.close()
                 st.success("✅ कमेंट सेव्ह झाली!")
 
@@ -1552,9 +1509,8 @@ elif st.session_state.selected_module == "Rate Analysis":
                 conn = get_db_connection()
                 cursor = conn.cursor()
                 now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
-                cursor.execute("INSERT INTO history (user_key, timestamp, user_note, report_data) VALUES (%s, %s, %s, %s)", (current_user_name, now_str, st.session_state.current_comment, report_table))
+                cursor.execute("INSERT INTO history (user_key, timestamp, user_note, report_data) VALUES (?, ?, ?, ?)", (current_user_name, now_str, st.session_state.current_comment, report_table))
                 conn.commit()
-                cursor.close()
                 conn.close()
 
     elif "Brickwork" in main_choice:
@@ -1601,9 +1557,8 @@ elif st.session_state.selected_module == "Rate Analysis":
                 st.session_state.current_comment = user_note.strip()
                 conn = get_db_connection()
                 cursor = conn.cursor()
-                cursor.execute("UPDATE users SET comment = %s WHERE user_key = %s", (user_note.strip(), current_user_name))
+                cursor.execute("UPDATE users SET comment = ? WHERE user_key = ?", (user_note.strip(), current_user_name))
                 conn.commit()
-                cursor.close()
                 conn.close()
                 st.success("✅ कमेंट सेव्ह झाली!")
 
@@ -1682,9 +1637,8 @@ elif st.session_state.selected_module == "Rate Analysis":
                 conn = get_db_connection()
                 cursor = conn.cursor()
                 now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
-                cursor.execute("INSERT INTO history (user_key, timestamp, user_note, report_data) VALUES (%s, %s, %s, %s)", (current_user_name, now_str, st.session_state.current_comment, report_table))
+                cursor.execute("INSERT INTO history (user_key, timestamp, user_note, report_data) VALUES (?, ?, ?, ?)", (current_user_name, now_str, st.session_state.current_comment, report_table))
                 conn.commit()
-                cursor.close()
                 conn.close()
 
     else:  # Plaster Work
@@ -1739,9 +1693,8 @@ elif st.session_state.selected_module == "Rate Analysis":
                 st.session_state.current_comment = user_note.strip()
                 conn = get_db_connection()
                 cursor = conn.cursor()
-                cursor.execute("UPDATE users SET comment = %s WHERE user_key = %s", (user_note.strip(), current_user_name))
+                cursor.execute("UPDATE users SET comment = ? WHERE user_key = ?", (user_note.strip(), current_user_name))
                 conn.commit()
-                cursor.close()
                 conn.close()
                 st.success("✅ कमेंट सेव्ह झाली!")
 
@@ -1824,9 +1777,8 @@ elif st.session_state.selected_module == "Rate Analysis":
                 conn = get_db_connection()
                 cursor = conn.cursor()
                 now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
-                cursor.execute("INSERT INTO history (user_key, timestamp, user_note, report_data) VALUES (%s, %s, %s, %s)", (current_user_name, now_str, st.session_state.current_comment, report_table))
+                cursor.execute("INSERT INTO history (user_key, timestamp, user_note, report_data) VALUES (?, ?, ?, ?)", (current_user_name, now_str, st.session_state.current_comment, report_table))
                 conn.commit()
-                cursor.close()
                 conn.close()
 
 # ==========================================
@@ -1936,9 +1888,8 @@ elif st.session_state.selected_module == "BBS":
             st.session_state.current_comment = user_note.strip()
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("UPDATE users SET comment = %s WHERE user_key = %s", (user_note.strip(), current_user_name))
+            cursor.execute("UPDATE users SET comment = ? WHERE user_key = ?", (user_note.strip(), current_user_name))
             conn.commit()
-            cursor.close()
             conn.close()
             st.success("✅ कमेंट सेव्ह झाली!")
 
@@ -2096,9 +2047,8 @@ elif st.session_state.selected_module == "BBS":
             conn = get_db_connection()
             cursor = conn.cursor()
             now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
-            cursor.execute("INSERT INTO history (user_key, timestamp, user_note, report_data) VALUES (%s, %s, %s, %s)", (current_user_name, now_str, st.session_state.current_comment, report_table))
+            cursor.execute("INSERT INTO history (user_key, timestamp, user_note, report_data) VALUES (?, ?, ?, ?)", (current_user_name, now_str, st.session_state.current_comment, report_table))
             conn.commit()
-            cursor.close()
             conn.close()
 
 # ==========================================
@@ -2113,8 +2063,18 @@ elif st.session_state.selected_module == "Quantity Surveying":
     st.subheader("📈 Quantity Surveying & Abstract Sheet Master")
     st.caption("💡 नोटबुकच्या मोजमाप पद्धतीनुसार खालील टेबलमध्ये Description, Nos, Length, Width, Height भरा. हिशोब तयार करा!")
 
-    st.markdown("### 🏢 Construction Stages Measurement Sheet (Excavation to Finishing)")
-    
+    # 1. Camera / Blueprint Section (Visual Guide Only)
+    with st.expander("📷 2D Plan / Blueprint / Camera Reference (Visual Guide)"):
+        plan_option = st.radio("ब्लूप्रिंट इनपुट पद्धत निवडा:", ["Upload 2D Plan Image", "Capture via Camera (Live)"], horizontal=True)
+        if "Upload" in plan_option:
+            uploaded_plan = st.file_uploader("Upload Blueprint (PNG/JPG):", type=["png", "jpg", "jpeg"])
+            if uploaded_plan:
+                st.image(uploaded_plan, caption="Uploaded 2D Floor Plan Reference", use_column_width=True)
+        else:
+            cam_pic = st.camera_input("📸 Capture 2D Plan from Camera")
+            if cam_pic:
+                st.image(cam_pic, caption="Captured Blueprint Reference", use_column_width=True)
+
     stages = [
         "Earthwork in Excavation",
         "P.C.C. Bedding",
@@ -2278,9 +2238,8 @@ elif st.session_state.selected_module == "Quantity Surveying":
             st.session_state.current_comment = user_note.strip()
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("UPDATE users SET comment = %s WHERE user_key = %s", (user_note.strip(), current_user_name))
+            cursor.execute("UPDATE users SET comment = ? WHERE user_key = ?", (user_note.strip(), current_user_name))
             conn.commit()
-            cursor.close()
             conn.close()
             st.success("✅ कमेंट सेव्ह झाली!")
 
@@ -2337,7 +2296,6 @@ elif st.session_state.selected_module == "Quantity Surveying":
                 conn = get_db_connection()
                 cursor = conn.cursor()
                 now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
-                cursor.execute("INSERT INTO history (user_key, timestamp, user_note, report_data) VALUES (%s, %s, %s, %s)", (current_user_name, now_str, st.session_state.current_comment, final_report_html))
-                conn.commit()
+                cursor.execute("INSERT INTO history (user_key, timestamp, user_note, report_data) VALUES (?, ?, ?, ?)", (current_user_name, now_str, st.session_state.current_comment, final_report_html))                conn.commit()
                 cursor.close()
                 conn.close()
