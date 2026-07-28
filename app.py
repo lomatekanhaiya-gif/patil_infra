@@ -2063,13 +2063,13 @@ elif st.session_state.selected_module == "Quantity Surveying":
     st.subheader("📈 Quantity Surveying & Abstract Sheet Master")
     st.caption("💡 नोटबुकच्या मोजमाप पद्धतीनुसार खालील टेबलमध्ये Description, Nos, Length, Width, Height भरा. हिशोब तयार करा!")
 
-    # 1. Camera / Blueprint Section
-    with st.expander("📷 2D Plan / Blueprint / Camera Reference"):
+    # 1. Camera / Blueprint Section (Visual Guide Only)
+    with st.expander("📷 2D Plan / Blueprint / Camera Reference (Visual Guide)"):
         plan_option = st.radio("ब्लूप्रिंट इनपुट पद्धत निवडा:", ["Upload 2D Plan Image", "Capture via Camera (Live)"], horizontal=True)
         if "Upload" in plan_option:
             uploaded_plan = st.file_uploader("Upload Blueprint (PNG/JPG):", type=["png", "jpg", "jpeg"])
             if uploaded_plan:
-                st.image(uploaded_plan, caption="Uploaded 2D Floor Plan", use_column_width=True)
+                st.image(uploaded_plan, caption="Uploaded 2D Floor Plan Reference", use_column_width=True)
         else:
             cam_pic = st.camera_input("📸 Capture 2D Plan from Camera")
             if cam_pic:
@@ -2088,13 +2088,6 @@ elif st.session_state.selected_module == "Quantity Surveying":
         "Flooring / Tiling Work",
         "Plaster Work"
     ]
-
-    master_rates = get_market_rates()
-    c_rate = master_rates.get('cement', 400.0)
-    s_rate = master_rates.get('sand', 2500.0)
-    a_rate = master_rates.get('aggregate', 2200.0)
-    st_rate = master_rates.get('steel', 60.0)
-    b_rate = master_rates.get('bricks', 8.0)
 
     stage_results = []
     
@@ -2173,7 +2166,7 @@ elif st.session_state.selected_module == "Quantity Surveying":
                 "Stage": desc_val,
                 "Dimensions": f"{l_val} x {w_val} x {h_val if not is_area_unit else 1.0}",
                 "Nos": nos_val,
-                "SingleQty": single_qty,
+                "SingleQty": f"{single_qty:.3f} {unit_label}",
                 "TotalQty": f"{total_qty:.3f} {unit_label}",
                 "Material": mat_summary
             })
@@ -2264,16 +2257,16 @@ elif st.session_state.selected_module == "Quantity Surveying":
             whatsapp_text_items = ""
             
             for r in stage_results:
-                table_rows += f"| {r['Stage']} | {r['Nos']} | {r['Dimensions']} | {r['TotalQty']} | {r['Material']} |\n"
-                whatsapp_text_items += f"• *{r['Stage']}*\n  - Nos: {r['Nos']} | Size: {r['Dimensions']}\n  - Single Qty: {r['SingleQty']:.3f}\n  - Total Qty: {r['TotalQty']}\n  - Material: {r['Material']}\n\n"
+                table_rows += f"| {r['Stage']} | {r['Nos']} | {r['Dimensions']} | {r['SingleQty']} | {r['TotalQty']} | {r['Material']} |\n"
+                whatsapp_text_items += f"• *{r['Stage']}*\n  - Nos: {r['Nos']} | Size: {r['Dimensions']}\n  - Single Qty: {r['SingleQty']}\n  - Total Qty: {r['TotalQty']}\n  - Material: {r['Material']}\n\n"
 
             final_report_html = f"""
 <div class="print-container">
 <h2>📊 PATIL INFRATECH - ABSTRACT SHEET & QUANTITY SURVEY</h2>
 <p><strong>Prepared For:</strong> {current_user_name} | <strong>Date:</strong> {get_ist_time().strftime('%d-%m-%Y')}</p>
 
-| Description | Nos | Length x Width x Height | Total Quantity | Material |
-| :--- | :--- | :--- | :--- | :--- |
+| Description | Nos | Length x Width x Height | Single Quantity | Total Quantity | Material |
+| :--- | :--- | :--- | :--- | :--- | :--- |
 {table_rows}
 
 ---
