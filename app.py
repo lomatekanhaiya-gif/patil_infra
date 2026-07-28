@@ -572,19 +572,22 @@ if st.session_state.is_admin_logged:
 
     st.write("---")
     
-    ac1, ac2, ac3, ac4 = st.columns(4)
+    ac1, ac2, ac3, ac4, ac5 = st.columns(5)
     with ac1:
-        if st.button("📈 Update Market Rates", use_container_width=True):
+        if st.button("📈 Rates", use_container_width=True):
             st.session_state.admin_dashboard_tab = "rates"
     with ac2:
-        if st.button("⚙️ Feature Lock Manager", use_container_width=True):
+        if st.button("⚙️ Locks", use_container_width=True):
             st.session_state.admin_dashboard_tab = "locks"
     with ac3:
-        if st.button("👥 User Data", use_container_width=True):
+        if st.button("👥 Users", use_container_width=True):
             st.session_state.admin_dashboard_tab = "users"
     with ac4:
-        if st.button("📢 Ad Sponsor", use_container_width=True):
+        if st.button("📢 Ads", use_container_width=True):
             st.session_state.admin_dashboard_tab = "ads"
+    with ac5:
+        if st.button("🔔 Broadcast", use_container_width=True):
+            st.session_state.admin_dashboard_tab = "broadcast"
 
     st.write("---")
     current_tab = st.session_state.admin_dashboard_tab
@@ -869,6 +872,30 @@ if st.session_state.is_admin_logged:
                     st.rerun()
         else:
             st.info("ℹ️ सध्या कोणतीही ॲड किंवा स्पॉन्सरशिप उपलब्ध नाही.")
+
+    elif current_tab == "broadcast":
+        st.markdown("### 🔔 Broadcast Notification to All Users")
+        st.caption("💡 इथून तुम्ही एकाच वेळी सर्व रजिस्टर केलेल्या युझर्सच्या इनबॉक्समध्ये मेसेज पाठवू शकता.")
+
+        with st.form("broadcast_form"):
+            broadcast_msg = st.text_area("सर्व युझर्सना पाठवायचा मेसेज (Broadcast Message):", placeholder="उदा. नवीन अपडेट आली आहे, चेक करा...")
+            submit_broadcast = st.form_submit_button("🚀 Send to All Users (Broadcast)", type="primary")
+
+            if submit_broadcast:
+                if broadcast_msg.strip():
+                    conn = get_db_connection()
+                    cursor = conn.cursor()
+                    # मास्टर ॲडमीन (9999999999) सोडून बाकी सर्व युझर्सना मेसेज अपडेट करणे
+                    cursor.execute('''
+                        UPDATE users 
+                        SET admin_message = ?, unread_notification = 1 
+                        WHERE user_key != '9999999999'
+                    ''', (broadcast_msg.strip(),))
+                    conn.commit()
+                    conn.close()
+                    st.success("🎉 ब्रॉडकास्ट मेसेज सर्व युझर्सना यशस्वीरित्या पाठवला गेला आहे!")
+                else:
+                    st.warning("⚠️ कृपया पाठवण्यासाठी काहीतरी मेसेज लिहा!")
 
     st.stop()
 
@@ -1516,7 +1543,7 @@ elif st.session_state.selected_module == "Rate Analysis":
     elif "Brickwork" in main_choice:
         st.subheader("🧱 Brickwork Estimation")
         mortar_choice = st.selectbox("मॉर्टर मिक्स गुणोत्तर (Mortar Mix Ratio) निवडा:", 
-                                   ["1:3 (सिमेंट : वाळू)", "1:4 (सिमेंट : वाळू)", "1:5 (सिमेंट : वाळू)", "1:6 (सिमेंट : वाळू)"])
+                                     ["1:3 (सिमेंट : वाळू)", "1:4 (सिमेंट : वाळू)", "1:5 (सिमेंट : वाळू)", "1:6 (सिमेंट : वाळू)"])
         
         if "1:3" in mortar_choice: c_part, s_part = 1, 3
         elif "1:4" in mortar_choice: c_part, s_part = 1, 4
