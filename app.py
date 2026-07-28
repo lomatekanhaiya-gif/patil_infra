@@ -2052,7 +2052,7 @@ elif st.session_state.selected_module == "BBS":
             conn.close()
 
 # ==========================================
-# 📈 QUANTITY SURVEYING & ABSTRACT SHEET MODULE (Excavation to Finishing)
+# 📈 QUANTITY SURVEYING & ABSTRACT SHEET MODULE (Notebook Format with Conditional Material View)
 # ==========================================
 elif st.session_state.selected_module == "Quantity Surveying":
     if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_to_main_qs"):
@@ -2061,7 +2061,7 @@ elif st.session_state.selected_module == "Quantity Surveying":
         
     st.write("---")
     st.subheader("📈 Quantity Surveying & Abstract Sheet Master")
-    st.caption("💡 नोटबुकच्या मोजमाप पद्धतीनुसार खालील टेबलमध्ये Description, Nos, Length, Width, Height भरा. ज्या कामाची व्हॅल्यू भरली जाईल, फक्त त्याचाच हिशोब आणि मटेरियल रिपोर्ट तयार होईल!")
+    st.caption("💡 नोटबुकच्या मोजमाप पद्धतीनुसार खालील टेबलमध्ये Description, Nos, Length, Width, Height भरा. चेकबॉक्सवर क्लिक केल्यासच मटेरियल आणि खर्च दिसेल!")
 
     # 1. Camera / Blueprint Section
     with st.expander("📷 2D Plan / Blueprint / Camera Reference"):
@@ -2131,46 +2131,56 @@ elif st.session_state.selected_module == "Quantity Surveying":
 
             st.markdown(f"**📐 Total Quantity: `{qty:.3f} {unit_label}`**")
 
+            # युझरने क्लिक केल्यावरच मटेरियल दिसेल
+            show_mat = st.checkbox(f"📦 View Material Breakdown for #{idx}", key=f"qs_mat_chk_{idx}")
+
             mat_summary = "मटेरियल लागू नाही"
             item_cost = 0.0
 
-            if "P.C.C." in stg_name:
-                dry_vol = qty * 1.54
-                c_bags = math.ceil((1 / 13) * dry_vol * 28.8)
-                sand_m3 = (4 / 13) * dry_vol
-                agg_m3 = (8 / 13) * dry_vol
-                item_cost = (c_bags * c_rate) + (sand_m3 * s_rate) + (agg_m3 * a_rate)
-                mat_summary = f"Cement: {c_bags} Bags, Sand: {sand_m3:.2f} m³, Aggregate: {agg_m3:.2f} m³"
-                st.info(f"• **Cement:** {c_bags} Bags | **Sand:** {sand_m3:.2f} m³ | **Aggregate:** {agg_m3:.2f} m³ | **Cost:** ₹ {item_cost:.2f}")
+            if show_mat:
+                st.markdown("<div style='background: rgba(31, 41, 55, 0.9); padding: 12px; border-radius: 12px; border-left: 4px solid #fbbf24;'>", unsafe_allow_html=True)
+                
+                if "P.C.C." in stg_name:
+                    dry_vol = qty * 1.54
+                    c_bags = math.ceil((1 / 13) * dry_vol * 28.8)
+                    sand_m3 = (4 / 13) * dry_vol
+                    agg_m3 = (8 / 13) * dry_vol
+                    item_cost = (c_bags * c_rate) + (sand_m3 * s_rate) + (agg_m3 * a_rate)
+                    mat_summary = f"Cement: {c_bags} Bags, Sand: {sand_m3:.2f} m³, Aggregate: {agg_m3:.2f} m³"
+                    st.info(f"• **Cement:** {c_bags} Bags\n• **Sand:** {sand_m3:.2f} m³\n• **Aggregate:** {agg_m3:.2f} m³\n• **Total Material Cost:** ₹ **{item_cost:.2f}**")
 
-            elif "RCC" in stg_name or "Column" in stg_name or "Slab" in stg_name or "Footing" in stg_name:
-                dry_vol = qty * 1.54
-                c_bags = math.ceil((1 / 5.5) * dry_vol * 28.8)
-                sand_m3 = (1.5 / 5.5) * dry_vol
-                agg_m3 = (3 / 5.5) * dry_vol
-                steel_kg = qty * 80.0
-                item_cost = (c_bags * c_rate) + (sand_m3 * s_rate) + (agg_m3 * a_rate) + (steel_kg * st_rate)
-                mat_summary = f"Cement: {c_bags} Bags, Sand: {sand_m3:.2f} m³, Aggregate: {agg_m3:.2f} m³, Steel: {steel_kg:.1f} Kg"
-                st.info(f"• **Cement:** {c_bags} Bags | **Sand:** {sand_m3:.2f} m³ | **Aggregate:** {agg_m3:.2f} m³ | **Steel:** {steel_kg:.1f} Kg | **Cost:** ₹ {item_cost:.2f}")
+                elif "RCC" in stg_name or "Column" in stg_name or "Slab" in stg_name or "Footing" in stg_name:
+                    dry_vol = qty * 1.54
+                    c_bags = math.ceil((1 / 5.5) * dry_vol * 28.8)
+                    sand_m3 = (1.5 / 5.5) * dry_vol
+                    agg_m3 = (3 / 5.5) * dry_vol
+                    steel_kg = qty * 80.0
+                    item_cost = (c_bags * c_rate) + (sand_m3 * s_rate) + (agg_m3 * a_rate) + (steel_kg * st_rate)
+                    mat_summary = f"Cement: {c_bags} Bags, Sand: {sand_m3:.2f} m³, Aggregate: {agg_m3:.2f} m³, Steel: {steel_kg:.1f} Kg"
+                    st.info(f"• **Cement:** {c_bags} Bags\n• **Sand:** {sand_m3:.2f} m³\n• **Aggregate:** {agg_m3:.2f} m³\n• **Steel:** {steel_kg:.1f} Kg\n• **Total Material Cost:** ₹ **{item_cost:.2f}**")
 
-            elif "Brickwork" in stg_name:
-                bricks = math.ceil(qty * 500)
-                mortar_vol = qty * 0.30
-                c_bags = math.ceil((1 / 5) * mortar_vol * 28.8)
-                sand_m3 = (4 / 5) * mortar_vol
-                item_cost = (bricks * (b_rate/1000.0)) + (c_bags * c_rate) + (sand_m3 * s_rate)
-                mat_summary = f"Bricks: {bricks} Nos, Cement: {c_bags} Bags, Sand: {sand_m3:.2f} m³"
-                st.info(f"• **Bricks:** {bricks} Nos | **Cement:** {c_bags} Bags | **Sand:** {sand_m3:.2f} m³ | **Cost:** ₹ {item_cost:.2f}")
+                elif "Brickwork" in stg_name:
+                    bricks = math.ceil(qty * 500)
+                    mortar_vol = qty * 0.30
+                    c_bags = math.ceil((1 / 5) * mortar_vol * 28.8)
+                    sand_m3 = (4 / 5) * mortar_vol
+                    item_cost = (bricks * (b_rate/1000.0)) + (c_bags * c_rate) + (sand_m3 * s_rate)
+                    mat_summary = f"Bricks: {bricks} Nos, Cement: {c_bags} Bags, Sand: {sand_m3:.2f} m³"
+                    st.info(f"• **Bricks:** {bricks} Nos\n• **Cement:** {c_bags} Bags\n• **Sand:** {sand_m3:.2f} m³\n• **Total Material Cost:** ₹ **{item_cost:.2f}**")
 
-            elif "Plaster" in stg_name:
-                thickness = 0.012 
-                wet_vol = qty * thickness
-                dry_vol = wet_vol * 1.33
-                c_bags = math.ceil((1 / 5) * dry_vol * 28.8)
-                sand_m3 = (4 / 5) * dry_vol
-                item_cost = (c_bags * c_rate) + (sand_m3 * s_rate)
-                mat_summary = f"Cement: {c_bags} Bags, Sand: {sand_m3:.2f} m³"
-                st.info(f"• **Cement (12mm):** {c_bags} Bags | **Sand:** {sand_m3:.2f} m³ | **Cost:** ₹ {item_cost:.2f}")
+                elif "Plaster" in stg_name:
+                    thickness = 0.012 
+                    wet_vol = qty * thickness
+                    dry_vol = wet_vol * 1.33
+                    c_bags = math.ceil((1 / 5) * dry_vol * 28.8)
+                    sand_m3 = (4 / 5) * dry_vol
+                    item_cost = (c_bags * c_rate) + (sand_m3 * s_rate)
+                    mat_summary = f"Cement: {c_bags} Bags, Sand: {sand_m3:.2f} m³"
+                    st.info(f"• **Cement (12mm):** {c_bags} Bags\n• **Sand:** {sand_m3:.2f} m³\n• **Total Material Cost:** ₹ **{item_cost:.2f}**")
+                else:
+                    st.info("या कामासाठी जनरल मोजमाप लागू आहे.")
+
+                st.markdown("</div>", unsafe_allow_html=True)
 
             stage_results.append({
                 "Stage": desc_val,
@@ -2181,7 +2191,7 @@ elif st.session_state.selected_module == "Quantity Surveying":
                 "Cost": item_cost
             })
 
-        # 🚪 Brickwork Deduction Sub-Section (KeyError Fixed)
+        # 🚪 Brickwork Deduction Sub-Section
         if is_brickwork:
             st.markdown("##### 🚪 Brickwork Deductions (Doors / Windows in m³)")
             ded_key_bw = f"bw_ded_count_{idx}"
@@ -2212,7 +2222,7 @@ elif st.session_state.selected_module == "Quantity Surveying":
             if bw_ded_vol > 0:
                 st.markdown(f"**🔴 Brickwork Deduction Vol: `{bw_ded_vol:.3f} m³`**")
 
-        # 🚪 Plaster Deduction Sub-Section (KeyError Fixed)
+        # 🚪 Plaster Deduction Sub-Section
         if is_plaster:
             st.markdown("##### 🚪 Plaster Deductions (Doors / Windows in m²)")
             ded_key_pl = f"pl_ded_count_{idx}"
