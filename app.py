@@ -2052,7 +2052,7 @@ elif st.session_state.selected_module == "BBS":
             conn.close()
 
 # ==========================================
-# 📈 QUANTITY SURVEYING & ABSTRACT SHEET MODULE (Notebook Format with Conditional Material View)
+# 📈 QUANTITY SURVEYING & ABSTRACT SHEET MODULE (Notebook Format)
 # ==========================================
 elif st.session_state.selected_module == "Quantity Surveying":
     if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_to_main_qs"):
@@ -2061,7 +2061,7 @@ elif st.session_state.selected_module == "Quantity Surveying":
         
     st.write("---")
     st.subheader("📈 Quantity Surveying & Abstract Sheet Master")
-    st.caption("💡 नोटबुकच्या मोजमाप पद्धतीनुसार खालील टेबलमध्ये Description, Nos, Length, Width, Height भरा. चेकबॉक्सवर क्लिक केल्यासच मटेरियल आणि खर्च दिसेल!")
+    st.caption("💡 नोटबुकच्या मोजमाप पद्धतीनुसार खालील टेबलमध्ये Description, Nos, Length, Width, Height भरा. हिशोब तयार करा!")
 
     # 1. Camera / Blueprint Section
     with st.expander("📷 2D Plan / Blueprint / Camera Reference"):
@@ -2078,15 +2078,15 @@ elif st.session_state.selected_module == "Quantity Surveying":
     st.markdown("### 🏢 Construction Stages Measurement Sheet (Excavation to Finishing)")
     
     stages = [
-        "1. Earthwork in Excavation (पाया खोदकाम - m³)",
-        "2. P.C.C. Bedding (Plain Cement Concrete - m³)",
-        "3. Foundation / Footing RCC Work (m³)",
-        "4. Plinth Beam & Masonry Work (m³)",
-        "5. Superstructure Brickwork (वीटकाम - m³)",
-        "6. RCC Columns & Beams (m³)",
-        "7. Slab Casting (छताचे काम - m³)",
-        "8. Flooring / Tiling Work (फर्श - m²)",
-        "9. Plaster Work (प्लास्टर व फिनिशिंग - m²)"
+        "Earthwork in Excavation",
+        "P.C.C. Bedding",
+        "Foundation / Footing RCC Work",
+        "Plinth Beam & Masonry Work",
+        "Superstructure Brickwork",
+        "RCC Columns & Beams",
+        "Slab Casting",
+        "Flooring / Tiling Work",
+        "Plaster Work"
     ]
 
     master_rates = get_market_rates()
@@ -2099,7 +2099,7 @@ elif st.session_state.selected_module == "Quantity Surveying":
     stage_results = []
     
     for idx, stg_name in enumerate(stages):
-        is_area_unit = "m²" in stg_name or "Flooring" in stg_name or "Plaster" in stg_name
+        is_area_unit = "Flooring" in stg_name or "Plaster" in stg_name
         is_brickwork = "Brickwork" in stg_name
         is_plaster = "Plaster" in stg_name
         
@@ -2123,72 +2123,59 @@ elif st.session_state.selected_module == "Quantity Surveying":
 
         if nos_val > 0 and l_val > 0 and w_val > 0 and (is_area_unit or h_val > 0):
             if is_area_unit:
-                qty = l_val * w_val * nos_val
+                single_qty = l_val * w_val
+                total_qty = single_qty * nos_val
                 unit_label = "m²"
             else:
-                qty = l_val * w_val * h_val * nos_val
+                single_qty = l_val * w_val * h_val
+                total_qty = single_qty * nos_val
                 unit_label = "m³"
 
-            st.markdown(f"**📐 Total Quantity: `{qty:.3f} {unit_label}`**")
-
-            # युझरने क्लिक केल्यावरच मटेरियल दिसेल
-            show_mat = st.checkbox(f"📦 View Material Breakdown for #{idx}", key=f"qs_mat_chk_{idx}")
+            st.markdown(f"**📐 Single Qty: `{single_qty:.3f} {unit_label}` | Total Qty: `{total_qty:.3f} {unit_label}`**")
 
             mat_summary = "मटेरियल लागू नाही"
-            item_cost = 0.0
 
-            if show_mat:
-                st.markdown("<div style='background: rgba(31, 41, 55, 0.9); padding: 12px; border-radius: 12px; border-left: 4px solid #fbbf24;'>", unsafe_allow_html=True)
-                
-                if "P.C.C." in stg_name:
-                    dry_vol = qty * 1.54
-                    c_bags = math.ceil((1 / 13) * dry_vol * 28.8)
-                    sand_m3 = (4 / 13) * dry_vol
-                    agg_m3 = (8 / 13) * dry_vol
-                    item_cost = (c_bags * c_rate) + (sand_m3 * s_rate) + (agg_m3 * a_rate)
-                    mat_summary = f"Cement: {c_bags} Bags, Sand: {sand_m3:.2f} m³, Aggregate: {agg_m3:.2f} m³"
-                    st.info(f"• **Cement:** {c_bags} Bags\n• **Sand:** {sand_m3:.2f} m³\n• **Aggregate:** {agg_m3:.2f} m³\n• **Total Material Cost:** ₹ **{item_cost:.2f}**")
+            if "P.C.C." in stg_name:
+                dry_vol = total_qty * 1.54
+                c_bags = math.ceil((1 / 13) * dry_vol * 28.8)
+                sand_m3 = (4 / 13) * dry_vol
+                agg_m3 = (8 / 13) * dry_vol
+                mat_summary = f"Cement: {c_bags} Bags, Sand: {sand_m3:.2f} m³, Aggregate: {agg_m3:.2f} m³"
+                st.info(f"• **Cement:** {c_bags} Bags | **Sand:** {sand_m3:.2f} m³ | **Aggregate:** {agg_m3:.2f} m³")
 
-                elif "RCC" in stg_name or "Column" in stg_name or "Slab" in stg_name or "Footing" in stg_name:
-                    dry_vol = qty * 1.54
-                    c_bags = math.ceil((1 / 5.5) * dry_vol * 28.8)
-                    sand_m3 = (1.5 / 5.5) * dry_vol
-                    agg_m3 = (3 / 5.5) * dry_vol
-                    steel_kg = qty * 80.0
-                    item_cost = (c_bags * c_rate) + (sand_m3 * s_rate) + (agg_m3 * a_rate) + (steel_kg * st_rate)
-                    mat_summary = f"Cement: {c_bags} Bags, Sand: {sand_m3:.2f} m³, Aggregate: {agg_m3:.2f} m³, Steel: {steel_kg:.1f} Kg"
-                    st.info(f"• **Cement:** {c_bags} Bags\n• **Sand:** {sand_m3:.2f} m³\n• **Aggregate:** {agg_m3:.2f} m³\n• **Steel:** {steel_kg:.1f} Kg\n• **Total Material Cost:** ₹ **{item_cost:.2f}**")
+            elif "RCC" in stg_name or "Column" in stg_name or "Slab" in stg_name or "Footing" in stg_name:
+                dry_vol = total_qty * 1.54
+                c_bags = math.ceil((1 / 5.5) * dry_vol * 28.8)
+                sand_m3 = (1.5 / 5.5) * dry_vol
+                agg_m3 = (3 / 5.5) * dry_vol
+                steel_kg = total_qty * 80.0
+                mat_summary = f"Cement: {c_bags} Bags, Sand: {sand_m3:.2f} m³, Aggregate: {agg_m3:.2f} m³, Steel: {steel_kg:.1f} Kg"
+                st.info(f"• **Cement:** {c_bags} Bags | **Sand:** {sand_m3:.2f} m³ | **Aggregate:** {agg_m3:.2f} m³ | **Steel:** {steel_kg:.1f} Kg")
 
-                elif "Brickwork" in stg_name:
-                    bricks = math.ceil(qty * 500)
-                    mortar_vol = qty * 0.30
-                    c_bags = math.ceil((1 / 5) * mortar_vol * 28.8)
-                    sand_m3 = (4 / 5) * mortar_vol
-                    item_cost = (bricks * (b_rate/1000.0)) + (c_bags * c_rate) + (sand_m3 * s_rate)
-                    mat_summary = f"Bricks: {bricks} Nos, Cement: {c_bags} Bags, Sand: {sand_m3:.2f} m³"
-                    st.info(f"• **Bricks:** {bricks} Nos\n• **Cement:** {c_bags} Bags\n• **Sand:** {sand_m3:.2f} m³\n• **Total Material Cost:** ₹ **{item_cost:.2f}**")
+            elif "Brickwork" in stg_name:
+                bricks = math.ceil(total_qty * 500)
+                mortar_vol = total_qty * 0.30
+                c_bags = math.ceil((1 / 5) * mortar_vol * 28.8)
+                sand_m3 = (4 / 5) * mortar_vol
+                mat_summary = f"Bricks: {bricks} Nos, Cement: {c_bags} Bags, Sand: {sand_m3:.2f} m³"
+                st.info(f"• **Bricks:** {bricks} Nos | **Cement:** {c_bags} Bags | **Sand:** {sand_m3:.2f} m³")
 
-                elif "Plaster" in stg_name:
-                    thickness = 0.012 
-                    wet_vol = qty * thickness
-                    dry_vol = wet_vol * 1.33
-                    c_bags = math.ceil((1 / 5) * dry_vol * 28.8)
-                    sand_m3 = (4 / 5) * dry_vol
-                    item_cost = (c_bags * c_rate) + (sand_m3 * s_rate)
-                    mat_summary = f"Cement: {c_bags} Bags, Sand: {sand_m3:.2f} m³"
-                    st.info(f"• **Cement (12mm):** {c_bags} Bags\n• **Sand:** {sand_m3:.2f} m³\n• **Total Material Cost:** ₹ **{item_cost:.2f}**")
-                else:
-                    st.info("या कामासाठी जनरल मोजमाप लागू आहे.")
-
-                st.markdown("</div>", unsafe_allow_html=True)
+            elif "Plaster" in stg_name:
+                thickness = 0.012 
+                wet_vol = total_qty * thickness
+                dry_vol = wet_vol * 1.33
+                c_bags = math.ceil((1 / 5) * dry_vol * 28.8)
+                sand_m3 = (4 / 5) * dry_vol
+                mat_summary = f"Cement: {c_bags} Bags, Sand: {sand_m3:.2f} m³"
+                st.info(f"• **Cement (12mm):** {c_bags} Bags | **Sand:** {sand_m3:.2f} m³")
 
             stage_results.append({
                 "Stage": desc_val,
                 "Dimensions": f"{l_val} x {w_val} x {h_val if not is_area_unit else 1.0}",
                 "Nos": nos_val,
-                "Quantity": f"{qty:.3f} {unit_label}",
-                "Material": mat_summary,
-                "Cost": item_cost
+                "SingleQty": single_qty,
+                "TotalQty": f"{total_qty:.3f} {unit_label}",
+                "Material": mat_summary
             })
 
         # 🚪 Brickwork Deduction Sub-Section
@@ -2269,28 +2256,29 @@ elif st.session_state.selected_module == "Quantity Surveying":
         if not stage_results:
             st.warning("⚠️ कृपया कमीत कमी एका स्टेजसाठी Nos, Length, Width आणि Height च्या व्हॅल्यू भरा!")
         else:
-            grand_total_cost = sum(r["Cost"] for r in stage_results)
-
             st.success("🎉 Abstract Sheet & Material Report यशस्वीरित्या तयार झाला आहे!")
             st.markdown(f"### 📊 ABSTRACT SHEET & MATERIAL REPORT")
             st.info(f"👤 **Prepared For:** {current_user_name}")
 
             table_rows = ""
+            whatsapp_text_items = ""
+            
             for r in stage_results:
-                table_rows += f"| {r['Stage']} | {r['Nos']} | {r['Dimensions']} | {r['Quantity']} | {r['Material']} | ₹ {r['Cost']:.2f} |\n"
+                table_rows += f"| {r['Stage']} | {r['Nos']} | {r['Dimensions']} | {r['TotalQty']} | {r['Material']} |\n"
+                whatsapp_text_items += f"• *{r['Stage']}*\n  - Nos: {r['Nos']} | Size: {r['Dimensions']}\n  - Single Qty: {r['SingleQty']:.3f}\n  - Total Qty: {r['TotalQty']}\n  - Material: {r['Material']}\n\n"
 
             final_report_html = f"""
 <div class="print-container">
 <h2>📊 PATIL INFRATECH - ABSTRACT SHEET & QUANTITY SURVEY</h2>
 <p><strong>Prepared For:</strong> {current_user_name} | <strong>Date:</strong> {get_ist_time().strftime('%d-%m-%Y')}</p>
 
-| Description | Nos | Length x Width x Height | Quantity | Material | Amount (₹) |
-| :--- | :--- | :--- | :--- | :--- | :--- |
+| Description | Nos | Length x Width x Height | Total Quantity | Material |
+| :--- | :--- | :--- | :--- | :--- |
 {table_rows}
 
 ---
-### 📌 SUMMARY DETAILS
-* **GRAND TOTAL ESTIMATED COST:** **₹ {grand_total_cost:.2f}/-**
+### 📌 SUMMARY
+* **Status:** Report Generated Successfully (No Cost/Amount Shown)
 </div>
 """
             st.markdown(final_report_html, unsafe_allow_html=True)
@@ -2298,7 +2286,7 @@ elif st.session_state.selected_module == "Quantity Surveying":
             msg_text = f"📊 *PATIL INFRATECH - ABSTRACT SHEET*\n"
             msg_text += f"👤 *Prepared For:* {current_user_name}\n"
             msg_text += f"📅 *Date:* {get_ist_time().strftime('%d-%m-%Y')}\n\n"
-            msg_text += f"💰 *GRAND TOTAL ESTIMATED COST:* ₹ {grand_total_cost:.2f}/-\n"
+            msg_text += f"📋 *MEASUREMENT DETAILS:*\n{whatsapp_text_items}"
             msg_text += f"_Generated by Patil Infratech_"
 
             encoded_msg = urllib.parse.quote(msg_text)
