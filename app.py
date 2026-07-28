@@ -1,7 +1,7 @@
-# KANHA_1p - पाटील इन्फ्राटेक (Streamlit Web Application)
+# KANHA_1p - पाटील इन्फ्राटेक (Streamlit Web Application with SQLite Database)
 import streamlit as st
 import math
-import json
+import sqlite3
 import os
 import datetime
 import pandas as pd
@@ -29,53 +29,152 @@ def get_ist_time():
     return ist_now
 
 # ==========================================
-# 📂 फाईल डेटाबेस मॅनेजमेंट (Permanent Data Saving)
+# 🗄️ SQLITE DATABASE MANAGEMENT
 # ==========================================
-DB_FILE = "users_db.json"
+DB_FILE = "patil_infratech.db"
 
-def load_db():
-    db = {
-        "9999999999": {
-            "id": "kanha", 
-            "uid": "KANHA_1P",
-            "pin": "1234",
-            "mobile": "9999999999",
-            "password": "patiladmin123",
-            "comment": "मास्टर ॲडमीन अकाउंट",
-            "admin_message": "स्वागत आहे मास्टर कन्हैया! आपले पाटील इन्फ्राटेक मध्ये सर्व अधिकार अनलॉक्ड आहेत ⚡",
-            "is_premium": True,
-            "premium_expiry": "2099-12-31 23:59:59",
-            "requested_code": False,
-            "seen_popup": True,
-            "history": []
-        },
-        "PREMIUM_CODES": {},
-        "FEATURE_LOCKS": {
-            "Civil Calculator": "Free",
-            "Rate Analysis": "Free",
-            "BBS": "Free",
-            "WhatsApp Share": "Premium",
-            "Civil AI Assistant": "Premium"
-        },
-        "ADS_DB": []
+def get_db_connection():
+    conn = sqlite3.connect(DB_FILE, check_same_thread=False)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def init_db():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # 1. Users Table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            user_key TEXT PRIMARY KEY,
+            id TEXT,
+            uid TEXT UNIQUE,
+            pin TEXT,
+            mobile TEXT,
+            password TEXT,
+            comment TEXT,
+            admin_message TEXT,
+            unread_notification INTEGER,
+            is_premium INTEGER,
+            premium_expiry TEXT,
+            requested_code INTEGER,
+            seen_popup INTEGER,
+            master_code_uses INTEGER,
+            last_active TEXT,
+            activated_by TEXT
+        )
+    ''')
+
+    # 2. History Table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_key TEXT,
+            timestamp TEXT,
+            user_note TEXT,
+            report_data TEXT,
+            FOREIGN KEY (user_key) REFERENCES users (user_key)
+        )
+    ''')
+
+    # 3. Premium Codes Table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS premium_codes (
+            code TEXT PRIMARY KEY,
+            assigned_to TEXT,
+            used INTEGER,
+            used_by TEXT,
+            used_date TEXT,
+            created_at TEXT
+        )
+    ''')
+
+    # 4. Feature Locks Table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS feature_locks (
+            feature_name TEXT PRIMARY KEY,
+            access_level TEXT
+        )
+    ''')
+
+    # 5. Master Market Rates Table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS market_rates (
+            material TEXT PRIMARY KEY,
+            rate REAL
+        )
+    ''')
+
+    # 6. Ads Table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS ads (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT,
+            desc TEXT,
+            link TEXT,
+            media_type TEXT,
+            media_url TEXT,
+            position TEXT,
+            active INTEGER,
+            date TEXT
+        )
+    ''')
+
+    # Master Admin Default Entry
+    cursor.execute("SELECT * FROM users WHERE user_key = ?", ("9999999999",))
+    if not cursor.fetchone():
+        cursor.execute('''
+            INSERT INTO users (user_key, id, uid, pin, mobile, password, comment, admin_message, unread_notification, is_premium, premium_expiry, requested_code, seen_popup, master_code_uses, last_active, activated_by)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', ("9999999999", "kanha", "KANHA_1P", "1234", "9999999999", "patiladmin123", "मास्टर ॲडमीन अकाउंट", "स्वागत आहे मास्टर कन्हैया! आपले पाटील इन्फ्राटेक मध्ये सर्व अधिकार अनलॉक्ड आहेत ⚡", 0, 1, "2099-12-31 23:59:59", 0, 1, 0, get_ist_time().strftime("%Y-%m-%d %H:%M:%S"), "Master Admin"))
+
+    # Default Feature Locks
+    default_locks = {
+        "Civil Calculator": "Free",
+        "Rate Analysis": "Free",
+        "BBS": "Free",
+        "WhatsApp Share": "Premium",
+        "Civil AI Assistant": "Premium"
     }
-    if os.path.exists(DB_FILE):
-        try:
-            with open(DB_FILE, "r", encoding="utf-8") as f:
-                old_db = json.load(f)
-                if isinstance(old_db, dict):
-                    for key, val in old_db.items():
-                        if key != "9999999999":
-                            db[key] = val
-        except:
-            pass
-    return db
+    for f_name, f_lvl in default_locks.items():
+        cursor.execute("INSERT OR IGNORE INTO feature_locks (feature_name, access_level) VALUES (?, ?)", (f_name, f_lvl))
 
-def save_db(db):
-    with open(DB_FILE, "w", encoding="utf-8") as f:
-        json.dump(db, f, ensure_ascii=False, indent=4)
+    # Default Market Rates
+    default_rates = {"cement": 400.0, "sand": 2500.0, "bricks": 8.0, "aggregate": 2200.0, "steel": 60.0}
+    for mat, rat in default_rates.items():
+        cursor.execute("INSERT OR IGNORE INTO market_rates (material, rate) VALUES (?, ?)", (mat, rat))
 
-user_db = load_db()
+    conn.commit()
+    conn.close()
+
+init_db()
+
+# DB Helper Functions
+def get_user_data(user_key):
+    if not user_key: return None
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM users WHERE user_key = ?", (user_key,))
+    row = cursor.fetchone()
+    conn.close()
+    if row:
+        return dict(row)
+    return None
+
+def get_market_rates():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT material, rate FROM market_rates")
+    rows = cursor.fetchall()
+    conn.close()
+    return {row["material"]: row["rate"] for row in rows}
+
+def get_feature_locks():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT feature_name, access_level FROM feature_locks")
+    rows = cursor.fetchall()
+    conn.close()
+    return {row["feature_name"]: row["access_level"] for row in rows}
 
 # Session State & Query Params Initialization (Auto-Login Support)
 if "app_user_name" not in st.session_state:
@@ -84,10 +183,13 @@ if "app_user_name" not in st.session_state:
 query_params = st.query_params
 if st.session_state.app_user_name is None and "saved_uid" in query_params:
     saved_uid = query_params["saved_uid"]
-    for u_key, u_data in user_db.items():
-        if isinstance(u_data, dict) and u_data.get("uid") == saved_uid:
-            st.session_state.app_user_name = u_key
-            break
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT user_key FROM users WHERE uid = ?", (saved_uid,))
+    row = cursor.fetchone()
+    conn.close()
+    if row:
+        st.session_state.app_user_name = row["user_key"]
 
 if "is_admin_logged" not in st.session_state:
     st.session_state.is_admin_logged = False
@@ -105,9 +207,12 @@ if "admin_selected_user" not in st.session_state:
 current_user_name = st.session_state.app_user_name
 
 # 🟢 युझर ॲक्टिव्ह असेल तर त्याची वेळ अपडेट करणे (Live Activity Tracker)
-if current_user_name and current_user_name in user_db:
-    user_db[current_user_name]["last_active"] = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
-    save_db(user_db)
+if current_user_name:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE users SET last_active = ? WHERE user_key = ?", (get_ist_time().strftime("%Y-%m-%d %H:%M:%S"), current_user_name))
+    conn.commit()
+    conn.close()
 
 # ⏳ प्रिमियम स्टेटस व अचूक एक्सपायरी तपासणी
 def check_user_premium_status(username):
@@ -115,19 +220,20 @@ def check_user_premium_status(username):
     if username.lower() == "kanha" or username == "9999999999":
         return True, "Master Lifetime VIP"
     
-    db = load_db()
-    user_info = db.get(username, {})
-    if isinstance(user_info, dict) and user_info.get("is_premium", False):
-        exp_date_str = user_info.get("premium_expiry")
+    u_info = get_user_data(username)
+    if u_info and u_info.get("is_premium") == 1:
+        exp_date_str = u_info.get("premium_expiry")
         if exp_date_str:
             try:
                 exp_datetime = datetime.datetime.strptime(exp_date_str, "%Y-%m-%d %H:%M:%S")
                 now_datetime = get_ist_time()
                 
                 if now_datetime > exp_datetime:
-                    user_info["is_premium"] = False
-                    user_info["premium_expiry"] = None
-                    save_db(db)
+                    conn = get_db_connection()
+                    cursor = conn.cursor()
+                    cursor.execute("UPDATE users SET is_premium = 0, premium_expiry = NULL WHERE user_key = ?", (username,))
+                    conn.commit()
+                    conn.close()
                     return False, "Expired"
                 else:
                     diff = exp_datetime - now_datetime
@@ -308,9 +414,8 @@ def generate_random_code():
 # 🔐 ॲप व्हॉट्सॲप फीचर अनलॉक/प्रीमियम फंक्शन
 # ==========================================
 def render_whatsapp_feature(encoded_msg, key_prefix):
-    user_db = load_db()
     is_prem, status_str = check_user_premium_status(current_user_name)
-    locks_cfg = user_db.get("FEATURE_LOCKS", {})
+    locks_cfg = get_feature_locks()
     wa_lock_setting = locks_cfg.get("WhatsApp Share", "Premium")
 
     if wa_lock_setting == "Free" or is_prem:
@@ -331,34 +436,46 @@ def render_whatsapp_feature(encoded_msg, key_prefix):
             w_col1, w_col2 = st.columns(2)
             with w_col1:
                 if st.button("🔓 Unlock WhatsApp Share Now", key=f"{key_prefix}_unlock_btn"):
-                    codes_db = user_db.get("PREMIUM_CODES", {})
-                    if p_code in codes_db:
-                        c_info = codes_db[p_code]
-                        if c_info.get("used", False):
+                    conn = get_db_connection()
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT * FROM premium_codes WHERE code = ?", (p_code,))
+                    row = cursor.fetchone()
+                    
+                    if row:
+                        c_info = dict(row)
+                        if c_info.get("used") == 1:
                             st.error("❌ हा कोड आधीच वापरला गेला आहे! तो आता व्हॅलिड नाही.")
+                            conn.close()
                         else:
-                            user_db["PREMIUM_CODES"][p_code]["used"] = True
-                            user_db["PREMIUM_CODES"][p_code]["used_by"] = current_user_name
-                            user_db["PREMIUM_CODES"][p_code]["used_date"] = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
-
                             exp_datetime = get_ist_time() + datetime.timedelta(days=28)
-                            user_db[current_user_name]["is_premium"] = True
-                            user_db[current_user_name]["premium_expiry"] = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
-                            user_db[current_user_name]["seen_popup"] = False
-                            user_db[current_user_name]["activated_by"] = "Kanhaiya (Founder of Patil Infratech)"
+                            exp_str = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
+                            now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
+
+                            cursor.execute("UPDATE premium_codes SET used = 1, used_by = ?, used_date = ? WHERE code = ?", (current_user_name, now_str, p_code))
                             
                             disp_name = current_user_name if current_user_name else ""
-                            user_db[current_user_name]["admin_message"] = f"{disp_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
-                            user_db[current_user_name]["unread_notification"] = False
-                            save_db(user_db)
+                            welcome_msg = f"{disp_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
+                            
+                            cursor.execute('''
+                                UPDATE users 
+                                SET is_premium = 1, premium_expiry = ?, seen_popup = 0, activated_by = ?, admin_message = ?, unread_notification = 0
+                                WHERE user_key = ?
+                            ''', (exp_str, "Kanhaiya (Founder of Patil Infratech)", welcome_msg, current_user_name))
+                            
+                            conn.commit()
+                            conn.close()
                             st.rerun()
                     else:
+                        conn.close()
                         st.error("❌ चुकीचा प्रिमियम कोड! कृपया अचूक कोड टाका.")
 
             with w_col2:
                 if st.button("📩 Request Code from Admin", key=f"{key_prefix}_req_btn"):
-                    user_db[current_user_name]["requested_code"] = True
-                    save_db(user_db)
+                    conn = get_db_connection()
+                    cursor = conn.cursor()
+                    cursor.execute("UPDATE users SET requested_code = 1 WHERE user_key = ?", (current_user_name,))
+                    conn.commit()
+                    conn.close()
                     st.success("✅ ॲडमीनला कोडसाठी रिक्वेस्ट पाठवली आहे!")
 
 # ==========================================
@@ -389,19 +506,23 @@ if not st.session_state.welcome_completed:
         st.markdown("<h1 style='text-align: center; color: #60a5fa;'>🏗️ WELCOME TO PATIL INFRATECH...</h1>", unsafe_allow_html=True)
         st.markdown("<h3 style='text-align: center; color: #9ca3af;'>तुमचे स्वप्न, आमचे एस्टिमेशन!</h3>", unsafe_allow_html=True)
         
-        db_temp = load_db()
-        ads_list = db_temp.get("ADS_DB", [])
-        for ad in ads_list:
-            if ad.get("active", False) and ad.get("position") == "Loading Page (Title Sponsor)":
-                st.markdown(f"""
-                    <div style="background: rgba(17, 24, 39, 0.7); border: 1px solid rgba(59, 130, 246, 0.3); padding: 6px 10px; border-radius: 10px; text-align: center; margin: 15px auto; max-width: 280px;">
-                        <span style="font-size: 9px; color: #93c5fd; font-weight: bold;">⭐ SPONSOR</span><br>
-                        <b style="color: #ffffff; font-size: 12px;">{ad.get('title')}</b>
-                        <p style="color: #9ca3af; font-size: 10px; margin: 2px 0;">{ad.get('desc')}</p>
-                        {"<img src='" + ad.get('media_url') + "' style='max-height:50px; border-radius:6px; margin-top:3px;'/>" if ad.get('media_type') == 'Photo (PNG/JPG)' and ad.get('media_url') else ""}
-                        <br><a href="{ad.get('link')}" target="_blank" style="color: #fbbf24; font-weight: bold; text-decoration: underline; font-size: 11px;">👉 Visit Link</a>
-                    </div>
-                """, unsafe_allow_html=True)
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM ads WHERE active = 1 AND position = 'Loading Page (Title Sponsor)'")
+        ads_rows = cursor.fetchall()
+        conn.close()
+
+        for ad in ads_rows:
+            ad_dict = dict(ad)
+            st.markdown(f"""
+                <div style="background: rgba(17, 24, 39, 0.7); border: 1px solid rgba(59, 130, 246, 0.3); padding: 6px 10px; border-radius: 10px; text-align: center; margin: 15px auto; max-width: 280px;">
+                    <span style="font-size: 9px; color: #93c5fd; font-weight: bold;">⭐ SPONSOR</span><br>
+                    <b style="color: #ffffff; font-size: 12px;">{ad_dict.get('title')}</b>
+                    <p style="color: #9ca3af; font-size: 10px; margin: 2px 0;">{ad_dict.get('desc')}</p>
+                    {"<img src='" + ad_dict.get('media_url') + "' style='max-height:50px; border-radius:6px; margin-top:3px;'/>" if ad_dict.get('media_type') == 'Photo (PNG/JPG)' and ad_dict.get('media_url') else ""}
+                    <br><a href="{ad_dict.get('link')}" target="_blank" style="color: #fbbf24; font-weight: bold; text-decoration: underline; font-size: 11px;">👉 Visit Link</a>
+                </div>
+            """, unsafe_allow_html=True)
 
         st.caption("<p style='text-align: center; color: #6b7280;'>(पुढे जाण्यासाठी स्क्रीनवर कुठेही टच करा)</p>", unsafe_allow_html=True)
         
@@ -467,12 +588,11 @@ if st.session_state.is_admin_logged:
             st.session_state.admin_dashboard_tab = "ads"
 
     st.write("---")
-    user_db = load_db()
     current_tab = st.session_state.admin_dashboard_tab
 
     if current_tab == "rates":
         st.markdown("### 📈 Update Master Market Rates")
-        m_rates = user_db.get("MASTER_MARKET_RATES", {"cement": 400.0, "sand": 2500.0, "bricks": 8.0, "aggregate": 2200.0, "steel": 60.0})
+        m_rates = get_market_rates()
         
         adm_cem = st.number_input("Cement (per bag ₹):", min_value=0.0, value=float(m_rates.get("cement", 400.0)), step=1.0)
         adm_snd = st.number_input("Sand (per m³ ₹):", min_value=0.0, value=float(m_rates.get("sand", 2500.0)), step=1.0)
@@ -481,31 +601,39 @@ if st.session_state.is_admin_logged:
         adm_ste = st.number_input("Steel Rate (per kg ₹):", min_value=0.0, value=float(m_rates.get("steel", 60.0)), step=1.0)
         
         if st.button("💾 Save Master Market Rates", type="primary"):
-            user_db["MASTER_MARKET_RATES"] = {
-                "cement": adm_cem, "sand": adm_snd, "bricks": adm_brk, "aggregate": adm_agg, "steel": adm_ste
-            }
-            save_db(user_db)
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            updated_rates = {"cement": adm_cem, "sand": adm_snd, "bricks": adm_brk, "aggregate": adm_agg, "steel": adm_ste}
+            for mat, rat in updated_rates.items():
+                cursor.execute("REPLACE INTO market_rates (material, rate) VALUES (?, ?)", (mat, rat))
+            conn.commit()
+            conn.close()
             st.success("✅ आजचे मास्टर मार्केट दर डेटाबेसमध्ये यशस्वीरित्या अपडेट झाले!")
 
     elif current_tab == "locks":
         st.markdown("### ⚙️ Feature Lock Manager")
-        cur_locks = user_db.get("FEATURE_LOCKS", {"Civil Calculator": "Free", "Rate Analysis": "Free", "BBS": "Free", "WhatsApp Share": "Premium", "Civil AI Assistant": "Premium"})
+        cur_locks = get_feature_locks()
 
         fl_calc = st.selectbox("Civil Calculator Access:", ["Free", "Premium"], index=0 if cur_locks.get("Civil Calculator", "Free") == "Free" else 1)
-        fl_ra = st.selectbox("Rate Analysis Module Access:", ["Free", "Premium"], index=0 if cur_locks.get("Rate Analysis") == "Free" else 1)
-        fl_bbs = st.selectbox("BBS Calculator Access:", ["Free", "Premium"], index=0 if cur_locks.get("BBS") == "Free" else 1)
-        fl_wa = st.selectbox("WhatsApp Full Report Share:", ["Free", "Premium"], index=0 if cur_locks.get("WhatsApp Share") == "Free" else 1)
-        fl_ai = st.selectbox("Civil AI Assistant Access:", ["Free", "Premium"], index=0 if cur_locks.get("Civil AI Assistant") == "Free" else 1)
+        fl_ra = st.selectbox("Rate Analysis Module Access:", ["Free", "Premium"], index=0 if cur_locks.get("Rate Analysis", "Free") == "Free" else 1)
+        fl_bbs = st.selectbox("BBS Calculator Access:", ["Free", "Premium"], index=0 if cur_locks.get("BBS", "Free") == "Free" else 1)
+        fl_wa = st.selectbox("WhatsApp Full Report Share:", ["Free", "Premium"], index=0 if cur_locks.get("WhatsApp Share", "Free") == "Free" else 1)
+        fl_ai = st.selectbox("Civil AI Assistant Access:", ["Free", "Premium"], index=0 if cur_locks.get("Civil AI Assistant", "Premium") == "Free" else 1)
 
         if st.button("💾 Save Feature Lock Settings", type="primary"):
-            user_db["FEATURE_LOCKS"] = {
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            new_locks = {
                 "Civil Calculator": fl_calc,
                 "Rate Analysis": fl_ra,
                 "BBS": fl_bbs,
                 "WhatsApp Share": fl_wa,
                 "Civil AI Assistant": fl_ai
             }
-            save_db(user_db)
+            for f_name, f_lvl in new_locks.items():
+                cursor.execute("REPLACE INTO feature_locks (feature_name, access_level) VALUES (?, ?)", (f_name, f_lvl))
+            conn.commit()
+            conn.close()
             st.success("✅ प्रिमियम/फ्री फीचर्स सेटिंग्स यशस्वीरित्या बदलल्या!")
 
     elif current_tab == "users":
@@ -518,26 +646,26 @@ if st.session_state.is_admin_logged:
                 st.session_state.admin_selected_user = None
                 st.rerun()
 
-            info = user_db.get(target_user, {})
-            if not isinstance(info, dict):
-                info = {}
+            info = get_user_data(target_user) or {}
             
             u_name = info.get("id", target_user)
             u_uid = info.get("uid", "N/A")
             u_mob = info.get("mobile", "N/A")
             u_pin = info.get("pin", "N/A")
             u_comm = info.get("comment", "काही नाही")
-            u_prem = info.get("is_premium", False)
+            u_prem = bool(info.get("is_premium", 0))
             exp_date = info.get("premium_expiry", "N/A")
-            is_req = info.get("requested_code", False)
-            u_hist = info.get("history", [])
+            is_req = bool(info.get("requested_code", 0))
+            
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM history WHERE user_key = ? ORDER BY id DESC", (target_user,))
+            u_hist = [dict(r) for r in cursor.fetchall()]
 
-            assigned_code = None
-            if "PREMIUM_CODES" in user_db:
-                for c_code, c_data in user_db["PREMIUM_CODES"].items():
-                    if isinstance(c_data, dict) and c_data.get("assigned_to") == u_name and not c_data.get("used", False):
-                        assigned_code = c_code
-                        break
+            cursor.execute("SELECT code FROM premium_codes WHERE assigned_to = ? AND used = 0", (u_name,))
+            c_row = cursor.fetchone()
+            conn.close()
+            assigned_code = c_row["code"] if c_row else None
 
             status_badge = f"👑 VIP MEMBER: {u_name.upper()}" if u_prem else ("🚨 CODE REQUESTED!" if is_req else f"🆓 FREE: {u_name.upper()}")
 
@@ -557,15 +685,14 @@ if st.session_state.is_admin_logged:
             else:
                 if st.button(f"🚀 Generate & Send Unique Code to {u_name}", key=f"win_gen_send_{target_user}"):
                     new_c = generate_random_code()
-                    if "PREMIUM_CODES" not in user_db: user_db["PREMIUM_CODES"] = {}
-                    user_db["PREMIUM_CODES"][new_c] = {
-                        "assigned_to": u_name,
-                        "used": False,
-                        "created_at": get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
-                    }
-                    user_db[target_user]["admin_message"] = f"तुमचा प्रिमियम कोड: {new_c} (ॲपमध्ये टाकून प्रिमियम अनलॉक करा)"
-                    user_db[target_user]["requested_code"] = False
-                    save_db(user_db)
+                    now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
+                    conn = get_db_connection()
+                    cursor = conn.cursor()
+                    cursor.execute("INSERT INTO premium_codes (code, assigned_to, used, created_at) VALUES (?, ?, 0, ?)", (new_c, u_name, now_str))
+                    msg = f"तुमचा प्रिमियम कोड: {new_c} (ॲपमध्ये टाकून प्रिमियम अनलॉक करा)"
+                    cursor.execute("UPDATE users SET admin_message = ?, requested_code = 0 WHERE user_key = ?", (msg, target_user))
+                    conn.commit()
+                    conn.close()
                     st.success(f"🎉 {u_name} ला ऑटोमॅटिकली कोड पाठवला: `{new_c}`")
                     st.rerun()
 
@@ -586,20 +713,25 @@ if st.session_state.is_admin_logged:
                 else:
                     exp_time = now + datetime.timedelta(days=time_val)
 
-                user_db[target_user]["is_premium"] = True
-                user_db[target_user]["premium_expiry"] = exp_time.strftime("%Y-%m-%d %H:%M:%S")
-                user_db[target_user]["requested_code"] = False
-                user_db[target_user]["seen_popup"] = False
-                user_db[target_user]["activated_by"] = "Kanhaiya (Founder of Patil Infratech)"
-                save_db(user_db)
+                conn = get_db_connection()
+                cursor = conn.cursor()
+                cursor.execute('''
+                    UPDATE users 
+                    SET is_premium = 1, premium_expiry = ?, requested_code = 0, seen_popup = 0, activated_by = ?
+                    WHERE user_key = ?
+                ''', (exp_time.strftime("%Y-%m-%d %H:%M:%S"), "Kanhaiya (Founder of Patil Infratech)", target_user))
+                conn.commit()
+                conn.close()
                 st.success(f"✅ {u_name} साठी {time_val} {time_unit} सेव्ह केले!")
                 st.rerun()
 
             if u_prem:
                 if st.button(f"🔻 Revoke Premium: {u_name}", key=f"win_rev_{target_user}"):
-                    user_db[target_user]["is_premium"] = False
-                    user_db[target_user]["premium_expiry"] = None
-                    save_db(user_db)
+                    conn = get_db_connection()
+                    cursor = conn.cursor()
+                    cursor.execute("UPDATE users SET is_premium = 0, premium_expiry = NULL WHERE user_key = ?", (target_user,))
+                    conn.commit()
+                    conn.close()
                     st.warning(f"❌ {u_name} चे प्रिमियम काढले आहे.")
                     st.rerun()
 
@@ -608,15 +740,21 @@ if st.session_state.is_admin_logged:
             new_msg = st.text_input(f"✍️ {u_name} साठी इनबॉक्स मेसेज बदलणे (Notification Send):", value=current_msg, key=f"win_msg_{target_user}")
             if st.button(f"✉️ मेसेज सेव्ह करा व पाठवा ({u_name})", key=f"win_btn_msg_{target_user}"):
                 if new_msg.strip():
-                    user_db[target_user]["admin_message"] = new_msg.strip()
-                    user_db[target_user]["unread_notification"] = True
-                    save_db(user_db)
+                    conn = get_db_connection()
+                    cursor = conn.cursor()
+                    cursor.execute("UPDATE users SET admin_message = ?, unread_notification = 1 WHERE user_key = ?", (new_msg.strip(), target_user))
+                    conn.commit()
+                    conn.close()
                     st.success(f"✅ '{u_name}' च्या इनबॉक्समध्ये नवीन मेसेज पाठवला (Notification Sent)!")
                     st.rerun()
 
             if st.button(f"🗑️ Delete User: {u_name}", key=f"win_del_{target_user}"):
-                del user_db[target_user]
-                save_db(user_db)
+                conn = get_db_connection()
+                cursor = conn.cursor()
+                cursor.execute("DELETE FROM users WHERE user_key = ?", (target_user,))
+                cursor.execute("DELETE FROM history WHERE user_key = ?", (target_user,))
+                conn.commit()
+                conn.close()
                 st.session_state.admin_view = "main"
                 st.session_state.admin_selected_user = None
                 st.error(f"❌ युझर '{u_name}' डिलीट केला आहे!")
@@ -626,24 +764,26 @@ if st.session_state.is_admin_logged:
             st.markdown(f"##### 📜 {u_name} चे जनरेट केलेले एस्टिमेशन रिपोर्ट्स ({len(u_hist)})")
             if u_hist:
                 for idx, hist in enumerate(u_hist, 1):
-                    if isinstance(hist, dict):
-                        ts = hist.get('timestamp', 'N/A')
-                        with st.expander(f"🗓️ रिपोर्ट #{idx} | तारीख व वेळ: `{ts}`"):
-                            st.markdown(hist.get("report_data", "डेटा उपलब्ध नाही"))
+                    ts = hist.get('timestamp', 'N/A')
+                    with st.expander(f"🗓️ रिपोर्ट #{idx} | तारीख व वेळ: `{ts}`"):
+                        st.markdown(hist.get("report_data", "डेटा उपलब्ध नाही"))
             else:
                 st.info("ℹ️ या युझरने अजून एकही रिपोर्ट जनरेट केलेला नाही.")
         else:
-            all_users_keys = [k for k, v in user_db.items() if k not in ["9999999999", "MASTER_MARKET_RATES", "PREMIUM_CODES", "FEATURE_LOCKS"] and isinstance(v, dict)]
-            sorted_user_keys = sorted(all_users_keys, key=lambda x: str(user_db[x].get("id", x)).lower())
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM users WHERE user_key != '9999999999' ORDER BY id ASC")
+            all_users = [dict(r) for r in cursor.fetchall()]
+            conn.close()
 
-            if sorted_user_keys:
+            if all_users:
                 now_time = get_ist_time()
-                for mob in sorted_user_keys:
-                    info = user_db[mob]
+                for info in all_users:
+                    mob = info.get("user_key")
                     u_name = info.get("id", mob)
                     u_uid = info.get("uid", "N/A")
-                    u_prem = info.get("is_premium", False)
-                    is_req = info.get("requested_code", False)
+                    u_prem = bool(info.get("is_premium", 0))
+                    is_req = bool(info.get("requested_code", 0))
                     last_active_str = info.get("last_active", None)
 
                     is_online = False
@@ -678,9 +818,6 @@ if st.session_state.is_admin_logged:
         st.markdown("### 📢 Ad & Sponsor Manager")
         st.caption("💡 इथून तू दोन प्रकारचे स्पॉन्सरशिप्स (Ads) मॅनेज करू शकतोस:")
 
-        if "ADS_DB" not in user_db:
-            user_db["ADS_DB"] = []
-
         with st.form("add_ad_form"):
             ad_title = st.text_input("Sponsor / Ad Title:")
             ad_desc = st.text_area("Offer / Description:")
@@ -696,18 +833,15 @@ if st.session_state.is_admin_logged:
             submit_ad = st.form_submit_button("🚀 Publish Ad Sponsor", type="primary")
             if submit_ad:
                 if ad_title.strip():
-                    new_ad = {
-                        "title": ad_title.strip(),
-                        "desc": ad_desc.strip(),
-                        "link": ad_link.strip(),
-                        "media_type": media_type,
-                        "media_url": media_url.strip(),
-                        "position": position,
-                        "active": is_active,
-                        "date": get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
-                    }
-                    user_db["ADS_DB"].append(new_ad)
-                    save_db(user_db)
+                    conn = get_db_connection()
+                    cursor = conn.cursor()
+                    now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
+                    cursor.execute('''
+                        INSERT INTO ads (title, desc, link, media_type, media_url, position, active, date)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    ''', (ad_title.strip(), ad_desc.strip(), ad_link.strip(), media_type, media_url.strip(), position, 1 if is_active else 0, now_str))
+                    conn.commit()
+                    conn.close()
                     st.success("✅ स्पॉन्सर ॲड यशस्वीरित्या पब्लिश झाली!")
                     st.rerun()
                 else:
@@ -715,13 +849,22 @@ if st.session_state.is_admin_logged:
 
         st.markdown("---")
         st.markdown("##### 📋 सध्या चालू असलेल्या जाहिराती (Active Ads List):")
-        ads_list = user_db.get("ADS_DB", [])
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM ads ORDER BY id DESC")
+        ads_list = [dict(r) for r in cursor.fetchall()]
+        conn.close()
+
         if ads_list:
-            for idx, ad in enumerate(ads_list):
-                st.info(f"**#{idx+1} | {ad.get('title')}** ({ad.get('position')})\n- *Status:* {'🟢 Active' if ad.get('active') else '🔴 Inactive'}")
-                if st.button(f"🗑️ Delete Ad #{idx+1}", key=f"del_ad_{idx}"):
-                    user_db["ADS_DB"].pop(idx)
-                    save_db(user_db)
+            for ad in ads_list:
+                ad_id = ad.get("id")
+                st.info(f"**#{ad_id} | {ad.get('title')}** ({ad.get('position')})\n- *Status:* {'🟢 Active' if ad.get('active')==1 else '🔴 Inactive'}")
+                if st.button(f"🗑️ Delete Ad #{ad_id}", key=f"del_ad_{ad_id}"):
+                    conn = get_db_connection()
+                    cursor = conn.cursor()
+                    cursor.execute("DELETE FROM ads WHERE id = ?", (ad_id,))
+                    conn.commit()
+                    conn.close()
                     st.success("🗑️ ॲड डिलीट केली!")
                     st.rerun()
         else:
@@ -736,7 +879,6 @@ if st.session_state.app_user_name is None:
     st.markdown("### 🏗️ PATIL INFRATECH - SECURE LOGIN")
     
     auth_mode = st.radio("निवडा (Select Option):", ["🔑 UID Login (लॉगिन करा)", "✨ Register (नवीन अकाउंट)", "❓ Forgot UID/PIN (आयडी/पिन रिकव्हर करा)"], horizontal=True)
-    user_db = load_db()
 
     if "Login" in auth_mode:
         with st.form("uid_login_form"):
@@ -745,13 +887,14 @@ if st.session_state.app_user_name is None:
             submit_login = st.form_submit_button("🚀 Login Now", type="primary")
 
             if submit_login:
-                found_user = None
-                for u_key, u_data in user_db.items():
-                    if isinstance(u_data, dict) and u_data.get("uid") == input_uid:
-                        found_user = u_key
-                        break
+                conn = get_db_connection()
+                cursor = conn.cursor()
+                cursor.execute("SELECT user_key FROM users WHERE uid = ?", (input_uid,))
+                row = cursor.fetchone()
+                conn.close()
 
-                if found_user:
+                if row:
+                    found_user = row["user_key"]
                     st.session_state.app_user_name = found_user
                     if remember_me:
                         st.query_params["saved_uid"] = input_uid
@@ -770,52 +913,41 @@ if st.session_state.app_user_name is None:
 
             if submit_reg:
                 if reg_name and len(reg_mob) >= 10 and len(reg_pin) == 4:
-                    mob_exists = False
-                    for u_key, u_data in user_db.items():
-                        if isinstance(u_data, dict) and u_data.get("mobile") == reg_mob:
-                            mob_exists = True
-                            break
+                    conn = get_db_connection()
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT user_key FROM users WHERE mobile = ?", (reg_mob,))
+                    mob_exists = cursor.fetchone()
 
                     if mob_exists:
+                        conn.close()
                         st.error("❌ या मोबाईल नंबरवर आधीच अकाउंट तयार आहे!")
                     else:
                         first_name = reg_name.split()[0].upper()
                         last_4_mob = reg_mob[-4:]
                         generated_uid = f"{first_name}{last_4_mob}"
 
-                        uid_exists = False
-                        for u_key, u_data in user_db.items():
-                            if isinstance(u_data, dict) and u_data.get("uid") == generated_uid:
-                                uid_exists = True
-                                break
-
-                        if uid_exists:
+                        cursor.execute("SELECT user_key FROM users WHERE uid = ?", (generated_uid,))
+                        if cursor.fetchone():
                             generated_uid = f"{first_name}{random.randint(1000, 9999)}"
 
-                        if reg_name not in user_db:
+                        cursor.execute("SELECT user_key FROM users WHERE user_key = ?", (reg_name,))
+                        if not cursor.fetchone():
                             new_welcome_msg = f"{reg_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
-                            user_db[reg_name] = {
-                                "id": reg_name,
-                                "uid": generated_uid,
-                                "pin": reg_pin,
-                                "mobile": reg_mob,
-                                "comment": "काही नाही",
-                                "admin_message": new_welcome_msg,
-                                "unread_notification": False,
-                                "is_premium": False,
-                                "premium_expiry": None,
-                                "requested_code": False,
-                                "seen_popup": False,
-                                "master_code_uses": 0,
-                                "history": []
-                            }
-                            save_db(user_db)
+                            now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
                             
-                            # 🟢 नवीन लॉजिक: अकाउंट तयार झाल्यावर युझरला थेट लॉगिन न करता फक्त त्याचा UID दाखवणे आणि लॉगिन करायला सांगणे
+                            cursor.execute('''
+                                INSERT INTO users (user_key, id, uid, pin, mobile, password, comment, admin_message, unread_notification, is_premium, premium_expiry, requested_code, seen_popup, master_code_uses, last_active, activated_by)
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, 0, NULL, 0, 0, 0, ?, ?)
+                            ''', (reg_name, reg_name, generated_uid, reg_pin, reg_mob, "user123", "काही नाही", new_welcome_msg, now_str, "Free User"))
+                            
+                            conn.commit()
+                            conn.close()
+                            
                             st.success(f"🎉 अकाउंट यशस्वीरित्या तयार झाले! तुमचा युनिक UID हा आहे: **{generated_uid} and pin {reg_pin}**")
                             st.info("💡 कृपया हा UID लक्षात ठेवा आणि वर 'UID Login' वर क्लिक करून लॉगिन करा!")
-                            st.stop()  # इथे ॲप थांबेल, जेणेकरून युझर स्वतः UID टाकून लॉगिन करेल
+                            st.stop()
                         else:
+                            conn.close()
                             st.error("❌ या नावाने आधीच अकाउंट आहे! कृपया दुसरे नाव वापरून रजिस्टर करा.")
                 else:
                     st.warning("⚠️ कृपया नाव, १० अंकी मोबाईल नंबर आणि अचूक ४ अंकी पिन (PIN) टाकल्याची खात्री करा!")
@@ -827,15 +959,16 @@ if st.session_state.app_user_name is None:
             submit_forgot = st.form_submit_button("🔍 Recover My UID", type="primary")
 
             if submit_forgot:
-                matched_users = []
-                for u_key, u_data in user_db.items():
-                    if isinstance(u_data, dict) and u_data.get("mobile") == forgot_mob and u_data.get("pin") == forgot_pin:
-                        matched_users.append((u_data.get("id"), u_data.get("uid")))
+                conn = get_db_connection()
+                cursor = conn.cursor()
+                cursor.execute("SELECT id, uid FROM users WHERE mobile = ? AND pin = ?", (forgot_mob, forgot_pin))
+                matched_users = cursor.fetchall()
+                conn.close()
 
                 if matched_users:
                     st.success("✅ तुमचे अकाउंट तपशील सापडले आहेत:")
-                    for name, uid_val in matched_users:
-                        st.info(f"👤 नाव: **{name}** | 🔑 UID: **{uid_val}** (आता या UID ने लॉगिन करा)")
+                    for row in matched_users:
+                        st.info(f"👤 नाव: **{row['id']}** | 🔑 UID: **{row['uid']}** (आता या UID ने लॉगिन करा)")
                 else:
                     st.error("❌ चुकीचा मोबाईल नंबर किंवा PIN! तपशील जुळत नाहीत.")
 
@@ -863,21 +996,24 @@ if st.session_state.app_user_name is None:
 # 🚀 MAIN DASHBOARD (USER LOGGED IN)
 # ==========================================
 current_user_name = st.session_state.app_user_name
-user_db = load_db()
 
 is_user_premium, status_text_str = check_user_premium_status(current_user_name)
 
-ads_list = user_db.get("ADS_DB", [])
+conn = get_db_connection()
+cursor = conn.cursor()
+cursor.execute("SELECT * FROM ads WHERE active = 1 AND position = 'Main App Header (Top Banner)'")
+ads_list = [dict(r) for r in cursor.fetchall()]
+conn.close()
+
 for ad in ads_list:
-    if ad.get("active", False) and ad.get("position") == "Main App Header (Top Banner)":
-        st.markdown(f"""
-            <div style="background: rgba(17, 24, 39, 0.7); border: 1px solid rgba(59, 130, 246, 0.3); padding: 6px 10px; border-radius: 10px; text-align: center; margin-bottom: 15px;">
-                <span style="font-size: 9px; color: #93c5fd; font-weight: bold;">📢 SPONSOR AD</span><br>
-                <b style="color: #fff; font-size: 12px;">{ad.get('title')}</b> — <span style="color: #cbd5e1; font-size: 11px;">{ad.get('desc')}</span>
-                {"<img src='" + ad.get('media_url') + "' style='max-height:50px; border-radius:6px; margin-top:3px;'/>" if ad.get('media_type') == 'Photo (PNG/JPG)' and ad.get('media_url') else ""}
-                <a href="{ad.get('link')}" target="_blank" style="color: #fbbf24; font-weight: bold; text-decoration: underline; font-size: 11px; margin-left: 6px;">[Visit]</a>
-            </div>
-        """, unsafe_allow_html=True)
+    st.markdown(f"""
+        <div style="background: rgba(17, 24, 39, 0.7); border: 1px solid rgba(59, 130, 246, 0.3); padding: 6px 10px; border-radius: 10px; text-align: center; margin-bottom: 15px;">
+            <span style="font-size: 9px; color: #93c5fd; font-weight: bold;">📢 SPONSOR AD</span><br>
+            <b style="color: #fff; font-size: 12px;">{ad.get('title')}</b> — <span style="color: #cbd5e1; font-size: 11px;">{ad.get('desc')}</span>
+            {"<img src='" + ad.get('media_url') + "' style='max-height:50px; border-radius:6px; margin-top:3px;'/>" if ad.get('media_type') == 'Photo (PNG/JPG)' and ad.get('media_url') else ""}
+            <a href="{ad.get('link')}" target="_blank" style="color: #fbbf24; font-weight: bold; text-decoration: underline; font-size: 11px; margin-left: 6px;">[Visit]</a>
+        </div>
+    """, unsafe_allow_html=True)
 
 col_u, col_lo = st.columns([3.5, 1.5])
 if is_user_premium:
@@ -893,13 +1029,10 @@ if col_lo.button("🔄 Logout / ॲप बदला"):
     st.session_state.selected_module = None
     st.rerun()
 
-current_user_data = user_db.get(current_user_name, {})
-if not isinstance(current_user_data, dict):
-    current_user_data = {}
-
+current_user_data = get_user_data(current_user_name) or {}
 disp_name_inbox = current_user_name if current_user_name else ""
 
-if current_user_data.get("unread_notification", False):
+if current_user_data.get("unread_notification") == 1:
     admin_msg = current_user_data.get("admin_message", "")
     st.markdown(f"""
         <div style="background: linear-gradient(135deg, #047857 0%, #065f46 100%); padding: 16px 20px; border-radius: 16px; margin-bottom: 15px; border: 1px solid #34d399; box-shadow: 0 4px 20px rgba(52, 211, 153, 0.3);">
@@ -909,9 +1042,11 @@ if current_user_data.get("unread_notification", False):
     """, unsafe_allow_html=True)
     
     if st.button("✅ Mark as Read & Clear (वाचले आहे)", type="primary"):
-        user_db[current_user_name]["unread_notification"] = False
-        user_db[current_user_name]["admin_message"] = f"{disp_name_inbox} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
-        save_db(user_db)
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE users SET unread_notification = 0, admin_message = ? WHERE user_key = ?", (f"{disp_name_inbox} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳", current_user_name))
+        conn.commit()
+        conn.close()
         st.success("✅ मेसेज वाचून क्लियर केला आहे!")
         st.rerun()
 else:
@@ -927,66 +1062,82 @@ if not is_user_premium:
         c_btn1, c_btn2 = st.columns(2)
         with c_btn1:
             if st.button("🔓 Activate Premium", type="primary"):
-                codes_db = user_db.get("PREMIUM_CODES", {})
+                u_info = get_user_data(current_user_name) or {}
                 
                 if input_code == "4528":
-                    u_info = user_db.get(current_user_name, {})
                     uses_count = u_info.get("master_code_uses", 0)
-                    
                     if uses_count >= 3:
                         st.error("❌ हा मास्टर कोड तुम्ही आधीच ३ वेळा वापरला आहे! मर्यादा संपली आहे.")
                     else:
-                        user_db[current_user_name]["master_code_uses"] = uses_count + 1
                         exp_datetime = get_ist_time() + datetime.timedelta(hours=8)
-                        user_db[current_user_name]["is_premium"] = True
-                        user_db[current_user_name]["premium_expiry"] = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
-                        user_db[current_user_name]["seen_popup"] = False
-                        user_db[current_user_name]["activated_by"] = "Master Code 4528 (8 Hours VIP)"
-                        user_db[current_user_name]["admin_message"] = f"🎉 मास्टर कोड 4528 द्वारे तुला ८ तासांचे प्रिमियम मिळाले आहे! (वापर: {user_db[current_user_name]['master_code_uses']}/3)"
-                        user_db[current_user_name]["unread_notification"] = False
+                        exp_str = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
                         
-                        save_db(user_db)
-                        st.success("{disp_name_act} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳")
+                        conn = get_db_connection()
+                        cursor = conn.cursor()
+                        cursor.execute('''
+                            UPDATE users 
+                            SET master_code_uses = ?, is_premium = 1, premium_expiry = ?, seen_popup = 0,
+                                activated_by = ?, admin_message = ?, unread_notification = 0
+                            WHERE user_key = ?
+                        ''', (uses_count + 1, exp_str, "Master Code 4528 (8 Hours VIP)", f"🎉 मास्टर कोड 4528 द्वारे तुला ८ तासांचे प्रिमियम मिळाले आहे! (वापर: {uses_count + 1}/3)", current_user_name))
+                        conn.commit()
+                        conn.close()
+                        
+                        st.success("🎉 मास्टर कोड द्वारे ८ तासांचे प्रिमियम अनलॉक झाले!")
                         st.rerun()
 
                 elif input_code == "kanha_1p":
                     exp_datetime = get_ist_time() + datetime.timedelta(days=1)
-                    user_db[current_user_name]["is_premium"] = True
-                    user_db[current_user_name]["premium_expiry"] = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
-                    user_db[current_user_name]["seen_popup"] = False
-                    user_db[current_user_name]["activated_by"] = "Master Code"
+                    exp_str = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
                     
-                    disp_name_act = current_user_name if current_user_name else ""
-                    user_db[current_user_name]["admin_message"] = f"{disp_name_act} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
-                    user_db[current_user_name]["unread_notification"] = False
+                    conn = get_db_connection()
+                    cursor = conn.cursor()
+                    cursor.execute('''
+                        UPDATE users 
+                        SET is_premium = 1, premium_expiry = ?, seen_popup = 0, activated_by = ?,
+                            admin_message = ?, unread_notification = 0
+                        WHERE user_key = ?
+                    ''', (exp_str, "Master Code", f"{current_user_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳", current_user_name))
+                    conn.commit()
+                    conn.close()
                     
-                    save_db(user_db)
                     st.success("🎉 मास्टर कोडद्वारे प्रिमियम यशस्वीरित्या सुरू झाले!")
                     st.rerun()
-                elif input_code in codes_db and not codes_db[input_code].get("used", False):
-                    user_db["PREMIUM_CODES"][input_code]["used"] = True
-                    exp_datetime = get_ist_time() + datetime.timedelta(days=28)
-                    user_db[current_user_name]["is_premium"] = True
-                    user_db[current_user_name]["premium_expiry"] = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
-                    user_db[current_user_name]["seen_popup"] = False
-                    user_db[current_user_name]["activated_by"] = "Patil Infratech"
-                    
-                    disp_name_act2 = current_user_name if current_user_name else ""
-                    user_db[current_user_name]["admin_message"] = f"{disp_name_act2} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
-                    user_db[current_user_name]["unread_notification"] = False
-                    
-                    save_db(user_db)
-                    st.success("🎉 प्रिमियम यशस्वीरित्या सुरू झाले!")
-                    st.rerun()
                 else:
-                    st.error("❌ चुकीचा किंवा आधीच वापरलेला कोड!")
+                    conn = get_db_connection()
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT * FROM premium_codes WHERE code = ?", (input_code,))
+                    c_row = cursor.fetchone()
+                    
+                    if c_row and dict(c_row).get("used") == 0:
+                        exp_datetime = get_ist_time() + datetime.timedelta(days=28)
+                        exp_str = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
+                        now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
+
+                        cursor.execute("UPDATE premium_codes SET used = 1, used_by = ?, used_date = ? WHERE code = ?", (current_user_name, now_str, input_code))
+                        cursor.execute('''
+                            UPDATE users 
+                            SET is_premium = 1, premium_expiry = ?, seen_popup = 0, activated_by = ?,
+                                admin_message = ?, unread_notification = 0
+                            WHERE user_key = ?
+                        ''', (exp_str, "Patil Infratech", f"{current_user_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳", current_user_name))
+                        conn.commit()
+                        conn.close()
+                        st.success("🎉 प्रिमियम यशस्वीरित्या सुरू झाले!")
+                        st.rerun()
+                    else:
+                        conn.close()
+                        st.error("❌ चुकीचा किंवा आधीच वापरलेला कोड!")
         with c_btn2:
             if st.button("📩 Request Code"):
-                user_db[current_user_name]["requested_code"] = True
-                save_db(user_db)
+                conn = get_db_connection()
+                cursor = conn.cursor()
+                cursor.execute("UPDATE users SET requested_code = 1 WHERE user_key = ?", (current_user_name,))
+                conn.commit()
+                conn.close()
                 st.success("✅ ॲडमीनला रिक्वेस्ट पाठवली!")
 
-locks_cfg = user_db.get("FEATURE_LOCKS", {})
+locks_cfg = get_feature_locks()
 ai_lock_setting = locks_cfg.get("Civil AI Assistant", "Premium")
 
 if ai_lock_setting == "Free" or is_user_premium:
@@ -1192,10 +1343,10 @@ elif st.session_state.selected_module == "Rate Analysis":
         
     st.write("---")
     
-    master_rates = user_db.get("MASTER_MARKET_RATES", {"cement": 400.0, "sand": 2500.0, "bricks": 8.0, "aggregate": 2200.0, "steel": 60.0})
+    master_rates = get_market_rates()
     st.markdown(
         f"<div style='background: linear-gradient(90deg, #1f2937 0%, #111827 100%); padding: 12px; border-radius: 14px; text-align: center; font-size: 13px; font-weight: bold; color: #f3f4f6; margin-bottom: 15px; border-left: 5px solid #3b82f6; border: 1px solid rgba(255,255,255,0.08);'>"
-        f"📢 आजचे मार्केट दर 🏷️ cement: ₹{master_rates['cement']}/bag | sand: ₹{master_rates['sand']}/m³ | aggregate: ₹{master_rates['aggregate']}/m³ | steel: ₹{master_rates['steel']}/Kg | brick: ₹{master_rates['bricks']}/nos"
+        f"📢 आजचे मार्केट दर 🏷️ cement: ₹{master_rates.get('cement', 400.0)}/bag | sand: ₹{master_rates.get('sand', 2500.0)}/m³ | aggregate: ₹{master_rates.get('aggregate', 2200.0)}/m³ | steel: ₹{master_rates.get('steel', 60.0)}/Kg | brick: ₹{master_rates.get('bricks', 8.0)}/nos"
         f"</div>", 
         unsafe_allow_html=True
     )
@@ -1258,10 +1409,11 @@ elif st.session_state.selected_module == "Rate Analysis":
         if st.button("💬 कमेंट सबमिट करा", key="cc_comm_btn"):
             if user_note.strip():
                 st.session_state.current_comment = user_note.strip()
-                user_db = load_db()
-                if current_user_name in user_db:
-                    user_db[current_user_name]["comment"] = user_note.strip()
-                    save_db(user_db)
+                conn = get_db_connection()
+                cursor = conn.cursor()
+                cursor.execute("UPDATE users SET comment = ? WHERE user_key = ?", (user_note.strip(), current_user_name))
+                conn.commit()
+                conn.close()
                 st.success("✅ कमेंट सेव्ह झाली!")
 
         if st.button("📊 GENERATE RATE ANALYSIS REPORT", type="primary", key="cc_report_btn"):
@@ -1338,16 +1490,13 @@ elif st.session_state.selected_module == "Rate Analysis":
                     </button>
                 ''', unsafe_allow_html=True)
 
-            user_db = load_db()
-            if current_user_name in user_db:
-                timestamp = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
-                new_report = {
-                    "timestamp": timestamp,
-                    "user_note": st.session_state.current_comment,
-                    "report_data": report_table
-                }
-                user_db[current_user_name]["history"].append(new_report)
-                save_db(user_db)
+            if current_user_name:
+                conn = get_db_connection()
+                cursor = conn.cursor()
+                now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
+                cursor.execute("INSERT INTO history (user_key, timestamp, user_note, report_data) VALUES (?, ?, ?, ?)", (current_user_name, now_str, st.session_state.current_comment, report_table))
+                conn.commit()
+                conn.close()
 
     elif "Brickwork" in main_choice:
         st.subheader("🧱 Brickwork Estimation")
@@ -1391,10 +1540,11 @@ elif st.session_state.selected_module == "Rate Analysis":
         if st.button("💬 कमेंट सबमिट करा", key="bw_comment_btn"):
             if user_note.strip():
                 st.session_state.current_comment = user_note.strip()
-                user_db = load_db()
-                if current_user_name in user_db:
-                    user_db[current_user_name]["comment"] = user_note.strip()
-                    save_db(user_db)
+                conn = get_db_connection()
+                cursor = conn.cursor()
+                cursor.execute("UPDATE users SET comment = ? WHERE user_key = ?", (user_note.strip(), current_user_name))
+                conn.commit()
+                conn.close()
                 st.success("✅ कमेंट सेव्ह झाली!")
 
         if st.button("📊 GENERATE RATE ANALYSIS REPORT", type="primary", key="bw_report_btn"):
@@ -1468,16 +1618,13 @@ elif st.session_state.selected_module == "Rate Analysis":
                     </button>
                 ''', unsafe_allow_html=True)
 
-            user_db = load_db()
-            if current_user_name in user_db:
-                timestamp = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
-                new_report = {
-                    "timestamp": timestamp,
-                    "user_note": st.session_state.current_comment,
-                    "report_data": report_table
-                }
-                user_db[current_user_name]["history"].append(new_report)
-                save_db(user_db)
+            if current_user_name:
+                conn = get_db_connection()
+                cursor = conn.cursor()
+                now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
+                cursor.execute("INSERT INTO history (user_key, timestamp, user_note, report_data) VALUES (?, ?, ?, ?)", (current_user_name, now_str, st.session_state.current_comment, report_table))
+                conn.commit()
+                conn.close()
 
     else:  # Plaster Work
         st.subheader("🎨 Plaster Work Estimation")
@@ -1529,10 +1676,11 @@ elif st.session_state.selected_module == "Rate Analysis":
         if st.button("💬 कमेंट सबमिट करा", key="pl_comm_btn"):
             if user_note.strip():
                 st.session_state.current_comment = user_note.strip()
-                user_db = load_db()
-                if current_user_name in user_db:
-                    user_db[current_user_name]["comment"] = user_note.strip()
-                    save_db(user_db)
+                conn = get_db_connection()
+                cursor = conn.cursor()
+                cursor.execute("UPDATE users SET comment = ? WHERE user_key = ?", (user_note.strip(), current_user_name))
+                conn.commit()
+                conn.close()
                 st.success("✅ कमेंट सेव्ह झाली!")
 
         if st.button("📊 GENERATE PLASTER REPORT", type="primary", key="pl_report_btn"):
@@ -1610,16 +1758,13 @@ elif st.session_state.selected_module == "Rate Analysis":
                     </button>
                 ''', unsafe_allow_html=True)
 
-            user_db = load_db()
-            if current_user_name in user_db:
-                timestamp = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
-                new_report = {
-                    "timestamp": timestamp,
-                    "user_note": st.session_state.current_comment,
-                    "report_data": report_table
-                }
-                user_db[current_user_name]["history"].append(new_report)
-                save_db(user_db)
+            if current_user_name:
+                conn = get_db_connection()
+                cursor = conn.cursor()
+                now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
+                cursor.execute("INSERT INTO history (user_key, timestamp, user_note, report_data) VALUES (?, ?, ?, ?)", (current_user_name, now_str, st.session_state.current_comment, report_table))
+                conn.commit()
+                conn.close()
 
 # ==========================================
 # 🛑 MODULE 2: BBS MODULE
@@ -1718,7 +1863,7 @@ elif st.session_state.selected_module == "BBS":
             sl_dist_dia = st.selectbox("Distribution Bar DIA (mm):", dia_list, index=0, key="sl_d_dia")
             sl_dist_spacing = st.number_input("Distribution Bar Spacing (mm):", min_value=50, value=150, step=10, key="sl_d_spacing")
 
-    master_rates = user_db.get("MASTER_MARKET_RATES", {"steel": 60.0})
+    master_rates = get_market_rates()
     steel_rate_kg = st.number_input("आजचा स्टील दर (₹/Kg):", min_value=0.0, value=float(master_rates.get("steel", 60.0)), key="bbs_rate")
 
     st.markdown("#### 💬 कमेंट पॅनल (Comment Panel)")
@@ -1726,10 +1871,11 @@ elif st.session_state.selected_module == "BBS":
     if st.button("💬 कमेंट सबमिट करा", key="bbs_comment_btn"):
         if user_note.strip():
             st.session_state.current_comment = user_note.strip()
-            user_db = load_db()
-            if current_user_name in user_db:
-                user_db[current_user_name]["comment"] = user_note.strip()
-                save_db(user_db)
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("UPDATE users SET comment = ? WHERE user_key = ?", (user_note.strip(), current_user_name))
+            conn.commit()
+            conn.close()
             st.success("✅ कमेंट सेव्ह झाली!")
 
     if st.button("🧮 CALCULATE BBS REPORT", type="primary", key="bbs_calc_btn"):
@@ -1866,7 +2012,7 @@ elif st.session_state.selected_module == "BBS":
         msg_text += f"--------------------------------\n"
         msg_text += f"⚖️ *TOTAL STEEL WEIGHT:* {total_weight_kg:.2f} Kg ({total_weight_kg/1000:.3f} MT)\n"
         msg_text += f"💵 *Steel Rate:* ₹ {steel_rate_kg:.2f} / Kg\n"
-        msg_text += f"💰 *ESTIMATED COST:* ₹ {total_cost:.2f}/-⁠\n"
+        msg_text += f"💰 *ESTIMATED COST:* ₹ {total_cost:.2f}/-\n"
         msg_text += f"--------------------------------\n"
         msg_text += f"_Generated by Patil Infratech_"
 
@@ -1882,13 +2028,10 @@ elif st.session_state.selected_module == "BBS":
                 </button>
             ''', unsafe_allow_html=True)
 
-        user_db = load_db()
-        if current_user_name in user_db:
-            timestamp = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
-            new_report = {
-                "timestamp": timestamp,
-                "user_note": st.session_state.current_comment,
-                "report_data": report_table
-            }
-            user_db[current_user_name]["history"].append(new_report)
-            save_db(user_db)
+        if current_user_name:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
+            cursor.execute("INSERT INTO history (user_key, timestamp, user_note, report_data) VALUES (?, ?, ?, ?)", (current_user_name, now_str, st.session_state.current_comment, report_table))
+            conn.commit()
+            conn.close()
