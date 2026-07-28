@@ -2061,7 +2061,7 @@ elif st.session_state.selected_module == "Quantity Surveying":
         
     st.write("---")
     st.subheader("📈 Quantity Surveying & Abstract Sheet Master")
-    st.caption("💡 ज्या कामाची व्हॅल्यू टाकाल, फक्त त्याचाच हिशोब आणि मटेरियल रिपोर्ट तयार होईल!")
+    st.caption("💡 नोटबुकच्या फॉर्मेटनुसार DESCRIPTION | NOS | LENGTH | WIDTH | HEIGHT | QUANTITY भरा. ज्या कामाची व्हॅल्यू टाकली जाईल, फक्त त्याचाच रिपोर्ट जनरेट होईल!")
 
     # 1. Camera / Blueprint Section
     with st.expander("📷 2D Plan / Blueprint / Camera Reference"):
@@ -2075,7 +2075,7 @@ elif st.session_state.selected_module == "Quantity Surveying":
             if cam_pic:
                 st.image(cam_pic, caption="Captured Blueprint Reference", use_column_width=True)
 
-    st.markdown("### 🏢 Construction Stages Abstract Sheet (Excavation to Finishing)")
+    st.markdown("### 🏢 Construction Stages Measurement Sheet (Excavation to Finishing)")
     
     stages = [
         "1. Earthwork in Excavation (पाया खोदकाम - m³)",
@@ -2102,30 +2102,34 @@ elif st.session_state.selected_module == "Quantity Surveying":
         is_area_unit = "m²" in stg_name or "Flooring" in stg_name or "Plaster" in stg_name
         
         st.markdown(f"#### 🔹 {stg_name}")
-        sc1, sc2, sc3, sc4 = st.columns(4)
-        with sc1:
-            l_val = st.number_input(f"Length L (m) #{idx}", min_value=0.0, value=0.0, step=0.1, key=f"qs_l_{idx}")
-        with sc2:
-            b_val = st.number_input(f"Width B (m) #{idx}", min_value=0.0, value=0.0, step=0.1, key=f"qs_b_{idx}")
-        with sc3:
+        
+        # Notebook Format Columns: Description, Nos, Length, Width, Height
+        c_desc, c_nos, c_l, c_w, c_h = st.columns([2.5, 1, 1, 1, 1])
+        with c_desc:
+            desc_val = st.text_input(f"Description #{idx}", value=stg_name, key=f"qs_desc_{idx}")
+        with c_nos:
+            nos_val = st.number_input(f"Nos #{idx}", min_value=0, value=0, step=1, key=f"qs_nos_{idx}")
+        with c_l:
+            l_val = st.number_input(f"Length #{idx}", min_value=0.0, value=0.0, step=0.1, key=f"qs_l_{idx}")
+        with c_w:
+            w_val = st.number_input(f"Width #{idx}", min_value=0.0, value=0.0, step=0.1, key=f"qs_w_{idx}")
+        with c_h:
             if is_area_unit:
                 h_val = 1.0
                 st.caption("📏 (Area m²)")
             else:
-                h_val = st.number_input(f"Height H (m) #{idx}", min_value=0.0, value=0.0, step=0.05, key=f"qs_h_{idx}")
-        with sc4:
-            nos_val = st.number_input(f"Nos #{idx}", min_value=0, value=0, step=1, key=f"qs_nos_{idx}")
+                h_val = st.number_input(f"Height #{idx}", min_value=0.0, value=0.0, step=0.05, key=f"qs_h_{idx}")
 
         # If user has entered valid dimensions and nos
-        if l_val > 0 and b_val > 0 and nos_val > 0:
+        if nos_val > 0 and l_val > 0 and w_val > 0 and (is_area_unit or h_val > 0):
             if is_area_unit:
-                qty = l_val * b_val * nos_val
+                qty = l_val * w_val * nos_val
                 unit_label = "m²"
             else:
-                qty = l_val * b_val * h_val * nos_val
+                qty = l_val * w_val * h_val * nos_val
                 unit_label = "m³"
 
-            st.markdown(f"**📐 QTY: `{qty:.3f} {unit_label}`**")
+            st.markdown(f"**📐 Total Quantity: `{qty:.3f} {unit_label}`**")
 
             mat_summary = "मटेरियल लागू नाही"
             item_cost = 0.0
@@ -2169,8 +2173,8 @@ elif st.session_state.selected_module == "Quantity Surveying":
                 st.info(f"• **Cement (12mm):** {c_bags} Bags | **Sand:** {sand_m3:.2f} m³ | **Cost:** ₹ {item_cost:.2f}")
 
             stage_results.append({
-                "Stage": stg_name,
-                "Dimensions": f"{l_val} x {b_val} x {h_val if not is_area_unit else 1.0}",
+                "Stage": desc_val,
+                "Dimensions": f"{l_val} x {w_val} x {h_val if not is_area_unit else 1.0}",
                 "Nos": nos_val,
                 "Quantity": f"{qty:.3f} {unit_label}",
                 "Material": mat_summary,
@@ -2178,7 +2182,7 @@ elif st.session_state.selected_module == "Quantity Surveying":
             })
         st.write("---")
 
-    # Deduction Manager (m³)
+    # Deduction Manager (m³) restricted for Brickwork & Plaster
     st.markdown("#### 🚪 Door & Window Deductions Manager (for Brickwork & Plaster in m³)")
     if "deduction_count" not in st.session_state:
         st.session_state.deduction_count = 1
@@ -2194,11 +2198,11 @@ elif st.session_state.selected_module == "Quantity Surveying":
         with dc1:
             d_type = st.selectbox(f"Type #{d_idx}", ["Door", "Window", "Ventilator"], key=f"d_type_{d_idx}")
         with dc2:
-            dl = st.number_input(f"L (m) #{d_idx}", min_value=0.0, value=0.0, step=0.1, key=f"d_l_{d_idx}")
+            dl = st.number_input(f"Length (m) #{d_idx}", min_value=0.0, value=0.0, step=0.1, key=f"d_l_{d_idx}")
         with dc3:
-            db = st.number_input(f"B/Thick #{d_idx}", min_value=0.0, value=0.23, step=0.05, key=f"d_b_{d_idx}")
+            db = st.number_input(f"Width/Thick #{d_idx}", min_value=0.0, value=0.23, step=0.05, key=f"d_b_{d_idx}")
         with dc4:
-            dh = st.number_input(f"H (m) #{d_idx}", min_value=0.0, value=0.0, step=0.1, key=f"d_h_{d_idx}")
+            dh = st.number_input(f"Height (m) #{d_idx}", min_value=0.0, value=0.0, step=0.1, key=f"d_h_{d_idx}")
         with dc5:
             dnos = st.number_input(f"Nos #{d_idx}", min_value=0, value=0, step=1, key=f"d_nos_{d_idx}")
         
@@ -2221,7 +2225,7 @@ elif st.session_state.selected_module == "Quantity Surveying":
 
     if st.button("📈 GENERATE ABSTRACT SHEET & MATERIAL REPORT", type="primary", key="qs_gen_btn"):
         if not stage_results:
-            st.warning("⚠️ कृपया कमीत कमी एका स्टेजसाठी L, B, H आणि Nos ची व्हॅल्यू भरा!")
+            st.warning("⚠️ कृपया कमीत कमी एका स्टेजसाठी Nos, Length, Width आणि Height च्या व्हॅल्यू भरा!")
         else:
             grand_total_cost = sum(r["Cost"] for r in stage_results)
 
@@ -2231,16 +2235,16 @@ elif st.session_state.selected_module == "Quantity Surveying":
 
             table_rows = ""
             for r in stage_results:
-                table_rows += f"| {r['Stage']} | {r['Dimensions']} | {r['Nos']} | {r['Quantity']} | {r['Material']} | ₹ {r['Cost']:.2f} |\n"
+                table_rows += f"| {r['Stage']} | {r['Nos']} | {r['Dimensions']} | {r['Quantity']} | {r['Material']} | ₹ {r['Cost']:.2f} |\n"
 
             final_report_html = f"""
 <div class="print-container">
 <h2>📊 PATIL INFRATECH - ABSTRACT SHEET & QUANTITY SURVEY</h2>
 <p><strong>Prepared For:</strong> {current_user_name} | <strong>Date:</strong> {get_ist_time().strftime('%d-%m-%Y')}</p>
 
-| DESCRIPTION | L x B x H | NOS | QUANTITY | MATERIAL | AMOUNT (₹) |
+| Description | Nos | Length x Width x Height | Quantity | Material | Amount (₹) |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **DEDUCTIONS (Openings)** | Brick/Plaster Deduction | - | {total_deduction_vol:.3f} m³ | Volume Deducted | - |
+| **DEDUCTIONS (Openings)** | - | Brick/Plaster Deduction | {total_deduction_vol:.3f} m³ | Volume Deducted | - |
 {table_rows}
 
 ---
