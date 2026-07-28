@@ -1,4 +1,4 @@
-# KANHA_1p - पाटील इन्फ्राटेक (Streamlit Web Application with SQLite Database)
+# KANHA_1p - पाटील इन्फ्राटेक (SQLite Database & Streamlit Web Application)
 import streamlit as st
 import math
 import sqlite3
@@ -127,11 +127,12 @@ def init_db():
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', ("9999999999", "kanha", "KANHA_1P", "1234", "9999999999", "patiladmin123", "मास्टर ॲडमीन अकाउंट", "स्वागत आहे मास्टर कन्हैया! आपले पाटील इन्फ्राटेक मध्ये सर्व अधिकार अनलॉक्ड आहेत ⚡", 0, 1, "2099-12-31 23:59:59", 0, 1, 0, get_ist_time().strftime("%Y-%m-%d %H:%M:%S"), "Master Admin"))
 
-    # Default Feature Locks
+    # Default Feature Locks (Quantity Surveying Included)
     default_locks = {
         "Civil Calculator": "Free",
         "Rate Analysis": "Free",
         "BBS": "Free",
+        "Quantity Surveying": "Free",
         "WhatsApp Share": "Premium",
         "Civil AI Assistant": "Premium"
     }
@@ -206,7 +207,7 @@ if "admin_selected_user" not in st.session_state:
 
 current_user_name = st.session_state.app_user_name
 
-# 🟢 युझर ॲक्टिव्ह असेल तर त्याची वेळ अपडेट करणे (Live Activity Tracker)
+# 🟢 युझर ॲक्टिव्ह असेल तर त्याची वेळ अपडेट करणे
 if current_user_name:
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -253,7 +254,7 @@ def check_user_premium_status(username):
 is_curr_premium, _ = check_user_premium_status(current_user_name)
 
 # ==========================================
-# 🎨 ULTRA-PREMIUM ROYAL METALLIC GOLD & EXECUTIVE ADMIN STYLING
+# 🎨 ULTRA-PREMIUM ROYAL METALLIC GOLD STYLING
 # ==========================================
 touch_glow_color = "rgba(255, 179, 0, 0.45)" if is_curr_premium else "rgba(59, 130, 246, 0.25)"
 touch_border_color = "#FFD54F" if is_curr_premium else "#3b82f6"
@@ -378,7 +379,6 @@ st.markdown(f"""
         display: inline-block;
     }}
 
-    /* 👑 ॲडमीन स्पेशल रॉयल एक्झिक्युटिव्ह ऑफिस थीम */
     .admin-command-center {{
         background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%) !important;
         border: 2px solid #FFD54F !important;
@@ -406,12 +406,11 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-# 🔑 रँडम ५ अक्षरी युनिक कोड जनरेटर
 def generate_random_code():
     return "PATIL-" + ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
 
 # ==========================================
-# 🔐 ॲप व्हॉट्सॲप फीचर अनलॉक/प्रीमियम फंक्शन
+# 📱 WHATSAPP SHARING
 # ==========================================
 def render_whatsapp_feature(encoded_msg, key_prefix):
     is_prem, status_str = check_user_premium_status(current_user_name)
@@ -479,7 +478,7 @@ def render_whatsapp_feature(encoded_msg, key_prefix):
                     st.success("✅ ॲडमीनला कोडसाठी रिक्वेस्ट पाठवली आहे!")
 
 # ==========================================
-# --- १. वेलकम स्क्रीन ॲनिमेशन (Loading Page with Title Sponsor) ---
+# --- १. वेलकम स्क्रीन ॲनिमेशन ---
 # ==========================================
 welcome_placeholder = st.empty()
 
@@ -555,7 +554,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 🛡️ ADMIN PANEL (👑 ROYAL CEO COMMAND CENTER VIBE)
+# 🛡️ ADMIN PANEL
 # ==========================================
 if st.session_state.is_admin_logged:
     st.markdown("""
@@ -617,6 +616,7 @@ if st.session_state.is_admin_logged:
         fl_calc = st.selectbox("Civil Calculator Access:", ["Free", "Premium"], index=0 if cur_locks.get("Civil Calculator", "Free") == "Free" else 1)
         fl_ra = st.selectbox("Rate Analysis Module Access:", ["Free", "Premium"], index=0 if cur_locks.get("Rate Analysis", "Free") == "Free" else 1)
         fl_bbs = st.selectbox("BBS Calculator Access:", ["Free", "Premium"], index=0 if cur_locks.get("BBS", "Free") == "Free" else 1)
+        fl_qs = st.selectbox("Quantity Surveying Access:", ["Free", "Premium"], index=0 if cur_locks.get("Quantity Surveying", "Free") == "Free" else 1)
         fl_wa = st.selectbox("WhatsApp Full Report Share:", ["Free", "Premium"], index=0 if cur_locks.get("WhatsApp Share", "Free") == "Free" else 1)
         fl_ai = st.selectbox("Civil AI Assistant Access:", ["Free", "Premium"], index=0 if cur_locks.get("Civil AI Assistant", "Premium") == "Free" else 1)
 
@@ -627,6 +627,7 @@ if st.session_state.is_admin_logged:
                 "Civil Calculator": fl_calc,
                 "Rate Analysis": fl_ra,
                 "BBS": fl_bbs,
+                "Quantity Surveying": fl_qs,
                 "WhatsApp Share": fl_wa,
                 "Civil AI Assistant": fl_ai
             }
@@ -647,7 +648,6 @@ if st.session_state.is_admin_logged:
                 st.rerun()
 
             info = get_user_data(target_user) or {}
-            
             u_name = info.get("id", target_user)
             u_uid = info.get("uid", "N/A")
             u_mob = info.get("mobile", "N/A")
@@ -873,11 +873,10 @@ if st.session_state.is_admin_logged:
     st.stop()
 
 # ==========================================
-# 👤 UID & PIN SECURE LOGIN / SIGNUP SYSTEM (With Auto-Login / Remember Me)
+# 👤 UID & PIN SECURE LOGIN / SIGNUP SYSTEM
 # ==========================================
 if st.session_state.app_user_name is None:
     st.markdown("### 🏗️ PATIL INFRATECH - SECURE LOGIN")
-    
     auth_mode = st.radio("निवडा (Select Option):", ["🔑 UID Login (लॉगिन करा)", "✨ Register (नवीन अकाउंट)", "❓ Forgot UID/PIN (आयडी/पिन रिकव्हर करा)"], horizontal=True)
 
     if "Login" in auth_mode:
@@ -996,7 +995,6 @@ if st.session_state.app_user_name is None:
 # 🚀 MAIN DASHBOARD (USER LOGGED IN)
 # ==========================================
 current_user_name = st.session_state.app_user_name
-
 is_user_premium, status_text_str = check_user_premium_status(current_user_name)
 
 conn = get_db_connection()
@@ -1175,19 +1173,20 @@ if st.session_state.selected_module is None:
     calc_lock = locks_cfg.get("Civil Calculator", "Free")
     ra_lock = locks_cfg.get("Rate Analysis", "Free")
     bbs_lock = locks_cfg.get("BBS", "Free")
+    qs_lock = locks_cfg.get("Quantity Surveying", "Free")
 
-    col_icon1, col_icon2, col_icon3 = st.columns(3)
+    col_icon1, col_icon2, col_icon3, col_icon4 = st.columns(4)
     
     with col_icon1:
         calc_badge = "🆓 Free" if calc_lock == "Free" else "👑 Premium"
         st.markdown(f"""
             <div style="text-align: center; background: rgba(31, 41, 55, 0.8); padding: 15px; border-radius: 18px; border: 1px solid rgba(59, 130, 246, 0.3);">
-                <h1 style="font-size: 40px; margin:0;">🧮</h1>
-                <h4 style="margin: 8px 0 4px 0; color: #f3f4f6;">Calculator</h4>
-                <p style="font-size: 11px; color: #9ca3af;">युनिट कनव्हर्टर [{calc_badge}]</p>
+                <h1 style="font-size: 35px; margin:0;">🧮</h1>
+                <h5 style="margin: 6px 0 2px 0; color: #f3f4f6;">Calculator</h5>
+                <p style="font-size: 10px; color: #9ca3af;">[{calc_badge}]</p>
             </div>
         """, unsafe_allow_html=True)
-        if st.button("🧮 Open Calculator", key="btn_open_calc", use_container_width=True):
+        if st.button("🧮 Calculator", key="btn_open_calc", use_container_width=True):
             if calc_lock == "Premium" and not is_user_premium:
                 st.error("🔒 हे फीचर प्रिमियम युझर्ससाठी आहे!")
             else:
@@ -1198,12 +1197,12 @@ if st.session_state.selected_module is None:
         ra_badge = "🆓 Free" if ra_lock == "Free" else "👑 Premium"
         st.markdown(f"""
             <div style="text-align: center; background: rgba(31, 41, 55, 0.8); padding: 15px; border-radius: 18px; border: 1px solid rgba(59, 130, 246, 0.3);">
-                <h1 style="font-size: 40px; margin:0;">📊</h1>
-                <h4 style="margin: 8px 0 4px 0; color: #f3f4f6;">Rate Analysis</h4>
-                <p style="font-size: 11px; color: #9ca3af;">दर विश्लेषण [{ra_badge}]</p>
+                <h1 style="font-size: 35px; margin:0;">📊</h1>
+                <h5 style="margin: 6px 0 2px 0; color: #f3f4f6;">Rate Analysis</h5>
+                <p style="font-size: 10px; color: #9ca3af;">[{ra_badge}]</p>
             </div>
         """, unsafe_allow_html=True)
-        if st.button("📊 Open Rate Analysis", key="btn_open_ra", use_container_width=True):
+        if st.button("📊 Rate Analysis", key="btn_open_ra", use_container_width=True):
             if ra_lock == "Premium" and not is_user_premium:
                 st.error("🔒 हे फीचर प्रिमियम युझर्ससाठी आहे!")
             else:
@@ -1214,9 +1213,9 @@ if st.session_state.selected_module is None:
         bbs_badge = "🆓 Free" if bbs_lock == "Free" else "👑 Premium"
         st.markdown(f"""
             <div style="text-align: center; background: rgba(31, 41, 55, 0.8); padding: 15px; border-radius: 18px; border: 1px solid rgba(59, 130, 246, 0.3);">
-                <h1 style="font-size: 40px; margin:0;">🏗️</h1>
-                <h4 style="margin: 8px 0 4px 0; color: #f3f4f6;">BBS</h4>
-                <p style="font-size: 11px; color: #9ca3af;">Bar Bending [{bbs_badge}]</p>
+                <h1 style="font-size: 35px; margin:0;">🏗️</h1>
+                <h5 style="margin: 6px 0 2px 0; color: #f3f4f6;">BBS</h5>
+                <p style="font-size: 10px; color: #9ca3af;">[{bbs_badge}]</p>
             </div>
         """, unsafe_allow_html=True)
         if st.button("🏗️ Open BBS", key="btn_open_bbs", use_container_width=True):
@@ -1226,8 +1225,24 @@ if st.session_state.selected_module is None:
                 st.session_state.selected_module = "BBS"
                 st.rerun()
 
+    with col_icon4:
+        qs_badge = "🆓 Free" if qs_lock == "Free" else "👑 Premium"
+        st.markdown(f"""
+            <div style="text-align: center; background: rgba(31, 41, 55, 0.8); padding: 15px; border-radius: 18px; border: 1px solid rgba(59, 130, 246, 0.3);">
+                <h1 style="font-size: 35px; margin:0;">📈</h1>
+                <h5 style="margin: 6px 0 2px 0; color: #f3f4f6;">Quantity Survey</h5>
+                <p style="font-size: 10px; color: #9ca3af;">[{qs_badge}]</p>
+            </div>
+        """, unsafe_allow_html=True)
+        if st.button("📈 Quantity Survey", key="btn_open_qs", use_container_width=True):
+            if qs_lock == "Premium" and not is_user_premium:
+                st.error("🔒 हे फीचर प्रिमियम युझर्ससाठी आहे!")
+            else:
+                st.session_state.selected_module = "Quantity Surveying"
+                st.rerun()
+
 # ==========================================
-# 🧮 MODULE 0: CIVIL CALCULATOR & UNIT CONVERTER (Google Style Smart Converter)
+# 🧮 MODULE 0: CIVIL CALCULATOR & UNIT CONVERTER
 # ==========================================
 elif st.session_state.selected_module == "Civil Calculator":
     if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_to_main_calc"):
@@ -2035,3 +2050,15 @@ elif st.session_state.selected_module == "BBS":
             cursor.execute("INSERT INTO history (user_key, timestamp, user_note, report_data) VALUES (?, ?, ?, ?)", (current_user_name, now_str, st.session_state.current_comment, report_table))
             conn.commit()
             conn.close()
+
+# ==========================================
+# 📈 QUANTITY SURVEYING MODULE (COMING SOON)
+# ==========================================
+elif st.session_state.selected_module == "Quantity Surveying":
+    if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_to_main_qs"):
+        st.session_state.selected_module = None
+        st.rerun()
+        
+    st.write("---")
+    st.subheader("📈 Quantity Surveying Master Module")
+    st.warning("🚧 **Coming Soon!** हे प्रगत क्वांटिटी सर्व्हेइंग मॉड्यूल लवकरच लॉन्च होत आहे. यामध्ये साईटवरील प्रत्येक घटकाचे ऑटोमॅटिक मोजमाप मिळणार आहे!")
