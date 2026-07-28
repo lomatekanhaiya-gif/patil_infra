@@ -1516,7 +1516,7 @@ elif st.session_state.selected_module == "Rate Analysis":
     elif "Brickwork" in main_choice:
         st.subheader("🧱 Brickwork Estimation")
         mortar_choice = st.selectbox("मॉर्टर मिक्स गुणोत्तर (Mortar Mix Ratio) निवडा:", 
-                                     ["1:3 (सिमेंट : वाळू)", "1:4 (सिमेंट : वाळू)", "1:5 (सिमेंट : वाळू)", "1:6 (सिमेंट : वाळू)"])
+                                   ["1:3 (सिमेंट : वाळू)", "1:4 (सिमेंट : वाळू)", "1:5 (सिमेंट : वाळू)", "1:6 (सिमेंट : वाळू)"])
         
         if "1:3" in mortar_choice: c_part, s_part = 1, 3
         elif "1:4" in mortar_choice: c_part, s_part = 1, 4
@@ -2052,7 +2052,7 @@ elif st.session_state.selected_module == "BBS":
             conn.close()
 
 # ==========================================
-# 📈 QUANTITY SURVEYING MODULE (COMING SOON)
+# 📈 QUANTITY SURVEYING MODULE (ADVANCED)
 # ==========================================
 elif st.session_state.selected_module == "Quantity Surveying":
     if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_to_main_qs"):
@@ -2060,5 +2060,157 @@ elif st.session_state.selected_module == "Quantity Surveying":
         st.rerun()
         
     st.write("---")
-    st.subheader("📈 Quantity Surveying Master Module")
-    st.warning("🚧 **Coming Soon!** हे प्रगत क्वांटिटी सर्व्हेइंग मॉड्यूल लवकरच लॉन्च होत आहे. यामध्ये साईटवरील प्रत्येक घटकाचे ऑटोमॅटिक मोजमाप मिळणार आहे!")
+    st.subheader("📈 Quantity Surveying & Centerline Estimation Master")
+    st.caption("💡 तुमच्या 2D प्लॅनचा फोटो/कॅमेरा वापरून सेंटरलाईन पद्धतीने पायापासून फिनिशिंगपर्यंत संपूर्ण हिशोब आणि मटेरियल ब्रेकडाऊन मिळवा!")
+
+    # 1. Camera / Blueprint Section
+    with st.expander("📷 2D Plan / Blueprint / Camera Reference"):
+        plan_option = st.radio("ब्लूप्रिंट इनपुट पद्धत निवडा:", ["Upload 2D Plan Image", "Capture via Camera (Live)"], horizontal=True)
+        if "Upload" in plan_option:
+            uploaded_plan = st.file_uploader("Upload Blueprint (PNG/JPG):", type=["png", "jpg", "jpeg"])
+            if uploaded_plan:
+                st.image(uploaded_plan, caption="Uploaded 2D Floor Plan", use_column_width=True)
+        else:
+            cam_pic = st.camera_input("📸 Capture 2D Plan from Camera")
+            if cam_pic:
+                st.image(cam_pic, caption="Captured Blueprint Reference", use_column_width=True)
+
+    st.markdown("### 🏢 Construction Stages Quantity & Material Estimator (Excavation to Finishing)")
+    
+    stages = [
+        "1. Earthwork in Excavation (पाया खोदकाम)",
+        "2. P.C.C. Bedding (Plain Cement Concrete)",
+        "3. Foundation / Footing RCC Work",
+        "4. Plinth Beam & Masonry Work",
+        "5. Superstructure Brickwork (वीटकाम)",
+        "6. RCC Columns & Beams",
+        "7. Slab Casting (छताचे काम)",
+        "8. Plaster Work (प्लास्टर व फिनिशिंग)"
+    ]
+
+    master_rates = get_market_rates()
+    c_rate = master_rates.get('cement', 400.0)
+    s_rate = master_rates.get('sand', 2500.0)
+    a_rate = master_rates.get('aggregate', 2200.0)
+    st_rate = master_rates.get('steel', 60.0)
+    b_rate = master_rates.get('bricks', 8.0)
+
+    stage_inputs = []
+    
+    for idx, stg_name in enumerate(stages):
+        with st.expander(f"🔹 {stg_name}"):
+            sc1, sc2, sc3, sc4 = st.columns(4)
+            with sc1:
+                l_val = st.number_input(f"Length L (m) #{idx}", min_value=0.0, value=5.0, step=0.1, key=f"qs_l_{idx}")
+            with sc2:
+                b_val = st.number_input(f"Width B (m) #{idx}", min_value=0.0, value=4.0, step=0.1, key=f"qs_b_{idx}")
+            with sc3:
+                h_val = st.number_input(f"Height/Depth H (m) #{idx}", min_value=0.0, value=1.0, step=0.05, key=f"qs_h_{idx}")
+            with sc4:
+                nos_val = st.number_input(f"Nos / Items #{idx}", min_value=1, value=1, step=1, key=f"qs_nos_{idx}")
+
+            stage_inputs.append({"name": stg_name, "L": l_val, "B": b_val, "H": h_val, "Nos": nos_val})
+
+    # Deduction Manager
+    st.markdown("#### 🚪 Window & Door Deductions Manager")
+    if "deduction_count" not in st.session_state:
+        st.session_state.deduction_count = 1
+
+    def add_deduction():
+        st.session_state.deduction_count += 1
+
+    st.button("➕ Add Door / Window Deduction", on_click=add_deduction)
+
+    deductions = []
+    for d_idx in range(st.session_state.deduction_count):
+        dc1, dc2, dc3, dc4 = st.columns(4)
+        with dc1:
+            d_type = st.selectbox(f"Type #{d_idx}", ["Door", "Window", "Ventilator"], key=f"d_type_{d_idx}")
+        with dc2:
+            dl = st.number_input(f"Length (m) #{d_idx}", min_value=0.0, value=1.0, step=0.1, key=f"d_l_{d_idx}")
+        with dc3:
+            db = st.number_input(f"Width/Depth (m) #{d_idx}", min_value=0.0, value=0.2, step=0.05, key=f"d_b_{d_idx}")
+        with dc4:
+            dnos = st.number_input(f"Nos #{d_idx}", min_value=1, value=1, step=1, key=f"d_nos_{d_idx}")
+        deductions.append({"type": d_type, "L": dl, "B": db, "Nos": dnos})
+
+    st.markdown("#### 💬 कमेंट पॅनल (Comment Panel)")
+    user_note = st.text_area("Quantity Surveying संदर्भात विशेष नोंद:", placeholder="उदा. Centerline method applied...", key="qs_note")
+    if st.button("💬 कमेंट सेव्ह करा", key="qs_comm_btn"):
+        if user_note.strip():
+            st.session_state.current_comment = user_note.strip()
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("UPDATE users SET comment = ? WHERE user_key = ?", (user_note.strip(), current_user_name))
+            conn.commit()
+            conn.close()
+            st.success("✅ कमेंट सेव्ह झाली!")
+
+    if st.button("📈 GENERATE QUANTITY SURVEY & MATERIAL REPORT", type="primary", key="qs_gen_btn"):
+        total_deductionvol = sum(d["L"] * d["B"] * d["Nos"] * 0.15 for d in deductions) # assuming average wall thickness or opening depth
+        
+        report_rows = ""
+        grand_total_cost = 0.0
+        
+        for item in stage_inputs:
+            vol = item["L"] * item["B"] * item["H"] * item["Nos"]
+            unit_str = "m³"
+            
+            # Material estimation per m3
+            cement_bags = math.ceil(vol * 6.0) if "Concrete" in item["name"] or "Slab" in item["name"] or "Column" in item["name"] else (math.ceil(vol * 2.5) if "Brickwork" in item["name"] or "Masonry" in item["name"] else 0)
+            sand_qty = vol * 0.45 if cement_bags > 0 else 0.0
+            agg_qty = vol * 0.90 if "Concrete" in item["name"] or "Slab" in item["name"] or "Column" in item["name"] else 0.0
+            steel_qty = vol * 80.0 if "RCC" in item["name"] or "Column" in item["name"] or "Beam" in item["name"] or "Slab" in item["name"] else 0.0
+            brick_qty = math.ceil(vol * 500) if "Brickwork" in item["name"] or "Masonry" in item["name"] else 0
+
+            item_cost = (cement_bags * c_rate) + (sand_qty * s_rate) + (agg_qty * a_rate) + (steel_qty * st_rate) + (brick_qty * (b_rate/1000.0))
+            grand_total_cost += item_cost
+
+            report_rows += f"| {item['name']} | {item['L']}x{item['B']}x{item['H']} | {item['Nos']} | {vol:.2f} {unit_str} | {cement_bags} Bags, {steel_qty:.1f} Kg | ₹ {item_cost:.2f} |\n"
+
+        st.success("🎉 क्वांटिटी सर्व्हेइंग रिपोर्ट यशस्वीरित्या तयार झाला आहे!")
+        st.markdown(f"### 📈 QUANTITY SURVEY & ESTIMATION REPORT")
+        st.info(f"👤 **Prepared For:** {current_user_name} | **Method:** Centerline & Detailed Measurement")
+
+        final_report_html = f"""
+<div class="print-container">
+<h2>📈 PATIL INFRATECH - QUANTITY SURVEYING REPORT</h2>
+<p><strong>Prepared For:</strong> {current_user_name} | <strong>Date:</strong> {get_ist_time().strftime('%d-%m-%Y')}</p>
+
+| STAGE / COMPONENT | DIMENSIONS (L x B x H) | NOS | QUANTITY (VOL) | KEY MATERIALS | ESTIMATED COST (₹) |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+{report_rows}
+
+---
+### 📌 SUMMARY & DEDUCTIONS
+* **Total Openings Deductions Volume:** {total_deductionvol:.2f} m³
+* **GRAND TOTAL ESTIMATED COST:** **₹ {grand_total_cost:.2f}/-**
+</div>
+"""
+        st.markdown(final_report_html, unsafe_allow_html=True)
+
+        msg_text = f"📈 *PATIL INFRATECH - QUANTITY SURVEY REPORT*\n"
+        msg_text += f"👤 *Prepared For:* {current_user_name}\n"
+        msg_text += f"📅 *Date:* {get_ist_time().strftime('%d-%m-%Y')}\n\n"
+        msg_text += f"💰 *GRAND TOTAL ESTIMATED COST:* ₹ {grand_total_cost:.2f}/-\n"
+        msg_text += f"_Generated by Patil Infratech_"
+
+        encoded_msg = urllib.parse.quote(msg_text)
+
+        btn_col1, btn_col2 = st.columns(2)
+        with btn_col1:
+            render_whatsapp_feature(encoded_msg, "qs_main")
+        with btn_col2:
+            st.markdown('''
+                <button onclick="window.print()" style="width: 100%; background-color: #3b82f6; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px;">
+                    📄 Print / Save A3 Size PDF
+                </button>
+            ''', unsafe_allow_html=True)
+
+        if current_user_name:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
+            cursor.execute("INSERT INTO history (user_key, timestamp, user_note, report_data) VALUES (?, ?, ?, ?)", (current_user_name, now_str, st.session_state.current_comment, final_report_html))
+            conn.commit()
+            conn.close()
