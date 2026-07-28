@@ -2061,7 +2061,7 @@ elif st.session_state.selected_module == "Quantity Surveying":
         
     st.write("---")
     st.subheader("📈 Quantity Surveying & Abstract Sheet Master")
-    st.caption("💡 सेंटरलाईन किंवा मोजमाप पद्धतीनुसार पायापासून फिनिशिंगपर्यंत L, B, H भरा. क्वांटिटी आपोआप मिळेल आणि मटेरियलच्या पर्यायावर क्लिक करून सिमेंट-वाळूचे प्रमाण काढा!")
+    st.caption("💡 DESCRIPTION | L | B | H | QUANTITY | MATERIAL फॉर्मेटनुसार पायापासून फिनिशिंगपर्यंत हिशोब करा आणि मटेरियलचे अचूक प्रमाण मिळवा!")
 
     # 1. Camera / Blueprint Section
     with st.expander("📷 2D Plan / Blueprint / Camera Reference"):
@@ -2102,19 +2102,21 @@ elif st.session_state.selected_module == "Quantity Surveying":
         is_area_unit = "m²" in stg_name or "Flooring" in stg_name or "Plaster" in stg_name
         
         with st.expander(f"🔹 {stg_name}"):
+            # DESCRIPTION / L / B / H / NOS Layout
+            st.markdown(f"**DESCRIPTION:** `{stg_name}`")
             sc1, sc2, sc3, sc4 = st.columns(4)
             with sc1:
-                l_val = st.number_input(f"Length L (m) #{idx}", min_value=0.0, value=5.0, step=0.1, key=f"qs_l_{idx}")
+                l_val = st.number_input(f"Length L (m)", min_value=0.0, value=5.0, step=0.1, key=f"qs_l_{idx}")
             with sc2:
-                b_val = st.number_input(f"Width B (m) #{idx}", min_value=0.0, value=4.0, step=0.1, key=f"qs_b_{idx}")
+                b_val = st.number_input(f"Width B (m)", min_value=0.0, value=4.0, step=0.1, key=f"qs_b_{idx}")
             with sc3:
                 if is_area_unit:
-                    h_val = 1.0 # Area madhe height chi garaj naste
-                    st.caption("📏 (क्षेत्रफळ मोजमाप - L x B x Nos)")
+                    h_val = 1.0
+                    st.caption("📏 (Area m²)")
                 else:
-                    h_val = st.number_input(f"Height/Depth H (m) #{idx}", min_value=0.0, value=1.0, step=0.05, key=f"qs_h_{idx}")
+                    h_val = st.number_input(f"Height/Depth H (m)", min_value=0.0, value=1.0, step=0.05, key=f"qs_h_{idx}")
             with sc4:
-                nos_val = st.number_input(f"Nos / Items #{idx}", min_value=1, value=1, step=1, key=f"qs_nos_{idx}")
+                nos_val = st.number_input(f"Nos", min_value=1, value=1, step=1, key=f"qs_nos_{idx}")
 
             # Quantity Calculation
             if is_area_unit:
@@ -2124,10 +2126,10 @@ elif st.session_state.selected_module == "Quantity Surveying":
                 qty = l_val * b_val * h_val * nos_val
                 unit_label = "m³"
 
-            st.markdown(f"**📐 एकूण क्वांटिटी (Quantity): `{qty:.3f} {unit_label}`**")
+            st.markdown(f"**📐 QUANTITY: `{qty:.3f} {unit_label}`**")
 
             # Material breakdown toggle option
-            show_mat = st.checkbox(f"📦 View Material Breakdown for {stg_name}", key=f"qs_mat_chk_{idx}")
+            show_mat = st.checkbox(f"📦 View Material Breakdown", key=f"qs_mat_chk_{idx}")
 
             mat_summary = "मटेरियल लागू नाही"
             item_cost = 0.0
@@ -2238,7 +2240,7 @@ elif st.session_state.selected_module == "Quantity Surveying":
 <h2>📊 PATIL INFRATECH - ABSTRACT SHEET & QUANTITY SURVEY</h2>
 <p><strong>Prepared For:</strong> {current_user_name} | <strong>Date:</strong> {get_ist_time().strftime('%d-%m-%Y')}</p>
 
-| STAGE / ITEM DESCRIPTION | DIMENSIONS (L x B x H) | NOS | QUANTITY | MATERIAL BREAKDOWN | AMOUNT (₹) |
+| DESCRIPTION | L x B x H | NOS | QUANTITY | MATERIAL | AMOUNT (₹) |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **DEDUCTIONS (Doors/Windows)** | Total Area: {total_deduction_area:.2f} m² | - | - | Wall/Plaster Deductions | - |
 {table_rows}
