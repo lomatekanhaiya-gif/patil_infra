@@ -2052,7 +2052,7 @@ elif st.session_state.selected_module == "BBS":
             conn.close()
 
 # ==========================================
-# 📈 QUANTITY SURVEYING & ABSTRACT SHEET MODULE (Notebook Format)
+# 📈 QUANTITY SURVEYING & ABSTRACT SHEET MODULE (Excavation to Finishing)
 # ==========================================
 elif st.session_state.selected_module == "Quantity Surveying":
     if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_to_main_qs"):
@@ -2097,9 +2097,7 @@ elif st.session_state.selected_module == "Quantity Surveying":
     b_rate = master_rates.get('bricks', 8.0)
 
     stage_results = []
-    brickwork_qty = 0.0
-    plaster_qty = 0.0
-
+    
     for idx, stg_name in enumerate(stages):
         is_area_unit = "m²" in stg_name or "Flooring" in stg_name or "Plaster" in stg_name
         is_brickwork = "Brickwork" in stg_name
@@ -2107,7 +2105,6 @@ elif st.session_state.selected_module == "Quantity Surveying":
         
         st.markdown(f"#### 🔹 {stg_name}")
         
-        # Notebook Format Columns: Description, Nos, Length, Width, Height
         c_desc, c_nos, c_l, c_w, c_h = st.columns([2.5, 1, 1, 1, 1])
         with c_desc:
             desc_val = st.text_input(f"Description #{idx}", value=stg_name, key=f"qs_desc_{idx}")
@@ -2124,7 +2121,6 @@ elif st.session_state.selected_module == "Quantity Surveying":
             else:
                 h_val = st.number_input(f"Height #{idx}", min_value=0.0, value=0.0, step=0.05, key=f"qs_h_{idx}")
 
-        # If user has entered valid dimensions and nos
         if nos_val > 0 and l_val > 0 and w_val > 0 and (is_area_unit or h_val > 0):
             if is_area_unit:
                 qty = l_val * w_val * nos_val
@@ -2132,11 +2128,6 @@ elif st.session_state.selected_module == "Quantity Surveying":
             else:
                 qty = l_val * w_val * h_val * nos_val
                 unit_label = "m³"
-
-            if is_brickwork:
-                brickwork_qty += qty
-            elif is_plaster:
-                plaster_qty += qty
 
             st.markdown(f"**📐 Total Quantity: `{qty:.3f} {unit_label}`**")
 
@@ -2172,7 +2163,7 @@ elif st.session_state.selected_module == "Quantity Surveying":
                 st.info(f"• **Bricks:** {bricks} Nos | **Cement:** {c_bags} Bags | **Sand:** {sand_m3:.2f} m³ | **Cost:** ₹ {item_cost:.2f}")
 
             elif "Plaster" in stg_name:
-                thickness = 0.012 # 12mm
+                thickness = 0.012 
                 wet_vol = qty * thickness
                 dry_vol = wet_vol * 1.33
                 c_bags = math.ceil((1 / 5) * dry_vol * 28.8)
@@ -2187,24 +2178,22 @@ elif st.session_state.selected_module == "Quantity Surveying":
                 "Nos": nos_val,
                 "Quantity": f"{qty:.3f} {unit_label}",
                 "Material": mat_summary,
-                "Cost": item_cost,
-                "IsBrick": is_brickwork,
-                "IsPlaster": is_plaster
+                "Cost": item_cost
             })
 
-        # 🚪 Brickwork Deduction Sub-Section
+        # 🚪 Brickwork Deduction Sub-Section (KeyError Fixed)
         if is_brickwork:
             st.markdown("##### 🚪 Brickwork Deductions (Doors / Windows in m³)")
-            if f"bw_ded_count_{idx}" not in st.session_state:
-                st.session_state[f"bw_ded_count_{idx}"] = 1
+            ded_key_bw = f"bw_ded_count_{idx}"
+            if ded_key_bw not in st.session_state:
+                st.session_state[ded_key_bw] = 1
 
-            def add_bw_ded():
-                st.session_state[f"bw_ded_count_{idx}"] += 1
-
-            st.button(f"➕ Add Brickwork Deduction Item #{idx}", on_click=add_bw_ded, key=f"btn_bw_ded_{idx}")
+            if st.button(f"➕ Add Brickwork Deduction Item #{idx}", key=f"btn_bw_ded_{idx}"):
+                st.session_state[ded_key_bw] += 1
+                st.rerun()
             
             bw_ded_vol = 0.0
-            for d_i in range(st.session_state[f"bw_ded_count_{idx}"]):
+            for d_i in range(st.session_state[ded_key_bw]):
                 dc1, dc2, dc3, dc4, dc5 = st.columns(5)
                 with dc1:
                     dt = st.selectbox(f"Type", ["Door", "Window"], key=f"bw_dt_{idx}_{d_i}")
@@ -2223,19 +2212,19 @@ elif st.session_state.selected_module == "Quantity Surveying":
             if bw_ded_vol > 0:
                 st.markdown(f"**🔴 Brickwork Deduction Vol: `{bw_ded_vol:.3f} m³`**")
 
-        # 🚪 Plaster Deduction Sub-Section
+        # 🚪 Plaster Deduction Sub-Section (KeyError Fixed)
         if is_plaster:
             st.markdown("##### 🚪 Plaster Deductions (Doors / Windows in m²)")
-            if f"pl_ded_count_{idx}" not in st.session_state:
-                st.session_state[f"pl_ded_count_{idx}"] = 1
+            ded_key_pl = f"pl_ded_count_{idx}"
+            if ded_key_pl not in st.session_state:
+                st.session_state[ded_key_pl] = 1
 
-            def add_pl_ded():
-                st.session_state[f"pl_ded_count_{idx}"] += 1
-
-            st.button(f"➕ Add Plaster Deduction Item #{idx}", on_click=add_pl_ded, key=f"btn_pl_ded_{idx}")
+            if st.button(f"➕ Add Plaster Deduction Item #{idx}", key=f"btn_pl_ded_{idx}"):
+                st.session_state[ded_key_pl] += 1
+                st.rerun()
             
             pl_ded_area = 0.0
-            for d_i in range(st.session_state[f"pl_ded_count_{idx}"]):
+            for d_i in range(st.session_state[ded_key_pl]):
                 dc1, dc2, dc3, dc4 = st.columns(4)
                 with dc1:
                     dt = st.selectbox(f"Type", ["Door", "Window"], key=f"pl_dt_{idx}_{d_i}")
@@ -2247,7 +2236,7 @@ elif st.session_state.selected_module == "Quantity Surveying":
                     dn = st.number_input(f"Nos", min_value=0, value=0, step=1, key=f"pl_dn_{idx}_{d_i}")
                 
                 if dl > 0 and dh > 0 and dn > 0:
-                    pl_ded_area += dl * dh * dn * 2 # both sides usually or single side as per requirement
+                    pl_ded_area += dl * dh * dn * 2 
             
             if pl_ded_area > 0:
                 st.markdown(f"**🔴 Plaster Deduction Area: `{pl_ded_area:.3f} m²`**")
