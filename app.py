@@ -296,6 +296,7 @@ st.markdown(f"""
         border: 1px solid #374151 !important;
     }}
 
+    /* 🟢 सर्व Forms चे बॅकग्राउंड आणि बॉर्डर पूर्णपणे काढून टाकले आहेत (No Dark Rectangle Box) */
     div.stForm {{
         background: transparent !important;
         border: none !important;
@@ -341,7 +342,7 @@ st.markdown(f"""
         font-size: 13px !important;
     }}
 
-    /* 🟢 बटन्सचे पांढरे बॅकग्राउंड काढून मूळ थीम कलर देणे */
+    /* 🟢 सर्व बटन्ससाठी योग्य थीम कलर */
     div.stButton > button {{
         background-color: #121929 !important;
         color: #ffffff !important;
