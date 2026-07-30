@@ -254,7 +254,7 @@ def check_user_premium_status(username):
 is_curr_premium, _ = check_user_premium_status(current_user_name)
 
 # ==========================================
-# 🎨 ULTRA-PREMIUM ROYAL METALLIC GOLD STYLING (Forced Strict Dark Theme)
+# 🎨 ULTRA-PREMIUM ROYAL METALLIC GOLD STYLING (Forced Strict Dark Theme & Buttons Fix)
 # ==========================================
 touch_glow_color = "rgba(255, 179, 0, 0.45)" if is_curr_premium else "rgba(59, 130, 246, 0.25)"
 touch_border_color = "#FFD54F" if is_curr_premium else "#3b82f6"
@@ -353,13 +353,28 @@ st.markdown(f"""
         color: #FFD54F !important;
     }}
 
+    /* 🟢 सर्व नॉर्मल बटन्ससाठी डार्क थीम (पांढरा रंग काढण्यासाठी) */
+    div.stButton > button {{
+        background-color: #121929 !important;
+        color: #f3f4f6 !important;
+        border: 1px solid {touch_border_color} !important;
+        border-radius: 14px !important;
+        font-weight: 600 !important;
+        transition: all 0.3s ease;
+    }}
+
+    div.stButton > button:hover {{
+        background-color: #1a233a !important;
+        border-color: #FFD54F !important;
+        color: #FFD54F !important;
+        box-shadow: 0 0 15px {touch_glow_color} !important;
+    }}
+
+    /* प्राइमरी (लाल/महत्त्वाची) बटणे */
     div.stButton > button[kind="primary"] {{
         background: linear-gradient(90deg, #dc2626 0%, #ef4444 100%) !important;
         color: white !important;
-        font-weight: 700 !important;
-        border-radius: 14px !important;
         border: none !important;
-        padding: 12px 20px !important;
         box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4);
         width: 100%;
     }}
