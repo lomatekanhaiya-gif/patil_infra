@@ -254,7 +254,7 @@ def check_user_premium_status(username):
 is_curr_premium, _ = check_user_premium_status(current_user_name)
 
 # ==========================================
-# 🎨 ULTRA-PREMIUM ROYAL METALLIC GOLD STYLING (Forced Dark Mode for All)
+# 🎨 ULTRA-PREMIUM ROYAL METALLIC GOLD STYLING (Forced Strict Dark Theme)
 # ==========================================
 touch_glow_color = "rgba(255, 179, 0, 0.45)" if is_curr_premium else "rgba(59, 130, 246, 0.25)"
 touch_border_color = "#FFD54F" if is_curr_premium else "#3b82f6"
@@ -274,7 +274,8 @@ st.markdown(f"""
     button[title="Increment"], button[title="Decrement"] {{ display: none !important; }}
     div[data-testid="stNumberInputStepUp"], div[data-testid="stNumberInputStepDown"] {{ display: none !important; }}
 
-    .stApp {{
+    /* संपूर्ण ॲपसाठी सक्तीची डार्क थीम */
+    .stApp, [data-testid="stMain"], [data-testid="stVerticalBlock"] {{
         background: linear-gradient(135deg, #070a12 0%, #0d1322 100%) !important;
         color: #f3f4f6 !important;
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -282,6 +283,13 @@ st.markdown(f"""
 
     .stApp:active {{
         box-shadow: inset 0 0 80px {touch_glow_color} !important;
+    }}
+
+    /* सर्व टेक्स्ट आणि मजकूर पांढरे किंवा राखाडी दिसण्यासाठी */
+    p, span, label, h1, h2, h3, h4, h5, h6, 
+    div[data-testid="stWidgetLabel"] p, 
+    .stRadio label span, .stCheckbox label span {{
+        color: #f3f4f6 !important;
     }}
 
     .stMarkdown table {{
@@ -295,10 +303,11 @@ st.markdown(f"""
         padding: 10px 14px !important;
         border: 1px solid #374151 !important;
         color: #f3f4f6 !important;
+        background-color: #111827 !important;
     }}
 
     div.stForm, div[data-testid="stExpander"] {{
-        background: rgba(17, 24, 39, 0.9) !important;
+        background: rgba(17, 24, 39, 0.95) !important;
         backdrop-filter: blur(16px);
         border: 1px solid {card_border_color} !important;
         border-radius: 20px !important;
@@ -317,7 +326,6 @@ st.markdown(f"""
         outline: none !important;
         font-weight: 500 !important;
         box-shadow: {input_inner_shadow} !important;
-        transition: all 0.25s ease-in-out !important;
     }}
 
     div[data-baseweb="select"]:focus-within > div,
@@ -327,12 +335,6 @@ st.markdown(f"""
         border-color: {touch_border_color} !important;
         background-color: #1a233a !important;
         box-shadow: 0 0 18px {touch_glow_color}, {input_inner_shadow} !important;
-    }}
-
-    label, div[data-testid="stWidgetLabel"] p, .stRadio label p, .stCheckbox label p {{
-        color: #9ca3af !important;
-        font-weight: 600 !important;
-        font-size: 13px !important;
     }}
 
     /* Dropdown Options Dark Fix */
