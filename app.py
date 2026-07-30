@@ -254,7 +254,7 @@ def check_user_premium_status(username):
 is_curr_premium, _ = check_user_premium_status(current_user_name)
 
 # ==========================================
-# 🎨 ULTRA-PREMIUM ROYAL METALLIC GOLD STYLING (Forced Strict Dark Theme & Buttons Fix)
+# 🎨 ULTRA-PREMIUM ROYAL METALLIC GOLD STYLING (Removed Form Box Background)
 # ==========================================
 touch_glow_color = "rgba(255, 179, 0, 0.45)" if is_curr_premium else "rgba(59, 130, 246, 0.25)"
 touch_border_color = "#FFD54F" if is_curr_premium else "#3b82f6"
@@ -306,7 +306,16 @@ st.markdown(f"""
         background-color: #111827 !important;
     }}
 
-    div.stForm, div[data-testid="stExpander"] {{
+    /* 🟢 फॉर्मचा डार्क रेक्टेंगल बॉक्स पूर्णपणे काढून टाकला आहे (Transparent) */
+    div.stForm {{
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0px !important;
+    }}
+
+    /* फक्त Expander साठी बॉक्स राहील */
+    div[data-testid="stExpander"] {{
         background: rgba(17, 24, 39, 0.95) !important;
         backdrop-filter: blur(16px);
         border: 1px solid {card_border_color} !important;
@@ -353,7 +362,7 @@ st.markdown(f"""
         color: #FFD54F !important;
     }}
 
-    /* 🟢 सर्व नॉर्मल बटन्ससाठी डार्क थीम (पांढरा रंग काढण्यासाठी) */
+    /* 🟢 सर्व नॉर्मल बटन्ससाठी डार्क थीम */
     div.stButton > button {{
         background-color: #121929 !important;
         color: #f3f4f6 !important;
