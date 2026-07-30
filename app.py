@@ -254,7 +254,7 @@ def check_user_premium_status(username):
 is_curr_premium, _ = check_user_premium_status(current_user_name)
 
 # ==========================================
-# 🎨 ULTRA-PREMIUM ROYAL METALLIC GOLD STYLING
+# 🎨 ULTRA-PREMIUM ROYAL METALLIC GOLD STYLING (Forced Permanent Dark Theme)
 # ==========================================
 touch_glow_color = "rgba(255, 179, 0, 0.45)" if is_curr_premium else "rgba(59, 130, 246, 0.25)"
 touch_border_color = "#FFD54F" if is_curr_premium else "#3b82f6"
@@ -263,6 +263,14 @@ input_inner_shadow = "inset 0 0 10px rgba(255, 179, 0, 0.3)" if is_curr_premium 
 
 st.markdown(f"""
     <style>
+    /* 🟢 मोबाईलची थीम कोणतीही असो, ॲप कायम डार्क मोडमध्येच राहणार (Forced Theme Override) */
+    @media (prefers-color-scheme: light), (prefers-color-scheme: dark) {{
+        .stApp {{
+            background: linear-gradient(135deg, #070a12 0%, #0d1322 100%) !important;
+            color: #f3f4f6 !important;
+        }}
+    }}
+
     #MainMenu {{ visibility: hidden; }}
     header[data-testid="stHeader"] {{ visibility: hidden; height: 0%; display: none !important; }}
     footer {{ visibility: hidden; display: none !important; }}
@@ -273,12 +281,6 @@ st.markdown(f"""
     
     button[title="Increment"], button[title="Decrement"] {{ display: none !important; }}
     div[data-testid="stNumberInputStepUp"], div[data-testid="stNumberInputStepDown"] {{ display: none !important; }}
-
-    .stApp {{
-        background: linear-gradient(135deg, #070a12 0%, #0d1322 100%);
-        color: #f3f4f6;
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    }}
 
     .stApp:active {{
         box-shadow: inset 0 0 80px {touch_glow_color} !important;
@@ -294,9 +296,10 @@ st.markdown(f"""
     .stMarkdown th, .stMarkdown td {{
         padding: 10px 14px !important;
         border: 1px solid #374151 !important;
+        color: #f3f4f6 !important;
+        background-color: #111827 !important;
     }}
 
-    /* 🟢 सर्व Forms आणि Admin Panel चे बॅकग्राउंड पूर्णपणे ट्रान्सपरंट (रिमूव्ह बॉक्सेस) */
     div.stForm {{
         background: transparent !important;
         border: none !important;
@@ -336,13 +339,13 @@ st.markdown(f"""
         box-shadow: 0 0 18px {touch_glow_color}, {input_inner_shadow} !important;
     }}
 
-    label, div[data-testid="stWidgetLabel"] p {{
+    label, div[data-testid="stWidgetLabel"] p, .stRadio label p, .stCheckbox label p {{
         color: #9ca3af !important;
         font-weight: 600 !important;
         font-size: 13px !important;
     }}
 
-    /* 🟢 सर्व बटन्ससाठी आकर्षक डार्क थीम */
+    /* 🟢 सर्व बटन्सचे पांढरे बॅकग्राउंड काढून मूळ थीम कलर देणे */
     div.stButton > button {{
         background-color: #121929 !important;
         color: #ffffff !important;
