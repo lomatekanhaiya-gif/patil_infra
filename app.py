@@ -254,7 +254,7 @@ def check_user_premium_status(username):
 is_curr_premium, _ = check_user_premium_status(current_user_name)
 
 # ==========================================
-# 🎨 ULTRA-PREMIUM ROYAL METALLIC GOLD STYLING
+# 🎨 ULTRA-PREMIUM ROYAL METALLIC GOLD STYLING (Forced Dark Mode for All)
 # ==========================================
 touch_glow_color = "rgba(255, 179, 0, 0.45)" if is_curr_premium else "rgba(59, 130, 246, 0.25)"
 touch_border_color = "#FFD54F" if is_curr_premium else "#3b82f6"
@@ -275,8 +275,8 @@ st.markdown(f"""
     div[data-testid="stNumberInputStepUp"], div[data-testid="stNumberInputStepDown"] {{ display: none !important; }}
 
     .stApp {{
-        background: linear-gradient(135deg, #070a12 0%, #0d1322 100%);
-        color: #f3f4f6;
+        background: linear-gradient(135deg, #070a12 0%, #0d1322 100%) !important;
+        color: #f3f4f6 !important;
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }}
 
@@ -294,10 +294,11 @@ st.markdown(f"""
     .stMarkdown th, .stMarkdown td {{
         padding: 10px 14px !important;
         border: 1px solid #374151 !important;
+        color: #f3f4f6 !important;
     }}
 
     div.stForm, div[data-testid="stExpander"] {{
-        background: rgba(17, 24, 39, 0.8) !important;
+        background: rgba(17, 24, 39, 0.9) !important;
         backdrop-filter: blur(16px);
         border: 1px solid {card_border_color} !important;
         border-radius: 20px !important;
@@ -328,10 +329,26 @@ st.markdown(f"""
         box-shadow: 0 0 18px {touch_glow_color}, {input_inner_shadow} !important;
     }}
 
-    label, div[data-testid="stWidgetLabel"] p {{
+    label, div[data-testid="stWidgetLabel"] p, .stRadio label p, .stCheckbox label p {{
         color: #9ca3af !important;
         font-weight: 600 !important;
         font-size: 13px !important;
+    }}
+
+    /* Dropdown Options Dark Fix */
+    ul[data-baseweb="menu"] {{
+        background-color: #121929 !important;
+        border: 1px solid {touch_border_color} !important;
+    }}
+    
+    ul[data-baseweb="menu"] li {{
+        color: #ffffff !important;
+        background-color: #121929 !important;
+    }}
+    
+    ul[data-baseweb="menu"] li:hover {{
+        background-color: #1a233a !important;
+        color: #FFD54F !important;
     }}
 
     div.stButton > button[kind="primary"] {{
@@ -885,7 +902,6 @@ if st.session_state.is_admin_logged:
                 if broadcast_msg.strip():
                     conn = get_db_connection()
                     cursor = conn.cursor()
-                    # मास्टर ॲडमीन (9999999999) सोडून बाकी सर्व युझर्सना मेसेज अपडेट करणे
                     cursor.execute('''
                         UPDATE users 
                         SET admin_message = ?, unread_notification = 1 
@@ -1543,7 +1559,7 @@ elif st.session_state.selected_module == "Rate Analysis":
     elif "Brickwork" in main_choice:
         st.subheader("🧱 Brickwork Estimation")
         mortar_choice = st.selectbox("मॉर्टर मिक्स गुणोत्तर (Mortar Mix Ratio) निवडा:", 
-                                     ["1:3 (सिमेंट : वाळू)", "1:4 (सिमेंट : वाळू)", "1:5 (सिमेंट : वाळू)", "1:6 (सिमेंट : वाळू)"])
+                                   ["1:3 (सिमेंट : वाळू)", "1:4 (सिमेंट : वाळू)", "1:5 (सिमेंट : वाळू)", "1:6 (सिमेंट : वाळू)"])
         
         if "1:3" in mortar_choice: c_part, s_part = 1, 3
         elif "1:4" in mortar_choice: c_part, s_part = 1, 4
