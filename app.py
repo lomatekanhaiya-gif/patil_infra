@@ -254,7 +254,7 @@ def check_user_premium_status(username):
 is_curr_premium, _ = check_user_premium_status(current_user_name)
 
 # ==========================================
-# 🎨 ULTRA-PREMIUM ROYAL METALLIC GOLD STYLING (Removed Form Box Background)
+# 🎨 ULTRA-PREMIUM ROYAL METALLIC GOLD STYLING
 # ==========================================
 touch_glow_color = "rgba(255, 179, 0, 0.45)" if is_curr_premium else "rgba(59, 130, 246, 0.25)"
 touch_border_color = "#FFD54F" if is_curr_premium else "#3b82f6"
@@ -274,22 +274,14 @@ st.markdown(f"""
     button[title="Increment"], button[title="Decrement"] {{ display: none !important; }}
     div[data-testid="stNumberInputStepUp"], div[data-testid="stNumberInputStepDown"] {{ display: none !important; }}
 
-    /* संपूर्ण ॲपसाठी सक्तीची डार्क थीम */
-    .stApp, [data-testid="stMain"], [data-testid="stVerticalBlock"] {{
-        background: linear-gradient(135deg, #070a12 0%, #0d1322 100%) !important;
-        color: #f3f4f6 !important;
+    .stApp {{
+        background: linear-gradient(135deg, #070a12 0%, #0d1322 100%);
+        color: #f3f4f6;
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }}
 
     .stApp:active {{
         box-shadow: inset 0 0 80px {touch_glow_color} !important;
-    }}
-
-    /* सर्व टेक्स्ट आणि मजकूर पांढरे किंवा राखाडी दिसण्यासाठी */
-    p, span, label, h1, h2, h3, h4, h5, h6, 
-    div[data-testid="stWidgetLabel"] p, 
-    .stRadio label span, .stCheckbox label span {{
-        color: #f3f4f6 !important;
     }}
 
     .stMarkdown table {{
@@ -302,11 +294,8 @@ st.markdown(f"""
     .stMarkdown th, .stMarkdown td {{
         padding: 10px 14px !important;
         border: 1px solid #374151 !important;
-        color: #f3f4f6 !important;
-        background-color: #111827 !important;
     }}
 
-    /* 🟢 फॉर्मचा डार्क रेक्टेंगल बॉक्स पूर्णपणे काढून टाकला आहे (Transparent) */
     div.stForm {{
         background: transparent !important;
         border: none !important;
@@ -314,9 +303,8 @@ st.markdown(f"""
         padding: 0px !important;
     }}
 
-    /* फक्त Expander साठी बॉक्स राहील */
     div[data-testid="stExpander"] {{
-        background: rgba(17, 24, 39, 0.95) !important;
+        background: rgba(17, 24, 39, 0.8) !important;
         backdrop-filter: blur(16px);
         border: 1px solid {card_border_color} !important;
         border-radius: 20px !important;
@@ -335,6 +323,7 @@ st.markdown(f"""
         outline: none !important;
         font-weight: 500 !important;
         box-shadow: {input_inner_shadow} !important;
+        transition: all 0.25s ease-in-out !important;
     }}
 
     div[data-baseweb="select"]:focus-within > div,
@@ -346,30 +335,20 @@ st.markdown(f"""
         box-shadow: 0 0 18px {touch_glow_color}, {input_inner_shadow} !important;
     }}
 
-    /* Dropdown Options Dark Fix */
-    ul[data-baseweb="menu"] {{
-        background-color: #121929 !important;
-        border: 1px solid {touch_border_color} !important;
-    }}
-    
-    ul[data-baseweb="menu"] li {{
-        color: #ffffff !important;
-        background-color: #121929 !important;
-    }}
-    
-    ul[data-baseweb="menu"] li:hover {{
-        background-color: #1a233a !important;
-        color: #FFD54F !important;
+    label, div[data-testid="stWidgetLabel"] p {{
+        color: #9ca3af !important;
+        font-weight: 600 !important;
+        font-size: 13px !important;
     }}
 
-    /* 🟢 सर्व नॉर्मल बटन्ससाठी डार्क थीम */
+    /* 🟢 बटन्सचे पांढरे बॅकग्राउंड काढून मूळ थीम कलर देणे */
     div.stButton > button {{
         background-color: #121929 !important;
-        color: #f3f4f6 !important;
+        color: #ffffff !important;
         border: 1px solid {touch_border_color} !important;
         border-radius: 14px !important;
         font-weight: 600 !important;
-        transition: all 0.3s ease;
+        padding: 10px 18px !important;
     }}
 
     div.stButton > button:hover {{
@@ -379,11 +358,13 @@ st.markdown(f"""
         box-shadow: 0 0 15px {touch_glow_color} !important;
     }}
 
-    /* प्राइमरी (लाल/महत्त्वाची) बटणे */
     div.stButton > button[kind="primary"] {{
         background: linear-gradient(90deg, #dc2626 0%, #ef4444 100%) !important;
         color: white !important;
+        font-weight: 700 !important;
+        border-radius: 14px !important;
         border: none !important;
+        padding: 12px 20px !important;
         box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4);
         width: 100%;
     }}
@@ -2366,7 +2347,7 @@ elif st.session_state.selected_module == "Quantity Surveying":
             with btn_col2:
                 st.markdown('''
                     <button onclick="window.print()" style="width: 100%; background-color: #3b82f6; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px;">
-                        📄 Print / Save A3 Size PDF
+                        📄 Print / Download A3 Size PDF
                     </button>
                 ''', unsafe_allow_html=True)
 
