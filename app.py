@@ -1,4 +1,4 @@
-# KANHA_1p - पाटील इन्फ्राテック (Turso Cloud DB & Streamlit Web Application)
+# KANHA_1p - पाटील इन्फ्राटेक (Turso Cloud DB & Streamlit Web Application)
 import streamlit as st
 import math
 import os
@@ -8,7 +8,14 @@ import time
 import urllib.parse
 import random
 import string
-import libsql_experimental as libsql
+
+# 🗄️ Turso / SQLite Safe Import Protocol
+try:
+    import libsql_experimental as libsql
+    HAS_LIBSQL = True
+except Exception:
+    import sqlite3 as libsql
+    HAS_LIBSQL = False
 
 # Official Google GenAI SDK Import
 try:
@@ -35,8 +42,12 @@ TURSO_URL = st.secrets.get("TURSO_DATABASE_URL", "libsql://kanhaiya-kanha-1p.aws
 TURSO_TOKEN = st.secrets.get("TURSO_AUTH_TOKEN", "")
 
 def get_db_connection():
-    # लोकल फाईलऐवजी Turso क्लाउड डेटाबेसशी थेट जोडले जाईल
-    conn = libsql.connect(database=TURSO_URL, auth_token=TURSO_TOKEN)
+    if HAS_LIBSQL and TURSO_URL and TURSO_TOKEN:
+        # Turso Cloud डेटाबेसशी थेट जोडले जाईल
+        conn = libsql.connect(database=TURSO_URL, auth_token=TURSO_TOKEN)
+    else:
+        # लोकल बॅकअप (जर पॅकेज लोड झाले नाही तर)
+        conn = libsql.connect("patil_infratech.db", check_same_thread=False)
     return conn
 
 def init_db():
