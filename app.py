@@ -29,9 +29,10 @@ def get_ist_time():
     return ist_now
 
 # ==========================================
-# 🗄️ SQLITE DATABASE MANAGEMENT
+# 🗄️ SQLITE / CLOUD DATABASE MANAGEMENT
 # ==========================================
-DB_FILE = "patil_infratech.db"
+# टीप: क्लाउडवर कायमस्वरूपी सेव्ह करण्यासाठी Streamlit Secrets मध्ये DB_FILE किंवा DATABASE_URL कॉन्फिगर करा.
+DB_FILE = st.secrets.get("DB_FILE", "patil_infratech.db")
 
 def get_db_connection():
     conn = sqlite3.connect(DB_FILE, check_same_thread=False)
@@ -254,7 +255,7 @@ def check_user_premium_status(username):
 is_curr_premium, _ = check_user_premium_status(current_user_name)
 
 # ==========================================
-# 🎨 ULTRA-PREMIUM ROYAL METALLIC GOLD STYLING (Forced Permanent Dark Theme)
+# 🎨 ULTRA-PREMIUM ROYAL METALLIC GOLD STYLING
 # ==========================================
 touch_glow_color = "rgba(255, 179, 0, 0.45)" if is_curr_premium else "rgba(59, 130, 246, 0.25)"
 touch_border_color = "#FFD54F" if is_curr_premium else "#3b82f6"
@@ -263,7 +264,6 @@ input_inner_shadow = "inset 0 0 10px rgba(255, 179, 0, 0.3)" if is_curr_premium 
 
 st.markdown(f"""
     <style>
-    /* 🟢 मोबाईलची थीम कोणतीही असो, ॲप कायम डार्क मोडमध्येच राहणार (Forced Theme Override) */
     @media (prefers-color-scheme: light), (prefers-color-scheme: dark) {{
         .stApp {{
             background: linear-gradient(135deg, #070a12 0%, #0d1322 100%) !important;
@@ -345,7 +345,6 @@ st.markdown(f"""
         font-size: 13px !important;
     }}
 
-    /* 🟢 सर्व बटन्सचे पांढरे बॅकग्राउंड काढून मूळ थीम कलर देणे */
     div.stButton > button {{
         background-color: #121929 !important;
         color: #ffffff !important;
@@ -1403,7 +1402,7 @@ elif st.session_state.selected_module == "Civil Calculator":
             """, unsafe_allow_html=True)
 
 # ==========================================
-# 🛑 MODULE 1: RATE ANALYSIS MODULE (Concrete Work, Brickwork & Plaster Work)
+# 🛑 MODULE 1: RATE ANALYSIS MODULE
 # ==========================================
 elif st.session_state.selected_module == "Rate Analysis":
     if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_to_main"):
@@ -2106,7 +2105,7 @@ elif st.session_state.selected_module == "BBS":
             conn.close()
 
 # ==========================================
-# 📈 QUANTITY SURVEYING & ABSTRACT SHEET MODULE (Notebook Format)
+# 📈 QUANTITY SURVEYING & ABSTRACT SHEET MODULE
 # ==========================================
 elif st.session_state.selected_module == "Quantity Surveying":
     if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_to_main_qs"):
