@@ -1,7 +1,6 @@
-# KANHA_1p - पाटील इन्फ्राटेक (SQLite Database & Streamlit Web Application)
+# KANHA_1p - पाटील इन्फ्राテック (Turso Cloud DB & Streamlit Web Application)
 import streamlit as st
 import math
-import sqlite3
 import os
 import datetime
 import pandas as pd
@@ -9,6 +8,7 @@ import time
 import urllib.parse
 import random
 import string
+import libsql_experimental as libsql
 
 # Official Google GenAI SDK Import
 try:
@@ -29,14 +29,14 @@ def get_ist_time():
     return ist_now
 
 # ==========================================
-# 🗄️ SQLITE / CLOUD DATABASE MANAGEMENT
+# 🗄️ TURSO CLOUD DATABASE MANAGEMENT (PERMANENT DB)
 # ==========================================
-# टीप: क्लाउडवर कायमस्वरूपी सेव्ह करण्यासाठी Streamlit Secrets मध्ये DB_FILE किंवा DATABASE_URL कॉन्फिगर करा.
-DB_FILE = st.secrets.get("DB_FILE", "patil_infratech.db")
+TURSO_URL = st.secrets.get("TURSO_DATABASE_URL", "libsql://kanhaiya-kanha-1p.aws-ap-south-1.turso.io")
+TURSO_TOKEN = st.secrets.get("TURSO_AUTH_TOKEN", "")
 
 def get_db_connection():
-    conn = sqlite3.connect(DB_FILE, check_same_thread=False)
-    conn.row_factory = sqlite3.Row
+    # लोकल फाईलऐवजी Turso क्लाउड डेटाबेसशी थेट जोडले जाईल
+    conn = libsql.connect(database=TURSO_URL, auth_token=TURSO_TOKEN)
     return conn
 
 def init_db():
@@ -128,7 +128,7 @@ def init_db():
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', ("9999999999", "kanha", "KANHA_1P", "1234", "9999999999", "patiladmin123", "मास्टर ॲडमीन अकाउंट", "स्वागत आहे मास्टर कन्हैया! आपले पाटील इन्फ्राटेक मध्ये सर्व अधिकार अनलॉक्ड आहेत ⚡", 0, 1, "2099-12-31 23:59:59", 0, 1, 0, get_ist_time().strftime("%Y-%m-%d %H:%M:%S"), "Master Admin"))
 
-    # Default Feature Locks (Quantity Surveying Included)
+    # Default Feature Locks
     default_locks = {
         "Civil Calculator": "Free",
         "Rate Analysis": "Free",
@@ -159,7 +159,8 @@ def get_user_data(user_key):
     row = cursor.fetchone()
     conn.close()
     if row:
-        return dict(row)
+        columns = [column[0] for column in cursor.description]
+        return dict(zip(columns, row))
     return None
 
 def get_market_rates():
@@ -168,7 +169,7 @@ def get_market_rates():
     cursor.execute("SELECT material, rate FROM market_rates")
     rows = cursor.fetchall()
     conn.close()
-    return {row["material"]: row["rate"] for row in rows}
+    return {row[0]: row[1] for row in rows}
 
 def get_feature_locks():
     conn = get_db_connection()
@@ -176,9 +177,9 @@ def get_feature_locks():
     cursor.execute("SELECT feature_name, access_level FROM feature_locks")
     rows = cursor.fetchall()
     conn.close()
-    return {row["feature_name"]: row["access_level"] for row in rows}
+    return {row[0]: row[1] for row in rows}
 
-# Session State & Query Params Initialization (Auto-Login Support)
+# Session State & Query Params Initialization
 if "app_user_name" not in st.session_state:
     st.session_state.app_user_name = None
 
@@ -191,7 +192,7 @@ if st.session_state.app_user_name is None and "saved_uid" in query_params:
     row = cursor.fetchone()
     conn.close()
     if row:
-        st.session_state.app_user_name = row["user_key"]
+        st.session_state.app_user_name = row[0]
 
 if "is_admin_logged" not in st.session_state:
     st.session_state.is_admin_logged = False
@@ -216,7 +217,7 @@ if current_user_name:
     conn.commit()
     conn.close()
 
-# ⏳ प्रिमियम स्टेटस व अचूक एक्सपायरी तपासणी
+# ⏳ प्रिमियम स्टेटस तपासणी
 def check_user_premium_status(username):
     if not username: return False, "Free"
     if username.lower() == "kanha" or username == "9999999999":
@@ -255,7 +256,7 @@ def check_user_premium_status(username):
 is_curr_premium, _ = check_user_premium_status(current_user_name)
 
 # ==========================================
-# 🎨 ULTRA-PREMIUM ROYAL METALLIC GOLD STYLING
+# 🎨 ULTRA-PREMIUM STYLING
 # ==========================================
 touch_glow_color = "rgba(255, 179, 0, 0.45)" if is_curr_premium else "rgba(59, 130, 246, 0.25)"
 touch_border_color = "#FFD54F" if is_curr_premium else "#3b82f6"
@@ -468,7 +469,8 @@ def render_whatsapp_feature(encoded_msg, key_prefix):
                     row = cursor.fetchone()
                     
                     if row:
-                        c_info = dict(row)
+                        columns = [c[0] for c in cursor.description]
+                        c_info = dict(zip(columns, row))
                         if c_info.get("used") == 1:
                             st.error("❌ हा कोड आधीच वापरला गेला आहे! तो आता व्हॅलिड नाही.")
                             conn.close()
@@ -539,7 +541,7 @@ if not st.session_state.welcome_completed:
         conn.close()
 
         for ad in ads_rows:
-            ad_dict = dict(ad)
+            ad_dict = dict(zip([c[0] for c in cursor.description], ad))
             st.markdown(f"""
                 <div style="background: rgba(17, 24, 39, 0.7); border: 1px solid rgba(59, 130, 246, 0.3); padding: 6px 10px; border-radius: 10px; text-align: center; margin: 15px auto; max-width: 280px;">
                     <span style="font-size: 9px; color: #93c5fd; font-weight: bold;">⭐ SPONSOR</span><br>
@@ -690,12 +692,14 @@ if st.session_state.is_admin_logged:
             conn = get_db_connection()
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM history WHERE user_key = ? ORDER BY id DESC", (target_user,))
-            u_hist = [dict(r) for r in cursor.fetchall()]
+            rows = cursor.fetchall()
+            cols = [c[0] for c in cursor.description]
+            u_hist = [dict(zip(cols, r)) for r in rows]
 
             cursor.execute("SELECT code FROM premium_codes WHERE assigned_to = ? AND used = 0", (u_name,))
             c_row = cursor.fetchone()
             conn.close()
-            assigned_code = c_row["code"] if c_row else None
+            assigned_code = c_row[0] if c_row else None
 
             status_badge = f"👑 VIP MEMBER: {u_name.upper()}" if u_prem else ("🚨 CODE REQUESTED!" if is_req else f"🆓 FREE: {u_name.upper()}")
 
@@ -803,7 +807,9 @@ if st.session_state.is_admin_logged:
             conn = get_db_connection()
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM users WHERE user_key != '9999999999' ORDER BY id ASC")
-            all_users = [dict(r) for r in cursor.fetchall()]
+            rows = cursor.fetchall()
+            cols = [c[0] for c in cursor.description]
+            all_users = [dict(zip(cols, r)) for r in rows]
             conn.close()
 
             if all_users:
@@ -882,7 +888,9 @@ if st.session_state.is_admin_logged:
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM ads ORDER BY id DESC")
-        ads_list = [dict(r) for r in cursor.fetchall()]
+        rows = cursor.fetchall()
+        cols = [c[0] for c in cursor.description]
+        ads_list = [dict(zip(cols, r)) for r in rows]
         conn.close()
 
         if ads_list:
@@ -946,7 +954,7 @@ if st.session_state.app_user_name is None:
                 conn.close()
 
                 if row:
-                    found_user = row["user_key"]
+                    found_user = row[0]
                     st.session_state.app_user_name = found_user
                     if remember_me:
                         st.query_params["saved_uid"] = input_uid
@@ -1020,7 +1028,7 @@ if st.session_state.app_user_name is None:
                 if matched_users:
                     st.success("✅ तुमचे अकाउंट तपशील सापडले आहेत:")
                     for row in matched_users:
-                        st.info(f"👤 नाव: **{row['id']}** | 🔑 UID: **{row['uid']}** (आता या UID ने लॉगिन करा)")
+                        st.info(f"👤 नाव: **{row[0]}** | 🔑 UID: **{row[1]}** (आता या UID ने लॉगिन करा)")
                 else:
                     st.error("❌ चुकीचा मोबाईल नंबर किंवा PIN! तपशील जुळत नाहीत.")
 
@@ -1053,7 +1061,9 @@ is_user_premium, status_text_str = check_user_premium_status(current_user_name)
 conn = get_db_connection()
 cursor = conn.cursor()
 cursor.execute("SELECT * FROM ads WHERE active = 1 AND position = 'Main App Header (Top Banner)'")
-ads_list = [dict(r) for r in cursor.fetchall()]
+rows = cursor.fetchall()
+cols = [c[0] for c in cursor.description]
+ads_list = [dict(zip(cols, r)) for r in rows]
 conn.close()
 
 for ad in ads_list:
@@ -1160,25 +1170,31 @@ if not is_user_premium:
                     cursor.execute("SELECT * FROM premium_codes WHERE code = ?", (input_code,))
                     c_row = cursor.fetchone()
                     
-                    if c_row and dict(c_row).get("used") == 0:
-                        exp_datetime = get_ist_time() + datetime.timedelta(days=28)
-                        exp_str = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
-                        now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
+                    if c_row:
+                        cols = [c[0] for c in cursor.description]
+                        c_dict = dict(zip(cols, c_row))
+                        if c_dict.get("used") == 0:
+                            exp_datetime = get_ist_time() + datetime.timedelta(days=28)
+                            exp_str = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
+                            now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
 
-                        cursor.execute("UPDATE premium_codes SET used = 1, used_by = ?, used_date = ? WHERE code = ?", (current_user_name, now_str, input_code))
-                        cursor.execute('''
-                            UPDATE users 
-                            SET is_premium = 1, premium_expiry = ?, seen_popup = 0, activated_by = ?,
-                                admin_message = ?, unread_notification = 0
-                            WHERE user_key = ?
-                        ''', (exp_str, "Patil Infratech", f"{current_user_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳", current_user_name))
-                        conn.commit()
-                        conn.close()
-                        st.success("🎉 प्रिमियम यशस्वीरित्या सुरू झाले!")
-                        st.rerun()
+                            cursor.execute("UPDATE premium_codes SET used = 1, used_by = ?, used_date = ? WHERE code = ?", (current_user_name, now_str, input_code))
+                            cursor.execute('''
+                                UPDATE users 
+                                SET is_premium = 1, premium_expiry = ?, seen_popup = 0, activated_by = ?,
+                                    admin_message = ?, unread_notification = 0
+                                WHERE user_key = ?
+                            ''', (exp_str, "Patil Infratech", f"{current_user_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳", current_user_name))
+                            conn.commit()
+                            conn.close()
+                            st.success("🎉 प्रिमियम यशस्वीरित्या सुरू झाले!")
+                            st.rerun()
+                        else:
+                            conn.close()
+                            st.error("❌ हा कोड आधीच वापरला गेला आहे!")
                     else:
                         conn.close()
-                        st.error("❌ चुकीचा किंवा आधीच वापरलेला कोड!")
+                        st.error("❌ चुकीचा प्रिमियम कोड!")
         with c_btn2:
             if st.button("📩 Request Code"):
                 conn = get_db_connection()
