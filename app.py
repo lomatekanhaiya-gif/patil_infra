@@ -440,41 +440,82 @@ def generate_random_code():
     return "PATIL-" + ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
 
 # ==========================================
-# 📸 LIVE CAMERA MEASUREMENT PROCESSING ENGINE
+# 📸 ADVANCED HIGH-PRECISION CAMERA MEASUREMENT ENGINE
 # ==========================================
 def process_camera_measurement(image, ref_width_cm):
     """
-    कॅमेरा इमेज आणि रेफरन्स आकारावरून इमेजमधील वस्तूचे मोजमाप काढणे
+    ॲडव्हान्स इमेज प्रोसेसिंग:
+    - Adaptive Histogram Equalization (CLAHE) द्वारे लाईट संतुलन
+    - Rotated Minimum Area Bounding Box (`cv2.minAreaRect`) द्वारे तिरप्या वस्तूंचे अचूक मोजमाप
     """
     img_array = np.array(image.convert('RGB'))
     gray = cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY)
-    blur = cv2.GaussianBlur(gray, (5, 5), 0)
-    edged = cv2.Canny(blur, 50, 100)
     
-    contours, _ = cv2.findContours(edged.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    # १. लाईटिंग सुधारणे (CLAHE)
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+    enhanced_gray = clahe.apply(gray)
+    
+    # २. नॉईज घालवणे व ॲडॉप्टिव्ह थ्रेशोल्डिंग
+    blur = cv2.GaussianBlur(enhanced_gray, (7, 7), 0)
+    thresh = cv2.adaptiveThreshold(
+        blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
+        cv2.THRESH_BINARY_INV, 11, 2
+    )
+    
+    # ३. कंटूर शोधणे
+    contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     
     if not contours:
         return img_array, 0.0, 0.0
 
-    contours = sorted(contours, key=cv2.contourArea, reverse=True)
+    # लहान नॉईज काढून टाकण्यासाठी ५०० पिक्सेलपेक्षा मोठे कंटूर्स फिल्टर करणे
+    valid_contours = [c for c in contours if cv2.contourArea(c) > 500]
+    valid_contours = sorted(valid_contours, key=cv2.contourArea, reverse=True)
+    
+    if not valid_contours:
+        return img_array, 0.0, 0.0
+
     processed_img = img_array.copy()
     
-    ref_contour = contours[0]
-    x, y, w, h = cv2.boundingRect(ref_contour)
+    # ४. रेफरन्स ऑब्जेक्ट कॅलिब्रेशन (सर्वात मोठे कंटूर हे रेफरन्स मानले जाते)
+    ref_contour = valid_contours[0]
+    ref_rect = cv2.minAreaRect(ref_contour)
+    (cx, cy), (ref_w, ref_h), angle = ref_rect
     
-    pixels_per_cm = w / ref_width_cm if ref_width_cm > 0 else 1.0
+    known_ref_px = max(ref_w, ref_h)
+    pixels_per_cm = known_ref_px / ref_width_cm if ref_width_cm > 0 else 1.0
     
-    cv2.rectangle(processed_img, (x, y), (x + w, y + h), (0, 255, 0), 3)
+    calc_width_m, calc_height_m = 0.0, 0.0
     
-    calc_width_cm = w / pixels_per_cm
-    calc_height_cm = h / pixels_per_cm
-    
-    calc_width_m = calc_width_cm / 100.0
-    calc_height_m = calc_height_cm / 100.0
-    
-    cv2.putText(processed_img, f"W: {calc_width_m:.2f}m", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 215, 0), 2)
-    cv2.putText(processed_img, f"H: {calc_height_m:.2f}m", (x, y + h + 25), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 215, 0), 2)
-    
+    # ५. सर्व कंटूर्सवर रोटेटेड बाउंडिंग बॉक्स तयार करणे
+    for idx, cnt in enumerate(valid_contours):
+        rect = cv2.minAreaRect(cnt)
+        box = cv2.boxPoints(rect)
+        box = np.int64(box)
+        
+        (x, y), (w, h), ang = rect
+        
+        w_cm = w / pixels_per_cm
+        h_cm = h / pixels_per_cm
+        
+        w_m = w_cm / 100.0
+        h_m = h_cm / 100.0
+        
+        # पहिल्या ऑब्जेक्टचे मोजमाप सेव्ह करणे
+        if idx == 0:
+            calc_width_m = max(w_m, h_m)
+            calc_height_m = min(w_m, h_m)
+        
+        # हिरवा बॉक्स आणि मोजमाप इमेजवर ड्रॉ करणे
+        cv2.drawContours(processed_img, [box], 0, (0, 255, 0), 3)
+        cv2.putText(
+            processed_img, 
+            f"{max(w_m, h_m):.2f}m x {min(w_m, h_m):.2f}m", 
+            (int(x - 40), int(y)), 
+            cv2.FONT_HERSHEY_SIMPLEX, 
+            0.6, (255, 215, 0), 2
+        )
+
     return processed_img, calc_width_m, calc_height_m
 
 # ==========================================
@@ -1366,6 +1407,15 @@ elif st.session_state.selected_module == "Camera Measurement":
     st.subheader("📷 Live AR Camera Measurement Tool")
     st.caption("💡 तुमच्या मोबाईल/लॅपटॉप कॅमेऱ्याने फोटो काढा आणि वस्तूचे ऑटोमॅटिक लांबी व रुंदी मोजमाप मिळवा!")
 
+    # 💡 युझरसाठी महत्त्वाच्या टिप्स (User Guidelines & Best Practices)
+    with st.expander("💡 अचूक मोजमापासाठी महत्त्वाच्या टिप्स (Tips for Accurate Measurement)", expanded=True):
+        st.markdown("""
+        * 📐 **सपाट पृष्ठभाग (Flat Background):** वस्तू नेहमी एकाच रंगाच्या किंवा प्लेन पार्श्वभूमीवर ठेवा.
+        * 📏 **रेफरन्स ऑब्जेक्ट (Reference Scale):** फोटो काढताना वस्तूच्या शेजारी ATM कार्ड किंवा A4 कागद **त्याच पातळीवर (Same Plane)** ठेवा.
+        * 🎯 **९०° कॅमेरा अँगल (Straight Top View):** कॅमेरा नेहमी वस्तूच्या अगदी वर धरून ९० अंशात (Top View) फोटो काढा. फोटो तिरपा काढल्यास मोजमाप बदलू शकते.
+        * 💡 **चांगला प्रकाश (Good Lighting):** सावली (Shadow) कमी पडेल याची काळजी घ्या.
+        """)
+
     ref_col1, ref_col2 = st.columns(2)
     with ref_col1:
         ref_object = st.selectbox("कॅलिब्रेशन संदर्भ (Reference Scale):", [
@@ -1389,7 +1439,7 @@ elif st.session_state.selected_module == "Camera Measurement":
 
     if cam_image:
         img = Image.open(cam_image)
-        with st.spinner("🔍 वस्तूचे मोजमाप केले जात आहे..."):
+        with st.spinner("🔍 वस्तूचे अचूक मोजमाप केले जात आहे..."):
             processed_img, width_m, height_m = process_camera_measurement(img, known_width)
             
             st.image(processed_img, caption="🎯 Scanner & Measured Object Output", use_column_width=True)
@@ -1402,11 +1452,6 @@ elif st.session_state.selected_module == "Camera Measurement":
                     <p style="margin: 6px 0; font-size: 15px;"><b>🔲 अंदाज क्षेत्रफळ (Area):</b> <code>{width_m * height_m:.2f} m² ({(width_m * height_m)*10.7639:.2f} Sq.Ft.)</code></p>
                 </div>
             """, unsafe_allow_html=True)
-            
-            if st.button("📥 वापरा हे मोजमाप (Quantity Survey मध्ये पाठवा)"):
-                st.session_state["auto_cam_l"] = height_m
-                st.session_state["auto_cam_w"] = width_m
-                st.success("✅ मोजमाप सेव्ह झाले! Quantity Surveying उघडून वापरू शकता.")
 
 # ==========================================
 # 🧮 MODULE 0: CIVIL CALCULATOR & UNIT CONVERTER
@@ -2271,11 +2316,9 @@ elif st.session_state.selected_module == "Quantity Surveying":
         with c_nos:
             nos_val = st.number_input(f"Nos #{idx}", min_value=0, value=0, step=1, key=f"qs_nos_{idx}")
         with c_l:
-            def_l = st.session_state.get("auto_cam_l", 0.0) if idx == 0 else 0.0
-            l_val = st.number_input(f"Length #{idx}", min_value=0.0, value=def_l, step=0.1, key=f"qs_l_{idx}")
+            l_val = st.number_input(f"Length #{idx}", min_value=0.0, value=0.0, step=0.1, key=f"qs_l_{idx}")
         with c_w:
-            def_w = st.session_state.get("auto_cam_w", 0.0) if idx == 0 else 0.0
-            w_val = st.number_input(f"Width #{idx}", min_value=0.0, value=def_w, step=0.1, key=f"qs_w_{idx}")
+            w_val = st.number_input(f"Width #{idx}", min_value=0.0, value=0.0, step=0.1, key=f"qs_w_{idx}")
         with c_h:
             if is_area_unit:
                 h_val = 1.0
