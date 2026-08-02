@@ -267,7 +267,7 @@ def check_user_premium_status(username):
 is_curr_premium, _ = check_user_premium_status(current_user_name)
 
 # ==========================================
-# 🎨 ULTRA-PREMIUM STYLING
+# 🎨 ULTRA-PREMIUM & MOBILE CAMERA STYLING
 # ==========================================
 touch_glow_color = "rgba(255, 179, 0, 0.45)" if is_curr_premium else "rgba(59, 130, 246, 0.25)"
 touch_border_color = "#FFD54F" if is_curr_premium else "#3b82f6"
@@ -293,6 +293,24 @@ st.markdown(f"""
     
     button[title="Increment"], button[title="Decrement"] {{ display: none !important; }}
     div[data-testid="stNumberInputStepUp"], div[data-testid="stNumberInputStepDown"] {{ display: none !important; }}
+
+    /* Mobile Camera UI Fixes */
+    div[data-testid="stCameraInput"] {{
+        width: 100% !important;
+        max-width: 100% !important;
+    }}
+    div[data-testid="stCameraInput"] video {{
+        width: 100% !important;
+        height: auto !important;
+        border-radius: 16px !important;
+        border: 2px solid {touch_border_color} !important;
+        box-shadow: 0 0 20px {touch_glow_color} !important;
+    }}
+    div[data-testid="stImage"] img {{
+        border-radius: 14px !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        width: 100% !important;
+    }}
 
     .stApp:active {{
         box-shadow: inset 0 0 80px {touch_glow_color} !important;
@@ -1322,7 +1340,7 @@ if st.session_state.selected_module is None:
                 st.rerun()
 
 # ==========================================
-# 🧮 MODULE 0: CIVIL CALCULATOR & UNIT CONVERTER
+# 🧮 MODULE 0: CIVIL CALCULATOR & AI DRAWING READER
 # ==========================================
 elif st.session_state.selected_module == "Civil Calculator":
     if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_to_main_calc"):
@@ -1330,27 +1348,116 @@ elif st.session_state.selected_module == "Civil Calculator":
         st.rerun()
         
     st.write("---")
-    st.subheader("🧮 Civil Smart Unit Converter")
-    st.caption("💡 एकाच बॉक्समध्ये मूल्य भरा आणि सर्व युनिट्समधील अचूक हिशोब एकाच झटक्यात मिळवा!")
+    st.subheader("🧮 Civil Smart Calculator & AI Drawing Reader")
 
-    conv_category = st.selectbox("कनव्हर्शन प्रकार निवडा:", [
+    conv_category = st.selectbox("पर्याय निवडा (Select Option):", [
+        "📐 AI Drawing Reader (फोटोवरून मोजमाप पत्रक बनवा)",
         "📦 Volume / Brass Converter (घनफळ आणि ब्रास)", 
         "📏 Length Converter (लांबी मोजमाप)", 
         "📐 Area Converter (क्षेत्रफळ मोजमाप)"
     ])
 
-    if "Volume / Brass" in conv_category:
+    # ------------------------------------------
+    # 📐 NEW FEATURE: AI DRAWING READER
+    # ------------------------------------------
+    if "AI Drawing Reader" in conv_category:
+        st.markdown("#### 📐 AI Drawing Specification & Measurement Reader")
+        st.caption("💡 तुमच्या मोबाईलच्या कॅमेऱ्याने प्लॅन/ड्राइंगचा स्पष्ट फोटो काढा. AI अचूक एरिया स्टेटमेंट, ओपनिंग शेड्युल आणि मोजमाप शीट तयार करेल.")
+
+        input_method = st.radio("इनपुट पद्धत निवडा:", ["📸 Capture via Camera (Live)", "📁 Upload Drawing Photo"], horizontal=True)
+        
+        drawing_img = None
+        if "Capture" in input_method:
+            drawing_img = st.camera_input("📸 कॅमेरा वापरून ड्राइंगचा स्पष्ट फोटो घ्या")
+        else:
+            drawing_img = st.file_uploader("Upload Plan / Drawing Image (PNG, JPG):", type=["png", "jpg", "jpeg"])
+
+        if drawing_img is not None:
+            st.image(drawing_img, caption="📸 कॅप्चर केलेले/अपलोड केलेले ड्राइंग", use_column_width=True)
+            
+            if st.button("🚀 Analyze Drawing & Generate Measurement Sheet", type="primary", use_container_width=True):
+                api_key = st.secrets.get("GEMINI_API_KEY", os.getenv("GEMINI_API_KEY", ""))
+                
+                if not HAS_GENAI or not api_key:
+                    st.error("❌ Google Gemini API Key कॉन्फिगर केलेली नाही. कृपया Secrets मध्ये GEMINI_API_KEY सेट करा.")
+                else:
+                    with st.spinner("🔍 AI ड्राइंगमधील डायमेन्शन्स, एरिया स्टेटमेंट आणि ओपनिंग शेड्युल रीड करत आहे... (कृपया ५-१० सेकंद वाट पाहा)"):
+                        try:
+                            # PIL Image Convert
+                            from PIL import Image
+                            image_bytes = Image.open(drawing_img)
+
+                            client = genai.Client(api_key=api_key)
+                            
+                            prompt = """
+                            You are an expert Senior Civil Site Engineer and Quantity Surveyor for Patil Infratech. 
+                            Analyze this civil engineering drawing/blueprint accurately. Strictly extract information printed on the drawing (DO NOT GUESS or invent values):
+                            
+                            1. **AREA STATEMENT TABLE:**
+                               - Plot Area, Built-up Area, Carpet Area, Balcony/Open Area (if mentioned).
+                            
+                            2. **OPENING SCHEDULE (DOORS & WINDOWS):**
+                               - Type (e.g. D1, D2, W1, W2), Size (Width x Height in meters/feet), Quantity (Nos), and Location/Description.
+                            
+                            3. **STRUCTURAL & WORK SPECIFICATIONS:**
+                               - Concrete Grade, Brickwork Thickness, Plaster Details, Steel Grade (if printed in legend/notes).
+                            
+                            4. **CIVIL SITE MEASUREMENT SHEET:**
+                               - Prepare a clear Markdown Measurement Sheet based directly on the drawn dimensions.
+                            
+                            Format the output clearly with professional Markdown tables suitable for a Site Engineer.
+                            """
+                            
+                            response = client.models.generate_content(
+                                model='gemini-2.5-flash',
+                                contents=[prompt, image_bytes]
+                            )
+
+                            if response and response.text:
+                                st.success("🎉 ड्राइंग रीडिंग यशस्वी झाले! मोजमाप तक्ता खालीलप्रमाणे आहे:")
+                                st.markdown("### 📊 PATIL INFRATECH - AI DRAWING MEASUREMENT REPORT")
+                                st.info(f"👤 **Prepared For:** {current_user_name} | **Date:** {get_ist_time().strftime('%d-%m-%Y %H:%M:%S')}")
+                                
+                                report_content = response.text
+                                st.markdown(report_content)
+                                
+                                # WhatsApp Sharing Option
+                                msg_text = f"🏗️ *PATIL INFRATECH - AI DRAWING ANALYSIS REPORT*\n"
+                                msg_text += f"👤 *Engineer/User:* {current_user_name}\n"
+                                msg_text += f"📅 *Date:* {get_ist_time().strftime('%d-%m-%Y')}\n\n"
+                                msg_text += f"{report_content[:1500]}...\n\n"  # Truncate for WA limit
+                                msg_text += f"_Generated by Patil Infratech AI Drawing Reader_"
+                                
+                                encoded_msg = urllib.parse.quote(msg_text)
+                                st.write("---")
+                                render_whatsapp_feature(encoded_msg, "ai_dwg_reader")
+                                
+                                # History DB Save
+                                if current_user_name:
+                                    conn = get_db_connection()
+                                    cursor = conn.cursor()
+                                    now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
+                                    cursor.execute("INSERT INTO history (user_key, timestamp, user_note, report_data) VALUES (?, ?, ?, ?)", 
+                                                   (current_user_name, now_str, "AI Drawing Scan Report", report_content))
+                                    conn.commit()
+                                    conn.close()
+                            else:
+                                st.error("⚠️ AI ला ड्राइंगमधील मजकूर वाचता आला नाही. फोटो स्पष्ट आणि पुरेसा प्रकाश असताना पुन्हा काढून पहा.")
+                        except Exception as e:
+                            st.error(f"⚠️ ड्राइंग प्रोसेस करताना एरर आला: {e}")
+
+    # ------------------------------------------
+    # OTHER EXISTING CALCULATOR OPTIONS
+    # ------------------------------------------
+    elif "Volume / Brass" in conv_category:
         st.markdown("#### 📦 Volume & Brass Converter")
         val = st.number_input("मूल्य भरा (Value):", min_value=0.0, value=1.0, step=0.1, key="v_val")
         unit_from = st.selectbox("मूळ युनिट (From Unit):", ["Cubic Meter (m³)", "Cubic Feet (CFT)", "Brass"])
 
         if st.button("⚡ Convert Now", type="primary", key="btn_conv_vol"):
-            if "Cubic Meter" in unit_from:
-                m3 = val
-            elif "Cubic Feet" in unit_from:
-                m3 = val / 35.3147
-            else:
-                m3 = val * 2.83168
+            if "Cubic Meter" in unit_from: m3 = val
+            elif "Cubic Feet" in unit_from: m3 = val / 35.3147
+            else: m3 = val * 2.83168
 
             brass = m3 / 2.83168
             cft = m3 * 35.3147
@@ -1372,16 +1479,11 @@ elif st.session_state.selected_module == "Civil Calculator":
         unit_from = st.selectbox("मूळ युनिट (From Unit):", ["Meters", "Feet", "Inches", "Millimeters (mm)", "Centimeters (cm)"])
 
         if st.button("⚡ Convert Now", type="primary", key="btn_conv_len"):
-            if "Meters" in unit_from:
-                meters = val
-            elif "Feet" in unit_from:
-                meters = val / 3.28084
-            elif "Inches" in unit_from:
-                meters = val / 39.3701
-            elif "Millimeters" in unit_from:
-                meters = val / 1000.0
-            else:
-                meters = val / 100.0
+            if "Meters" in unit_from: meters = val
+            elif "Feet" in unit_from: meters = val / 3.28084
+            elif "Inches" in unit_from: meters = val / 39.3701
+            elif "Millimeters" in unit_from: meters = val / 1000.0
+            else: meters = val / 100.0
 
             feet = meters * 3.28084
             inches = meters * 39.3701
@@ -1405,14 +1507,10 @@ elif st.session_state.selected_module == "Civil Calculator":
         unit_from = st.selectbox("मूळ युनिट (From Unit):", ["Sq. Meters (m²)", "Sq. Feet (Sq. Ft.)", "Guntha", "Acre"])
 
         if st.button("⚡ Convert Now", type="primary", key="btn_conv_area"):
-            if "Sq. Feet" in unit_from:
-                sqft = val
-            elif "Sq. Meters" in unit_from:
-                sqft = val * 10.7639
-            elif "Guntha" in unit_from:
-                sqft = val * 1089.0
-            else:
-                sqft = val * 43560.0
+            if "Sq. Feet" in unit_from: sqft = val
+            elif "Sq. Meters" in unit_from: sqft = val * 10.7639
+            elif "Guntha" in unit_from: sqft = val * 1089.0
+            else: sqft = val * 43560.0
 
             sqm = sqft / 10.7639
             guntha = sqft / 1089.0
