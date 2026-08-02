@@ -1,4 +1,4 @@
-# KANHA_1p - पाटील इन्फ्राटेक (SQLite Database & Streamlit Web Application)
+# KANHA_1p - पाटील इन्फ्राटेक (SQLite Database & Streamlit Web Application with Email OTP)
 import streamlit as st
 import math
 import sqlite3
@@ -9,6 +9,9 @@ import time
 import urllib.parse
 import random
 import string
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 # Official Google GenAI SDK Import
 try:
@@ -29,6 +32,32 @@ def get_ist_time():
     return ist_now
 
 # ==========================================
+# 📧 EMAIL OTP SENDING FUNCTION (FREE GMAIL SMTP)
+# ==========================================
+def send_email_otp(receiver_email, otp_code):
+    sender_email = st.secrets.get("EMAIL_USER", "your_email@gmail.com") if hasattr(st, "secrets") else "your_email@gmail.com"
+    sender_password = st.secrets.get("EMAIL_PASS", "your_gmail_app_password") if hasattr(st, "secrets") else "your_gmail_app_password"
+    
+    message = MIMEMultipart("alternative")
+    message["Subject"] = "PATIL INFRATECH - Login OTP Verification"
+    message["From"] = sender_email
+    message["To"] = receiver_email
+
+    text = f"नमस्कार!\nतुमचा पाटील इन्फ्राटेक लॉगिन/रेजिस्ट्रेशन OTP हा आहे: {otp_code}\nहा OTP कोणासोबतही शेअर करू नका.\n\n- पाटील इन्फ्राटेक टीम"
+    part = MIMEText(text, "plain")
+    message.attach(part)
+
+    try:
+        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server.starttls()
+        server.login(sender_email, sender_password)
+        server.sendmail(sender_email, receiver_email, message.as_string())
+        server.quit()
+        return True
+    except Exception as e:
+        return False
+
+# ==========================================
 # 🗄️ SQLITE DATABASE MANAGEMENT
 # ==========================================
 DB_FILE = "patil_infratech.db"
@@ -42,7 +71,7 @@ def init_db():
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # 1. Users Table
+    # 1. Users Table (Added email column)
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
             user_key TEXT PRIMARY KEY,
@@ -50,6 +79,7 @@ def init_db():
             uid TEXT UNIQUE,
             pin TEXT,
             mobile TEXT,
+            email TEXT,
             password TEXT,
             comment TEXT,
             admin_message TEXT,
@@ -123,9 +153,9 @@ def init_db():
     cursor.execute("SELECT * FROM users WHERE user_key = ?", ("9999999999",))
     if not cursor.fetchone():
         cursor.execute('''
-            INSERT INTO users (user_key, id, uid, pin, mobile, password, comment, admin_message, unread_notification, is_premium, premium_expiry, requested_code, seen_popup, master_code_uses, last_active, activated_by)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', ("9999999999", "kanha", "KANHA_1P", "1234", "9999999999", "patiladmin123", "मास्टर ॲडमीन अकाउंट", "स्वागत आहे मास्टर कन्हैया! आपले पाटील इन्फ्राटेक मध्ये सर्व अधिकार अनलॉक्ड आहेत ⚡", 0, 1, "2099-12-31 23:59:59", 0, 1, 0, get_ist_time().strftime("%Y-%m-%d %H:%M:%S"), "Master Admin"))
+            INSERT INTO users (user_key, id, uid, pin, mobile, email, password, comment, admin_message, unread_notification, is_premium, premium_expiry, requested_code, seen_popup, master_code_uses, last_active, activated_by)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', ("9999999999", "kanha", "KANHA_1P", "1234", "9999999999", "admin@patilinfratech.com", "patiladmin123", "मास्टर ॲडमीन अकाउंट", "स्वागत आहे मास्टर कन्हैया! आपले पाटील इन्फ्राटेक मध्ये सर्व अधिकार अनलॉक्ड आहेत ⚡", 0, 1, "2099-12-31 23:59:59", 0, 1, 0, get_ist_time().strftime("%Y-%m-%d %H:%M:%S"), "Master Admin"))
 
     # Default Feature Locks (Quantity Surveying Included)
     default_locks = {
@@ -180,6 +210,12 @@ def get_feature_locks():
 # Session State & Query Params Initialization (Auto-Login Support)
 if "app_user_name" not in st.session_state:
     st.session_state.app_user_name = None
+if "pending_email" not in st.session_state:
+    st.session_state.pending_email = None
+if "generated_otp" not in st.session_state:
+    st.session_state.generated_otp = None
+if "otp_verified" not in st.session_state:
+    st.session_state.otp_verified = False
 
 query_params = st.query_params
 if st.session_state.app_user_name is None and "saved_uid" in query_params:
@@ -654,6 +690,7 @@ if st.session_state.is_admin_logged:
             u_name = info.get("id", target_user)
             u_uid = info.get("uid", "N/A")
             u_mob = info.get("mobile", "N/A")
+            u_email = info.get("email", "N/A")
             u_pin = info.get("pin", "N/A")
             u_comm = info.get("comment", "काही नाही")
             u_prem = bool(info.get("is_premium", 0))
@@ -676,7 +713,7 @@ if st.session_state.is_admin_logged:
             st.markdown(f"""
                 <div class="admin-user-card">
                     <p style="margin:5px 0; font-size:16px;"><b>माहिती/स्टेटस:</b> <span class="gold-vip-badge">{status_badge}</span></p>
-                    <p style="margin:5px 0; font-size:15px;"><b>UID:</b> <code style="color:#60a5fa; font-size:15px;">{u_uid}</code> | <b>Mobile:</b> <code>{u_mob}</code> | <b>PIN:</b> <code style="color:#f59e0b; font-size:15px;">{u_pin}</code></p>
+                    <p style="margin:5px 0; font-size:15px;"><b>UID:</b> <code style="color:#60a5fa; font-size:15px;">{u_uid}</code> | <b>Mobile:</b> <code>{u_mob}</code> | <b>Email:</b> <code>{u_email}</code></p>
                     <p style="margin:8px 0 5px 0; font-size:15px;"><b>प्रिमियम मुदत (Expiry):</b> <code>{exp_date}</code></p>
                     <p style="margin:5px 0; font-size:15px;"><b>ॲक्टिव्ह कोड (Unused):</b> <code style="color:#10b981; font-size:16px;">{assigned_code if assigned_code else 'काही नाही'}</code></p>
                     <p style="margin:5px 0; font-size:14px; color:#9ca3af;"><b>युझर कमेंट:</b> {u_comm}</p>
@@ -885,7 +922,6 @@ if st.session_state.is_admin_logged:
                 if broadcast_msg.strip():
                     conn = get_db_connection()
                     cursor = conn.cursor()
-                    # मास्टर ॲडमीन (9999999999) सोडून बाकी सर्व युझर्सना मेसेज अपडेट करणे
                     cursor.execute('''
                         UPDATE users 
                         SET admin_message = ?, unread_notification = 1 
@@ -900,13 +936,67 @@ if st.session_state.is_admin_logged:
     st.stop()
 
 # ==========================================
-# 👤 UID & PIN SECURE LOGIN / SIGNUP SYSTEM
+# 👤 SECURE LOGIN / SIGNUP WITH EMAIL OTP
 # ==========================================
 if st.session_state.app_user_name is None:
     st.markdown("### 🏗️ PATIL INFRATECH - SECURE LOGIN")
-    auth_mode = st.radio("निवडा (Select Option):", ["🔑 UID Login (लॉगिन करा)", "✨ Register (नवीन अकाउंट)", "❓ Forgot UID/PIN (आयडी/पिन रिकव्हर करा)"], horizontal=True)
+    auth_mode = st.radio("निवडा (Select Option):", ["🔑 UID Login (लॉगिन करा)", "✨ Register (नवीन अकाउंट)", "📧 Email OTP Login (ओटीपी द्वारे लॉगिन)", "❓ Forgot UID/PIN (आयडी/पिन रिकव्हर करा)"], horizontal=True)
 
-    if "Login" in auth_mode:
+    if "Email OTP Login" in auth_mode:
+        st.markdown("#### 📧 Email OTP Verification")
+        email_input = st.text_input("तुमचा ईमेल आयडी (Email ID):").strip()
+        
+        if not st.session_state.otp_verified:
+            if st.button("📤 Send OTP to Email", type="primary"):
+                if email_input and "@" in email_input:
+                    generated_otp = ''.join(random.choices(string.digits, k=6))
+                    st.session_state.generated_otp = generated_otp
+                    st.session_state.pending_email = email_input
+                    
+                    with st.spinner("📧 ईमेलवर OTP पाठवत आहे..."):
+                        success = send_email_otp(email_input, generated_otp)
+                        if success:
+                            st.success("✅ तुमच्या ईमेलवर 6 अंकी OTP पाठवला आहे! खाली टाका.")
+                        else:
+                            st.error("❌ ईमेल पाठवताना एरर आली. (कृपया तुमचे SMTP क्रेडेन्शियल्स तपासा)")
+                else:
+                    st.warning("⚠️ कृपया वैध ईमेल आयडी टाका!")
+            
+            if st.session_state.generated_otp:
+                entered_otp = st.text_input("6 अंकी OTP टाका:", max_chars=6).strip()
+                if st.button("🔐 Verify OTP & Login"):
+                    if entered_otp == st.session_state.generated_otp:
+                        st.session_state.otp_verified = True
+                        
+                        conn = get_db_connection()
+                        cursor = conn.cursor()
+                        cursor.execute("SELECT user_key FROM users WHERE email = ?", (st.session_state.pending_email,))
+                        row = cursor.fetchone()
+                        
+                        if row:
+                            st.session_state.app_user_name = row["user_key"]
+                            conn.close()
+                        else:
+                            uname = st.session_state.pending_email.split('@')[0].upper()
+                            uid_gen = uname[:4] + "".join(random.choices(string.digits, k=4))
+                            welcome_msg = f"{uname} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
+                            now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
+                            
+                            cursor.execute('''
+                                INSERT INTO users (user_key, id, uid, pin, mobile, email, password, comment, admin_message, unread_notification, is_premium, premium_expiry, requested_code, seen_popup, master_code_uses, last_active, activated_by)
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, NULL, 0, 0, 0, ?, ?)
+                            ''', (uname, uname, uid_gen, "1234", "9999999999", st.session_state.pending_email, "user123", "काही नाही", welcome_msg, now_str, "Free User"))
+                            conn.commit()
+                            conn.close()
+                            st.session_state.app_user_name = uname
+                            
+                        st.success("🎉 OTP यशस्वीरित्या व्हेरिफाय झाला! लॉगिन होत आहे...")
+                        time.sleep(1)
+                        st.rerun()
+                    else:
+                        st.error("❌ चुकीचा OTP! कृपया पुन्हा प्रयत्न करा.")
+
+    elif "UID Login" in auth_mode:
         with st.form("uid_login_form"):
             input_uid = st.text_input("Enter your UID:").strip().upper()
             remember_me = st.checkbox("📌 या डिव्हाइसवर अकाउंट सेव्ह ठेवा (Remember Me)", value=False)
@@ -933,20 +1023,21 @@ if st.session_state.app_user_name is None:
         with st.form("uid_reg_form"):
             reg_name = st.text_input("नाव (Name):", placeholder="नाव टाका").strip()
             reg_mob = st.text_input("मोबाईल नंबर (Mobile Number):", placeholder="१० अंकी नंबर").strip()
+            reg_email = st.text_input("ईमेल आयडी (Email ID):", placeholder="abc@gmail.com").strip()
             reg_pin = st.text_input("4-Digit सिक्रेट पिन सेट करा (Set PIN):", type="password", max_chars=4, placeholder="1234").strip()
             remember_me_reg = st.checkbox("📌 या डिव्हाइसवर अकाउंट सेव्ह ठेवा (Remember Me)", value=False, key="reg_rem")
             submit_reg = st.form_submit_button("✨ Create Account & Get UID", type="primary")
 
             if submit_reg:
-                if reg_name and len(reg_mob) >= 10 and len(reg_pin) == 4:
+                if reg_name and len(reg_mob) >= 10 and "@" in reg_email and len(reg_pin) == 4:
                     conn = get_db_connection()
                     cursor = conn.cursor()
-                    cursor.execute("SELECT user_key FROM users WHERE mobile = ?", (reg_mob,))
-                    mob_exists = cursor.fetchone()
+                    cursor.execute("SELECT user_key FROM users WHERE mobile = ? OR email = ?", (reg_mob, reg_email))
+                    exists = cursor.fetchone()
 
-                    if mob_exists:
+                    if exists:
                         conn.close()
-                        st.error("❌ या मोबाईल नंबरवर आधीच अकाउंट तयार आहे!")
+                        st.error("❌ या मोबाईल नंबर किंवा ईमेलवर आधीच अकाउंट तयार आहे!")
                     else:
                         first_name = reg_name.split()[0].upper()
                         last_4_mob = reg_mob[-4:]
@@ -956,27 +1047,21 @@ if st.session_state.app_user_name is None:
                         if cursor.fetchone():
                             generated_uid = f"{first_name}{random.randint(1000, 9999)}"
 
-                        cursor.execute("SELECT user_key FROM users WHERE user_key = ?", (reg_name,))
-                        if not cursor.fetchone():
-                            new_welcome_msg = f"{reg_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
-                            now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
-                            
-                            cursor.execute('''
-                                INSERT INTO users (user_key, id, uid, pin, mobile, password, comment, admin_message, unread_notification, is_premium, premium_expiry, requested_code, seen_popup, master_code_uses, last_active, activated_by)
-                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, 0, NULL, 0, 0, 0, ?, ?)
-                            ''', (reg_name, reg_name, generated_uid, reg_pin, reg_mob, "user123", "काही नाही", new_welcome_msg, now_str, "Free User"))
-                            
-                            conn.commit()
-                            conn.close()
-                            
-                            st.success(f"🎉 अकाउंट यशस्वीरित्या तयार झाले! तुमचा युनिक UID हा आहे: **{generated_uid} and pin {reg_pin}**")
-                            st.info("💡 कृपया हा UID लक्षात ठेवा आणि वर 'UID Login' वर क्लिक करून लॉगिन करा!")
-                            st.stop()
-                        else:
-                            conn.close()
-                            st.error("❌ या नावाने आधीच अकाउंट आहे! कृपया दुसरे नाव वापरून रजिस्टर करा.")
+                        new_welcome_msg = f"{reg_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
+                        now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
+                        
+                        cursor.execute('''
+                            INSERT INTO users (user_key, id, uid, pin, mobile, email, password, comment, admin_message, unread_notification, is_premium, premium_expiry, requested_code, seen_popup, master_code_uses, last_active, activated_by)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, NULL, 0, 0, 0, ?, ?)
+                        ''', (reg_name, reg_name, generated_uid, reg_pin, reg_mob, reg_email, "user123", "काही नाही", new_welcome_msg, now_str, "Free User"))
+                        
+                        conn.commit()
+                        conn.close()
+                        
+                        st.success(f"🎉 अकाउंट यशस्वीरित्या तयार झाले! तुमचा युनिक UID हा आहे: **{generated_uid}**")
+                        st.info("💡 कृपया हा UID लक्षात ठेवा आणि वर 'UID Login' वर क्लिक करून लॉगिन करा!")
                 else:
-                    st.warning("⚠️ कृपया नाव, १० अंकी मोबाईल नंबर आणि अचूक ४ अंकी पिन (PIN) टाकल्याची खात्री करा!")
+                    st.warning("⚠️ कृपया सर्व माहिती, वैध ईमेल आणि ४ अंकी पिन अचूक भरा!")
 
     else:
         with st.form("forgot_uid_form"):
@@ -1048,6 +1133,7 @@ else:
 
 if col_lo.button("🔄 Logout / ॲप बदला"):
     st.session_state.app_user_name = None
+    st.session_state.otp_verified = False
     if "saved_uid" in st.query_params:
         del st.query_params["saved_uid"]
     st.session_state.current_comment = "काही नाही"
@@ -1376,7 +1462,7 @@ elif st.session_state.selected_module == "Civil Calculator":
             """, unsafe_allow_html=True)
 
 # ==========================================
-# 🛑 MODULE 1: RATE ANALYSIS MODULE (Concrete Work, Brickwork & Plaster Work)
+# 🛑 MODULE 1: RATE ANALYSIS MODULE
 # ==========================================
 elif st.session_state.selected_module == "Rate Analysis":
     if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_to_main"):
@@ -1402,7 +1488,7 @@ elif st.session_state.selected_module == "Rate Analysis":
             grade = st.selectbox("काँक्रीट ग्रेड निवडा:", ["M10 (1:3:6)", "M15 (1:2:4)", "M20 (1:1.5:3)", "M25 (1:1:2)"])
         with col2:
             component = st.selectbox("आरसीसी घटक (Component) निवडा:", 
-                                     ["Footing (0.8% Steel)", "Slab (1.0% Steel)", "Beam (2.0% Steel)", "Column (2.5% Steel)", "Plain Concrete (0% Steel)"])
+                                   ["Footing (0.8% Steel)", "Slab (1.0% Steel)", "Beam (2.0% Steel)", "Column (2.5% Steel)", "Plain Concrete (0% Steel)"])
 
         if "M10" in grade: cement_ratio, sand_ratio, aggregate_ratio = 1, 3, 6
         elif "M15" in grade: cement_ratio, sand_ratio, aggregate_ratio = 1, 2, 4
@@ -1543,7 +1629,7 @@ elif st.session_state.selected_module == "Rate Analysis":
     elif "Brickwork" in main_choice:
         st.subheader("🧱 Brickwork Estimation")
         mortar_choice = st.selectbox("मॉर्टर मिक्स गुणोत्तर (Mortar Mix Ratio) निवडा:", 
-                                     ["1:3 (सिमेंट : वाळू)", "1:4 (सिमेंट : वाळू)", "1:5 (सिमेंट : वाळू)", "1:6 (सिमेंट : वाळू)"])
+                                   ["1:3 (सिमेंट : वाळू)", "1:4 (सिमेंट : वाळू)", "1:5 (सिमेंट : वाळू)", "1:6 (सिमेंट : वाळू)"])
         
         if "1:3" in mortar_choice: c_part, s_part = 1, 3
         elif "1:4" in mortar_choice: c_part, s_part = 1, 4
@@ -2079,7 +2165,7 @@ elif st.session_state.selected_module == "BBS":
             conn.close()
 
 # ==========================================
-# 📈 QUANTITY SURVEYING & ABSTRACT SHEET MODULE (Notebook Format)
+# 📈 QUANTITY SURVEYING & ABSTRACT SHEET MODULE
 # ==========================================
 elif st.session_state.selected_module == "Quantity Surveying":
     if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_to_main_qs"):
@@ -2090,7 +2176,6 @@ elif st.session_state.selected_module == "Quantity Surveying":
     st.subheader("📈 Quantity Surveying & Abstract Sheet Master")
     st.caption("💡 नोटबुकच्या मोजमाप पद्धतीनुसार खालील टेबलमध्ये Description, Nos, Length, Width, Height भरा. हिशोब तयार करा!")
 
-    # 1. Camera / Blueprint Section
     with st.expander("📷 2D Plan / Blueprint / Camera Reference"):
         plan_option = st.radio("ब्लूप्रिंट इनपुट पद्धत निवडा:", ["Upload 2D Plan Image", "Capture via Camera (Live)"], horizontal=True)
         if "Upload" in plan_option:
@@ -2205,7 +2290,6 @@ elif st.session_state.selected_module == "Quantity Surveying":
                 "Material": mat_summary
             })
 
-        # 🚪 Brickwork Deduction Sub-Section
         if is_brickwork:
             st.markdown("##### 🚪 Brickwork Deductions (Doors / Windows in m³)")
             ded_key_bw = f"bw_ded_count_{idx}"
@@ -2236,7 +2320,6 @@ elif st.session_state.selected_module == "Quantity Surveying":
             if bw_ded_vol > 0:
                 st.markdown(f"**🔴 Brickwork Deduction Vol: `{bw_ded_vol:.3f} m³`**")
 
-        # 🚪 Plaster Deduction Sub-Section
         if is_plaster:
             st.markdown("##### 🚪 Plaster Deductions (Doors / Windows in m²)")
             ded_key_pl = f"pl_ded_count_{idx}"
