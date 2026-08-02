@@ -1,9 +1,5 @@
 streamlit
 pandas
-numpy
-pillow
-opencv-python-headless
 google-genai
-psycopg2-binary
-libsql-client
-pypdf
+libsql-experimental
+Pillow
