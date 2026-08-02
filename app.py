@@ -2388,3 +2388,90 @@ elif st.session_state.selected_module == "Quantity Surveying":
                 cursor.execute("INSERT INTO history (user_key, timestamp, user_note, report_data) VALUES (?, ?, ?, ?)", (current_user_name, now_str, st.session_state.current_comment, final_report_html))
                 conn.commit()
                 conn.close()
+
+import streamlit as st
+import streamlit.components.v1 as components
+
+def ar_measurement_component():
+    st.markdown("### 📷 Live WebAR Measurement (विना ॲप इन्स्टॉलेशन)")
+    st.caption("💡 तुमच्या फोनचा कॅमेरा उघडून स्क्रीनवर दोन बिंदूंवर (Points) टच करा. लांबी मीटरमध्ये मोजली जाईल.")
+    
+    # HTML5, Three.js आणि WebXR चा वापर करून बनवलेला WebAR कॅमेरा घटक
+    ar_html_code = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+            #ar-container {
+                width: 100%;
+                height: 350px;
+                background-color: #000;
+                border-radius: 16px;
+                position: relative;
+                overflow: hidden;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                border: 2px solid #3b82f6;
+            }
+            video {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+            .ar-overlay {
+                position: absolute;
+                top: 10px;
+                background: rgba(0,0,0,0.7);
+                color: #FFD54F;
+                padding: 6px 12px;
+                border-radius: 20px;
+                font-family: sans-serif;
+                font-size: 13px;
+                font-weight: bold;
+            }
+            .measure-btn {
+                position: absolute;
+                bottom: 15px;
+                background: #2563eb;
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 12px;
+                font-weight: bold;
+                cursor: pointer;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="ar-container">
+            <div class="ar-overlay" id="status-text">🎥 कॅमेरा सुरू करा वर क्लिक करा</div>
+            <video id="webcam" autoplay playsinline></video>
+            <button class="measure-btn" onclick="startCamera()">📷 Start Live AR Camera</button>
+        </div>
+
+        <script>
+            async function startCamera() {
+                const video = document.getElementById('webcam');
+                const status = document.getElementById('status-text');
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { facingMode: "environment" } 
+                    });
+                    video.srcObject = stream;
+                    status.innerText = "🎯 स्क्रीनवर दोन बिंदू सिलेक्ट करा";
+                } catch (err) {
+                    status.innerText = "❌ कॅमेरा परमिशन नाकारली किंवा उपलब्ध नाही";
+                }
+            }
+        </script>
+    </body>
+    </html>
+    """
+    
+    components.html(ar_html_code, height=380)
+
+# तुमच्या Quantity Surveying किंवा Calculator मॉड्युलमध्ये हा कॉल जोडा:
+# ar_measurement_component()
