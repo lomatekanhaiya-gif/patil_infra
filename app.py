@@ -2146,30 +2146,35 @@ elif st.session_state.selected_module == "Quantity Surveying":
 import streamlit as st
 import streamlit.components.v1 as components
 
-    # ----------------------------------------------------
-    # 📸 1. LIVE WebAR CAMERA & BLUEPRINT SECTION
-    # ----------------------------------------------------
+   # ==========================================
+# 📈 QUANTITY SURVEYING & ABSTRACT SHEET MODULE
+# ==========================================
+elif st.session_state.selected_module == "Quantity Surveying":
+    if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_to_main_qs"):
+        st.session_state.selected_module = None
+        st.rerun()
+        
+    st.write("---")
+    st.subheader("📈 Quantity Surveying & Abstract Sheet Master")
+    st.caption("💡 नोटबुकच्या मोजमाप पद्धतीनुसार खालील टेबलमध्ये Description, Nos, Length, Width, Height भरा. हिशोब तयार करा!")
+
+    # 1. Camera / Blueprint Section with WebAR
     with st.expander("📷 Live WebAR Measurement & Blueprint Reference"):
         plan_option = st.radio(
-            "इनपुट पद्धत निवडा:", 
-["🎯 Live WebAR Camera (AR मोजमाप)", " Upload 2D Plan Image", "📸 Capture via Camera (Live Photo)"], 
+            "ब्लूप्रिंट इनपुट पद्धत निवडा:", 
+            ["🎯 Live WebAR Camera (AR मोजमाप)", "Upload 2D Plan Image", "Capture via Camera (Live)"], 
             horizontal=True
         )
         
         if "Live WebAR Camera" in plan_option:
-            # ⭐ इथे आपण AR मेजरमेंट कॉम्पोनंट कॉल करत आहोत ⭐
             ar_measurement_component()
-
         elif "Upload" in plan_option:
             uploaded_plan = st.file_uploader("Upload Blueprint (PNG/JPG):", type=["png", "jpg", "jpeg"])
             if uploaded_plan:
                 st.image(uploaded_plan, caption="Uploaded 2D Floor Plan", use_column_width=True)
-
         else:
             cam_pic = st.camera_input("📸 Capture 2D Plan from Camera")
             if cam_pic:
                 st.image(cam_pic, caption="Captured Blueprint Reference", use_column_width=True)
 
-    # ----------------------------------------------------
-    # पुढे तुझा उर्वरित Quantity Surveying चा कोड जसा आहे तसाच राहील...
-    # ----------------------------------------------------
+    st.markdown("### 🏢 Construction Stages Measurement Sheet (Excavation to Finishing)")
