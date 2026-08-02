@@ -2157,24 +2157,4 @@ elif st.session_state.selected_module == "Quantity Surveying":
     st.write("---")
     st.subheader("📈 Quantity Surveying & Abstract Sheet Master")
     st.caption("💡 नोटबुकच्या मोजमाप पद्धतीनुसार खालील टेबलमध्ये Description, Nos, Length, Width, Height भरा. हिशोब तयार करा!")
-
-    # 1. Camera / Blueprint Section with WebAR
-    with st.expander("📷 Live WebAR Measurement & Blueprint Reference"):
-        plan_option = st.radio(
-            "ब्लूप्रिंट इनपुट पद्धत निवडा:", 
-            ["🎯 Live WebAR Camera (AR मोजमाप)", "Upload 2D Plan Image", "Capture via Camera (Live)"], 
-            horizontal=True
-        )
-        
-        if "Live WebAR Camera" in plan_option:
-            ar_measurement_component()
-        elif "Upload" in plan_option:
-            uploaded_plan = st.file_uploader("Upload Blueprint (PNG/JPG):", type=["png", "jpg", "jpeg"])
-            if uploaded_plan:
-                st.image(uploaded_plan, caption="Uploaded 2D Floor Plan", use_column_width=True)
-        else:
-            cam_pic = st.camera_input("📸 Capture 2D Plan from Camera")
-            if cam_pic:
-                st.image(cam_pic, caption="Captured Blueprint Reference", use_column_width=True)
-
-    st.markdown("### 🏢 Construction Stages Measurement Sheet (Excavation to Finishing)")
+   
