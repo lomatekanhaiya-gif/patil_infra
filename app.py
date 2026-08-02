@@ -1396,10 +1396,11 @@ elif st.session_state.selected_module == "Civil Calculator":
                     with st.spinner("🔍 AI ड्राइंग मधील माहिती, डायमेन्शन्स आणि एरिया स्टेटमेंट रीड करत आहे... (कृपया ५-१० सेकंद वाट पाहा)"):
                         try:
                             client = genai.Client(api_key=api_key)
+                            response = None  # व्हॅरिएबल आधीच डिफाईन केला
                             
                             if is_pdf:
                                 if not HAS_PYPDF:
-                                    st.error("❌ PDF प्रक्रिया करण्यासाठी `pypdf` लायब्ररी आवश्यक आहे. कृपया `pip install pypdf` इन्स्टॉल करा.")
+                                    st.error("❌ PDF प्रक्रिया करण्यासाठी `pypdf` लायब्ररी आवश्यक आहे. कृपया सर्व्हरवर/`requirements.txt` मध्ये `pypdf` जोडा.")
                                 else:
                                     pdf_reader = pypdf.PdfReader(drawing_file)
                                     extracted_text = ""
@@ -1479,6 +1480,8 @@ elif st.session_state.selected_module == "Civil Calculator":
                                                    (current_user_name, now_str, "AI Drawing Scan Report", report_content))
                                     conn.commit()
                                     conn.close()
+                            elif response is None and is_pdf and not HAS_PYPDF:
+                                pass # pypdf चा एरर मेसेज आधीच दाखवला आहे
                             else:
                                 st.error("⚠️ AI ला फाइलमधील मजकूर/ड्राइंग वाचता आले नाही. कृपया फाईल तपासून पुन्हा प्रयत्न करा.")
                         except Exception as e:
