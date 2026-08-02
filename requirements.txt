@@ -1,4 +1,5 @@
 streamlit
 pandas
-libsql-experimental
 google-genai
+psycopg2-binary
+libsql-experimental
