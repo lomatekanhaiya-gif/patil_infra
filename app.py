@@ -1,6 +1,7 @@
-# KANHA_1p - पाटील इन्फ्राटेक (Turso Cloud DB & Streamlit Web Application)
+# KANHA_1p - पाटील इन्फ्राटेक (SQLite Database & Streamlit Web Application)
 import streamlit as st
 import math
+import sqlite3
 import os
 import datetime
 import pandas as pd
@@ -8,14 +9,6 @@ import time
 import urllib.parse
 import random
 import string
-
-# 🗄️ Turso / SQLite Safe Import Protocol
-try:
-    import libsql_experimental as libsql
-    HAS_LIBSQL = True
-except Exception:
-    import sqlite3 as libsql
-    HAS_LIBSQL = False
 
 # Official Google GenAI SDK Import
 try:
@@ -36,18 +29,13 @@ def get_ist_time():
     return ist_now
 
 # ==========================================
-# 🗄️ TURSO CLOUD DATABASE MANAGEMENT (PERMANENT DB)
+# 🗄️ SQLITE DATABASE MANAGEMENT
 # ==========================================
-TURSO_URL = st.secrets.get("TURSO_DATABASE_URL", "libsql://kanhaiya-kanha-1p.aws-ap-south-1.turso.io")
-TURSO_TOKEN = st.secrets.get("TURSO_AUTH_TOKEN", "")
+DB_FILE = "patil_infratech.db"
 
 def get_db_connection():
-    if HAS_LIBSQL and TURSO_URL and TURSO_TOKEN:
-        # Turso Cloud डेटाबेसशी थेट जोडले जाईल
-        conn = libsql.connect(database=TURSO_URL, auth_token=TURSO_TOKEN)
-    else:
-        # लोकल बॅकअप (जर पॅकेज लोड झाले नाही तर)
-        conn = libsql.connect("patil_infratech.db", check_same_thread=False)
+    conn = sqlite3.connect(DB_FILE, check_same_thread=False)
+    conn.row_factory = sqlite3.Row
     return conn
 
 def init_db():
@@ -139,7 +127,7 @@ def init_db():
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', ("9999999999", "kanha", "KANHA_1P", "1234", "9999999999", "patiladmin123", "मास्टर ॲडमीन अकाउंट", "स्वागत आहे मास्टर कन्हैया! आपले पाटील इन्फ्राटेक मध्ये सर्व अधिकार अनलॉक्ड आहेत ⚡", 0, 1, "2099-12-31 23:59:59", 0, 1, 0, get_ist_time().strftime("%Y-%m-%d %H:%M:%S"), "Master Admin"))
 
-    # Default Feature Locks
+    # Default Feature Locks (Quantity Surveying Included)
     default_locks = {
         "Civil Calculator": "Free",
         "Rate Analysis": "Free",
@@ -170,8 +158,7 @@ def get_user_data(user_key):
     row = cursor.fetchone()
     conn.close()
     if row:
-        columns = [column[0] for column in cursor.description]
-        return dict(zip(columns, row))
+        return dict(row)
     return None
 
 def get_market_rates():
@@ -180,7 +167,7 @@ def get_market_rates():
     cursor.execute("SELECT material, rate FROM market_rates")
     rows = cursor.fetchall()
     conn.close()
-    return {row[0]: row[1] for row in rows}
+    return {row["material"]: row["rate"] for row in rows}
 
 def get_feature_locks():
     conn = get_db_connection()
@@ -188,9 +175,9 @@ def get_feature_locks():
     cursor.execute("SELECT feature_name, access_level FROM feature_locks")
     rows = cursor.fetchall()
     conn.close()
-    return {row[0]: row[1] for row in rows}
+    return {row["feature_name"]: row["access_level"] for row in rows}
 
-# Session State & Query Params Initialization
+# Session State & Query Params Initialization (Auto-Login Support)
 if "app_user_name" not in st.session_state:
     st.session_state.app_user_name = None
 
@@ -203,7 +190,7 @@ if st.session_state.app_user_name is None and "saved_uid" in query_params:
     row = cursor.fetchone()
     conn.close()
     if row:
-        st.session_state.app_user_name = row[0]
+        st.session_state.app_user_name = row["user_key"]
 
 if "is_admin_logged" not in st.session_state:
     st.session_state.is_admin_logged = False
@@ -228,7 +215,7 @@ if current_user_name:
     conn.commit()
     conn.close()
 
-# ⏳ प्रिमियम स्टेटस तपासणी
+# ⏳ प्रिमियम स्टेटस व अचूक एक्सपायरी तपासणी
 def check_user_premium_status(username):
     if not username: return False, "Free"
     if username.lower() == "kanha" or username == "9999999999":
@@ -267,7 +254,7 @@ def check_user_premium_status(username):
 is_curr_premium, _ = check_user_premium_status(current_user_name)
 
 # ==========================================
-# 🎨 ULTRA-PREMIUM STYLING
+# 🎨 ULTRA-PREMIUM ROYAL METALLIC GOLD STYLING (Forced Permanent Dark Theme)
 # ==========================================
 touch_glow_color = "rgba(255, 179, 0, 0.45)" if is_curr_premium else "rgba(59, 130, 246, 0.25)"
 touch_border_color = "#FFD54F" if is_curr_premium else "#3b82f6"
@@ -276,6 +263,7 @@ input_inner_shadow = "inset 0 0 10px rgba(255, 179, 0, 0.3)" if is_curr_premium 
 
 st.markdown(f"""
     <style>
+    /* 🟢 मोबाईलची थीम कोणतीही असो, ॲप कायम डार्क मोडमध्येच राहणार (Forced Theme Override) */
     @media (prefers-color-scheme: light), (prefers-color-scheme: dark) {{
         .stApp {{
             background: linear-gradient(135deg, #070a12 0%, #0d1322 100%) !important;
@@ -357,6 +345,7 @@ st.markdown(f"""
         font-size: 13px !important;
     }}
 
+    /* 🟢 सर्व बटन्सचे पांढरे बॅकग्राउंड काढून मूळ थीम कलर देणे */
     div.stButton > button {{
         background-color: #121929 !important;
         color: #ffffff !important;
@@ -480,8 +469,7 @@ def render_whatsapp_feature(encoded_msg, key_prefix):
                     row = cursor.fetchone()
                     
                     if row:
-                        columns = [c[0] for c in cursor.description]
-                        c_info = dict(zip(columns, row))
+                        c_info = dict(row)
                         if c_info.get("used") == 1:
                             st.error("❌ हा कोड आधीच वापरला गेला आहे! तो आता व्हॅलिड नाही.")
                             conn.close()
@@ -552,7 +540,7 @@ if not st.session_state.welcome_completed:
         conn.close()
 
         for ad in ads_rows:
-            ad_dict = dict(zip([c[0] for c in cursor.description], ad))
+            ad_dict = dict(ad)
             st.markdown(f"""
                 <div style="background: rgba(17, 24, 39, 0.7); border: 1px solid rgba(59, 130, 246, 0.3); padding: 6px 10px; border-radius: 10px; text-align: center; margin: 15px auto; max-width: 280px;">
                     <span style="font-size: 9px; color: #93c5fd; font-weight: bold;">⭐ SPONSOR</span><br>
@@ -703,14 +691,12 @@ if st.session_state.is_admin_logged:
             conn = get_db_connection()
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM history WHERE user_key = ? ORDER BY id DESC", (target_user,))
-            rows = cursor.fetchall()
-            cols = [c[0] for c in cursor.description]
-            u_hist = [dict(zip(cols, r)) for r in rows]
+            u_hist = [dict(r) for r in cursor.fetchall()]
 
             cursor.execute("SELECT code FROM premium_codes WHERE assigned_to = ? AND used = 0", (u_name,))
             c_row = cursor.fetchone()
             conn.close()
-            assigned_code = c_row[0] if c_row else None
+            assigned_code = c_row["code"] if c_row else None
 
             status_badge = f"👑 VIP MEMBER: {u_name.upper()}" if u_prem else ("🚨 CODE REQUESTED!" if is_req else f"🆓 FREE: {u_name.upper()}")
 
@@ -818,9 +804,7 @@ if st.session_state.is_admin_logged:
             conn = get_db_connection()
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM users WHERE user_key != '9999999999' ORDER BY id ASC")
-            rows = cursor.fetchall()
-            cols = [c[0] for c in cursor.description]
-            all_users = [dict(zip(cols, r)) for r in rows]
+            all_users = [dict(r) for r in cursor.fetchall()]
             conn.close()
 
             if all_users:
@@ -899,9 +883,7 @@ if st.session_state.is_admin_logged:
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM ads ORDER BY id DESC")
-        rows = cursor.fetchall()
-        cols = [c[0] for c in cursor.description]
-        ads_list = [dict(zip(cols, r)) for r in rows]
+        ads_list = [dict(r) for r in cursor.fetchall()]
         conn.close()
 
         if ads_list:
@@ -965,7 +947,7 @@ if st.session_state.app_user_name is None:
                 conn.close()
 
                 if row:
-                    found_user = row[0]
+                    found_user = row["user_key"]
                     st.session_state.app_user_name = found_user
                     if remember_me:
                         st.query_params["saved_uid"] = input_uid
@@ -1039,7 +1021,7 @@ if st.session_state.app_user_name is None:
                 if matched_users:
                     st.success("✅ तुमचे अकाउंट तपशील सापडले आहेत:")
                     for row in matched_users:
-                        st.info(f"👤 नाव: **{row[0]}** | 🔑 UID: **{row[1]}** (आता या UID ने लॉगिन करा)")
+                        st.info(f"👤 नाव: **{row['id']}** | 🔑 UID: **{row['uid']}** (आता या UID ने लॉगिन करा)")
                 else:
                     st.error("❌ चुकीचा मोबाईल नंबर किंवा PIN! तपशील जुळत नाहीत.")
 
@@ -1072,9 +1054,7 @@ is_user_premium, status_text_str = check_user_premium_status(current_user_name)
 conn = get_db_connection()
 cursor = conn.cursor()
 cursor.execute("SELECT * FROM ads WHERE active = 1 AND position = 'Main App Header (Top Banner)'")
-rows = cursor.fetchall()
-cols = [c[0] for c in cursor.description]
-ads_list = [dict(zip(cols, r)) for r in rows]
+ads_list = [dict(r) for r in cursor.fetchall()]
 conn.close()
 
 for ad in ads_list:
@@ -1181,31 +1161,25 @@ if not is_user_premium:
                     cursor.execute("SELECT * FROM premium_codes WHERE code = ?", (input_code,))
                     c_row = cursor.fetchone()
                     
-                    if c_row:
-                        cols = [c[0] for c in cursor.description]
-                        c_dict = dict(zip(cols, c_row))
-                        if c_dict.get("used") == 0:
-                            exp_datetime = get_ist_time() + datetime.timedelta(days=28)
-                            exp_str = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
-                            now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
+                    if c_row and dict(c_row).get("used") == 0:
+                        exp_datetime = get_ist_time() + datetime.timedelta(days=28)
+                        exp_str = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
+                        now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
 
-                            cursor.execute("UPDATE premium_codes SET used = 1, used_by = ?, used_date = ? WHERE code = ?", (current_user_name, now_str, input_code))
-                            cursor.execute('''
-                                UPDATE users 
-                                SET is_premium = 1, premium_expiry = ?, seen_popup = 0, activated_by = ?,
-                                    admin_message = ?, unread_notification = 0
-                                WHERE user_key = ?
-                            ''', (exp_str, "Patil Infratech", f"{current_user_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳", current_user_name))
-                            conn.commit()
-                            conn.close()
-                            st.success("🎉 प्रिमियम यशस्वीरित्या सुरू झाले!")
-                            st.rerun()
-                        else:
-                            conn.close()
-                            st.error("❌ हा कोड आधीच वापरला गेला आहे!")
+                        cursor.execute("UPDATE premium_codes SET used = 1, used_by = ?, used_date = ? WHERE code = ?", (current_user_name, now_str, input_code))
+                        cursor.execute('''
+                            UPDATE users 
+                            SET is_premium = 1, premium_expiry = ?, seen_popup = 0, activated_by = ?,
+                                admin_message = ?, unread_notification = 0
+                            WHERE user_key = ?
+                        ''', (exp_str, "Patil Infratech", f"{current_user_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳", current_user_name))
+                        conn.commit()
+                        conn.close()
+                        st.success("🎉 प्रिमियम यशस्वीरित्या सुरू झाले!")
+                        st.rerun()
                     else:
                         conn.close()
-                        st.error("❌ चुकीचा प्रिमियम कोड!")
+                        st.error("❌ चुकीचा किंवा आधीच वापरलेला कोड!")
         with c_btn2:
             if st.button("📩 Request Code"):
                 conn = get_db_connection()
@@ -1429,7 +1403,7 @@ elif st.session_state.selected_module == "Civil Calculator":
             """, unsafe_allow_html=True)
 
 # ==========================================
-# 🛑 MODULE 1: RATE ANALYSIS MODULE
+# 🛑 MODULE 1: RATE ANALYSIS MODULE (Concrete Work, Brickwork & Plaster Work)
 # ==========================================
 elif st.session_state.selected_module == "Rate Analysis":
     if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_to_main"):
@@ -2132,7 +2106,7 @@ elif st.session_state.selected_module == "BBS":
             conn.close()
 
 # ==========================================
-# 📈 QUANTITY SURVEYING & ABSTRACT SHEET MODULE
+# 📈 QUANTITY SURVEYING & ABSTRACT SHEET MODULE (Notebook Format)
 # ==========================================
 elif st.session_state.selected_module == "Quantity Surveying":
     if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_to_main_qs"):
@@ -2143,18 +2117,248 @@ elif st.session_state.selected_module == "Quantity Surveying":
     st.subheader("📈 Quantity Surveying & Abstract Sheet Master")
     st.caption("💡 नोटबुकच्या मोजमाप पद्धतीनुसार खालील टेबलमध्ये Description, Nos, Length, Width, Height भरा. हिशोब तयार करा!")
 
-import streamlit as st
-import streamlit.components.v1 as components
+    # 1. Camera / Blueprint Section
+    with st.expander("📷 2D Plan / Blueprint / Camera Reference"):
+        plan_option = st.radio("ब्लूप्रिंट इनपुट पद्धत निवडा:", ["Upload 2D Plan Image", "Capture via Camera (Live)"], horizontal=True)
+        if "Upload" in plan_option:
+            uploaded_plan = st.file_uploader("Upload Blueprint (PNG/JPG):", type=["png", "jpg", "jpeg"])
+            if uploaded_plan:
+                st.image(uploaded_plan, caption="Uploaded 2D Floor Plan", use_column_width=True)
+        else:
+            cam_pic = st.camera_input("📸 Capture 2D Plan from Camera")
+            if cam_pic:
+                st.image(cam_pic, caption="Captured Blueprint Reference", use_column_width=True)
 
-   # ==========================================
-# 📈 QUANTITY SURVEYING & ABSTRACT SHEET MODULE
-# ==========================================
-elif st.session_state.selected_module == "Quantity Surveying":
-    if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_to_main_qs"):
-        st.session_state.selected_module = None
-        st.rerun()
+    st.markdown("### 🏢 Construction Stages Measurement Sheet (Excavation to Finishing)")
+    
+    stages = [
+        "Earthwork in Excavation",
+        "P.C.C. Bedding",
+        "Foundation / Footing RCC Work",
+        "Plinth Beam & Masonry Work",
+        "Superstructure Brickwork",
+        "RCC Columns & Beams",
+        "Slab Casting",
+        "Flooring / Tiling Work",
+        "Plaster Work"
+    ]
+
+    master_rates = get_market_rates()
+    c_rate = master_rates.get('cement', 400.0)
+    s_rate = master_rates.get('sand', 2500.0)
+    a_rate = master_rates.get('aggregate', 2200.0)
+    st_rate = master_rates.get('steel', 60.0)
+    b_rate = master_rates.get('bricks', 8.0)
+
+    stage_results = []
+    
+    for idx, stg_name in enumerate(stages):
+        is_area_unit = "Flooring" in stg_name or "Plaster" in stg_name
+        is_brickwork = "Brickwork" in stg_name
+        is_plaster = "Plaster" in stg_name
         
-    st.write("---")
-    st.subheader("📈 Quantity Surveying & Abstract Sheet Master")
-    st.caption("💡 नोटबुकच्या मोजमाप पद्धतीनुसार खालील टेबलमध्ये Description, Nos, Length, Width, Height भरा. हिशोब तयार करा!")
-   
+        st.markdown(f"#### 🔹 {stg_name}")
+        
+        c_desc, c_nos, c_l, c_w, c_h = st.columns([2.5, 1, 1, 1, 1])
+        with c_desc:
+            desc_val = st.text_input(f"Description #{idx}", value=stg_name, key=f"qs_desc_{idx}")
+        with c_nos:
+            nos_val = st.number_input(f"Nos #{idx}", min_value=0, value=0, step=1, key=f"qs_nos_{idx}")
+        with c_l:
+            l_val = st.number_input(f"Length #{idx}", min_value=0.0, value=0.0, step=0.1, key=f"qs_l_{idx}")
+        with c_w:
+            w_val = st.number_input(f"Width #{idx}", min_value=0.0, value=0.0, step=0.1, key=f"qs_w_{idx}")
+        with c_h:
+            if is_area_unit:
+                h_val = 1.0
+                st.caption("📏 (Area m²)")
+            else:
+                h_val = st.number_input(f"Height #{idx}", min_value=0.0, value=0.0, step=0.05, key=f"qs_h_{idx}")
+
+        if nos_val > 0 and l_val > 0 and w_val > 0 and (is_area_unit or h_val > 0):
+            if is_area_unit:
+                single_qty = l_val * w_val
+                total_qty = single_qty * nos_val
+                unit_label = "m²"
+            else:
+                single_qty = l_val * w_val * h_val
+                total_qty = single_qty * nos_val
+                unit_label = "m³"
+
+            st.markdown(f"**📐 Single Qty: `{single_qty:.3f} {unit_label}` | Total Qty: `{total_qty:.3f} {unit_label}`**")
+
+            mat_summary = "मटेरियल लागू नाही"
+
+            if "P.C.C." in stg_name:
+                dry_vol = total_qty * 1.54
+                c_bags = math.ceil((1 / 13) * dry_vol * 28.8)
+                sand_m3 = (4 / 13) * dry_vol
+                agg_m3 = (8 / 13) * dry_vol
+                mat_summary = f"Cement: {c_bags} Bags, Sand: {sand_m3:.2f} m³, Aggregate: {agg_m3:.2f} m³"
+                st.info(f"• **Cement:** {c_bags} Bags | **Sand:** {sand_m3:.2f} m³ | **Aggregate:** {agg_m3:.2f} m³")
+
+            elif "RCC" in stg_name or "Column" in stg_name or "Slab" in stg_name or "Footing" in stg_name:
+                dry_vol = total_qty * 1.54
+                c_bags = math.ceil((1 / 5.5) * dry_vol * 28.8)
+                sand_m3 = (1.5 / 5.5) * dry_vol
+                agg_m3 = (3 / 5.5) * dry_vol
+                steel_kg = total_qty * 80.0
+                mat_summary = f"Cement: {c_bags} Bags, Sand: {sand_m3:.2f} m³, Aggregate: {agg_m3:.2f} m³, Steel: {steel_kg:.1f} Kg"
+                st.info(f"• **Cement:** {c_bags} Bags | **Sand:** {sand_m3:.2f} m³ | **Aggregate:** {agg_m3:.2f} m³ | **Steel:** {steel_kg:.1f} Kg")
+
+            elif "Brickwork" in stg_name:
+                bricks = math.ceil(total_qty * 500)
+                mortar_vol = total_qty * 0.30
+                c_bags = math.ceil((1 / 5) * mortar_vol * 28.8)
+                sand_m3 = (4 / 5) * mortar_vol
+                mat_summary = f"Bricks: {bricks} Nos, Cement: {c_bags} Bags, Sand: {sand_m3:.2f} m³"
+                st.info(f"• **Bricks:** {bricks} Nos | **Cement:** {c_bags} Bags | **Sand:** {sand_m3:.2f} m³")
+
+            elif "Plaster" in stg_name:
+                thickness = 0.012 
+                wet_vol = total_qty * thickness
+                dry_vol = wet_vol * 1.33
+                c_bags = math.ceil((1 / 5) * dry_vol * 28.8)
+                sand_m3 = (4 / 5) * dry_vol
+                mat_summary = f"Cement: {c_bags} Bags, Sand: {sand_m3:.2f} m³"
+                st.info(f"• **Cement (12mm):** {c_bags} Bags | **Sand:** {sand_m3:.2f} m³")
+
+            stage_results.append({
+                "Stage": desc_val,
+                "Dimensions": f"{l_val} x {w_val} x {h_val if not is_area_unit else 1.0}",
+                "Nos": nos_val,
+                "SingleQty": single_qty,
+                "TotalQty": f"{total_qty:.3f} {unit_label}",
+                "Material": mat_summary
+            })
+
+        # 🚪 Brickwork Deduction Sub-Section
+        if is_brickwork:
+            st.markdown("##### 🚪 Brickwork Deductions (Doors / Windows in m³)")
+            ded_key_bw = f"bw_ded_count_{idx}"
+            if ded_key_bw not in st.session_state:
+                st.session_state[ded_key_bw] = 1
+
+            if st.button(f"➕ Add Brickwork Deduction Item #{idx}", key=f"btn_bw_ded_{idx}"):
+                st.session_state[ded_key_bw] += 1
+                st.rerun()
+            
+            bw_ded_vol = 0.0
+            for d_i in range(st.session_state[ded_key_bw]):
+                dc1, dc2, dc3, dc4, dc5 = st.columns(5)
+                with dc1:
+                    dt = st.selectbox(f"Type", ["Door", "Window"], key=f"bw_dt_{idx}_{d_i}")
+                with dc2:
+                    dl = st.number_input(f"L (m)", min_value=0.0, value=0.0, step=0.1, key=f"bw_dl_{idx}_{d_i}")
+                with dc3:
+                    db = st.number_input(f"Thickness", min_value=0.0, value=0.23, step=0.05, key=f"bw_db_{idx}_{d_i}")
+                with dc4:
+                    dh = st.number_input(f"H (m)", min_value=0.0, value=0.0, step=0.1, key=f"bw_dh_{idx}_{d_i}")
+                with dc5:
+                    dn = st.number_input(f"Nos", min_value=0, value=0, step=1, key=f"bw_dn_{idx}_{d_i}")
+                
+                if dl > 0 and db > 0 and dh > 0 and dn > 0:
+                    bw_ded_vol += dl * db * dh * dn
+            
+            if bw_ded_vol > 0:
+                st.markdown(f"**🔴 Brickwork Deduction Vol: `{bw_ded_vol:.3f} m³`**")
+
+        # 🚪 Plaster Deduction Sub-Section
+        if is_plaster:
+            st.markdown("##### 🚪 Plaster Deductions (Doors / Windows in m²)")
+            ded_key_pl = f"pl_ded_count_{idx}"
+            if ded_key_pl not in st.session_state:
+                st.session_state[ded_key_pl] = 1
+
+            if st.button(f"➕ Add Plaster Deduction Item #{idx}", key=f"btn_pl_ded_{idx}"):
+                st.session_state[ded_key_pl] += 1
+                st.rerun()
+            
+            pl_ded_area = 0.0
+            for d_i in range(st.session_state[ded_key_pl]):
+                dc1, dc2, dc3, dc4 = st.columns(4)
+                with dc1:
+                    dt = st.selectbox(f"Type", ["Door", "Window"], key=f"pl_dt_{idx}_{d_i}")
+                with dc2:
+                    dl = st.number_input(f"Length (m)", min_value=0.0, value=0.0, step=0.1, key=f"pl_dl_{idx}_{d_i}")
+                with dc3:
+                    dh = st.number_input(f"Height (m)", min_value=0.0, value=0.0, step=0.1, key=f"pl_dh_{idx}_{d_i}")
+                with dc4:
+                    dn = st.number_input(f"Nos", min_value=0, value=0, step=1, key=f"pl_dn_{idx}_{d_i}")
+                
+                if dl > 0 and dh > 0 and dn > 0:
+                    pl_ded_area += dl * dh * dn * 2 
+            
+            if pl_ded_area > 0:
+                st.markdown(f"**🔴 Plaster Deduction Area: `{pl_ded_area:.3f} m²`**")
+
+        st.write("---")
+
+    st.markdown("#### 💬 कमेंट पॅनल (Comment Panel)")
+    user_note = st.text_area("Abstract Sheet संदर्भात विशेष नोंद:", placeholder="उदा. Ground floor estimation...", key="qs_note")
+    if st.button("💬 कमेंट सबमिट करा", key="qs_comm_btn"):
+        if user_note.strip():
+            st.session_state.current_comment = user_note.strip()
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("UPDATE users SET comment = ? WHERE user_key = ?", (user_note.strip(), current_user_name))
+            conn.commit()
+            conn.close()
+            st.success("✅ कमेंट सेव्ह झाली!")
+
+    if st.button("📈 GENERATE ABSTRACT SHEET & MATERIAL REPORT", type="primary", key="qs_gen_btn"):
+        if not stage_results:
+            st.warning("⚠️ कृपया कमीत कमी एका स्टेजसाठी Nos, Length, Width आणि Height च्या व्हॅल्यू भरा!")
+        else:
+            st.success("🎉 Abstract Sheet & Material Report यशस्वीरित्या तयार झाला आहे!")
+            st.markdown(f"### 📊 ABSTRACT SHEET & MATERIAL REPORT")
+            st.info(f"👤 **Prepared For:** {current_user_name}")
+
+            table_rows = ""
+            whatsapp_text_items = ""
+            
+            for r in stage_results:
+                table_rows += f"| {r['Stage']} | {r['Nos']} | {r['Dimensions']} | {r['TotalQty']} | {r['Material']} |\n"
+                whatsapp_text_items += f"• *{r['Stage']}*\n  - Nos: {r['Nos']} | Size: {r['Dimensions']}\n  - Single Qty: {r['SingleQty']:.3f}\n  - Total Qty: {r['TotalQty']}\n  - Material: {r['Material']}\n\n"
+
+            final_report_html = f"""
+<div class="print-container">
+<h2>📊 PATIL INFRATECH - ABSTRACT SHEET & QUANTITY SURVEY</h2>
+<p><strong>Prepared For:</strong> {current_user_name} | <strong>Date:</strong> {get_ist_time().strftime('%d-%m-%Y')}</p>
+
+| Description | Nos | Length x Width x Height | Total Quantity | Material |
+| :--- | :--- | :--- | :--- | :--- |
+{table_rows}
+
+---
+### 📌 SUMMARY
+* **Status:** Report Generated Successfully (No Cost/Amount Shown)
+</div>
+"""
+            st.markdown(final_report_html, unsafe_allow_html=True)
+
+            msg_text = f"📊 *PATIL INFRATECH - ABSTRACT SHEET*\n"
+            msg_text += f"👤 *Prepared For:* {current_user_name}\n"
+            msg_text += f"📅 *Date:* {get_ist_time().strftime('%d-%m-%Y')}\n\n"
+            msg_text += f"📋 *MEASUREMENT DETAILS:*\n{whatsapp_text_items}"
+            msg_text += f"_Generated by Patil Infratech_"
+
+            encoded_msg = urllib.parse.quote(msg_text)
+
+            btn_col1, btn_col2 = st.columns(2)
+            with btn_col1:
+                render_whatsapp_feature(encoded_msg, "qs_main")
+            with btn_col2:
+                st.markdown('''
+                    <button onclick="window.print()" style="width: 100%; background-color: #3b82f6; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px;">
+                        📄 Print / Download A3 Size PDF
+                    </button>
+                ''', unsafe_allow_html=True)
+
+            if current_user_name:
+                conn = get_db_connection()
+                cursor = conn.cursor()
+                now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
+                cursor.execute("INSERT INTO history (user_key, timestamp, user_note, report_data) VALUES (?, ?, ?, ?)", (current_user_name, now_str, st.session_state.current_comment, final_report_html))
+                conn.commit()
+                conn.close()
