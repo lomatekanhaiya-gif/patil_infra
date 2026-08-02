@@ -1256,7 +1256,7 @@ if ai_lock_setting == "Free" or is_user_premium:
                         try:
                             client = genai.Client(api_key=api_key)
                             prompt = f"You are a Senior Civil Engineer for Patil Infratech. Provide a direct, professional, final answer to the user query without showing calculation steps: {user_ai_query}"
-                            response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
+                            response = client.models.generate_content(model='gemini-1.5-flash', contents=prompt)
                             if response and response.text: ai_response_text = response.text
                         except Exception as e:
                             ai_response_text = f"⚠️ AI Error: {e}"
@@ -1396,7 +1396,7 @@ elif st.session_state.selected_module == "Civil Calculator":
                     with st.spinner("🔍 AI ड्राइंग मधील माहिती, डायमेन्शन्स आणि एरिया स्टेटमेंट रीड करत आहे... (कृपया ५-१० सेकंद वाट पाहा)"):
                         try:
                             client = genai.Client(api_key=api_key)
-                            response = None  # व्हॅरिएबल आधीच डिफाईन केला
+                            response = None  # व्हॅरिएबल इनिशियलाइज केला
                             
                             if is_pdf:
                                 if not HAS_PYPDF:
@@ -1421,7 +1421,7 @@ elif st.session_state.selected_module == "Civil Calculator":
                                     """
                                     
                                     response = client.models.generate_content(
-                                        model='gemini-2.5-flash',
+                                        model='gemini-1.5-flash',
                                         contents=prompt
                                     )
                             else:
@@ -1448,7 +1448,7 @@ elif st.session_state.selected_module == "Civil Calculator":
                                 """
                                 
                                 response = client.models.generate_content(
-                                    model='gemini-2.5-flash',
+                                    model='gemini-1.5-flash',
                                     contents=[prompt, image_bytes]
                                 )
 
