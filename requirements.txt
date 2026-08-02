@@ -1,8 +1,8 @@
 streamlit
 pandas
-google-genai
-psycopg2-binary
-libsql-client
 numpy
 pillow
 opencv-python-headless
+google-genai
+psycopg2-binary
+libsql-client
