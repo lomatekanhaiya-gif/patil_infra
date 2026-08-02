@@ -2143,90 +2143,30 @@ elif st.session_state.selected_module == "Quantity Surveying":
     st.subheader("📈 Quantity Surveying & Abstract Sheet Master")
     st.caption("💡 नोटबुकच्या मोजमाप पद्धतीनुसार खालील टेबलमध्ये Description, Nos, Length, Width, Height भरा. हिशोब तयार करा!")
 
-import streamlit as st
-import streamlit.components.v1 as components
+    # ----------------------------------------------------
+    # 📸 1. LIVE WebAR CAMERA & BLUEPRINT SECTION
+    # ----------------------------------------------------
+    with st.expander("📷 Live WebAR Measurement & Blueprint Reference"):
+        plan_option = st.radio(
+            "इनपुट पद्धत निवडा:", 
+            ["🎯 Live WebAR Camera (AR मोजमाप)", " Upload 2D Plan Image", "📸 Capture via Camera (Live Photo)"], 
+            horizontal=True
+        )
+        
+        if "Live WebAR Camera" in plan_option:
+            # ⭐ इथे आपण AR मेजरमेंट कॉम्पोनंट कॉल करत आहोत ⭐
+            ar_measurement_component()
 
-def ar_measurement_component():
-    st.markdown("### 📷 Live WebAR Measurement (विना ॲप इन्स्टॉलेशन)")
-    st.caption("💡 तुमच्या फोनचा कॅमेरा उघडून स्क्रीनवर दोन बिंदूंवर (Points) टच करा. लांबी मीटरमध्ये मोजली जाईल.")
-    
-    # HTML5, Three.js आणि WebXR चा वापर करून बनवलेला WebAR कॅमेरा घटक
-    ar_html_code = """
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <style>
-            #ar-container {
-                width: 100%;
-                height: 350px;
-                background-color: #000;
-                border-radius: 16px;
-                position: relative;
-                overflow: hidden;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                border: 2px solid #3b82f6;
-            }
-            video {
-                width: 100%;
-                height: 100%;
-                object-fit: cover;
-            }
-            .ar-overlay {
-                position: absolute;
-                top: 10px;
-                background: rgba(0,0,0,0.7);
-                color: #FFD54F;
-                padding: 6px 12px;
-                border-radius: 20px;
-                font-family: sans-serif;
-                font-size: 13px;
-                font-weight: bold;
-            }
-            .measure-btn {
-                position: absolute;
-                bottom: 15px;
-                background: #2563eb;
-                color: white;
-                border: none;
-                padding: 10px 20px;
-                border-radius: 12px;
-                font-weight: bold;
-                cursor: pointer;
-            }
-        </style>
-    </head>
-    <body>
-        <div id="ar-container">
-            <div class="ar-overlay" id="status-text">🎥 कॅमेरा सुरू करा वर क्लिक करा</div>
-            <video id="webcam" autoplay playsinline></video>
-            <button class="measure-btn" onclick="startCamera()">📷 Start Live AR Camera</button>
-        </div>
+        elif "Upload" in plan_option:
+            uploaded_plan = st.file_uploader("Upload Blueprint (PNG/JPG):", type=["png", "jpg", "jpeg"])
+            if uploaded_plan:
+                st.image(uploaded_plan, caption="Uploaded 2D Floor Plan", use_column_width=True)
 
-        <script>
-            async function startCamera() {
-                const video = document.getElementById('webcam');
-                const status = document.getElementById('status-text');
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ 
-                        video: { facingMode: "environment" } 
-                    });
-                    video.srcObject = stream;
-                    status.innerText = "🎯 स्क्रीनवर दोन बिंदू सिलेक्ट करा";
-                } catch (err) {
-                    status.innerText = "❌ कॅमेरा परमिशन नाकारली किंवा उपलब्ध नाही";
-                }
-            }
-        </script>
-    </body>
-    </html>
-    """
-    
-    components.html(ar_html_code, height=380)
+        else:
+            cam_pic = st.camera_input("📸 Capture 2D Plan from Camera")
+            if cam_pic:
+                st.image(cam_pic, caption="Captured Blueprint Reference", use_column_width=True)
 
-# तुमच्या Quantity Surveying किंवा Calculator मॉड्युलमध्ये हा कॉल जोडा:
-# ar_measurement_component()
-  
+    # ----------------------------------------------------
+    # पुढे तुझा उर्वरित Quantity Surveying चा कोड जसा आहे तसाच राहील...
+    # ----------------------------------------------------
