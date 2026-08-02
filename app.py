@@ -2134,9 +2134,6 @@ elif st.session_state.selected_module == "BBS":
 # ==========================================
 # 📈 QUANTITY SURVEYING & ABSTRACT SHEET MODULE
 # ==========================================
-# ==========================================
-# 📈 QUANTITY SURVEYING & ABSTRACT SHEET MODULE
-# ==========================================
 elif st.session_state.selected_module == "Quantity Surveying":
     if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_to_main_qs"):
         st.session_state.selected_module = None
@@ -2155,7 +2152,7 @@ import streamlit.components.v1 as components
     with st.expander("📷 Live WebAR Measurement & Blueprint Reference"):
         plan_option = st.radio(
             "इनपुट पद्धत निवडा:", 
-            ["🎯 Live WebAR Camera (AR मोजमाप)", " Upload 2D Plan Image", "📸 Capture via Camera (Live Photo)"], 
+["🎯 Live WebAR Camera (AR मोजमाप)", " Upload 2D Plan Image", "📸 Capture via Camera (Live Photo)"], 
             horizontal=True
         )
         
