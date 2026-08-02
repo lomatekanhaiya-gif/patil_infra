@@ -9,6 +9,13 @@ import urllib.parse
 import random
 import string
 
+# 📄 PDF Processing Import Protocol
+try:
+    import pypdf
+    HAS_PYPDF = True
+except ImportError:
+    HAS_PYPDF = False
+
 # 🗄️ Turso / SQLite Safe Import Protocol
 try:
     import libsql_experimental as libsql
@@ -1358,22 +1365,27 @@ elif st.session_state.selected_module == "Civil Calculator":
     ])
 
     # ------------------------------------------
-    # 📐 NEW FEATURE: AI DRAWING READER
+    # 📐 AI DRAWING READER (SUPPORT FOR PNG, JPG, PDF)
     # ------------------------------------------
     if "AI Drawing Reader" in conv_category:
         st.markdown("#### 📐 AI Drawing Specification & Measurement Reader")
-        st.caption("💡 तुमच्या मोबाईलच्या कॅमेऱ्याने प्लॅन/ड्राइंगचा स्पष्ट फोटो काढा. AI अचूक एरिया स्टेटमेंट, ओपनिंग शेड्युल आणि मोजमाप शीट तयार करेल.")
+        st.caption("💡 तुमच्या मोबाईलच्या कॅमेऱ्याने प्लॅन/ड्राइंगचा स्पष्ट फोटो काढा किंवा PNG, JPG, PDF फाइल अपलोड करा. AI अचूक मोजमाप शीट तयार करेल.")
 
-        input_method = st.radio("इनपुट पद्धत निवडा:", ["📸 Capture via Camera (Live)", "📁 Upload Drawing Photo"], horizontal=True)
+        input_method = st.radio("इनपुट पद्धत निवडा:", ["📸 Capture via Camera (Live)", "📁 Upload Drawing File (Photo / PDF)"], horizontal=True)
         
-        drawing_img = None
+        drawing_file = None
         if "Capture" in input_method:
-            drawing_img = st.camera_input("📸 कॅमेरा वापरून ड्राइंगचा स्पष्ट फोटो घ्या")
+            drawing_file = st.camera_input("📸 कॅमेरा वापरून ड्राइंगचा स्पष्ट फोटो घ्या")
         else:
-            drawing_img = st.file_uploader("Upload Plan / Drawing Image (PNG, JPG):", type=["png", "jpg", "jpeg"])
+            drawing_file = st.file_uploader("Upload Plan / Drawing File (PNG, JPG, PDF):", type=["png", "jpg", "jpeg", "pdf"])
 
-        if drawing_img is not None:
-            st.image(drawing_img, caption="📸 कॅप्चर केलेले/अपलोड केलेले ड्राइंग", use_column_width=True)
+        if drawing_file is not None:
+            is_pdf = drawing_file.name.endswith(".pdf") if hasattr(drawing_file, "name") else False
+            
+            if is_pdf:
+                st.info(f"📄 **{drawing_file.name}** (PDF File Uploaded)")
+            else:
+                st.image(drawing_file, caption="📸 कॅप्चर केलेले/अपलोड केलेले ड्राइंग", use_column_width=True)
             
             if st.button("🚀 Analyze Drawing & Generate Measurement Sheet", type="primary", use_container_width=True):
                 api_key = st.secrets.get("GEMINI_API_KEY", os.getenv("GEMINI_API_KEY", ""))
@@ -1381,37 +1393,63 @@ elif st.session_state.selected_module == "Civil Calculator":
                 if not HAS_GENAI or not api_key:
                     st.error("❌ Google Gemini API Key कॉन्फिगर केलेली नाही. कृपया Secrets मध्ये GEMINI_API_KEY सेट करा.")
                 else:
-                    with st.spinner("🔍 AI ड्राइंगमधील डायमेन्शन्स, एरिया स्टेटमेंट आणि ओपनिंग शेड्युल रीड करत आहे... (कृपया ५-१० सेकंद वाट पाहा)"):
+                    with st.spinner("🔍 AI ड्राइंग मधील माहिती, डायमेन्शन्स आणि एरिया स्टेटमेंट रीड करत आहे... (कृपया ५-१० सेकंद वाट पाहा)"):
                         try:
-                            # PIL Image Convert
-                            from PIL import Image
-                            image_bytes = Image.open(drawing_img)
-
                             client = genai.Client(api_key=api_key)
                             
-                            prompt = """
-                            You are an expert Senior Civil Site Engineer and Quantity Surveyor for Patil Infratech. 
-                            Analyze this civil engineering drawing/blueprint accurately. Strictly extract information printed on the drawing (DO NOT GUESS or invent values):
-                            
-                            1. **AREA STATEMENT TABLE:**
-                               - Plot Area, Built-up Area, Carpet Area, Balcony/Open Area (if mentioned).
-                            
-                            2. **OPENING SCHEDULE (DOORS & WINDOWS):**
-                               - Type (e.g. D1, D2, W1, W2), Size (Width x Height in meters/feet), Quantity (Nos), and Location/Description.
-                            
-                            3. **STRUCTURAL & WORK SPECIFICATIONS:**
-                               - Concrete Grade, Brickwork Thickness, Plaster Details, Steel Grade (if printed in legend/notes).
-                            
-                            4. **CIVIL SITE MEASUREMENT SHEET:**
-                               - Prepare a clear Markdown Measurement Sheet based directly on the drawn dimensions.
-                            
-                            Format the output clearly with professional Markdown tables suitable for a Site Engineer.
-                            """
-                            
-                            response = client.models.generate_content(
-                                model='gemini-2.5-flash',
-                                contents=[prompt, image_bytes]
-                            )
+                            if is_pdf:
+                                if not HAS_PYPDF:
+                                    st.error("❌ PDF प्रक्रिया करण्यासाठी `pypdf` लायब्ररी आवश्यक आहे. कृपया `pip install pypdf` इन्स्टॉल करा.")
+                                else:
+                                    pdf_reader = pypdf.PdfReader(drawing_file)
+                                    extracted_text = ""
+                                    for page in pdf_reader.pages:
+                                        extracted_text += page.extract_text() or ""
+                                    
+                                    prompt = f"""
+                                    You are an expert Senior Civil Site Engineer and Quantity Surveyor for Patil Infratech. 
+                                    Analyze this extracted text from a civil engineering PDF plan/blueprint and generate:
+                                    
+                                    1. **AREA STATEMENT TABLE:** Plot Area, Built-up Area, Carpet Area.
+                                    2. **OPENING SCHEDULE (DOORS & WINDOWS):** Type, Size, Nos.
+                                    3. **STRUCTURAL & WORK SPECIFICATIONS:** Concrete Grade, Brickwork, Steel details.
+                                    4. **CIVIL SITE MEASUREMENT SHEET:** Clear Markdown Measurement Sheet.
+                                    
+                                    Extracted Content:
+                                    {extracted_text if extracted_text.strip() else "No direct text extracted, perform general structured structural engineering checklist based on document metadata."}
+                                    """
+                                    
+                                    response = client.models.generate_content(
+                                        model='gemini-2.5-flash',
+                                        contents=prompt
+                                    )
+                            else:
+                                from PIL import Image
+                                image_bytes = Image.open(drawing_file)
+                                
+                                prompt = """
+                                You are an expert Senior Civil Site Engineer and Quantity Surveyor for Patil Infratech. 
+                                Analyze this civil engineering drawing/blueprint accurately. Strictly extract information printed on the drawing (DO NOT GUESS or invent values):
+                                
+                                1. **AREA STATEMENT TABLE:**
+                                   - Plot Area, Built-up Area, Carpet Area, Balcony/Open Area (if mentioned).
+                                
+                                2. **OPENING SCHEDULE (DOORS & WINDOWS):**
+                                   - Type (e.g. D1, D2, W1, W2), Size (Width x Height in meters/feet), Quantity (Nos), and Location/Description.
+                                
+                                3. **STRUCTURAL & WORK SPECIFICATIONS:**
+                                   - Concrete Grade, Brickwork Thickness, Plaster Details, Steel Grade (if printed in legend/notes).
+                                
+                                4. **CIVIL SITE MEASUREMENT SHEET:**
+                                   - Prepare a clear Markdown Measurement Sheet based directly on the drawn dimensions.
+                                
+                                Format the output clearly with professional Markdown tables suitable for a Site Engineer.
+                                """
+                                
+                                response = client.models.generate_content(
+                                    model='gemini-2.5-flash',
+                                    contents=[prompt, image_bytes]
+                                )
 
                             if response and response.text:
                                 st.success("🎉 ड्राइंग रीडिंग यशस्वी झाले! मोजमाप तक्ता खालीलप्रमाणे आहे:")
@@ -1425,7 +1463,7 @@ elif st.session_state.selected_module == "Civil Calculator":
                                 msg_text = f"🏗️ *PATIL INFRATECH - AI DRAWING ANALYSIS REPORT*\n"
                                 msg_text += f"👤 *Engineer/User:* {current_user_name}\n"
                                 msg_text += f"📅 *Date:* {get_ist_time().strftime('%d-%m-%Y')}\n\n"
-                                msg_text += f"{report_content[:1500]}...\n\n"  # Truncate for WA limit
+                                msg_text += f"{report_content[:1500]}...\n\n"
                                 msg_text += f"_Generated by Patil Infratech AI Drawing Reader_"
                                 
                                 encoded_msg = urllib.parse.quote(msg_text)
@@ -1442,9 +1480,9 @@ elif st.session_state.selected_module == "Civil Calculator":
                                     conn.commit()
                                     conn.close()
                             else:
-                                st.error("⚠️ AI ला ड्राइंगमधील मजकूर वाचता आला नाही. फोटो स्पष्ट आणि पुरेसा प्रकाश असताना पुन्हा काढून पहा.")
+                                st.error("⚠️ AI ला फाइलमधील मजकूर/ड्राइंग वाचता आले नाही. कृपया फाईल तपासून पुन्हा प्रयत्न करा.")
                         except Exception as e:
-                            st.error(f"⚠️ ड्राइंग प्रोसेस करताना एरर आला: {e}")
+                            st.error(f"⚠️ फाइल प्रोसेस करताना एरर आला: {e}")
 
     # ------------------------------------------
     # OTHER EXISTING CALCULATOR OPTIONS
@@ -2241,13 +2279,16 @@ elif st.session_state.selected_module == "Quantity Surveying":
     st.subheader("📈 Quantity Surveying & Abstract Sheet Master")
     st.caption("💡 नोटबुकच्या मोजमाप पद्धतीनुसार खालील टेबलमध्ये Description, Nos, Length, Width, Height भरा. हिशोब तयार करा!")
 
-    # 1. Camera / Blueprint Section
+    # 1. Camera / Blueprint Section (Supports PNG, JPG, PDF)
     with st.expander("📷 2D Plan / Blueprint / Camera Reference"):
-        plan_option = st.radio("ब्लूप्रिंट इनपुट पद्धत निवडा:", ["Upload 2D Plan Image", "Capture via Camera (Live)"], horizontal=True)
+        plan_option = st.radio("ब्लूप्रिंट इनपुट पद्धत निवडा:", ["Upload 2D Plan File (PNG/JPG/PDF)", "Capture via Camera (Live)"], horizontal=True)
         if "Upload" in plan_option:
-            uploaded_plan = st.file_uploader("Upload Blueprint (PNG/JPG):", type=["png", "jpg", "jpeg"])
+            uploaded_plan = st.file_uploader("Upload Blueprint (PNG/JPG/PDF):", type=["png", "jpg", "jpeg", "pdf"])
             if uploaded_plan:
-                st.image(uploaded_plan, caption="Uploaded 2D Floor Plan", use_column_width=True)
+                if uploaded_plan.name.endswith(".pdf"):
+                    st.success(f"📄 **{uploaded_plan.name}** (PDF File Uploaded Successfully)")
+                else:
+                    st.image(uploaded_plan, caption="Uploaded 2D Floor Plan", use_column_width=True)
         else:
             cam_pic = st.camera_input("📸 Capture 2D Plan from Camera")
             if cam_pic:
