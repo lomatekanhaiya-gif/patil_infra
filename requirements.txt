@@ -2,4 +2,4 @@ streamlit
 pandas
 google-genai
 psycopg2-binary
-libsql-experimental
+libsql-client
