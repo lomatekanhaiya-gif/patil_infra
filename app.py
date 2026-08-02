@@ -1,6 +1,7 @@
-# KANHA_1p - पाटील इन्फ्राटेक (Turso Cloud DB & Streamlit Web Application)
+# KANHA_1p - पाटील इन्फ्राटेक (SQLite Database & Streamlit Web Application)
 import streamlit as st
 import math
+import sqlite3
 import os
 import datetime
 import pandas as pd
@@ -8,21 +9,6 @@ import time
 import urllib.parse
 import random
 import string
-
-# 📄 PDF Processing Import Protocol
-try:
-    import pypdf
-    HAS_PYPDF = True
-except ImportError:
-    HAS_PYPDF = False
-
-# 🗄️ Turso / SQLite Safe Import Protocol
-try:
-    import libsql_experimental as libsql
-    HAS_LIBSQL = True
-except Exception:
-    import sqlite3 as libsql
-    HAS_LIBSQL = False
 
 # Official Google GenAI SDK Import
 try:
@@ -43,18 +29,13 @@ def get_ist_time():
     return ist_now
 
 # ==========================================
-# 🗄️ TURSO CLOUD DATABASE MANAGEMENT (PERMANENT DB)
+# 🗄️ SQLITE DATABASE MANAGEMENT
 # ==========================================
-TURSO_URL = st.secrets.get("TURSO_DATABASE_URL", "libsql://kanhaiya-kanha-1p.aws-ap-south-1.turso.io")
-TURSO_TOKEN = st.secrets.get("TURSO_AUTH_TOKEN", "")
+DB_FILE = "patil_infratech.db"
 
 def get_db_connection():
-    if HAS_LIBSQL and TURSO_URL and TURSO_TOKEN:
-        # Turso Cloud डेटाबेसशी थेट जोडले जाईल
-        conn = libsql.connect(database=TURSO_URL, auth_token=TURSO_TOKEN)
-    else:
-        # लोकल बॅकअप (जर पॅकेज लोड झाले नाही तर)
-        conn = libsql.connect("patil_infratech.db", check_same_thread=False)
+    conn = sqlite3.connect(DB_FILE, check_same_thread=False)
+    conn.row_factory = sqlite3.Row
     return conn
 
 def init_db():
@@ -146,7 +127,7 @@ def init_db():
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', ("9999999999", "kanha", "KANHA_1P", "1234", "9999999999", "patiladmin123", "मास्टर ॲडमीन अकाउंट", "स्वागत आहे मास्टर कन्हैया! आपले पाटील इन्फ्राटेक मध्ये सर्व अधिकार अनलॉक्ड आहेत ⚡", 0, 1, "2099-12-31 23:59:59", 0, 1, 0, get_ist_time().strftime("%Y-%m-%d %H:%M:%S"), "Master Admin"))
 
-    # Default Feature Locks
+    # Default Feature Locks (Quantity Surveying Included)
     default_locks = {
         "Civil Calculator": "Free",
         "Rate Analysis": "Free",
@@ -177,8 +158,7 @@ def get_user_data(user_key):
     row = cursor.fetchone()
     conn.close()
     if row:
-        columns = [column[0] for column in cursor.description]
-        return dict(zip(columns, row))
+        return dict(row)
     return None
 
 def get_market_rates():
@@ -187,7 +167,7 @@ def get_market_rates():
     cursor.execute("SELECT material, rate FROM market_rates")
     rows = cursor.fetchall()
     conn.close()
-    return {row[0]: row[1] for row in rows}
+    return {row["material"]: row["rate"] for row in rows}
 
 def get_feature_locks():
     conn = get_db_connection()
@@ -195,9 +175,9 @@ def get_feature_locks():
     cursor.execute("SELECT feature_name, access_level FROM feature_locks")
     rows = cursor.fetchall()
     conn.close()
-    return {row[0]: row[1] for row in rows}
+    return {row["feature_name"]: row["access_level"] for row in rows}
 
-# Session State & Query Params Initialization
+# Session State & Query Params Initialization (Auto-Login Support)
 if "app_user_name" not in st.session_state:
     st.session_state.app_user_name = None
 
@@ -210,7 +190,7 @@ if st.session_state.app_user_name is None and "saved_uid" in query_params:
     row = cursor.fetchone()
     conn.close()
     if row:
-        st.session_state.app_user_name = row[0]
+        st.session_state.app_user_name = row["user_key"]
 
 if "is_admin_logged" not in st.session_state:
     st.session_state.is_admin_logged = False
@@ -235,7 +215,7 @@ if current_user_name:
     conn.commit()
     conn.close()
 
-# ⏳ प्रिमियम स्टेटस तपासणी
+# ⏳ प्रिमियम स्टेटस व अचूक एक्सपायरी तपासणी
 def check_user_premium_status(username):
     if not username: return False, "Free"
     if username.lower() == "kanha" or username == "9999999999":
@@ -274,7 +254,7 @@ def check_user_premium_status(username):
 is_curr_premium, _ = check_user_premium_status(current_user_name)
 
 # ==========================================
-# 🎨 ULTRA-PREMIUM & MOBILE CAMERA STYLING
+# 🎨 ULTRA-PREMIUM ROYAL METALLIC GOLD STYLING
 # ==========================================
 touch_glow_color = "rgba(255, 179, 0, 0.45)" if is_curr_premium else "rgba(59, 130, 246, 0.25)"
 touch_border_color = "#FFD54F" if is_curr_premium else "#3b82f6"
@@ -283,13 +263,6 @@ input_inner_shadow = "inset 0 0 10px rgba(255, 179, 0, 0.3)" if is_curr_premium 
 
 st.markdown(f"""
     <style>
-    @media (prefers-color-scheme: light), (prefers-color-scheme: dark) {{
-        .stApp {{
-            background: linear-gradient(135deg, #070a12 0%, #0d1322 100%) !important;
-            color: #f3f4f6 !important;
-        }}
-    }}
-
     #MainMenu {{ visibility: hidden; }}
     header[data-testid="stHeader"] {{ visibility: hidden; height: 0%; display: none !important; }}
     footer {{ visibility: hidden; display: none !important; }}
@@ -301,22 +274,10 @@ st.markdown(f"""
     button[title="Increment"], button[title="Decrement"] {{ display: none !important; }}
     div[data-testid="stNumberInputStepUp"], div[data-testid="stNumberInputStepDown"] {{ display: none !important; }}
 
-    /* Mobile Camera UI Fixes */
-    div[data-testid="stCameraInput"] {{
-        width: 100% !important;
-        max-width: 100% !important;
-    }}
-    div[data-testid="stCameraInput"] video {{
-        width: 100% !important;
-        height: auto !important;
-        border-radius: 16px !important;
-        border: 2px solid {touch_border_color} !important;
-        box-shadow: 0 0 20px {touch_glow_color} !important;
-    }}
-    div[data-testid="stImage"] img {{
-        border-radius: 14px !important;
-        border: 1px solid rgba(255, 255, 255, 0.2) !important;
-        width: 100% !important;
+    .stApp {{
+        background: linear-gradient(135deg, #070a12 0%, #0d1322 100%);
+        color: #f3f4f6;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }}
 
     .stApp:active {{
@@ -333,18 +294,9 @@ st.markdown(f"""
     .stMarkdown th, .stMarkdown td {{
         padding: 10px 14px !important;
         border: 1px solid #374151 !important;
-        color: #f3f4f6 !important;
-        background-color: #111827 !important;
     }}
 
-    div.stForm {{
-        background: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-        padding: 0px !important;
-    }}
-
-    div[data-testid="stExpander"] {{
+    div.stForm, div[data-testid="stExpander"] {{
         background: rgba(17, 24, 39, 0.8) !important;
         backdrop-filter: blur(16px);
         border: 1px solid {card_border_color} !important;
@@ -376,26 +328,10 @@ st.markdown(f"""
         box-shadow: 0 0 18px {touch_glow_color}, {input_inner_shadow} !important;
     }}
 
-    label, div[data-testid="stWidgetLabel"] p, .stRadio label p, .stCheckbox label p {{
+    label, div[data-testid="stWidgetLabel"] p {{
         color: #9ca3af !important;
         font-weight: 600 !important;
         font-size: 13px !important;
-    }}
-
-    div.stButton > button {{
-        background-color: #121929 !important;
-        color: #ffffff !important;
-        border: 1px solid {touch_border_color} !important;
-        border-radius: 14px !important;
-        font-weight: 600 !important;
-        padding: 10px 18px !important;
-    }}
-
-    div.stButton > button:hover {{
-        background-color: #1a233a !important;
-        border-color: #FFD54F !important;
-        color: #FFD54F !important;
-        box-shadow: 0 0 15px {touch_glow_color} !important;
     }}
 
     div.stButton > button[kind="primary"] {{
@@ -505,8 +441,7 @@ def render_whatsapp_feature(encoded_msg, key_prefix):
                     row = cursor.fetchone()
                     
                     if row:
-                        columns = [c[0] for c in cursor.description]
-                        c_info = dict(zip(columns, row))
+                        c_info = dict(row)
                         if c_info.get("used") == 1:
                             st.error("❌ हा कोड आधीच वापरला गेला आहे! तो आता व्हॅलिड नाही.")
                             conn.close()
@@ -577,7 +512,7 @@ if not st.session_state.welcome_completed:
         conn.close()
 
         for ad in ads_rows:
-            ad_dict = dict(zip([c[0] for c in cursor.description], ad))
+            ad_dict = dict(ad)
             st.markdown(f"""
                 <div style="background: rgba(17, 24, 39, 0.7); border: 1px solid rgba(59, 130, 246, 0.3); padding: 6px 10px; border-radius: 10px; text-align: center; margin: 15px auto; max-width: 280px;">
                     <span style="font-size: 9px; color: #93c5fd; font-weight: bold;">⭐ SPONSOR</span><br>
@@ -728,14 +663,12 @@ if st.session_state.is_admin_logged:
             conn = get_db_connection()
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM history WHERE user_key = ? ORDER BY id DESC", (target_user,))
-            rows = cursor.fetchall()
-            cols = [c[0] for c in cursor.description]
-            u_hist = [dict(zip(cols, r)) for r in rows]
+            u_hist = [dict(r) for r in cursor.fetchall()]
 
             cursor.execute("SELECT code FROM premium_codes WHERE assigned_to = ? AND used = 0", (u_name,))
             c_row = cursor.fetchone()
             conn.close()
-            assigned_code = c_row[0] if c_row else None
+            assigned_code = c_row["code"] if c_row else None
 
             status_badge = f"👑 VIP MEMBER: {u_name.upper()}" if u_prem else ("🚨 CODE REQUESTED!" if is_req else f"🆓 FREE: {u_name.upper()}")
 
@@ -843,9 +776,7 @@ if st.session_state.is_admin_logged:
             conn = get_db_connection()
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM users WHERE user_key != '9999999999' ORDER BY id ASC")
-            rows = cursor.fetchall()
-            cols = [c[0] for c in cursor.description]
-            all_users = [dict(zip(cols, r)) for r in rows]
+            all_users = [dict(r) for r in cursor.fetchall()]
             conn.close()
 
             if all_users:
@@ -924,9 +855,7 @@ if st.session_state.is_admin_logged:
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM ads ORDER BY id DESC")
-        rows = cursor.fetchall()
-        cols = [c[0] for c in cursor.description]
-        ads_list = [dict(zip(cols, r)) for r in rows]
+        ads_list = [dict(r) for r in cursor.fetchall()]
         conn.close()
 
         if ads_list:
@@ -956,6 +885,7 @@ if st.session_state.is_admin_logged:
                 if broadcast_msg.strip():
                     conn = get_db_connection()
                     cursor = conn.cursor()
+                    # मास्टर ॲडमीन (9999999999) सोडून बाकी सर्व युझर्सना मेसेज अपडेट करणे
                     cursor.execute('''
                         UPDATE users 
                         SET admin_message = ?, unread_notification = 1 
@@ -990,7 +920,7 @@ if st.session_state.app_user_name is None:
                 conn.close()
 
                 if row:
-                    found_user = row[0]
+                    found_user = row["user_key"]
                     st.session_state.app_user_name = found_user
                     if remember_me:
                         st.query_params["saved_uid"] = input_uid
@@ -1064,7 +994,7 @@ if st.session_state.app_user_name is None:
                 if matched_users:
                     st.success("✅ तुमचे अकाउंट तपशील सापडले आहेत:")
                     for row in matched_users:
-                        st.info(f"👤 नाव: **{row[0]}** | 🔑 UID: **{row[1]}** (आता या UID ने लॉगिन करा)")
+                        st.info(f"👤 नाव: **{row['id']}** | 🔑 UID: **{row['uid']}** (आता या UID ने लॉगिन करा)")
                 else:
                     st.error("❌ चुकीचा मोबाईल नंबर किंवा PIN! तपशील जुळत नाहीत.")
 
@@ -1097,9 +1027,7 @@ is_user_premium, status_text_str = check_user_premium_status(current_user_name)
 conn = get_db_connection()
 cursor = conn.cursor()
 cursor.execute("SELECT * FROM ads WHERE active = 1 AND position = 'Main App Header (Top Banner)'")
-rows = cursor.fetchall()
-cols = [c[0] for c in cursor.description]
-ads_list = [dict(zip(cols, r)) for r in rows]
+ads_list = [dict(r) for r in cursor.fetchall()]
 conn.close()
 
 for ad in ads_list:
@@ -1206,31 +1134,25 @@ if not is_user_premium:
                     cursor.execute("SELECT * FROM premium_codes WHERE code = ?", (input_code,))
                     c_row = cursor.fetchone()
                     
-                    if c_row:
-                        cols = [c[0] for c in cursor.description]
-                        c_dict = dict(zip(cols, c_row))
-                        if c_dict.get("used") == 0:
-                            exp_datetime = get_ist_time() + datetime.timedelta(days=28)
-                            exp_str = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
-                            now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
+                    if c_row and dict(c_row).get("used") == 0:
+                        exp_datetime = get_ist_time() + datetime.timedelta(days=28)
+                        exp_str = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
+                        now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
 
-                            cursor.execute("UPDATE premium_codes SET used = 1, used_by = ?, used_date = ? WHERE code = ?", (current_user_name, now_str, input_code))
-                            cursor.execute('''
-                                UPDATE users 
-                                SET is_premium = 1, premium_expiry = ?, seen_popup = 0, activated_by = ?,
-                                    admin_message = ?, unread_notification = 0
-                                WHERE user_key = ?
-                            ''', (exp_str, "Patil Infratech", f"{current_user_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳", current_user_name))
-                            conn.commit()
-                            conn.close()
-                            st.success("🎉 प्रिमियम यशस्वीरित्या सुरू झाले!")
-                            st.rerun()
-                        else:
-                            conn.close()
-                            st.error("❌ हा कोड आधीच वापरला गेला आहे!")
+                        cursor.execute("UPDATE premium_codes SET used = 1, used_by = ?, used_date = ? WHERE code = ?", (current_user_name, now_str, input_code))
+                        cursor.execute('''
+                            UPDATE users 
+                            SET is_premium = 1, premium_expiry = ?, seen_popup = 0, activated_by = ?,
+                                admin_message = ?, unread_notification = 0
+                            WHERE user_key = ?
+                        ''', (exp_str, "Patil Infratech", f"{current_user_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳", current_user_name))
+                        conn.commit()
+                        conn.close()
+                        st.success("🎉 प्रिमियम यशस्वीरित्या सुरू झाले!")
+                        st.rerun()
                     else:
                         conn.close()
-                        st.error("❌ चुकीचा प्रिमियम कोड!")
+                        st.error("❌ चुकीचा किंवा आधीच वापरलेला कोड!")
         with c_btn2:
             if st.button("📩 Request Code"):
                 conn = get_db_connection()
@@ -1256,7 +1178,7 @@ if ai_lock_setting == "Free" or is_user_premium:
                         try:
                             client = genai.Client(api_key=api_key)
                             prompt = f"You are a Senior Civil Engineer for Patil Infratech. Provide a direct, professional, final answer to the user query without showing calculation steps: {user_ai_query}"
-                            response = client.models.generate_content(model='gemini-2.0-flash', contents=prompt)
+                            response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
                             if response and response.text: ai_response_text = response.text
                         except Exception as e:
                             ai_response_text = f"⚠️ AI Error: {e}"
@@ -1347,7 +1269,7 @@ if st.session_state.selected_module is None:
                 st.rerun()
 
 # ==========================================
-# 🧮 MODULE 0: CIVIL CALCULATOR & AI DRAWING READER
+# 🧮 MODULE 0: CIVIL CALCULATOR & UNIT CONVERTER
 # ==========================================
 elif st.session_state.selected_module == "Civil Calculator":
     if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_to_main_calc"):
@@ -1355,150 +1277,27 @@ elif st.session_state.selected_module == "Civil Calculator":
         st.rerun()
         
     st.write("---")
-    st.subheader("🧮 Civil Smart Calculator & AI Drawing Reader")
+    st.subheader("🧮 Civil Smart Unit Converter")
+    st.caption("💡 एकाच बॉक्समध्ये मूल्य भरा आणि सर्व युनिट्समधील अचूक हिशोब एकाच झटक्यात मिळवा!")
 
-    conv_category = st.selectbox("पर्याय निवडा (Select Option):", [
-        "📐 AI Drawing Reader (फोटोवरून मोजमाप पत्रक बनवा)",
+    conv_category = st.selectbox("कनव्हर्शन प्रकार निवडा:", [
         "📦 Volume / Brass Converter (घनफळ आणि ब्रास)", 
         "📏 Length Converter (लांबी मोजमाप)", 
         "📐 Area Converter (क्षेत्रफळ मोजमाप)"
     ])
 
-    # ------------------------------------------
-    # 📐 AI DRAWING READER (SUPPORT FOR PNG, JPG, PDF)
-    # ------------------------------------------
-    if "AI Drawing Reader" in conv_category:
-        st.markdown("#### 📐 AI Drawing Specification & Measurement Reader")
-        st.caption("💡 तुमच्या मोबाईलच्या कॅमेऱ्याने प्लॅन/ड्राइंगचा स्पष्ट फोटो काढा किंवा PNG, JPG, PDF फाइल अपलोड करा. AI अचूक मोजमाप शीट तयार करेल.")
-
-        input_method = st.radio("इनपुट पद्धत निवडा:", ["📸 Capture via Camera (Live)", "📁 Upload Drawing File (Photo / PDF)"], horizontal=True)
-        
-        drawing_file = None
-        if "Capture" in input_method:
-            drawing_file = st.camera_input("📸 कॅमेरा वापरून ड्राइंगचा स्पष्ट फोटो घ्या")
-        else:
-            drawing_file = st.file_uploader("Upload Plan / Drawing File (PNG, JPG, PDF):", type=["png", "jpg", "jpeg", "pdf"])
-
-        if drawing_file is not None:
-            is_pdf = drawing_file.name.endswith(".pdf") if hasattr(drawing_file, "name") else False
-            
-            if is_pdf:
-                st.info(f"📄 **{drawing_file.name}** (PDF File Uploaded)")
-            else:
-                st.image(drawing_file, caption="📸 कॅप्चर केलेले/अपलोड केलेले ड्राइंग", use_column_width=True)
-            
-            if st.button("🚀 Analyze Drawing & Generate Measurement Sheet", type="primary", use_container_width=True):
-                api_key = st.secrets.get("GEMINI_API_KEY", os.getenv("GEMINI_API_KEY", ""))
-                
-                if not HAS_GENAI or not api_key:
-                    st.error("❌ Google Gemini API Key कॉन्फिगर केलेली नाही. कृपया Secrets मध्ये GEMINI_API_KEY सेट करा.")
-                else:
-                    with st.spinner("🔍 AI ड्राइंग मधील माहिती, डायमेन्शन्स आणि एरिया स्टेटमेंट रीड करत आहे... (कृपया ५-१० सेकंद वाट पाहा)"):
-                        try:
-                            client = genai.Client(api_key=api_key)
-                            response = None  # व्हॅरिएबल इनिशियलाइज केला
-                            
-                            if is_pdf:
-                                if not HAS_PYPDF:
-                                    st.error("❌ PDF प्रक्रिया करण्यासाठी `pypdf` लायब्ररी आवश्यक आहे. कृपया सर्व्हरवर/`requirements.txt` मध्ये `pypdf` जोडा.")
-                                else:
-                                    pdf_reader = pypdf.PdfReader(drawing_file)
-                                    extracted_text = ""
-                                    for page in pdf_reader.pages:
-                                        extracted_text += page.extract_text() or ""
-                                    
-                                    prompt = f"""
-                                    You are an expert Senior Civil Site Engineer and Quantity Surveyor for Patil Infratech. 
-                                    Analyze this extracted text from a civil engineering PDF plan/blueprint and generate:
-                                    
-                                    1. **AREA STATEMENT TABLE:** Plot Area, Built-up Area, Carpet Area.
-                                    2. **OPENING SCHEDULE (DOORS & WINDOWS):** Type, Size, Nos.
-                                    3. **STRUCTURAL & WORK SPECIFICATIONS:** Concrete Grade, Brickwork, Steel details.
-                                    4. **CIVIL SITE MEASUREMENT SHEET:** Clear Markdown Measurement Sheet.
-                                    
-                                    Extracted Content:
-                                    {extracted_text if extracted_text.strip() else "No direct text extracted, perform general structured structural engineering checklist based on document metadata."}
-                                    """
-                                    
-                                    response = client.models.generate_content(
-                                        model='gemini-2.0-flash',
-                                        contents=prompt
-                                    )
-                            else:
-                                from PIL import Image
-                                image_bytes = Image.open(drawing_file)
-                                
-                                prompt = """
-                                You are an expert Senior Civil Site Engineer and Quantity Surveyor for Patil Infratech. 
-                                Analyze this civil engineering drawing/blueprint accurately. Strictly extract information printed on the drawing (DO NOT GUESS or invent values):
-                                
-                                1. **AREA STATEMENT TABLE:**
-                                   - Plot Area, Built-up Area, Carpet Area, Balcony/Open Area (if mentioned).
-                                
-                                2. **OPENING SCHEDULE (DOORS & WINDOWS):**
-                                   - Type (e.g. D1, D2, W1, W2), Size (Width x Height in meters/feet), Quantity (Nos), and Location/Description.
-                                
-                                3. **STRUCTURAL & WORK SPECIFICATIONS:**
-                                   - Concrete Grade, Brickwork Thickness, Plaster Details, Steel Grade (if printed in legend/notes).
-                                
-                                4. **CIVIL SITE MEASUREMENT SHEET:**
-                                   - Prepare a clear Markdown Measurement Sheet based directly on the drawn dimensions.
-                                
-                                Format the output clearly with professional Markdown tables suitable for a Site Engineer.
-                                """
-                                
-                                response = client.models.generate_content(
-                                    model='gemini-2.0-flash',
-                                    contents=[prompt, image_bytes]
-                                )
-
-                            if response and response.text:
-                                st.success("🎉 ड्राइंग रीडिंग यशस्वी झाले! मोजमाप तक्ता खालीलप्रमाणे आहे:")
-                                st.markdown("### 📊 PATIL INFRATECH - AI DRAWING MEASUREMENT REPORT")
-                                st.info(f"👤 **Prepared For:** {current_user_name} | **Date:** {get_ist_time().strftime('%d-%m-%Y %H:%M:%S')}")
-                                
-                                report_content = response.text
-                                st.markdown(report_content)
-                                
-                                # WhatsApp Sharing Option
-                                msg_text = f"🏗️ *PATIL INFRATECH - AI DRAWING ANALYSIS REPORT*\n"
-                                msg_text += f"👤 *Engineer/User:* {current_user_name}\n"
-                                msg_text += f"📅 *Date:* {get_ist_time().strftime('%d-%m-%Y')}\n\n"
-                                msg_text += f"{report_content[:1500]}...\n\n"
-                                msg_text += f"_Generated by Patil Infratech AI Drawing Reader_"
-                                
-                                encoded_msg = urllib.parse.quote(msg_text)
-                                st.write("---")
-                                render_whatsapp_feature(encoded_msg, "ai_dwg_reader")
-                                
-                                # History DB Save
-                                if current_user_name:
-                                    conn = get_db_connection()
-                                    cursor = conn.cursor()
-                                    now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
-                                    cursor.execute("INSERT INTO history (user_key, timestamp, user_note, report_data) VALUES (?, ?, ?, ?)", 
-                                                   (current_user_name, now_str, "AI Drawing Scan Report", report_content))
-                                    conn.commit()
-                                    conn.close()
-                            elif response is None and is_pdf and not HAS_PYPDF:
-                                pass # pypdf चा एरर मेसेज आधीच दाखवला आहे
-                            else:
-                                st.error("⚠️ AI ला फाइलमधील मजकूर/ड्राइंग वाचता आले नाही. कृपया फाईल तपासून पुन्हा प्रयत्न करा.")
-                        except Exception as e:
-                            st.error(f"⚠️ फाइल प्रोसेस करताना एरर आला: {e}")
-
-    # ------------------------------------------
-    # OTHER EXISTING CALCULATOR OPTIONS
-    # ------------------------------------------
-    elif "Volume / Brass" in conv_category:
+    if "Volume / Brass" in conv_category:
         st.markdown("#### 📦 Volume & Brass Converter")
         val = st.number_input("मूल्य भरा (Value):", min_value=0.0, value=1.0, step=0.1, key="v_val")
         unit_from = st.selectbox("मूळ युनिट (From Unit):", ["Cubic Meter (m³)", "Cubic Feet (CFT)", "Brass"])
 
         if st.button("⚡ Convert Now", type="primary", key="btn_conv_vol"):
-            if "Cubic Meter" in unit_from: m3 = val
-            elif "Cubic Feet" in unit_from: m3 = val / 35.3147
-            else: m3 = val * 2.83168
+            if "Cubic Meter" in unit_from:
+                m3 = val
+            elif "Cubic Feet" in unit_from:
+                m3 = val / 35.3147
+            else:
+                m3 = val * 2.83168
 
             brass = m3 / 2.83168
             cft = m3 * 35.3147
@@ -1520,11 +1319,16 @@ elif st.session_state.selected_module == "Civil Calculator":
         unit_from = st.selectbox("मूळ युनिट (From Unit):", ["Meters", "Feet", "Inches", "Millimeters (mm)", "Centimeters (cm)"])
 
         if st.button("⚡ Convert Now", type="primary", key="btn_conv_len"):
-            if "Meters" in unit_from: meters = val
-            elif "Feet" in unit_from: meters = val / 3.28084
-            elif "Inches" in unit_from: meters = val / 39.3701
-            elif "Millimeters" in unit_from: meters = val / 1000.0
-            else: meters = val / 100.0
+            if "Meters" in unit_from:
+                meters = val
+            elif "Feet" in unit_from:
+                meters = val / 3.28084
+            elif "Inches" in unit_from:
+                meters = val / 39.3701
+            elif "Millimeters" in unit_from:
+                meters = val / 1000.0
+            else:
+                meters = val / 100.0
 
             feet = meters * 3.28084
             inches = meters * 39.3701
@@ -1548,10 +1352,14 @@ elif st.session_state.selected_module == "Civil Calculator":
         unit_from = st.selectbox("मूळ युनिट (From Unit):", ["Sq. Meters (m²)", "Sq. Feet (Sq. Ft.)", "Guntha", "Acre"])
 
         if st.button("⚡ Convert Now", type="primary", key="btn_conv_area"):
-            if "Sq. Feet" in unit_from: sqft = val
-            elif "Sq. Meters" in unit_from: sqft = val * 10.7639
-            elif "Guntha" in unit_from: sqft = val * 1089.0
-            else: sqft = val * 43560.0
+            if "Sq. Feet" in unit_from:
+                sqft = val
+            elif "Sq. Meters" in unit_from:
+                sqft = val * 10.7639
+            elif "Guntha" in unit_from:
+                sqft = val * 1089.0
+            else:
+                sqft = val * 43560.0
 
             sqm = sqft / 10.7639
             guntha = sqft / 1089.0
@@ -1568,7 +1376,7 @@ elif st.session_state.selected_module == "Civil Calculator":
             """, unsafe_allow_html=True)
 
 # ==========================================
-# 🛑 MODULE 1: RATE ANALYSIS MODULE
+# 🛑 MODULE 1: RATE ANALYSIS MODULE (Concrete Work, Brickwork & Plaster Work)
 # ==========================================
 elif st.session_state.selected_module == "Rate Analysis":
     if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_to_main"):
@@ -1735,7 +1543,7 @@ elif st.session_state.selected_module == "Rate Analysis":
     elif "Brickwork" in main_choice:
         st.subheader("🧱 Brickwork Estimation")
         mortar_choice = st.selectbox("मॉर्टर मिक्स गुणोत्तर (Mortar Mix Ratio) निवडा:", 
-                                   ["1:3 (सिमेंट : वाळू)", "1:4 (सिमेंट : वाळू)", "1:5 (सिमेंट : वाळू)", "1:6 (सिमेंट : वाळू)"])
+                                     ["1:3 (सिमेंट : वाळू)", "1:4 (सिमेंट : वाळू)", "1:5 (सिमेंट : वाळू)", "1:6 (सिमेंट : वाळू)"])
         
         if "1:3" in mortar_choice: c_part, s_part = 1, 3
         elif "1:4" in mortar_choice: c_part, s_part = 1, 4
@@ -2271,7 +2079,7 @@ elif st.session_state.selected_module == "BBS":
             conn.close()
 
 # ==========================================
-# 📈 QUANTITY SURVEYING & ABSTRACT SHEET MODULE
+# 📈 QUANTITY SURVEYING & ABSTRACT SHEET MODULE (Notebook Format)
 # ==========================================
 elif st.session_state.selected_module == "Quantity Surveying":
     if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_to_main_qs"):
@@ -2282,16 +2090,13 @@ elif st.session_state.selected_module == "Quantity Surveying":
     st.subheader("📈 Quantity Surveying & Abstract Sheet Master")
     st.caption("💡 नोटबुकच्या मोजमाप पद्धतीनुसार खालील टेबलमध्ये Description, Nos, Length, Width, Height भरा. हिशोब तयार करा!")
 
-    # 1. Camera / Blueprint Section (Supports PNG, JPG, PDF)
+    # 1. Camera / Blueprint Section
     with st.expander("📷 2D Plan / Blueprint / Camera Reference"):
-        plan_option = st.radio("ब्लूप्रिंट इनपुट पद्धत निवडा:", ["Upload 2D Plan File (PNG/JPG/PDF)", "Capture via Camera (Live)"], horizontal=True)
+        plan_option = st.radio("ब्लूप्रिंट इनपुट पद्धत निवडा:", ["Upload 2D Plan Image", "Capture via Camera (Live)"], horizontal=True)
         if "Upload" in plan_option:
-            uploaded_plan = st.file_uploader("Upload Blueprint (PNG/JPG/PDF):", type=["png", "jpg", "jpeg", "pdf"])
+            uploaded_plan = st.file_uploader("Upload Blueprint (PNG/JPG):", type=["png", "jpg", "jpeg"])
             if uploaded_plan:
-                if uploaded_plan.name.endswith(".pdf"):
-                    st.success(f"📄 **{uploaded_plan.name}** (PDF File Uploaded Successfully)")
-                else:
-                    st.image(uploaded_plan, caption="Uploaded 2D Floor Plan", use_column_width=True)
+                st.image(uploaded_plan, caption="Uploaded 2D Floor Plan", use_column_width=True)
         else:
             cam_pic = st.camera_input("📸 Capture 2D Plan from Camera")
             if cam_pic:
@@ -2519,7 +2324,7 @@ elif st.session_state.selected_module == "Quantity Surveying":
             with btn_col2:
                 st.markdown('''
                     <button onclick="window.print()" style="width: 100%; background-color: #3b82f6; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px;">
-                        📄 Print / Download A3 Size PDF
+                        📄 Print / Save A3 Size PDF
                     </button>
                 ''', unsafe_allow_html=True)
 
