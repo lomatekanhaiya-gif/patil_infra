@@ -1,4 +1,4 @@
-# KANHA_1p - पाटील इन्फ्राटेक (SQLite Database & Streamlit Web Application)
+# KANHA_1p - पाटील इन्फ्राटेक (SQLite Database & Streamlit Web Application with Live Camera Measurement)
 import streamlit as st
 import math
 import sqlite3
@@ -9,6 +9,9 @@ import time
 import urllib.parse
 import random
 import string
+import cv2
+import numpy as np
+from PIL import Image
 
 # Official Google GenAI SDK Import
 try:
@@ -127,12 +130,13 @@ def init_db():
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', ("9999999999", "kanha", "KANHA_1P", "1234", "9999999999", "patiladmin123", "मास्टर ॲडमीन अकाउंट", "स्वागत आहे मास्टर कन्हैया! आपले पाटील इन्फ्राटेक मध्ये सर्व अधिकार अनलॉक्ड आहेत ⚡", 0, 1, "2099-12-31 23:59:59", 0, 1, 0, get_ist_time().strftime("%Y-%m-%d %H:%M:%S"), "Master Admin"))
 
-    # Default Feature Locks (Quantity Surveying Included)
+    # Default Feature Locks
     default_locks = {
         "Civil Calculator": "Free",
         "Rate Analysis": "Free",
         "BBS": "Free",
         "Quantity Surveying": "Free",
+        "Camera Measurement": "Free",
         "WhatsApp Share": "Premium",
         "Civil AI Assistant": "Premium"
     }
@@ -254,7 +258,7 @@ def check_user_premium_status(username):
 is_curr_premium, _ = check_user_premium_status(current_user_name)
 
 # ==========================================
-# 🎨 ULTRA-PREMIUM ROYAL METALLIC GOLD STYLING (Forced Permanent Dark Theme)
+# 🎨 ULTRA-PREMIUM ROYAL METALLIC GOLD STYLING
 # ==========================================
 touch_glow_color = "rgba(255, 179, 0, 0.45)" if is_curr_premium else "rgba(59, 130, 246, 0.25)"
 touch_border_color = "#FFD54F" if is_curr_premium else "#3b82f6"
@@ -263,7 +267,6 @@ input_inner_shadow = "inset 0 0 10px rgba(255, 179, 0, 0.3)" if is_curr_premium 
 
 st.markdown(f"""
     <style>
-    /* 🟢 मोबाईलची थीम कोणतीही असो, ॲप कायम डार्क मोडमध्येच राहणार (Forced Theme Override) */
     @media (prefers-color-scheme: light), (prefers-color-scheme: dark) {{
         .stApp {{
             background: linear-gradient(135deg, #070a12 0%, #0d1322 100%) !important;
@@ -345,7 +348,6 @@ st.markdown(f"""
         font-size: 13px !important;
     }}
 
-    /* 🟢 सर्व बटन्सचे पांढरे बॅकग्राउंड काढून मूळ थीम कलर देणे */
     div.stButton > button {{
         background-color: #121929 !important;
         color: #ffffff !important;
@@ -436,6 +438,44 @@ st.markdown(f"""
 
 def generate_random_code():
     return "PATIL-" + ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
+
+# ==========================================
+# 📸 LIVE CAMERA MEASUREMENT PROCESSING ENGINE
+# ==========================================
+def process_camera_measurement(image, ref_width_cm):
+    """
+    कॅमेरा इमेज आणि रेफरन्स आकारावरून इमेजमधील वस्तूचे मोजमाप काढणे
+    """
+    img_array = np.array(image.convert('RGB'))
+    gray = cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY)
+    blur = cv2.GaussianBlur(gray, (5, 5), 0)
+    edged = cv2.Canny(blur, 50, 100)
+    
+    contours, _ = cv2.findContours(edged.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    
+    if not contours:
+        return img_array, 0.0, 0.0
+
+    contours = sorted(contours, key=cv2.contourArea, reverse=True)
+    processed_img = img_array.copy()
+    
+    ref_contour = contours[0]
+    x, y, w, h = cv2.boundingRect(ref_contour)
+    
+    pixels_per_cm = w / ref_width_cm if ref_width_cm > 0 else 1.0
+    
+    cv2.rectangle(processed_img, (x, y), (x + w, y + h), (0, 255, 0), 3)
+    
+    calc_width_cm = w / pixels_per_cm
+    calc_height_cm = h / pixels_per_cm
+    
+    calc_width_m = calc_width_cm / 100.0
+    calc_height_m = calc_height_cm / 100.0
+    
+    cv2.putText(processed_img, f"W: {calc_width_m:.2f}m", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 215, 0), 2)
+    cv2.putText(processed_img, f"H: {calc_height_m:.2f}m", (x, y + h + 25), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 215, 0), 2)
+    
+    return processed_img, calc_width_m, calc_height_m
 
 # ==========================================
 # 📱 WHATSAPP SHARING
@@ -576,7 +616,7 @@ if not st.session_state.welcome_completed:
 st.markdown("""
     <div class="main-header">
         <h1 style='color: white; margin:0; font-size: 26px;'>🏗️ PATIL INFRATECH</h1>
-        <p style='color: #e0e7ff; margin:5px 0 0 0; font-size: 14px;'>📐 Quantity Surveyor & Cost Estimator</p>
+        <p style='color: #e0e7ff; margin:5px 0 0 0; font-size: 14px;'>📐 Quantity Surveyor, Cost Estimator & AR Measurement</p>
         <small style='color: #93c5fd;'>Concept & Logic by: Kanhaiya (Founder of Patil Infratech)</small>
     </div>
 """, unsafe_allow_html=True)
@@ -648,6 +688,7 @@ if st.session_state.is_admin_logged:
         fl_ra = st.selectbox("Rate Analysis Module Access:", ["Free", "Premium"], index=0 if cur_locks.get("Rate Analysis", "Free") == "Free" else 1)
         fl_bbs = st.selectbox("BBS Calculator Access:", ["Free", "Premium"], index=0 if cur_locks.get("BBS", "Free") == "Free" else 1)
         fl_qs = st.selectbox("Quantity Surveying Access:", ["Free", "Premium"], index=0 if cur_locks.get("Quantity Surveying", "Free") == "Free" else 1)
+        fl_cam = st.selectbox("AR Camera Measurement Access:", ["Free", "Premium"], index=0 if cur_locks.get("Camera Measurement", "Free") == "Free" else 1)
         fl_wa = st.selectbox("WhatsApp Full Report Share:", ["Free", "Premium"], index=0 if cur_locks.get("WhatsApp Share", "Free") == "Free" else 1)
         fl_ai = st.selectbox("Civil AI Assistant Access:", ["Free", "Premium"], index=0 if cur_locks.get("Civil AI Assistant", "Premium") == "Free" else 1)
 
@@ -659,6 +700,7 @@ if st.session_state.is_admin_logged:
                 "Rate Analysis": fl_ra,
                 "BBS": fl_bbs,
                 "Quantity Surveying": fl_qs,
+                "Camera Measurement": fl_cam,
                 "WhatsApp Share": fl_wa,
                 "Civil AI Assistant": fl_ai
             }
@@ -1228,19 +1270,20 @@ if st.session_state.selected_module is None:
     ra_lock = locks_cfg.get("Rate Analysis", "Free")
     bbs_lock = locks_cfg.get("BBS", "Free")
     qs_lock = locks_cfg.get("Quantity Surveying", "Free")
+    cam_lock = locks_cfg.get("Camera Measurement", "Free")
 
-    col_icon1, col_icon2, col_icon3, col_icon4 = st.columns(4)
+    col_icon1, col_icon2, col_icon3, col_icon4, col_icon5 = st.columns(5)
     
     with col_icon1:
         calc_badge = "🆓 Free" if calc_lock == "Free" else "👑 Premium"
         st.markdown(f"""
-            <div style="text-align: center; background: rgba(31, 41, 55, 0.8); padding: 15px; border-radius: 18px; border: 1px solid rgba(59, 130, 246, 0.3);">
-                <h1 style="font-size: 35px; margin:0;">🧮</h1>
-                <h5 style="margin: 6px 0 2px 0; color: #f3f4f6;">Calculator</h5>
-                <p style="font-size: 10px; color: #9ca3af;">[{calc_badge}]</p>
+            <div style="text-align: center; background: rgba(31, 41, 55, 0.8); padding: 10px; border-radius: 18px; border: 1px solid rgba(59, 130, 246, 0.3);">
+                <h1 style="font-size: 28px; margin:0;">🧮</h1>
+                <h6 style="margin: 4px 0 2px 0; color: #f3f4f6; font-size: 12px;">Calculator</h6>
+                <p style="font-size: 9px; color: #9ca3af; margin:0;">[{calc_badge}]</p>
             </div>
         """, unsafe_allow_html=True)
-        if st.button("🧮 Calculator", key="btn_open_calc", use_container_width=True):
+        if st.button("🧮 Open", key="btn_open_calc", use_container_width=True):
             if calc_lock == "Premium" and not is_user_premium:
                 st.error("🔒 हे फीचर प्रिमियम युझर्ससाठी आहे!")
             else:
@@ -1250,13 +1293,13 @@ if st.session_state.selected_module is None:
     with col_icon2:
         ra_badge = "🆓 Free" if ra_lock == "Free" else "👑 Premium"
         st.markdown(f"""
-            <div style="text-align: center; background: rgba(31, 41, 55, 0.8); padding: 15px; border-radius: 18px; border: 1px solid rgba(59, 130, 246, 0.3);">
-                <h1 style="font-size: 35px; margin:0;">📊</h1>
-                <h5 style="margin: 6px 0 2px 0; color: #f3f4f6;">Rate Analysis</h5>
-                <p style="font-size: 10px; color: #9ca3af;">[{ra_badge}]</p>
+            <div style="text-align: center; background: rgba(31, 41, 55, 0.8); padding: 10px; border-radius: 18px; border: 1px solid rgba(59, 130, 246, 0.3);">
+                <h1 style="font-size: 28px; margin:0;">📊</h1>
+                <h6 style="margin: 4px 0 2px 0; color: #f3f4f6; font-size: 12px;">Rate Analysis</h6>
+                <p style="font-size: 9px; color: #9ca3af; margin:0;">[{ra_badge}]</p>
             </div>
         """, unsafe_allow_html=True)
-        if st.button("📊 Rate Analysis", key="btn_open_ra", use_container_width=True):
+        if st.button("📊 Open", key="btn_open_ra", use_container_width=True):
             if ra_lock == "Premium" and not is_user_premium:
                 st.error("🔒 हे फीचर प्रिमियम युझर्ससाठी आहे!")
             else:
@@ -1266,13 +1309,13 @@ if st.session_state.selected_module is None:
     with col_icon3:
         bbs_badge = "🆓 Free" if bbs_lock == "Free" else "👑 Premium"
         st.markdown(f"""
-            <div style="text-align: center; background: rgba(31, 41, 55, 0.8); padding: 15px; border-radius: 18px; border: 1px solid rgba(59, 130, 246, 0.3);">
-                <h1 style="font-size: 35px; margin:0;">🏗️</h1>
-                <h5 style="margin: 6px 0 2px 0; color: #f3f4f6;">BBS</h5>
-                <p style="font-size: 10px; color: #9ca3af;">[{bbs_badge}]</p>
+            <div style="text-align: center; background: rgba(31, 41, 55, 0.8); padding: 10px; border-radius: 18px; border: 1px solid rgba(59, 130, 246, 0.3);">
+                <h1 style="font-size: 28px; margin:0;">🏗️</h1>
+                <h6 style="margin: 4px 0 2px 0; color: #f3f4f6; font-size: 12px;">BBS</h6>
+                <p style="font-size: 9px; color: #9ca3af; margin:0;">[{bbs_badge}]</p>
             </div>
         """, unsafe_allow_html=True)
-        if st.button("🏗️ Open BBS", key="btn_open_bbs", use_container_width=True):
+        if st.button("🏗️ Open", key="btn_open_bbs", use_container_width=True):
             if bbs_lock == "Premium" and not is_user_premium:
                 st.error("🔒 हे फीचर प्रिमियम युझर्ससाठी आहे!")
             else:
@@ -1282,18 +1325,88 @@ if st.session_state.selected_module is None:
     with col_icon4:
         qs_badge = "🆓 Free" if qs_lock == "Free" else "👑 Premium"
         st.markdown(f"""
-            <div style="text-align: center; background: rgba(31, 41, 55, 0.8); padding: 15px; border-radius: 18px; border: 1px solid rgba(59, 130, 246, 0.3);">
-                <h1 style="font-size: 35px; margin:0;">📈</h1>
-                <h5 style="margin: 6px 0 2px 0; color: #f3f4f6;">Quantity Survey</h5>
-                <p style="font-size: 10px; color: #9ca3af;">[{qs_badge}]</p>
+            <div style="text-align: center; background: rgba(31, 41, 55, 0.8); padding: 10px; border-radius: 18px; border: 1px solid rgba(59, 130, 246, 0.3);">
+                <h1 style="font-size: 28px; margin:0;">📈</h1>
+                <h6 style="margin: 4px 0 2px 0; color: #f3f4f6; font-size: 12px;">Quantity Survey</h6>
+                <p style="font-size: 9px; color: #9ca3af; margin:0;">[{qs_badge}]</p>
             </div>
         """, unsafe_allow_html=True)
-        if st.button("📈 Quantity Survey", key="btn_open_qs", use_container_width=True):
+        if st.button("📈 Open", key="btn_open_qs", use_container_width=True):
             if qs_lock == "Premium" and not is_user_premium:
                 st.error("🔒 हे फीचर प्रिमियम युझर्ससाठी आहे!")
             else:
                 st.session_state.selected_module = "Quantity Surveying"
                 st.rerun()
+
+    with col_icon5:
+        cam_badge = "🆓 Free" if cam_lock == "Free" else "👑 Premium"
+        st.markdown(f"""
+            <div style="text-align: center; background: rgba(31, 41, 55, 0.8); padding: 10px; border-radius: 18px; border: 1px solid rgba(59, 130, 246, 0.3);">
+                <h1 style="font-size: 28px; margin:0;">📷</h1>
+                <h6 style="margin: 4px 0 2px 0; color: #f3f4f6; font-size: 12px;">AR Camera</h6>
+                <p style="font-size: 9px; color: #9ca3af; margin:0;">[{cam_badge}]</p>
+            </div>
+        """, unsafe_allow_html=True)
+        if st.button("📷 Open", key="btn_open_cam", use_container_width=True):
+            if cam_lock == "Premium" and not is_user_premium:
+                st.error("🔒 हे फीचर प्रिमियम युझर्ससाठी आहे!")
+            else:
+                st.session_state.selected_module = "Camera Measurement"
+                st.rerun()
+
+# ==========================================
+# 📷 MODULE: LIVE CAMERA MEASUREMENT FEATURE
+# ==========================================
+elif st.session_state.selected_module == "Camera Measurement":
+    if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_to_main_cam"):
+        st.session_state.selected_module = None
+        st.rerun()
+
+    st.write("---")
+    st.subheader("📷 Live AR Camera Measurement Tool")
+    st.caption("💡 तुमच्या मोबाईल/लॅपटॉप कॅमेऱ्याने फोटो काढा आणि वस्तूचे ऑटोमॅटिक लांबी व रुंदी मोजमाप मिळवा!")
+
+    ref_col1, ref_col2 = st.columns(2)
+    with ref_col1:
+        ref_object = st.selectbox("कॅलिब्रेशन संदर्भ (Reference Scale):", [
+            "Standard Card / ATM Card (8.56 cm)",
+            "Standard A4 Paper Width (21.0 cm)",
+            "10 cm Marking Tape / Ruler",
+            "Custom Scale (स्वतःचे मोजमाप)"
+        ], key="cam_ref_sel")
+    
+    with ref_col2:
+        if "Custom" in ref_object:
+            known_width = st.number_input("संदर्भ रुंदी टाका (cm मध्ये):", min_value=1.0, value=10.0, step=0.5, key="cam_custom_w")
+        elif "A4" in ref_object:
+            known_width = 21.0
+        elif "10 cm" in ref_object:
+            known_width = 10.0
+        else:
+            known_width = 8.56
+
+    cam_image = st.camera_input("📸 कॅमेऱ्याने फोटो काढा (Take Measurement Snap)", key="cam_snap_input")
+
+    if cam_image:
+        img = Image.open(cam_image)
+        with st.spinner("🔍 वस्तूचे मोजमाप केले जात आहे..."):
+            processed_img, width_m, height_m = process_camera_measurement(img, known_width)
+            
+            st.image(processed_img, caption="🎯 Scanner & Measured Object Output", use_column_width=True)
+            
+            st.success("✅ मोजमाप यशस्वी (Calculated Results):")
+            st.markdown(f"""
+                <div style="background: rgba(31, 41, 55, 0.95); padding: 18px; border-radius: 16px; border-left: 5px solid #FFB300;">
+                    <p style="margin: 6px 0; font-size: 16px;"><b>📐 अंदाज लांबी (Height/Length):</b> <span style="color:#fbbf24; font-size:18px; font-weight:bold;">{height_m:.2f} Meters ({height_m*3.28084:.2f} Feet)</span></p>
+                    <p style="margin: 6px 0; font-size: 16px;"><b>📏 अंदाज रुंदी (Width):</b> <span style="color:#34d399; font-size:18px; font-weight:bold;">{width_m:.2f} Meters ({width_m*3.28084:.2f} Feet)</span></p>
+                    <p style="margin: 6px 0; font-size: 15px;"><b>🔲 अंदाज क्षेत्रफळ (Area):</b> <code>{width_m * height_m:.2f} m² ({(width_m * height_m)*10.7639:.2f} Sq.Ft.)</code></p>
+                </div>
+            """, unsafe_allow_html=True)
+            
+            if st.button("📥 वापरा हे मोजमाप (Quantity Survey मध्ये पाठवा)"):
+                st.session_state["auto_cam_l"] = height_m
+                st.session_state["auto_cam_w"] = width_m
+                st.success("✅ मोजमाप सेव्ह झाले! Quantity Surveying उघडून वापरू शकता.")
 
 # ==========================================
 # 🧮 MODULE 0: CIVIL CALCULATOR & UNIT CONVERTER
@@ -1403,7 +1516,7 @@ elif st.session_state.selected_module == "Civil Calculator":
             """, unsafe_allow_html=True)
 
 # ==========================================
-# 🛑 MODULE 1: RATE ANALYSIS MODULE (Concrete Work, Brickwork & Plaster Work)
+# 🛑 MODULE 1: RATE ANALYSIS MODULE
 # ==========================================
 elif st.session_state.selected_module == "Rate Analysis":
     if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_to_main"):
@@ -2106,7 +2219,7 @@ elif st.session_state.selected_module == "BBS":
             conn.close()
 
 # ==========================================
-# 📈 QUANTITY SURVEYING & ABSTRACT SHEET MODULE (Notebook Format)
+# 📈 QUANTITY SURVEYING & ABSTRACT SHEET MODULE
 # ==========================================
 elif st.session_state.selected_module == "Quantity Surveying":
     if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_to_main_qs"):
@@ -2117,7 +2230,6 @@ elif st.session_state.selected_module == "Quantity Surveying":
     st.subheader("📈 Quantity Surveying & Abstract Sheet Master")
     st.caption("💡 नोटबुकच्या मोजमाप पद्धतीनुसार खालील टेबलमध्ये Description, Nos, Length, Width, Height भरा. हिशोब तयार करा!")
 
-    # 1. Camera / Blueprint Section
     with st.expander("📷 2D Plan / Blueprint / Camera Reference"):
         plan_option = st.radio("ब्लूप्रिंट इनपुट पद्धत निवडा:", ["Upload 2D Plan Image", "Capture via Camera (Live)"], horizontal=True)
         if "Upload" in plan_option:
@@ -2144,12 +2256,6 @@ elif st.session_state.selected_module == "Quantity Surveying":
     ]
 
     master_rates = get_market_rates()
-    c_rate = master_rates.get('cement', 400.0)
-    s_rate = master_rates.get('sand', 2500.0)
-    a_rate = master_rates.get('aggregate', 2200.0)
-    st_rate = master_rates.get('steel', 60.0)
-    b_rate = master_rates.get('bricks', 8.0)
-
     stage_results = []
     
     for idx, stg_name in enumerate(stages):
@@ -2165,9 +2271,11 @@ elif st.session_state.selected_module == "Quantity Surveying":
         with c_nos:
             nos_val = st.number_input(f"Nos #{idx}", min_value=0, value=0, step=1, key=f"qs_nos_{idx}")
         with c_l:
-            l_val = st.number_input(f"Length #{idx}", min_value=0.0, value=0.0, step=0.1, key=f"qs_l_{idx}")
+            def_l = st.session_state.get("auto_cam_l", 0.0) if idx == 0 else 0.0
+            l_val = st.number_input(f"Length #{idx}", min_value=0.0, value=def_l, step=0.1, key=f"qs_l_{idx}")
         with c_w:
-            w_val = st.number_input(f"Width #{idx}", min_value=0.0, value=0.0, step=0.1, key=f"qs_w_{idx}")
+            def_w = st.session_state.get("auto_cam_w", 0.0) if idx == 0 else 0.0
+            w_val = st.number_input(f"Width #{idx}", min_value=0.0, value=def_w, step=0.1, key=f"qs_w_{idx}")
         with c_h:
             if is_area_unit:
                 h_val = 1.0
@@ -2232,66 +2340,6 @@ elif st.session_state.selected_module == "Quantity Surveying":
                 "Material": mat_summary
             })
 
-        # 🚪 Brickwork Deduction Sub-Section
-        if is_brickwork:
-            st.markdown("##### 🚪 Brickwork Deductions (Doors / Windows in m³)")
-            ded_key_bw = f"bw_ded_count_{idx}"
-            if ded_key_bw not in st.session_state:
-                st.session_state[ded_key_bw] = 1
-
-            if st.button(f"➕ Add Brickwork Deduction Item #{idx}", key=f"btn_bw_ded_{idx}"):
-                st.session_state[ded_key_bw] += 1
-                st.rerun()
-            
-            bw_ded_vol = 0.0
-            for d_i in range(st.session_state[ded_key_bw]):
-                dc1, dc2, dc3, dc4, dc5 = st.columns(5)
-                with dc1:
-                    dt = st.selectbox(f"Type", ["Door", "Window"], key=f"bw_dt_{idx}_{d_i}")
-                with dc2:
-                    dl = st.number_input(f"L (m)", min_value=0.0, value=0.0, step=0.1, key=f"bw_dl_{idx}_{d_i}")
-                with dc3:
-                    db = st.number_input(f"Thickness", min_value=0.0, value=0.23, step=0.05, key=f"bw_db_{idx}_{d_i}")
-                with dc4:
-                    dh = st.number_input(f"H (m)", min_value=0.0, value=0.0, step=0.1, key=f"bw_dh_{idx}_{d_i}")
-                with dc5:
-                    dn = st.number_input(f"Nos", min_value=0, value=0, step=1, key=f"bw_dn_{idx}_{d_i}")
-                
-                if dl > 0 and db > 0 and dh > 0 and dn > 0:
-                    bw_ded_vol += dl * db * dh * dn
-            
-            if bw_ded_vol > 0:
-                st.markdown(f"**🔴 Brickwork Deduction Vol: `{bw_ded_vol:.3f} m³`**")
-
-        # 🚪 Plaster Deduction Sub-Section
-        if is_plaster:
-            st.markdown("##### 🚪 Plaster Deductions (Doors / Windows in m²)")
-            ded_key_pl = f"pl_ded_count_{idx}"
-            if ded_key_pl not in st.session_state:
-                st.session_state[ded_key_pl] = 1
-
-            if st.button(f"➕ Add Plaster Deduction Item #{idx}", key=f"btn_pl_ded_{idx}"):
-                st.session_state[ded_key_pl] += 1
-                st.rerun()
-            
-            pl_ded_area = 0.0
-            for d_i in range(st.session_state[ded_key_pl]):
-                dc1, dc2, dc3, dc4 = st.columns(4)
-                with dc1:
-                    dt = st.selectbox(f"Type", ["Door", "Window"], key=f"pl_dt_{idx}_{d_i}")
-                with dc2:
-                    dl = st.number_input(f"Length (m)", min_value=0.0, value=0.0, step=0.1, key=f"pl_dl_{idx}_{d_i}")
-                with dc3:
-                    dh = st.number_input(f"Height (m)", min_value=0.0, value=0.0, step=0.1, key=f"pl_dh_{idx}_{d_i}")
-                with dc4:
-                    dn = st.number_input(f"Nos", min_value=0, value=0, step=1, key=f"pl_dn_{idx}_{d_i}")
-                
-                if dl > 0 and dh > 0 and dn > 0:
-                    pl_ded_area += dl * dh * dn * 2 
-            
-            if pl_ded_area > 0:
-                st.markdown(f"**🔴 Plaster Deduction Area: `{pl_ded_area:.3f} m²`**")
-
         st.write("---")
 
     st.markdown("#### 💬 कमेंट पॅनल (Comment Panel)")
@@ -2332,7 +2380,7 @@ elif st.session_state.selected_module == "Quantity Surveying":
 
 ---
 ### 📌 SUMMARY
-* **Status:** Report Generated Successfully (No Cost/Amount Shown)
+* **Status:** Report Generated Successfully
 </div>
 """
             st.markdown(final_report_html, unsafe_allow_html=True)
