@@ -2134,6 +2134,9 @@ elif st.session_state.selected_module == "BBS":
 # ==========================================
 # 📈 QUANTITY SURVEYING & ABSTRACT SHEET MODULE
 # ==========================================
+# ==========================================
+# 📈 QUANTITY SURVEYING & ABSTRACT SHEET MODULE
+# ==========================================
 elif st.session_state.selected_module == "Quantity Surveying":
     if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_to_main_qs"):
         st.session_state.selected_module = None
@@ -2142,6 +2145,9 @@ elif st.session_state.selected_module == "Quantity Surveying":
     st.write("---")
     st.subheader("📈 Quantity Surveying & Abstract Sheet Master")
     st.caption("💡 नोटबुकच्या मोजमाप पद्धतीनुसार खालील टेबलमध्ये Description, Nos, Length, Width, Height भरा. हिशोब तयार करा!")
+
+import streamlit as st
+import streamlit.components.v1 as components
 
     # ----------------------------------------------------
     # 📸 1. LIVE WebAR CAMERA & BLUEPRINT SECTION
