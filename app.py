@@ -59,6 +59,7 @@ def send_email_message(receiver_email, subject, body_text):
 
 # Password Complexity Checker Function
 def is_strong_password(password):
+    # At least 8 chars, 1 digit, 1 special character
     if len(password) < 8:
         return False, "पासवर्ड कमीत कमी ८ अक्षरांचा असावा."
     if not re.search(r"\d", password):
@@ -217,22 +218,9 @@ def get_feature_locks():
     conn.close()
     return {row["feature_name"]: row["access_level"] for row in rows}
 
-# Session State & INSTAGRAM STYLE AUTO-LOGIN INITIALIZATION
+# Session State Initialization
 if "app_user_name" not in st.session_state:
     st.session_state.app_user_name = None
-
-# Auto-Login (डिव्हाइसवर सेव्ह असल्यास पासवर्ड न विचारता थेट लॉगिन होईल)
-query_params = st.query_params
-if st.session_state.app_user_name is None and "saved_user" in query_params:
-    saved_key = query_params["saved_user"]
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT user_key FROM users WHERE user_key = ?", (saved_key,))
-    row = cursor.fetchone()
-    conn.close()
-    if row:
-        st.session_state.app_user_name = row["user_key"]
-
 if "pending_email" not in st.session_state:
     st.session_state.pending_email = None
 if "generated_otp" not in st.session_state:
@@ -300,7 +288,7 @@ def check_user_premium_status(username):
 is_curr_premium, _ = check_user_premium_status(current_user_name)
 
 # ==========================================
-# 🎨 UNIVERSAL DARK THEME STYLING (FIXES LIGHT MODE MOBILE ISSUES)
+# 🎨 STYLING
 # ==========================================
 touch_glow_color = "rgba(255, 179, 0, 0.45)" if is_curr_premium else "rgba(59, 130, 246, 0.25)"
 touch_border_color = "#FFD54F" if is_curr_premium else "#3b82f6"
@@ -320,19 +308,21 @@ st.markdown(f"""
     button[title="Increment"], button[title="Decrement"] {{ display: none !important; }}
     div[data-testid="stNumberInputStepUp"], div[data-testid="stNumberInputStepDown"] {{ display: none !important; }}
 
-    /* 🚨 FORCE DARK THEME ACROSS ALL DEVICES 🚨 */
-    html, body, .stApp, [data-testid="stAppViewContainer"] {{
-        background-color: #070a12 !important;
-        background: linear-gradient(135deg, #070a12 0%, #0d1322 100%) !important;
-        color: #f3f4f6 !important;
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+    .stApp {{
+        background: linear-gradient(135deg, #070a12 0%, #0d1322 100%);
+        color: #f3f4f6;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }}
 
-    p, span, h1, h2, h3, h4, h5, h6, li, small {{
-        color: #f3f4f6 !important;
+    div.stForm, div[data-testid="stExpander"] {{
+        background: rgba(17, 24, 39, 0.8) !important;
+        backdrop-filter: blur(16px);
+        border: 1px solid {card_border_color} !important;
+        border-radius: 20px !important;
+        padding: 18px !important;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), {input_inner_shadow};
     }}
 
-    /* Inputs, Selectboxes, Textareas Correction */
     div[data-baseweb="select"] > div,
     div[data-baseweb="input"] > div,
     div[data-baseweb="base-input"],
@@ -344,45 +334,11 @@ st.markdown(f"""
         outline: none !important;
         font-weight: 500 !important;
         box-shadow: {input_inner_shadow} !important;
-    }}
-
-    /* Selectbox Dropdown Menu Dark Theme Fix */
-    ul[role="listbox"], div[data-baseweb="popover"], div[data-baseweb="menu"] {{
-        background-color: #121929 !important;
-        color: #ffffff !important;
-    }}
-
-    li[role="option"] {{
-        background-color: #121929 !important;
-        color: #ffffff !important;
-    }}
-    li[role="option"]:hover {{
-        background-color: #1f2937 !important;
-        color: #60a5fa !important;
-    }}
-
-    /* Tabs Styling Fix */
-    button[data-baseweb="tab"] {{
-        background-color: transparent !important;
-        color: #9ca3af !important;
-    }}
-    button[aria-selected="true"] {{
-        color: #60a5fa !important;
-        border-bottom-color: #60a5fa !important;
-    }}
-
-    /* Form & Cards Dark Theme Fix */
-    div.stForm, div[data-testid="stExpander"] {{
-        background: rgba(17, 24, 39, 0.8) !important;
-        backdrop-filter: blur(16px);
-        border: 1px solid {card_border_color} !important;
-        border-radius: 20px !important;
-        padding: 18px !important;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), {input_inner_shadow};
+        transition: all 0.25s ease-in-out !important;
     }}
 
     label, div[data-testid="stWidgetLabel"] p {{
-        color: #cbd5e1 !important;
+        color: #9ca3af !important;
         font-weight: 600 !important;
         font-size: 13px !important;
     }}
@@ -398,12 +354,6 @@ st.markdown(f"""
         width: 100%;
     }}
 
-    div.stButton > button {{
-        color: #ffffff !important;
-        background-color: #1e293b !important;
-        border: 1px solid #334155 !important;
-    }}
-
     .main-header {{
         background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
         padding: 22px 15px;
@@ -416,7 +366,7 @@ st.markdown(f"""
 
     .gold-vip-badge {{
         background: linear-gradient(135deg, #FFE082 0%, #FFB300 50%, #FF6F00 100%);
-        color: #000000 !important;
+        color: #000000;
         padding: 8px 16px;
         border-radius: 20px;
         font-weight: 900;
@@ -429,7 +379,7 @@ st.markdown(f"""
 
     .free-user-badge {{
         background: rgba(31, 41, 55, 0.9);
-        color: #9ca3af !important;
+        color: #9ca3af;
         padding: 6px 14px;
         border-radius: 20px;
         font-weight: 700;
@@ -975,11 +925,8 @@ if st.session_state.app_user_name is None:
                     conn.close()
 
                     if row:
-                        found_user = row["user_key"]
-                        st.session_state.app_user_name = found_user
-                        # 📱 INSTAGRAM STYLE - Save User Session to Device URL
-                        st.query_params["saved_user"] = found_user
-                        st.success("🎉 यशस्वीरित्या लॉगिन झाले! (तुमचे सेशन या डिव्हाइसवर सेव्ह केले आहे)")
+                        st.session_state.app_user_name = row["user_key"]
+                        st.success("🎉 यशस्वीरित्या लॉगिन झाले!")
                         st.rerun()
                     else:
                         st.error("❌ चुकीचा ईमेल/Username किंवा पासवर्ड! कृपया तपासा.")
@@ -1029,13 +976,14 @@ if st.session_state.app_user_name is None:
             conn.close()
 
             if row:
+                # User Already Exists -> Direct Access
                 user_data = dict(row)
                 st.session_state.app_user_name = user_data["user_key"]
-                st.query_params["saved_user"] = user_data["user_key"]
                 st.success(f"🎉 स्वागत आहे {user_data['user_key']}! लॉगिन होत आहे...")
                 time.sleep(1)
                 st.rerun()
             else:
+                # New Registration Form for Custom Username & Strong Password
                 st.info("✨ नवीन युझर! कृपया खालील माहिती भरून युझरनेम आणि मजबूत पासवर्ड सेट करा:")
                 with st.form("custom_reg_form"):
                     custom_username = st.text_input("तुमचे नाव किंवा युनिक Username बनावा:").strip()
@@ -1077,8 +1025,6 @@ if st.session_state.app_user_name is None:
                                         send_email_message(st.session_state.pending_email, subject, body)
 
                                         st.session_state.app_user_name = custom_username
-                                        # 📱 INSTAGRAM STYLE AUTO LOGIN SAVE
-                                        st.query_params["saved_user"] = custom_username
                                         st.success("🎉 अकाउंट यशस्वीरित्या तयार झाले! डिटेल्स ईमेलवर पाठवले आहेत.")
                                         time.sleep(1)
                                         st.rerun()
@@ -1133,12 +1079,9 @@ if is_user_premium:
 else:
     col_u.markdown(f"<span class='free-user-badge'>🆓 FREE USER: {current_user_name.upper()}</span>", unsafe_allow_html=True)
 
-if col_lo.button("🔄 Logout"):
+if col_lo.button("🔄 Logout / ॲप बदला"):
     st.session_state.app_user_name = None
     st.session_state.otp_verified = False
-    # 🚨 CLEAR INSTAGRAM STYLE SAVED SESSION ON LOGOUT
-    if "saved_user" in st.query_params:
-        del st.query_params["saved_user"]
     st.session_state.current_comment = "काही नाही"
     st.session_state.selected_module = None
     st.rerun()
