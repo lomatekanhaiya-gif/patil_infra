@@ -1,4 +1,4 @@
-# KANHA_1p - पाटील इन्फ्राटेक (SQLite Database & Streamlit Web Application with Dual Royal Themes)
+# KANHA_1p - पाटील इन्फ्राटेक (SQLite Database & Streamlit Web Application with Email OTP)
 import streamlit as st
 import math
 import sqlite3
@@ -299,7 +299,7 @@ def check_user_premium_status(username):
 is_curr_premium, _ = check_user_premium_status(current_user_name)
 
 # ==========================================
-# 👑 HIGH-END PREMIUM DUAL-THEME STYLING
+# 🎨 HIGH-END PREMIUM DUAL-THEME STYLING
 # ==========================================
 if is_curr_premium:
     # 👑 ROYAL METALLIC GOLD VIP THEME
@@ -307,6 +307,7 @@ if is_curr_premium:
     accent_border = "#FFD54F"
     accent_glow = "rgba(255, 213, 79, 0.4)"
     card_bg = "rgba(23, 18, 5, 0.9)"
+    card_border_color = "rgba(255, 213, 79, 0.6)"
     header_gradient = "linear-gradient(135deg, #b8860b 0%, #ff1493 50%, #d4af37 100%)"
     box_inner_shadow = "inset 0 0 15px rgba(255, 213, 79, 0.25)"
 else:
@@ -315,6 +316,7 @@ else:
     accent_border = "#3b82f6"
     accent_glow = "rgba(59, 130, 246, 0.3)"
     card_bg = "rgba(10, 17, 34, 0.9)"
+    card_border_color = "rgba(59, 130, 246, 0.4)"
     header_gradient = "linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)"
     box_inner_shadow = "inset 0 2px 6px rgba(0, 0, 0, 0.6)"
 
