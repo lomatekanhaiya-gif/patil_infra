@@ -947,7 +947,7 @@ if st.session_state.app_user_name is None:
                     
                     with st.spinner("📧 ईमेलवर OTP पाठवत आहे..."):
                         subject = "PATIL INFRATECH - Verification OTP"
-                        body = f"नमस्कार!\n\nतुमचा पाटील इन्फ्राटेक लॉगिन/रेजिस्ट्रेशन OTP हा आहे: {generated_otp}\nहा OTP कोणासोबतही शेअर करू नका.\n\n- पाटील इन्फ्राटेक टीम"
+                        body = f"नमस्कार!\n\nतुमचा पाटील इन्फ्राटेक लॉगिन/रेजिस्ट्रेशन OTP हा आहे: {generated_otp}\nहा OTP कोणासोबतही शेअर करू नका.\n\n- kanhaiya founder of patil infratech"
                         success = send_email_message(email_input, subject, body)
                         
                         if success:
@@ -1021,7 +1021,7 @@ if st.session_state.app_user_name is None:
                                         
                                         # Send Details to Email
                                         subject = "PATIL INFRATECH - Account Created Successfully!"
-                                        body = f"नमस्कार {custom_username}!\n\nपाटील इन्फ्राटेक मध्ये तुमचे अकाउंट यशस्वीरित्या तयार झाले आहे.\n\nतुमचा लॉगिन तपशील:\nUsername: {custom_username}\nPassword: {custom_password}\nRegistered Email: {st.session_state.pending_email}\n\nतुम्ही पुढील वेळी थेट ईमेल/युझरनेम आणि पासवर्ड वापरून लॉगिन करू शकता.\n\n- पाटील इन्फ्राटेक टीम"
+                                        body = f"नमस्कार {custom_username}!\n\nपाटील इन्फ्राटेक मध्ये तुमचे अकाउंट यशस्वीरित्या तयार झाले आहे.\n\nतुमचा लॉगिन तपशील:\nUsername: {custom_username}\nPassword: {custom_password}\nRegistered Email: {st.session_state.pending_email}\n\nतुम्ही पुढील वेळी ईमेल/युझरनेम आणि पासवर्ड वापरून लॉगिन करू शकता.\n\n- kanhaiya founder of patil infratech"
                                         send_email_message(st.session_state.pending_email, subject, body)
 
                                         st.session_state.app_user_name = custom_username
