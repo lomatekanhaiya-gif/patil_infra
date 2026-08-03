@@ -221,6 +221,7 @@ def get_feature_locks():
 if "app_user_name" not in st.session_state:
     st.session_state.app_user_name = None
 
+# Auto-Login (डिव्हाइसवर सेव्ह असल्यास पासवर्ड न विचारता थेट लॉगिन होईल)
 query_params = st.query_params
 if st.session_state.app_user_name is None and "saved_user" in query_params:
     saved_key = query_params["saved_user"]
@@ -299,7 +300,7 @@ def check_user_premium_status(username):
 is_curr_premium, _ = check_user_premium_status(current_user_name)
 
 # ==========================================
-# 🎨 ABSOLUTE ZERO-WHITE UNIVERSAL DARK THEME
+# 🎨 UNIVERSAL DARK THEME STYLING (FIXES LIGHT MODE MOBILE ISSUES)
 # ==========================================
 touch_glow_color = "rgba(255, 179, 0, 0.45)" if is_curr_premium else "rgba(59, 130, 246, 0.25)"
 touch_border_color = "#FFD54F" if is_curr_premium else "#3b82f6"
@@ -319,19 +320,19 @@ st.markdown(f"""
     button[title="Increment"], button[title="Decrement"] {{ display: none !important; }}
     div[data-testid="stNumberInputStepUp"], div[data-testid="stNumberInputStepDown"] {{ display: none !important; }}
 
-    /* 🚨 FORCE DARK THEME ACROSS ALL MOBILE LIGHT MODES 🚨 */
-    html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"], [data-testid="stSidebar"] {{
+    /* 🚨 FORCE DARK THEME ACROSS ALL DEVICES 🚨 */
+    html, body, .stApp, [data-testid="stAppViewContainer"] {{
         background-color: #070a12 !important;
         background: linear-gradient(135deg, #070a12 0%, #0d1322 100%) !important;
         color: #f3f4f6 !important;
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
     }}
 
-    p, span, h1, h2, h3, h4, h5, h6, li, small, label, div {{
+    p, span, h1, h2, h3, h4, h5, h6, li, small {{
         color: #f3f4f6 !important;
     }}
 
-    /* Input Fields & Textareas Dark Correction */
+    /* Inputs, Selectboxes, Textareas Correction */
     div[data-baseweb="select"] > div,
     div[data-baseweb="input"] > div,
     div[data-baseweb="base-input"],
@@ -345,11 +346,10 @@ st.markdown(f"""
         box-shadow: {input_inner_shadow} !important;
     }}
 
-    /* Selectbox Dropdown Menu Fix */
+    /* Selectbox Dropdown Menu Dark Theme Fix */
     ul[role="listbox"], div[data-baseweb="popover"], div[data-baseweb="menu"] {{
         background-color: #121929 !important;
         color: #ffffff !important;
-        border: 1px solid #374151 !important;
     }}
 
     li[role="option"] {{
@@ -365,21 +365,20 @@ st.markdown(f"""
     button[data-baseweb="tab"] {{
         background-color: transparent !important;
         color: #9ca3af !important;
-        border-bottom: 2px solid transparent !important;
     }}
     button[aria-selected="true"] {{
         color: #60a5fa !important;
         border-bottom-color: #60a5fa !important;
     }}
 
-    /* Forms & Expanders Dark Overlay */
+    /* Form & Cards Dark Theme Fix */
     div.stForm, div[data-testid="stExpander"] {{
-        background: rgba(17, 24, 39, 0.9) !important;
+        background: rgba(17, 24, 39, 0.8) !important;
         backdrop-filter: blur(16px);
         border: 1px solid {card_border_color} !important;
         border-radius: 20px !important;
         padding: 18px !important;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), {input_inner_shadow};
     }}
 
     label, div[data-testid="stWidgetLabel"] p {{
@@ -388,7 +387,6 @@ st.markdown(f"""
         font-size: 13px !important;
     }}
 
-    /* Primary & Standard Buttons Styling */
     div.stButton > button[kind="primary"] {{
         background: linear-gradient(90deg, #dc2626 0%, #ef4444 100%) !important;
         color: white !important;
@@ -404,10 +402,8 @@ st.markdown(f"""
         color: #ffffff !important;
         background-color: #1e293b !important;
         border: 1px solid #334155 !important;
-        border-radius: 12px !important;
     }}
 
-    /* Main Header Styling */
     .main-header {{
         background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
         padding: 22px 15px;
@@ -600,7 +596,7 @@ if not st.session_state.welcome_completed:
     welcome_placeholder.empty()
     st.session_state.welcome_completed = True
 
-# मुख्य टायटल बॅнер
+# मुख्य टायटल बॅनर
 st.markdown("""
     <div class="main-header">
         <h1 style='color: white; margin:0; font-size: 26px;'>🏗️ PATIL INFRATECH</h1>
@@ -981,6 +977,7 @@ if st.session_state.app_user_name is None:
                     if row:
                         found_user = row["user_key"]
                         st.session_state.app_user_name = found_user
+                        # 📱 INSTAGRAM STYLE - Save User Session to Device URL
                         st.query_params["saved_user"] = found_user
                         st.success("🎉 यशस्वीरित्या लॉगिन झाले! (तुमचे सेशन या डिव्हाइसवर सेव्ह केले आहे)")
                         st.rerun()
@@ -1080,6 +1077,7 @@ if st.session_state.app_user_name is None:
                                         send_email_message(st.session_state.pending_email, subject, body)
 
                                         st.session_state.app_user_name = custom_username
+                                        # 📱 INSTAGRAM STYLE AUTO LOGIN SAVE
                                         st.query_params["saved_user"] = custom_username
                                         st.success("🎉 अकाउंट यशस्वीरित्या तयार झाले! डिटेल्स ईमेलवर पाठवले आहेत.")
                                         time.sleep(1)
@@ -1138,6 +1136,7 @@ else:
 if col_lo.button("🔄 Logout"):
     st.session_state.app_user_name = None
     st.session_state.otp_verified = False
+    # 🚨 CLEAR INSTAGRAM STYLE SAVED SESSION ON LOGOUT
     if "saved_user" in st.query_params:
         del st.query_params["saved_user"]
     st.session_state.current_comment = "काही नाही"
