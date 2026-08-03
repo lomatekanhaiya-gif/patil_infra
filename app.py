@@ -1,4 +1,4 @@
-# KANHA_1p - पाटील इन्फ्राटेक (SQLite Database & Streamlit Web Application with Email OTP)
+# KANHA_1p - पाटील इन्फ्राटेक (Turso Cloud Database & Streamlit Web Application with Email OTP)
 import streamlit as st
 import math
 import sqlite3
@@ -13,6 +13,13 @@ import smtplib
 import re
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+
+# Turso (libsql_experimental) SDK Import
+try:
+    import libsql_experimental as libsql
+    HAS_TURSO = True
+except ImportError:
+    HAS_TURSO = False
 
 # Official Google GenAI SDK Import
 try:
@@ -59,7 +66,6 @@ def send_email_message(receiver_email, subject, body_text):
 
 # Password Complexity Checker Function
 def is_strong_password(password):
-    # At least 8 chars, 1 digit, 1 special character
     if len(password) < 8:
         return False, "पासवर्ड कमीत कमी ८ अक्षरांचा असावा."
     if not re.search(r"\d", password):
@@ -69,21 +75,48 @@ def is_strong_password(password):
     return True, "Strong"
 
 # ==========================================
-# 🗄️ SQLITE DATABASE MANAGEMENT
+# 🗄️ TURSO / SQLITE DATABASE MANAGEMENT
 # ==========================================
 DB_FILE = "patil_infratech.db"
 
 def get_db_connection():
-    conn = sqlite3.connect(DB_FILE, check_same_thread=False)
-    conn.row_factory = sqlite3.Row
+    turso_url = st.secrets.get("TURSO_DATABASE_URL", None) if hasattr(st, "secrets") else None
+    turso_token = st.secrets.get("TURSO_AUTH_TOKEN", None) if hasattr(st, "secrets") else None
+
+    if HAS_TURSO and turso_url and turso_token:
+        # Connect to Turso Cloud Database
+        conn = libsql.connect(database=turso_url, auth_token=turso_token)
+    else:
+        # Fallback to local SQLite DB if Turso is not configured
+        conn = sqlite3.connect(DB_FILE, check_same_thread=False)
+        conn.row_factory = sqlite3.Row
     return conn
 
-def init_db():
+def execute_query(query, params=(), fetchone=False, fetchall=False, commit=False):
     conn = get_db_connection()
     cursor = conn.cursor()
+    cursor.execute(query, params)
     
+    result = None
+    if fetchone:
+        row = cursor.fetchone()
+        if row:
+            result = dict(row) if hasattr(row, 'keys') else row
+    elif fetchall:
+        rows = cursor.fetchall()
+        if rows:
+            result = [dict(r) if hasattr(r, 'keys') else r for r in rows]
+        else:
+            result = []
+            
+    if commit:
+        conn.commit()
+    conn.close()
+    return result
+
+def init_db():
     # 1. Users Table
-    cursor.execute('''
+    execute_query('''
         CREATE TABLE IF NOT EXISTS users (
             user_key TEXT PRIMARY KEY,
             id TEXT,
@@ -103,10 +136,10 @@ def init_db():
             last_active TEXT,
             activated_by TEXT
         )
-    ''')
+    ''', commit=True)
 
     # 2. History Table
-    cursor.execute('''
+    execute_query('''
         CREATE TABLE IF NOT EXISTS history (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_key TEXT,
@@ -115,10 +148,10 @@ def init_db():
             report_data TEXT,
             FOREIGN KEY (user_key) REFERENCES users (user_key)
         )
-    ''')
+    ''', commit=True)
 
     # 3. Premium Codes Table
-    cursor.execute('''
+    execute_query('''
         CREATE TABLE IF NOT EXISTS premium_codes (
             code TEXT PRIMARY KEY,
             assigned_to TEXT,
@@ -127,26 +160,26 @@ def init_db():
             used_date TEXT,
             created_at TEXT
         )
-    ''')
+    ''', commit=True)
 
     # 4. Feature Locks Table
-    cursor.execute('''
+    execute_query('''
         CREATE TABLE IF NOT EXISTS feature_locks (
             feature_name TEXT PRIMARY KEY,
             access_level TEXT
         )
-    ''')
+    ''', commit=True)
 
     # 5. Master Market Rates Table
-    cursor.execute('''
+    execute_query('''
         CREATE TABLE IF NOT EXISTS market_rates (
             material TEXT PRIMARY KEY,
             rate REAL
         )
-    ''')
+    ''', commit=True)
 
     # 6. Ads Table
-    cursor.execute('''
+    execute_query('''
         CREATE TABLE IF NOT EXISTS ads (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT,
@@ -158,15 +191,15 @@ def init_db():
             active INTEGER,
             date TEXT
         )
-    ''')
+    ''', commit=True)
 
     # Master Admin Default Entry
-    cursor.execute("SELECT * FROM users WHERE user_key = ?", ("9999999999",))
-    if not cursor.fetchone():
-        cursor.execute('''
+    admin_exists = execute_query("SELECT * FROM users WHERE user_key = ?", ("9999999999",), fetchone=True)
+    if not admin_exists:
+        execute_query('''
             INSERT INTO users (user_key, id, uid, pin, mobile, email, password, comment, admin_message, unread_notification, is_premium, premium_expiry, requested_code, seen_popup, master_code_uses, last_active, activated_by)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', ("9999999999", "kanha", "KANHA_1P", "1234", "9999999999", "admin@patilinfratech.com", "patiladmin123", "मास्टर ॲडमीन अकाउंट", "स्वागत आहे मास्टर कन्हैया! आपले पाटील इन्फ्राटेक मध्ये सर्व अधिकार अनलॉक्ड आहेत ⚡", 0, 1, "2099-12-31 23:59:59", 0, 1, 0, get_ist_time().strftime("%Y-%m-%d %H:%M:%S"), "Master Admin"))
+        ''', ("9999999999", "kanha", "KANHA_1P", "1234", "9999999999", "admin@patilinfratech.com", "patiladmin123", "मास्टर ॲडमीन अकाउंट", "स्वागत आहे मास्टर कन्हैया! आपले पाटील इन्फ्राटेक मध्ये सर्व अधिकार अनलॉक्ड आहेत ⚡", 0, 1, "2099-12-31 23:59:59", 0, 1, 0, get_ist_time().strftime("%Y-%m-%d %H:%M:%S"), "Master Admin"), commit=True)
 
     # Default Feature Locks
     default_locks = {
@@ -178,49 +211,39 @@ def init_db():
         "Civil AI Assistant": "Premium"
     }
     for f_name, f_lvl in default_locks.items():
-        cursor.execute("INSERT OR IGNORE INTO feature_locks (feature_name, access_level) VALUES (?, ?)", (f_name, f_lvl))
+        execute_query("INSERT OR IGNORE INTO feature_locks (feature_name, access_level) VALUES (?, ?)", (f_name, f_lvl), commit=True)
 
     # Default Market Rates
     default_rates = {"cement": 400.0, "sand": 2500.0, "bricks": 8.0, "aggregate": 2200.0, "steel": 60.0}
     for mat, rat in default_rates.items():
-        cursor.execute("INSERT OR IGNORE INTO market_rates (material, rate) VALUES (?, ?)", (mat, rat))
-
-    conn.commit()
-    conn.close()
+        execute_query("INSERT OR IGNORE INTO market_rates (material, rate) VALUES (?, ?)", (mat, rat), commit=True)
 
 init_db()
 
 # DB Helper Functions
 def get_user_data(user_key):
     if not user_key: return None
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM users WHERE user_key = ?", (user_key,))
-    row = cursor.fetchone()
-    conn.close()
-    if row:
-        return dict(row)
-    return None
+    return execute_query("SELECT * FROM users WHERE user_key = ?", (user_key,), fetchone=True)
 
 def get_market_rates():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT material, rate FROM market_rates")
-    rows = cursor.fetchall()
-    conn.close()
+    rows = execute_query("SELECT material, rate FROM market_rates", fetchall=True) or []
     return {row["material"]: row["rate"] for row in rows}
 
 def get_feature_locks():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT feature_name, access_level FROM feature_locks")
-    rows = cursor.fetchall()
-    conn.close()
+    rows = execute_query("SELECT feature_name, access_level FROM feature_locks", fetchall=True) or []
     return {row["feature_name"]: row["access_level"] for row in rows}
 
-# Session State Initialization
+# Session State & INSTAGRAM STYLE AUTO-LOGIN INITIALIZATION
 if "app_user_name" not in st.session_state:
     st.session_state.app_user_name = None
+
+query_params = st.query_params
+if st.session_state.app_user_name is None and "saved_user" in query_params:
+    saved_key = query_params["saved_user"]
+    row = execute_query("SELECT user_key FROM users WHERE user_key = ?", (saved_key,), fetchone=True)
+    if row:
+        st.session_state.app_user_name = row["user_key"]
+
 if "pending_email" not in st.session_state:
     st.session_state.pending_email = None
 if "generated_otp" not in st.session_state:
@@ -244,11 +267,7 @@ if "admin_selected_user" not in st.session_state:
 current_user_name = st.session_state.app_user_name
 
 if current_user_name:
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("UPDATE users SET last_active = ? WHERE user_key = ?", (get_ist_time().strftime("%Y-%m-%d %H:%M:%S"), current_user_name))
-    conn.commit()
-    conn.close()
+    execute_query("UPDATE users SET last_active = ? WHERE user_key = ?", (get_ist_time().strftime("%Y-%m-%d %H:%M:%S"), current_user_name), commit=True)
 
 def check_user_premium_status(username):
     if not username: return False, "Free"
@@ -264,11 +283,7 @@ def check_user_premium_status(username):
                 now_datetime = get_ist_time()
                 
                 if now_datetime > exp_datetime:
-                    conn = get_db_connection()
-                    cursor = conn.cursor()
-                    cursor.execute("UPDATE users SET is_premium = 0, premium_expiry = NULL WHERE user_key = ?", (username,))
-                    conn.commit()
-                    conn.close()
+                    execute_query("UPDATE users SET is_premium = 0, premium_expiry = NULL WHERE user_key = ?", (username,), commit=True)
                     return False, "Expired"
                 else:
                     diff = exp_datetime - now_datetime
@@ -288,7 +303,7 @@ def check_user_premium_status(username):
 is_curr_premium, _ = check_user_premium_status(current_user_name)
 
 # ==========================================
-# 🎨 STYLING
+# 🎨 ABSOLUTE ZERO-WHITE UNIVERSAL DARK THEME
 # ==========================================
 touch_glow_color = "rgba(255, 179, 0, 0.45)" if is_curr_premium else "rgba(59, 130, 246, 0.25)"
 touch_border_color = "#FFD54F" if is_curr_premium else "#3b82f6"
@@ -308,21 +323,19 @@ st.markdown(f"""
     button[title="Increment"], button[title="Decrement"] {{ display: none !important; }}
     div[data-testid="stNumberInputStepUp"], div[data-testid="stNumberInputStepDown"] {{ display: none !important; }}
 
-    .stApp {{
-        background: linear-gradient(135deg, #070a12 0%, #0d1322 100%);
-        color: #f3f4f6;
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    /* 🚨 FORCE DARK THEME ACROSS ALL MOBILE LIGHT MODES 🚨 */
+    html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"], [data-testid="stSidebar"] {{
+        background-color: #070a12 !important;
+        background: linear-gradient(135deg, #070a12 0%, #0d1322 100%) !important;
+        color: #f3f4f6 !important;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
     }}
 
-    div.stForm, div[data-testid="stExpander"] {{
-        background: rgba(17, 24, 39, 0.8) !important;
-        backdrop-filter: blur(16px);
-        border: 1px solid {card_border_color} !important;
-        border-radius: 20px !important;
-        padding: 18px !important;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), {input_inner_shadow};
+    p, span, h1, h2, h3, h4, h5, h6, li, small, label, div {{
+        color: #f3f4f6 !important;
     }}
 
+    /* Input Fields & Textareas Dark Correction */
     div[data-baseweb="select"] > div,
     div[data-baseweb="input"] > div,
     div[data-baseweb="base-input"],
@@ -334,15 +347,52 @@ st.markdown(f"""
         outline: none !important;
         font-weight: 500 !important;
         box-shadow: {input_inner_shadow} !important;
-        transition: all 0.25s ease-in-out !important;
+    }}
+
+    /* Selectbox Dropdown Menu Fix */
+    ul[role="listbox"], div[data-baseweb="popover"], div[data-baseweb="menu"] {{
+        background-color: #121929 !important;
+        color: #ffffff !important;
+        border: 1px solid #374151 !important;
+    }}
+
+    li[role="option"] {{
+        background-color: #121929 !important;
+        color: #ffffff !important;
+    }}
+    li[role="option"]:hover {{
+        background-color: #1f2937 !important;
+        color: #60a5fa !important;
+    }}
+
+    /* Tabs Styling Fix */
+    button[data-baseweb="tab"] {{
+        background-color: transparent !important;
+        color: #9ca3af !important;
+        border-bottom: 2px solid transparent !important;
+    }}
+    button[aria-selected="true"] {{
+        color: #60a5fa !important;
+        border-bottom-color: #60a5fa !important;
+    }}
+
+    /* Forms & Expanders Dark Overlay */
+    div.stForm, div[data-testid="stExpander"] {{
+        background: rgba(17, 24, 39, 0.9) !important;
+        backdrop-filter: blur(16px);
+        border: 1px solid {card_border_color} !important;
+        border-radius: 20px !important;
+        padding: 18px !important;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
     }}
 
     label, div[data-testid="stWidgetLabel"] p {{
-        color: #9ca3af !important;
+        color: #cbd5e1 !important;
         font-weight: 600 !important;
         font-size: 13px !important;
     }}
 
+    /* Primary & Standard Buttons Styling */
     div.stButton > button[kind="primary"] {{
         background: linear-gradient(90deg, #dc2626 0%, #ef4444 100%) !important;
         color: white !important;
@@ -354,6 +404,14 @@ st.markdown(f"""
         width: 100%;
     }}
 
+    div.stButton > button {{
+        color: #ffffff !important;
+        background-color: #1e293b !important;
+        border: 1px solid #334155 !important;
+        border-radius: 12px !important;
+    }}
+
+    /* Main Header Styling */
     .main-header {{
         background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
         padding: 22px 15px;
@@ -366,7 +424,7 @@ st.markdown(f"""
 
     .gold-vip-badge {{
         background: linear-gradient(135deg, #FFE082 0%, #FFB300 50%, #FF6F00 100%);
-        color: #000000;
+        color: #000000 !important;
         padding: 8px 16px;
         border-radius: 20px;
         font-weight: 900;
@@ -379,7 +437,7 @@ st.markdown(f"""
 
     .free-user-badge {{
         background: rgba(31, 41, 55, 0.9);
-        color: #9ca3af;
+        color: #9ca3af !important;
         padding: 6px 14px;
         border-radius: 20px;
         font-weight: 700;
@@ -437,46 +495,34 @@ def render_whatsapp_feature(encoded_msg, key_prefix):
             w_col1, w_col2 = st.columns(2)
             with w_col1:
                 if st.button("🔓 Unlock WhatsApp Share Now", key=f"{key_prefix}_unlock_btn"):
-                    conn = get_db_connection()
-                    cursor = conn.cursor()
-                    cursor.execute("SELECT * FROM premium_codes WHERE code = ?", (p_code,))
-                    row = cursor.fetchone()
+                    row = execute_query("SELECT * FROM premium_codes WHERE code = ?", (p_code,), fetchone=True)
                     
                     if row:
-                        c_info = dict(row)
-                        if c_info.get("used") == 1:
+                        if row.get("used") == 1:
                             st.error("❌ हा कोड आधीच वापरला गेला आहे! तो आता व्हॅलिड नाही.")
-                            conn.close()
                         else:
                             exp_datetime = get_ist_time() + datetime.timedelta(days=28)
                             exp_str = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
                             now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
 
-                            cursor.execute("UPDATE premium_codes SET used = 1, used_by = ?, used_date = ? WHERE code = ?", (current_user_name, now_str, p_code))
+                            execute_query("UPDATE premium_codes SET used = 1, used_by = ?, used_date = ? WHERE code = ?", (current_user_name, now_str, p_code), commit=True)
                             
                             disp_name = current_user_name if current_user_name else ""
                             welcome_msg = f"{disp_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
                             
-                            cursor.execute('''
+                            execute_query('''
                                 UPDATE users 
                                 SET is_premium = 1, premium_expiry = ?, seen_popup = 0, activated_by = ?, admin_message = ?, unread_notification = 0
                                 WHERE user_key = ?
-                            ''', (exp_str, "Kanhaiya (Founder of Patil Infratech)", welcome_msg, current_user_name))
+                            ''', (exp_str, "Kanhaiya (Founder of Patil Infratech)", welcome_msg, current_user_name), commit=True)
                             
-                            conn.commit()
-                            conn.close()
                             st.rerun()
                     else:
-                        conn.close()
                         st.error("❌ चुकीचा प्रिमियम कोड! कृपया अचूक कोड टाका.")
 
             with w_col2:
                 if st.button("📩 Request Code from Admin", key=f"{key_prefix}_req_btn"):
-                    conn = get_db_connection()
-                    cursor = conn.cursor()
-                    cursor.execute("UPDATE users SET requested_code = 1 WHERE user_key = ?", (current_user_name,))
-                    conn.commit()
-                    conn.close()
+                    execute_query("UPDATE users SET requested_code = 1 WHERE user_key = ?", (current_user_name,), commit=True)
                     st.success("✅ ॲडमीनला कोडसाठी रिक्वेस्ट पाठवली आहे!")
 
 # ==========================================
@@ -507,21 +553,16 @@ if not st.session_state.welcome_completed:
         st.markdown("<h1 style='text-align: center; color: #60a5fa;'>🏗️ WELCOME TO PATIL INFRATECH...</h1>", unsafe_allow_html=True)
         st.markdown("<h3 style='text-align: center; color: #9ca3af;'>तुमचे स्वप्न, आमचे एस्टिमेशन!</h3>", unsafe_allow_html=True)
         
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM ads WHERE active = 1 AND position = 'Loading Page (Title Sponsor)'")
-        ads_rows = cursor.fetchall()
-        conn.close()
+        ads_rows = execute_query("SELECT * FROM ads WHERE active = 1 AND position = 'Loading Page (Title Sponsor)'", fetchall=True) or []
 
         for ad in ads_rows:
-            ad_dict = dict(ad)
             st.markdown(f"""
                 <div style="background: rgba(17, 24, 39, 0.7); border: 1px solid rgba(59, 130, 246, 0.3); padding: 6px 10px; border-radius: 10px; text-align: center; margin: 15px auto; max-width: 280px;">
                     <span style="font-size: 9px; color: #93c5fd; font-weight: bold;">⭐ SPONSOR</span><br>
-                    <b style="color: #ffffff; font-size: 12px;">{ad_dict.get('title')}</b>
-                    <p style="color: #9ca3af; font-size: 10px; margin: 2px 0;">{ad_dict.get('desc')}</p>
-                    {"<img src='" + ad_dict.get('media_url') + "' style='max-height:50px; border-radius:6px; margin-top:3px;'/>" if ad_dict.get('media_type') == 'Photo (PNG/JPG)' and ad_dict.get('media_url') else ""}
-                    <br><a href="{ad_dict.get('link')}" target="_blank" style="color: #fbbf24; font-weight: bold; text-decoration: underline; font-size: 11px;">👉 Visit Link</a>
+                    <b style="color: #ffffff; font-size: 12px;">{ad.get('title')}</b>
+                    <p style="color: #9ca3af; font-size: 10px; margin: 2px 0;">{ad.get('desc')}</p>
+                    {"<img src='" + ad.get('media_url') + "' style='max-height:50px; border-radius:6px; margin-top:3px;'/>" if ad.get('media_type') == 'Photo (PNG/JPG)' and ad.get('media_url') else ""}
+                    <br><a href="{ad.get('link')}" target="_blank" style="color: #fbbf24; font-weight: bold; text-decoration: underline; font-size: 11px;">👉 Visit Link</a>
                 </div>
             """, unsafe_allow_html=True)
 
@@ -605,13 +646,9 @@ if st.session_state.is_admin_logged:
         adm_ste = st.number_input("Steel Rate (per kg ₹):", min_value=0.0, value=float(m_rates.get("steel", 60.0)), step=1.0)
         
         if st.button("💾 Save Master Market Rates", type="primary"):
-            conn = get_db_connection()
-            cursor = conn.cursor()
             updated_rates = {"cement": adm_cem, "sand": adm_snd, "bricks": adm_brk, "aggregate": adm_agg, "steel": adm_ste}
             for mat, rat in updated_rates.items():
-                cursor.execute("REPLACE INTO market_rates (material, rate) VALUES (?, ?)", (mat, rat))
-            conn.commit()
-            conn.close()
+                execute_query("REPLACE INTO market_rates (material, rate) VALUES (?, ?)", (mat, rat), commit=True)
             st.success("✅ आजचे मास्टर मार्केट दर डेटाबेसमध्ये यशस्वीरित्या अपडेट झाले!")
 
     elif current_tab == "locks":
@@ -626,8 +663,6 @@ if st.session_state.is_admin_logged:
         fl_ai = st.selectbox("Civil AI Assistant Access:", ["Free", "Premium"], index=0 if cur_locks.get("Civil AI Assistant", "Premium") == "Free" else 1)
 
         if st.button("💾 Save Feature Lock Settings", type="primary"):
-            conn = get_db_connection()
-            cursor = conn.cursor()
             new_locks = {
                 "Civil Calculator": fl_calc,
                 "Rate Analysis": fl_ra,
@@ -637,9 +672,7 @@ if st.session_state.is_admin_logged:
                 "Civil AI Assistant": fl_ai
             }
             for f_name, f_lvl in new_locks.items():
-                cursor.execute("REPLACE INTO feature_locks (feature_name, access_level) VALUES (?, ?)", (f_name, f_lvl))
-            conn.commit()
-            conn.close()
+                execute_query("REPLACE INTO feature_locks (feature_name, access_level) VALUES (?, ?)", (f_name, f_lvl), commit=True)
             st.success("✅ प्रिमियम/फ्री फीचर्स सेटिंग्स यशस्वीरित्या बदलल्या!")
 
     elif current_tab == "users":
@@ -655,7 +688,6 @@ if st.session_state.is_admin_logged:
             info = get_user_data(target_user) or {}
             u_name = info.get("id", target_user)
             u_uid = info.get("uid", "N/A")
-            u_mob = info.get("mobile", "N/A")
             u_email = info.get("email", "N/A")
             u_pin = info.get("pin", "N/A")
             u_comm = info.get("comment", "काही नाही")
@@ -663,14 +695,8 @@ if st.session_state.is_admin_logged:
             exp_date = info.get("premium_expiry", "N/A")
             is_req = bool(info.get("requested_code", 0))
             
-            conn = get_db_connection()
-            cursor = conn.cursor()
-            cursor.execute("SELECT * FROM history WHERE user_key = ? ORDER BY id DESC", (target_user,))
-            u_hist = [dict(r) for r in cursor.fetchall()]
-
-            cursor.execute("SELECT code FROM premium_codes WHERE assigned_to = ? AND used = 0", (u_name,))
-            c_row = cursor.fetchone()
-            conn.close()
+            u_hist = execute_query("SELECT * FROM history WHERE user_key = ? ORDER BY id DESC", (target_user,), fetchall=True) or []
+            c_row = execute_query("SELECT code FROM premium_codes WHERE assigned_to = ? AND used = 0", (u_name,), fetchone=True)
             assigned_code = c_row["code"] if c_row else None
 
             status_badge = f"👑 VIP MEMBER: {u_name.upper()}" if u_prem else ("🚨 CODE REQUESTED!" if is_req else f"🆓 FREE: {u_name.upper()}")
@@ -692,13 +718,9 @@ if st.session_state.is_admin_logged:
                 if st.button(f"🚀 Generate & Send Unique Code to {u_name}", key=f"win_gen_send_{target_user}"):
                     new_c = generate_random_code()
                     now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
-                    conn = get_db_connection()
-                    cursor = conn.cursor()
-                    cursor.execute("INSERT INTO premium_codes (code, assigned_to, used, created_at) VALUES (?, ?, 0, ?)", (new_c, u_name, now_str))
+                    execute_query("INSERT INTO premium_codes (code, assigned_to, used, created_at) VALUES (?, ?, 0, ?)", (new_c, u_name, now_str), commit=True)
                     msg = f"तुमचा प्रिमियम कोड: {new_c} (ॲपमध्ये टाकून प्रिमियम अनलॉक करा)"
-                    cursor.execute("UPDATE users SET admin_message = ?, requested_code = 0 WHERE user_key = ?", (msg, target_user))
-                    conn.commit()
-                    conn.close()
+                    execute_query("UPDATE users SET admin_message = ?, requested_code = 0 WHERE user_key = ?", (msg, target_user), commit=True)
                     st.success(f"🎉 {u_name} ला ऑटोमॅटिकली कोड पाठवला: `{new_c}`")
                     st.rerun()
 
@@ -719,25 +741,17 @@ if st.session_state.is_admin_logged:
                 else:
                     exp_time = now + datetime.timedelta(days=time_val)
 
-                conn = get_db_connection()
-                cursor = conn.cursor()
-                cursor.execute('''
+                execute_query('''
                     UPDATE users 
                     SET is_premium = 1, premium_expiry = ?, requested_code = 0, seen_popup = 0, activated_by = ?
                     WHERE user_key = ?
-                ''', (exp_time.strftime("%Y-%m-%d %H:%M:%S"), "Kanhaiya (Founder of Patil Infratech)", target_user))
-                conn.commit()
-                conn.close()
+                ''', (exp_time.strftime("%Y-%m-%d %H:%M:%S"), "Kanhaiya (Founder of Patil Infratech)", target_user), commit=True)
                 st.success(f"✅ {u_name} साठी {time_val} {time_unit} सेव्ह केले!")
                 st.rerun()
 
             if u_prem:
                 if st.button(f"🔻 Revoke Premium: {u_name}", key=f"win_rev_{target_user}"):
-                    conn = get_db_connection()
-                    cursor = conn.cursor()
-                    cursor.execute("UPDATE users SET is_premium = 0, premium_expiry = NULL WHERE user_key = ?", (target_user,))
-                    conn.commit()
-                    conn.close()
+                    execute_query("UPDATE users SET is_premium = 0, premium_expiry = NULL WHERE user_key = ?", (target_user,), commit=True)
                     st.warning(f"❌ {u_name} चे प्रिमियम काढले आहे.")
                     st.rerun()
 
@@ -746,21 +760,13 @@ if st.session_state.is_admin_logged:
             new_msg = st.text_input(f"✍️ {u_name} साठी इनबॉक्स मेसेज बदलणे (Notification Send):", value=current_msg, key=f"win_msg_{target_user}")
             if st.button(f"✉️ मेसेज सेव्ह करा व पाठवा ({u_name})", key=f"win_btn_msg_{target_user}"):
                 if new_msg.strip():
-                    conn = get_db_connection()
-                    cursor = conn.cursor()
-                    cursor.execute("UPDATE users SET admin_message = ?, unread_notification = 1 WHERE user_key = ?", (new_msg.strip(), target_user))
-                    conn.commit()
-                    conn.close()
+                    execute_query("UPDATE users SET admin_message = ?, unread_notification = 1 WHERE user_key = ?", (new_msg.strip(), target_user), commit=True)
                     st.success(f"✅ '{u_name}' च्या इनबॉक्समध्ये नवीन मेसेज पाठवला (Notification Sent)!")
                     st.rerun()
 
             if st.button(f"🗑️ Delete User: {u_name}", key=f"win_del_{target_user}"):
-                conn = get_db_connection()
-                cursor = conn.cursor()
-                cursor.execute("DELETE FROM users WHERE user_key = ?", (target_user,))
-                cursor.execute("DELETE FROM history WHERE user_key = ?", (target_user,))
-                conn.commit()
-                conn.close()
+                execute_query("DELETE FROM users WHERE user_key = ?", (target_user,), commit=True)
+                execute_query("DELETE FROM history WHERE user_key = ?", (target_user,), commit=True)
                 st.session_state.admin_view = "main"
                 st.session_state.admin_selected_user = None
                 st.error(f"❌ युझर '{u_name}' डिलीट केला आहे!")
@@ -776,11 +782,7 @@ if st.session_state.is_admin_logged:
             else:
                 st.info("ℹ️ या युझरने अजून एकही रिपोर्ट जनरेट केलेला नाही.")
         else:
-            conn = get_db_connection()
-            cursor = conn.cursor()
-            cursor.execute("SELECT * FROM users WHERE user_key != '9999999999' ORDER BY id ASC")
-            all_users = [dict(r) for r in cursor.fetchall()]
-            conn.close()
+            all_users = execute_query("SELECT * FROM users WHERE user_key != '9999999999' ORDER BY id ASC", fetchall=True) or []
 
             if all_users:
                 now_time = get_ist_time()
@@ -839,15 +841,11 @@ if st.session_state.is_admin_logged:
             submit_ad = st.form_submit_button("🚀 Publish Ad Sponsor", type="primary")
             if submit_ad:
                 if ad_title.strip():
-                    conn = get_db_connection()
-                    cursor = conn.cursor()
                     now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
-                    cursor.execute('''
+                    execute_query('''
                         INSERT INTO ads (title, desc, link, media_type, media_url, position, active, date)
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                    ''', (ad_title.strip(), ad_desc.strip(), ad_link.strip(), media_type, media_url.strip(), position, 1 if is_active else 0, now_str))
-                    conn.commit()
-                    conn.close()
+                    ''', (ad_title.strip(), ad_desc.strip(), ad_link.strip(), media_type, media_url.strip(), position, 1 if is_active else 0, now_str), commit=True)
                     st.success("✅ स्पॉन्सर ॲड यशस्वीरित्या पब्लिश झाली!")
                     st.rerun()
                 else:
@@ -855,22 +853,14 @@ if st.session_state.is_admin_logged:
 
         st.markdown("---")
         st.markdown("##### 📋 सध्या चालू असलेल्या जाहिराती (Active Ads List):")
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM ads ORDER BY id DESC")
-        ads_list = [dict(r) for r in cursor.fetchall()]
-        conn.close()
+        ads_list = execute_query("SELECT * FROM ads ORDER BY id DESC", fetchall=True) or []
 
         if ads_list:
             for ad in ads_list:
                 ad_id = ad.get("id")
                 st.info(f"**#{ad_id} | {ad.get('title')}** ({ad.get('position')})\n- *Status:* {'🟢 Active' if ad.get('active')==1 else '🔴 Inactive'}")
                 if st.button(f"🗑️ Delete Ad #{ad_id}", key=f"del_ad_{ad_id}"):
-                    conn = get_db_connection()
-                    cursor = conn.cursor()
-                    cursor.execute("DELETE FROM ads WHERE id = ?", (ad_id,))
-                    conn.commit()
-                    conn.close()
+                    execute_query("DELETE FROM ads WHERE id = ?", (ad_id,), commit=True)
                     st.success("🗑️ ॲड डिलीट केली!")
                     st.rerun()
         else:
@@ -886,15 +876,11 @@ if st.session_state.is_admin_logged:
 
             if submit_broadcast:
                 if broadcast_msg.strip():
-                    conn = get_db_connection()
-                    cursor = conn.cursor()
-                    cursor.execute('''
+                    execute_query('''
                         UPDATE users 
                         SET admin_message = ?, unread_notification = 1 
                         WHERE user_key != '9999999999'
-                    ''', (broadcast_msg.strip(),))
-                    conn.commit()
-                    conn.close()
+                    ''', (broadcast_msg.strip(),), commit=True)
                     st.success("🎉 ब्रॉडकास्ट मेसेज सर्व युझर्सना यशस्वीरित्या पाठवला गेला आहे!")
                 else:
                     st.warning("⚠️ कृपया पाठवण्यासाठी काहीतरी मेसेज लिहा!")
@@ -918,15 +904,13 @@ if st.session_state.app_user_name is None:
 
             if submit_direct:
                 if login_email and login_pass:
-                    conn = get_db_connection()
-                    cursor = conn.cursor()
-                    cursor.execute("SELECT user_key FROM users WHERE (email = ? OR uid = ? OR user_key = ?) AND pin = ?", (login_email, login_email, login_email, login_pass))
-                    row = cursor.fetchone()
-                    conn.close()
+                    row = execute_query("SELECT user_key FROM users WHERE (email = ? OR uid = ? OR user_key = ?) AND pin = ?", (login_email, login_email, login_email, login_pass), fetchone=True)
 
                     if row:
-                        st.session_state.app_user_name = row["user_key"]
-                        st.success("🎉 यशस्वीरित्या लॉगिन झाले!")
+                        found_user = row["user_key"]
+                        st.session_state.app_user_name = found_user
+                        st.query_params["saved_user"] = found_user
+                        st.success("🎉 यशस्वीरित्या लॉगिन झाले! (तुमचे सेशन या डिव्हाइसवर सेव्ह केले आहे)")
                         st.rerun()
                     else:
                         st.error("❌ चुकीचा ईमेल/Username किंवा पासवर्ड! कृपया तपासा.")
@@ -969,21 +953,16 @@ if st.session_state.app_user_name is None:
 
         # If OTP is verified, show Registration form or Complete Access
         if st.session_state.otp_verified and st.session_state.pending_email:
-            conn = get_db_connection()
-            cursor = conn.cursor()
-            cursor.execute("SELECT * FROM users WHERE email = ?", (st.session_state.pending_email,))
-            row = cursor.fetchone()
-            conn.close()
+            row = execute_query("SELECT * FROM users WHERE email = ?", (st.session_state.pending_email,), fetchone=True)
 
             if row:
-                # User Already Exists -> Direct Access
                 user_data = dict(row)
                 st.session_state.app_user_name = user_data["user_key"]
+                st.query_params["saved_user"] = user_data["user_key"]
                 st.success(f"🎉 स्वागत आहे {user_data['user_key']}! लॉगिन होत आहे...")
                 time.sleep(1)
                 st.rerun()
             else:
-                # New Registration Form for Custom Username & Strong Password
                 st.info("✨ नवीन युझर! कृपया खालील माहिती भरून युझरनेम आणि मजबूत पासवर्ड सेट करा:")
                 with st.form("custom_reg_form"):
                     custom_username = st.text_input("तुमचे नाव किंवा युनिक Username बनावा:").strip()
@@ -1001,23 +980,17 @@ if st.session_state.app_user_name is None:
                                 if not is_strong:
                                     st.error(f"❌ पासवर्ड कमजोर आहे: {msg}")
                                 else:
-                                    conn = get_db_connection()
-                                    cursor = conn.cursor()
-                                    cursor.execute("SELECT user_key FROM users WHERE user_key = ? OR uid = ?", (custom_username, custom_username))
-                                    if cursor.fetchone():
-                                        conn.close()
+                                    existing = execute_query("SELECT user_key FROM users WHERE user_key = ? OR uid = ?", (custom_username, custom_username), fetchone=True)
+                                    if existing:
                                         st.error("❌ हा Username आधीच वापरला गेला आहे, कृपया दुसरा टाका!")
                                     else:
                                         welcome_msg = f"{custom_username} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
                                         now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
                                         
-                                        cursor.execute('''
+                                        execute_query('''
                                             INSERT INTO users (user_key, id, uid, pin, mobile, email, password, comment, admin_message, unread_notification, is_premium, premium_expiry, requested_code, seen_popup, master_code_uses, last_active, activated_by)
                                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, NULL, 0, 0, 0, ?, ?)
-                                        ''', (custom_username, custom_username, custom_username, custom_password, "N/A", st.session_state.pending_email, custom_password, "काही नाही", welcome_msg, now_str, "Free User"))
-                                        
-                                        conn.commit()
-                                        conn.close()
+                                        ''', (custom_username, custom_username, custom_username, custom_password, "N/A", st.session_state.pending_email, custom_password, "काही नाही", welcome_msg, now_str, "Free User"), commit=True)
                                         
                                         # Send Details to Email
                                         subject = "PATIL INFRATECH - Account Created Successfully!"
@@ -1025,6 +998,7 @@ if st.session_state.app_user_name is None:
                                         send_email_message(st.session_state.pending_email, subject, body)
 
                                         st.session_state.app_user_name = custom_username
+                                        st.query_params["saved_user"] = custom_username
                                         st.success("🎉 अकाउंट यशस्वीरित्या तयार झाले! डिटेल्स ईमेलवर पाठवले आहेत.")
                                         time.sleep(1)
                                         st.rerun()
@@ -1057,11 +1031,7 @@ if st.session_state.app_user_name is None:
 current_user_name = st.session_state.app_user_name
 is_user_premium, status_text_str = check_user_premium_status(current_user_name)
 
-conn = get_db_connection()
-cursor = conn.cursor()
-cursor.execute("SELECT * FROM ads WHERE active = 1 AND position = 'Main App Header (Top Banner)'")
-ads_list = [dict(r) for r in cursor.fetchall()]
-conn.close()
+ads_list = execute_query("SELECT * FROM ads WHERE active = 1 AND position = 'Main App Header (Top Banner)'", fetchall=True) or []
 
 for ad in ads_list:
     st.markdown(f"""
@@ -1079,9 +1049,11 @@ if is_user_premium:
 else:
     col_u.markdown(f"<span class='free-user-badge'>🆓 FREE USER: {current_user_name.upper()}</span>", unsafe_allow_html=True)
 
-if col_lo.button("🔄 Logout / ॲप बदला"):
+if col_lo.button("🔄 Logout"):
     st.session_state.app_user_name = None
     st.session_state.otp_verified = False
+    if "saved_user" in st.query_params:
+        del st.query_params["saved_user"]
     st.session_state.current_comment = "काही नाही"
     st.session_state.selected_module = None
     st.rerun()
@@ -1099,11 +1071,7 @@ if current_user_data.get("unread_notification") == 1:
     """, unsafe_allow_html=True)
     
     if st.button("✅ Mark as Read & Clear (वाचले आहे)", type="primary"):
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute("UPDATE users SET unread_notification = 0, admin_message = ? WHERE user_key = ?", (f"{disp_name_inbox} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳", current_user_name))
-        conn.commit()
-        conn.close()
+        execute_query("UPDATE users SET unread_notification = 0, admin_message = ? WHERE user_key = ?", (f"{disp_name_inbox} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳", current_user_name), commit=True)
         st.success("✅ मेसेज वाचून क्लियर केला आहे!")
         st.rerun()
 else:
@@ -1129,16 +1097,12 @@ if not is_user_premium:
                         exp_datetime = get_ist_time() + datetime.timedelta(hours=8)
                         exp_str = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
                         
-                        conn = get_db_connection()
-                        cursor = conn.cursor()
-                        cursor.execute('''
+                        execute_query('''
                             UPDATE users 
                             SET master_code_uses = ?, is_premium = 1, premium_expiry = ?, seen_popup = 0,
                                 activated_by = ?, admin_message = ?, unread_notification = 0
                             WHERE user_key = ?
-                        ''', (uses_count + 1, exp_str, "Master Code 4528 (8 Hours VIP)", f"🎉 मास्टर कोड 4528 द्वारे तुला ८ तासांचे प्रिमियम मिळाले आहे! (वापर: {uses_count + 1}/3)", current_user_name))
-                        conn.commit()
-                        conn.close()
+                        ''', (uses_count + 1, exp_str, "Master Code 4528 (8 Hours VIP)", f"🎉 मास्टर कोड 4528 द्वारे तुला ८ तासांचे प्रिमियम मिळाले आहे! (वापर: {uses_count + 1}/3)", current_user_name), commit=True)
                         
                         st.success("🎉 मास्टर कोड द्वारे ८ तासांचे प्रिमियम अनलॉक झाले!")
                         st.rerun()
@@ -1147,51 +1111,37 @@ if not is_user_premium:
                     exp_datetime = get_ist_time() + datetime.timedelta(days=1)
                     exp_str = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
                     
-                    conn = get_db_connection()
-                    cursor = conn.cursor()
-                    cursor.execute('''
+                    execute_query('''
                         UPDATE users 
                         SET is_premium = 1, premium_expiry = ?, seen_popup = 0, activated_by = ?,
                             admin_message = ?, unread_notification = 0
                         WHERE user_key = ?
-                    ''', (exp_str, "Master Code", f"{current_user_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳", current_user_name))
-                    conn.commit()
-                    conn.close()
+                    ''', (exp_str, "Master Code", f"{current_user_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳", current_user_name), commit=True)
                     
                     st.success("🎉 मास्टर कोडद्वारे प्रिमियम यशस्वीरित्या सुरू झाले!")
                     st.rerun()
                 else:
-                    conn = get_db_connection()
-                    cursor = conn.cursor()
-                    cursor.execute("SELECT * FROM premium_codes WHERE code = ?", (input_code,))
-                    c_row = cursor.fetchone()
+                    c_row = execute_query("SELECT * FROM premium_codes WHERE code = ?", (input_code,), fetchone=True)
                     
-                    if c_row and dict(c_row).get("used") == 0:
+                    if c_row and c_row.get("used") == 0:
                         exp_datetime = get_ist_time() + datetime.timedelta(days=28)
                         exp_str = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
                         now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
 
-                        cursor.execute("UPDATE premium_codes SET used = 1, used_by = ?, used_date = ? WHERE code = ?", (current_user_name, now_str, input_code))
-                        cursor.execute('''
+                        execute_query("UPDATE premium_codes SET used = 1, used_by = ?, used_date = ? WHERE code = ?", (current_user_name, now_str, input_code), commit=True)
+                        execute_query('''
                             UPDATE users 
                             SET is_premium = 1, premium_expiry = ?, seen_popup = 0, activated_by = ?,
                                 admin_message = ?, unread_notification = 0
                             WHERE user_key = ?
-                        ''', (exp_str, "Patil Infratech", f"{current_user_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳", current_user_name))
-                        conn.commit()
-                        conn.close()
+                        ''', (exp_str, "Patil Infratech", f"{current_user_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳", current_user_name), commit=True)
                         st.success("🎉 प्रिमियम यशस्वीरित्या सुरू झाले!")
                         st.rerun()
                     else:
-                        conn.close()
                         st.error("❌ चुकीचा किंवा आधीच वापरलेला कोड!")
         with c_btn2:
             if st.button("📩 Request Code"):
-                conn = get_db_connection()
-                cursor = conn.cursor()
-                cursor.execute("UPDATE users SET requested_code = 1 WHERE user_key = ?", (current_user_name,))
-                conn.commit()
-                conn.close()
+                execute_query("UPDATE users SET requested_code = 1 WHERE user_key = ?", (current_user_name,), commit=True)
                 st.success("✅ ॲडमीनला रिक्वेस्ट पाठवली!")
 
 locks_cfg = get_feature_locks()
@@ -1483,11 +1433,7 @@ elif st.session_state.selected_module == "Rate Analysis":
         if st.button("💬 कमेंट सबमिट करा", key="cc_comm_btn"):
             if user_note.strip():
                 st.session_state.current_comment = user_note.strip()
-                conn = get_db_connection()
-                cursor = conn.cursor()
-                cursor.execute("UPDATE users SET comment = ? WHERE user_key = ?", (user_note.strip(), current_user_name))
-                conn.commit()
-                conn.close()
+                execute_query("UPDATE users SET comment = ? WHERE user_key = ?", (user_note.strip(), current_user_name), commit=True)
                 st.success("✅ कमेंट सेव्ह झाली!")
 
         if st.button("📊 GENERATE RATE ANALYSIS REPORT", type="primary", key="cc_report_btn"):
@@ -1565,12 +1511,8 @@ elif st.session_state.selected_module == "Rate Analysis":
                 ''', unsafe_allow_html=True)
 
             if current_user_name:
-                conn = get_db_connection()
-                cursor = conn.cursor()
                 now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
-                cursor.execute("INSERT INTO history (user_key, timestamp, user_note, report_data) VALUES (?, ?, ?, ?)", (current_user_name, now_str, st.session_state.current_comment, report_table))
-                conn.commit()
-                conn.close()
+                execute_query("INSERT INTO history (user_key, timestamp, user_note, report_data) VALUES (?, ?, ?, ?)", (current_user_name, now_str, st.session_state.current_comment, report_table), commit=True)
 
     elif "Brickwork" in main_choice:
         st.subheader("🧱 Brickwork Estimation")
@@ -1614,11 +1556,7 @@ elif st.session_state.selected_module == "Rate Analysis":
         if st.button("💬 कमेंट सबमिट करा", key="bw_comment_btn"):
             if user_note.strip():
                 st.session_state.current_comment = user_note.strip()
-                conn = get_db_connection()
-                cursor = conn.cursor()
-                cursor.execute("UPDATE users SET comment = ? WHERE user_key = ?", (user_note.strip(), current_user_name))
-                conn.commit()
-                conn.close()
+                execute_query("UPDATE users SET comment = ? WHERE user_key = ?", (user_note.strip(), current_user_name), commit=True)
                 st.success("✅ कमेंट सेव्ह झाली!")
 
         if st.button("📊 GENERATE RATE ANALYSIS REPORT", type="primary", key="bw_report_btn"):
@@ -1693,12 +1631,8 @@ elif st.session_state.selected_module == "Rate Analysis":
                 ''', unsafe_allow_html=True)
 
             if current_user_name:
-                conn = get_db_connection()
-                cursor = conn.cursor()
                 now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
-                cursor.execute("INSERT INTO history (user_key, timestamp, user_note, report_data) VALUES (?, ?, ?, ?)", (current_user_name, now_str, st.session_state.current_comment, report_table))
-                conn.commit()
-                conn.close()
+                execute_query("INSERT INTO history (user_key, timestamp, user_note, report_data) VALUES (?, ?, ?, ?)", (current_user_name, now_str, st.session_state.current_comment, report_table), commit=True)
 
     else:  # Plaster Work
         st.subheader("🎨 Plaster Work Estimation")
@@ -1750,11 +1684,7 @@ elif st.session_state.selected_module == "Rate Analysis":
         if st.button("💬 कमेंट सबमिट करा", key="pl_comm_btn"):
             if user_note.strip():
                 st.session_state.current_comment = user_note.strip()
-                conn = get_db_connection()
-                cursor = conn.cursor()
-                cursor.execute("UPDATE users SET comment = ? WHERE user_key = ?", (user_note.strip(), current_user_name))
-                conn.commit()
-                conn.close()
+                execute_query("UPDATE users SET comment = ? WHERE user_key = ?", (user_note.strip(), current_user_name), commit=True)
                 st.success("✅ कमेंट सेव्ह झाली!")
 
         if st.button("📊 GENERATE PLASTER REPORT", type="primary", key="pl_report_btn"):
@@ -1833,12 +1763,8 @@ elif st.session_state.selected_module == "Rate Analysis":
                 ''', unsafe_allow_html=True)
 
             if current_user_name:
-                conn = get_db_connection()
-                cursor = conn.cursor()
                 now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
-                cursor.execute("INSERT INTO history (user_key, timestamp, user_note, report_data) VALUES (?, ?, ?, ?)", (current_user_name, now_str, st.session_state.current_comment, report_table))
-                conn.commit()
-                conn.close()
+                execute_query("INSERT INTO history (user_key, timestamp, user_note, report_data) VALUES (?, ?, ?, ?)", (current_user_name, now_str, st.session_state.current_comment, report_table), commit=True)
 
 # ==========================================
 # 🛑 MODULE 2: BBS MODULE
@@ -1945,11 +1871,7 @@ elif st.session_state.selected_module == "BBS":
     if st.button("💬 कमेंट सबमिट करा", key="bbs_comment_btn"):
         if user_note.strip():
             st.session_state.current_comment = user_note.strip()
-            conn = get_db_connection()
-            cursor = conn.cursor()
-            cursor.execute("UPDATE users SET comment = ? WHERE user_key = ?", (user_note.strip(), current_user_name))
-            conn.commit()
-            conn.close()
+            execute_query("UPDATE users SET comment = ? WHERE user_key = ?", (user_note.strip(), current_user_name), commit=True)
             st.success("✅ कमेंट सेव्ह झाली!")
 
     if st.button("🧮 CALCULATE BBS REPORT", type="primary", key="bbs_calc_btn"):
@@ -2103,12 +2025,8 @@ elif st.session_state.selected_module == "BBS":
             ''', unsafe_allow_html=True)
 
         if current_user_name:
-            conn = get_db_connection()
-            cursor = conn.cursor()
             now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
-            cursor.execute("INSERT INTO history (user_key, timestamp, user_note, report_data) VALUES (?, ?, ?, ?)", (current_user_name, now_str, st.session_state.current_comment, report_table))
-            conn.commit()
-            conn.close()
+            execute_query("INSERT INTO history (user_key, timestamp, user_note, report_data) VALUES (?, ?, ?, ?)", (current_user_name, now_str, st.session_state.current_comment, report_table), commit=True)
 
 # ==========================================
 # 📈 QUANTITY SURVEYING & ABSTRACT SHEET MODULE
@@ -2301,11 +2219,7 @@ elif st.session_state.selected_module == "Quantity Surveying":
     if st.button("💬 कमेंट सबमिट करा", key="qs_comm_btn"):
         if user_note.strip():
             st.session_state.current_comment = user_note.strip()
-            conn = get_db_connection()
-            cursor = conn.cursor()
-            cursor.execute("UPDATE users SET comment = ? WHERE user_key = ?", (user_note.strip(), current_user_name))
-            conn.commit()
-            conn.close()
+            execute_query("UPDATE users SET comment = ? WHERE user_key = ?", (user_note.strip(), current_user_name), commit=True)
             st.success("✅ कमेंट सेव्ह झाली!")
 
     if st.button("📈 GENERATE ABSTRACT SHEET & MATERIAL REPORT", type="primary", key="qs_gen_btn"):
@@ -2358,9 +2272,5 @@ elif st.session_state.selected_module == "Quantity Surveying":
                 ''', unsafe_allow_html=True)
 
             if current_user_name:
-                conn = get_db_connection()
-                cursor = conn.cursor()
                 now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
-                cursor.execute("INSERT INTO history (user_key, timestamp, user_note, report_data) VALUES (?, ?, ?, ?)", (current_user_name, now_str, st.session_state.current_comment, final_report_html))
-                conn.commit()
-                conn.close()
+                execute_query("INSERT INTO history (user_key, timestamp, user_note, report_data) VALUES (?, ?, ?, ?)", (current_user_name, now_str, st.session_state.current_comment, final_report_html), commit=True)
