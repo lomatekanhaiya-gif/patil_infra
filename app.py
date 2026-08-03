@@ -10,6 +10,7 @@ import urllib.parse
 import random
 import string
 import smtplib
+import re
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
@@ -55,6 +56,17 @@ def send_email_message(receiver_email, subject, body_text):
         return True
     except Exception as e:
         return False
+
+# Password Complexity Checker Function
+def is_strong_password(password):
+    # At least 8 chars, 1 digit, 1 special character
+    if len(password) < 8:
+        return False, "पासवर्ड कमीत कमी ८ अक्षरांचा असावा."
+    if not re.search(r"\d", password):
+        return False, "पासवर्डमध्ये कमीत कमी एक नंबर (0-9) असावा."
+    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
+        return False, "पासवर्डमध्ये कमीत कमी एक विशेष चिन्ह (!@#$%^&*) असावे."
+    return True, "Strong"
 
 # ==========================================
 # 🗄️ SQLITE DATABASE MANAGEMENT
@@ -667,7 +679,7 @@ if st.session_state.is_admin_logged:
             st.markdown(f"""
                 <div class="admin-user-card">
                     <p style="margin:5px 0; font-size:16px;"><b>माहिती/स्टेटस:</b> <span class="gold-vip-badge">{status_badge}</span></p>
-                    <p style="margin:5px 0; font-size:15px;"><b>Username/UID:</b> <code style="color:#60a5fa; font-size:15px;">{u_uid}</code> | <b>Password (PIN):</b> <code>{u_pin}</code> | <b>Email:</b> <code>{u_email}</code></p>
+                    <p style="margin:5px 0; font-size:15px;"><b>Username/UID:</b> <code style="color:#60a5fa; font-size:15px;">{u_uid}</code> | <b>Password:</b> <code>{u_pin}</code> | <b>Email:</b> <code>{u_email}</code></p>
                     <p style="margin:8px 0 5px 0; font-size:15px;"><b>प्रिमियम मुदत (Expiry):</b> <code>{exp_date}</code></p>
                     <p style="margin:5px 0; font-size:15px;"><b>ॲक्टिव्ह कोड (Unused):</b> <code style="color:#10b981; font-size:16px;">{assigned_code if assigned_code else 'काही नाही'}</code></p>
                     <p style="margin:5px 0; font-size:14px; color:#9ca3af;"><b>युझर कमेंट:</b> {u_comm}</p>
@@ -794,11 +806,11 @@ if st.session_state.is_admin_logged:
 
                     col_u1, col_u2 = st.columns([3.2, 1.8])
                     if u_prem:
-                        col_u1.markdown(f"<span class='gold-vip-badge'>👑 VIP: {u_name.upper()}</span> (UID/User: <code>{u_uid}</code>)<br><small style='color: {'#10b981' if is_online else '#ef4444'}; font-weight: bold;'>Status: {status_indicator}</small>", unsafe_allow_html=True)
+                        col_u1.markdown(f"<span class='gold-vip-badge'>👑 VIP: {u_name.upper()}</span> (User ID: <code>{u_uid}</code>)<br><small style='color: {'#10b981' if is_online else '#ef4444'}; font-weight: bold;'>Status: {status_indicator}</small>", unsafe_allow_html=True)
                     elif is_req:
-                        col_u1.markdown(f"#### 👤 **{u_name}** `[🚨 CODE]` (UID/User: `{u_uid}`)<br><small style='color: {'#10b981' if is_online else '#ef4444'}; font-weight: bold;'>Status: {status_indicator}</small>", unsafe_allow_html=True)
+                        col_u1.markdown(f"#### 👤 **{u_name}** `[🚨 CODE]` (User ID: `{u_uid}`)<br><small style='color: {'#10b981' if is_online else '#ef4444'}; font-weight: bold;'>Status: {status_indicator}</small>", unsafe_allow_html=True)
                     else:
-                        col_u1.markdown(f"<span class='free-user-badge'>🆓 FREE: {u_name.upper()}</span> (UID/User: <code>{u_uid}</code>)<br><small style='color: {'#10b981' if is_online else '#ef4444'}; font-weight: bold;'>Status: {status_indicator}</small>", unsafe_allow_html=True)
+                        col_u1.markdown(f"<span class='free-user-badge'>🆓 FREE: {u_name.upper()}</span> (User ID: <code>{u_uid}</code>)<br><small style='color: {'#10b981' if is_online else '#ef4444'}; font-weight: bold;'>Status: {status_indicator}</small>", unsafe_allow_html=True)
 
                     if col_u2.button(f"👁️ View / Manage", key=f"open_user_win_{mob}"):
                         st.session_state.admin_view = "user_detail"
@@ -895,20 +907,20 @@ if st.session_state.is_admin_logged:
 if st.session_state.app_user_name is None:
     st.markdown("### 🏗️ PATIL INFRATECH - SECURE LOGIN")
     
-    login_tab, otp_tab = st.tabs(["🔑 Registered User Login", "📧 Email OTP Register / Login"])
+    login_tab, otp_tab = st.tabs(["🔑 Registered User Login", "📧 Email OTP Register / Verification"])
 
-    # 1. Registered Email & Password Login
+    # 1. Registered Email / Username & Password Login
     with login_tab:
         with st.form("direct_login_form"):
-            login_email = st.text_input("ईमेल आयडी (Email ID):").strip()
-            login_pass = st.text_input("पासवर्ड (Password/PIN):", type="password").strip()
+            login_email = st.text_input("ईमेल किंवा Username (Email ID / Username):").strip()
+            login_pass = st.text_input("पासवर्ड (Password):", type="password").strip()
             submit_direct = st.form_submit_button("🚀 Login Now", type="primary")
 
             if submit_direct:
                 if login_email and login_pass:
                     conn = get_db_connection()
                     cursor = conn.cursor()
-                    cursor.execute("SELECT user_key FROM users WHERE email = ? AND pin = ?", (login_email, login_pass))
+                    cursor.execute("SELECT user_key FROM users WHERE (email = ? OR uid = ? OR user_key = ?) AND pin = ?", (login_email, login_email, login_email, login_pass))
                     row = cursor.fetchone()
                     conn.close()
 
@@ -917,13 +929,13 @@ if st.session_state.app_user_name is None:
                         st.success("🎉 यशस्वीरित्या लॉगिन झाले!")
                         st.rerun()
                     else:
-                        st.error("❌ चुकीचा ईमेल किंवा पासवर्ड! कृपया तपासा.")
+                        st.error("❌ चुकीचा ईमेल/Username किंवा पासवर्ड! कृपया तपासा.")
                 else:
-                    st.warning("⚠️ कृपया ईमेल आणि पासवर्ड दोन्ही भरा.")
+                    st.warning("⚠️ कृपया ईमेल/Username आणि पासवर्ड दोन्ही भरा.")
 
-    # 2. Email OTP Authentication
+    # 2. Email OTP Register & Password Setup
     with otp_tab:
-        st.markdown("#### 📧 Email OTP Verification")
+        st.markdown("#### 📧 Email OTP Verification & Account Creation")
         email_input = st.text_input("तुमचा ईमेल आयडी टाका (Email ID):", key="otp_email_key").strip()
         
         if not st.session_state.otp_verified:
@@ -947,54 +959,77 @@ if st.session_state.app_user_name is None:
             
             if st.session_state.generated_otp:
                 entered_otp = st.text_input("6 अंकी OTP टाका:", max_chars=6).strip()
-                if st.button("🔐 Verify OTP & Access App"):
+                if st.button("🔐 Verify OTP"):
                     if entered_otp == st.session_state.generated_otp:
                         st.session_state.otp_verified = True
-                        
-                        conn = get_db_connection()
-                        cursor = conn.cursor()
-                        cursor.execute("SELECT * FROM users WHERE email = ?", (st.session_state.pending_email,))
-                        row = cursor.fetchone()
-                        
-                        if row:
-                            # Existing User
-                            user_data = dict(row)
-                            st.session_state.app_user_name = user_data["user_key"]
-                            conn.close()
-                            
-                            # Resend details to email for reminder
-                            subject = "PATIL INFRATECH - Your Login Credentials Reminder"
-                            body = f"नमस्कार!\n\nतुमचा पाटील इन्फ्राटेक मधील खाते तपशील खालीलप्रमाणे आहे:\nUsername/UID: {user_data['uid']}\nPassword (PIN): {user_data['pin']}\nEmail: {st.session_state.pending_email}\n\n- पाटील इन्फ्राटेक टीम"
-                            send_email_message(st.session_state.pending_email, subject, body)
-                            
-                        else:
-                            # New User Registration - Generate Username & Password
-                            uname = st.session_state.pending_email.split('@')[0].upper()
-                            gen_uid = uname[:4] + "".join(random.choices(string.digits, k=4))
-                            gen_pin = "".join(random.choices(string.digits, k=4)) # Auto Password/PIN
-                            
-                            welcome_msg = f"{uname} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
-                            now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
-                            
-                            cursor.execute('''
-                                INSERT INTO users (user_key, id, uid, pin, mobile, email, password, comment, admin_message, unread_notification, is_premium, premium_expiry, requested_code, seen_popup, master_code_uses, last_active, activated_by)
-                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, NULL, 0, 0, 0, ?, ?)
-                            ''', (uname, uname, gen_uid, gen_pin, "N/A", st.session_state.pending_email, gen_pin, "काही नाही", welcome_msg, now_str, "Free User"))
-                            
-                            conn.commit()
-                            conn.close()
-                            st.session_state.app_user_name = uname
-                            
-                            # Send Credentials via Email
-                            subject = "PATIL INFRATECH - Account Created Successfully!"
-                            body = f"नमस्कार {uname}!\n\nपाटील इन्फ्राटेक मध्ये तुमचे अकाउंट यशस्वीरित्या तयार झाले आहे.\n\nतुमचा लॉगिन तपशील:\nUsername/UID: {gen_uid}\nPassword (PIN): {gen_pin}\nRegistered Email: {st.session_state.pending_email}\n\nतुम्ही पुढील वेळी थेट पासवर्ड वापरूनही लॉगिन करू शकता.\n\n- पाटील इन्फ्राटेक टीम"
-                            send_email_message(st.session_state.pending_email, subject, body)
-
-                        st.success("🎉 OTP व्हेरिफाय झाला! लॉगिन क्रेडेन्शियल्स तुमच्या ईमेलवर पाठवले आहेत.")
-                        time.sleep(1)
+                        st.success("✅ OTP यशस्वीरित्या व्हेरिफाय झाला आहे!")
                         st.rerun()
                     else:
                         st.error("❌ चुकीचा OTP! कृपया पुन्हा प्रयत्न करा.")
+
+        # If OTP is verified, show Registration form or Complete Access
+        if st.session_state.otp_verified and st.session_state.pending_email:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM users WHERE email = ?", (st.session_state.pending_email,))
+            row = cursor.fetchone()
+            conn.close()
+
+            if row:
+                # User Already Exists -> Direct Access
+                user_data = dict(row)
+                st.session_state.app_user_name = user_data["user_key"]
+                st.success(f"🎉 स्वागत आहे {user_data['user_key']}! लॉगिन होत आहे...")
+                time.sleep(1)
+                st.rerun()
+            else:
+                # New Registration Form for Custom Username & Strong Password
+                st.info("✨ नवीन युझर! कृपया खालील माहिती भरून युझरनेम आणि मजबूत पासवर्ड सेट करा:")
+                with st.form("custom_reg_form"):
+                    custom_username = st.text_input("तुमचे नाव किंवा युनिक Username बनावा:").strip()
+                    custom_password = st.text_input("मजबूत पासवर्ड (Set Strong Password):", type="password", help="कमीत कमी ८ अक्षरे, १ अंक आणि १ विशेष चिन्ह (!@#$%) असणे आवश्यक आहे.").strip()
+                    confirm_password = st.text_input("पासवर्ड पुन्हा टाका (Confirm Password):", type="password").strip()
+                    
+                    submit_custom_reg = st.form_submit_button("🚀 Complete Registration & Create Account", type="primary")
+
+                    if submit_custom_reg:
+                        if custom_username and custom_password and confirm_password:
+                            if custom_password != confirm_password:
+                                st.error("❌ पासवर्ड आणि कंफर्म पासवर्ड जुळत नाहीत!")
+                            else:
+                                is_strong, msg = is_strong_password(custom_password)
+                                if not is_strong:
+                                    st.error(f"❌ पासवर्ड कमजोर आहे: {msg}")
+                                else:
+                                    conn = get_db_connection()
+                                    cursor = conn.cursor()
+                                    cursor.execute("SELECT user_key FROM users WHERE user_key = ? OR uid = ?", (custom_username, custom_username))
+                                    if cursor.fetchone():
+                                        conn.close()
+                                        st.error("❌ हा Username आधीच वापरला गेला आहे, कृपया दुसरा टाका!")
+                                    else:
+                                        welcome_msg = f"{custom_username} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
+                                        now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
+                                        
+                                        cursor.execute('''
+                                            INSERT INTO users (user_key, id, uid, pin, mobile, email, password, comment, admin_message, unread_notification, is_premium, premium_expiry, requested_code, seen_popup, master_code_uses, last_active, activated_by)
+                                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, NULL, 0, 0, 0, ?, ?)
+                                        ''', (custom_username, custom_username, custom_username, custom_password, "N/A", st.session_state.pending_email, custom_password, "काही नाही", welcome_msg, now_str, "Free User"))
+                                        
+                                        conn.commit()
+                                        conn.close()
+                                        
+                                        # Send Details to Email
+                                        subject = "PATIL INFRATECH - Account Created Successfully!"
+                                        body = f"नमस्कार {custom_username}!\n\nपाटील इन्फ्राटेक मध्ये तुमचे अकाउंट यशस्वीरित्या तयार झाले आहे.\n\nतुमचा लॉगिन तपशील:\nUsername: {custom_username}\nPassword: {custom_password}\nRegistered Email: {st.session_state.pending_email}\n\nतुम्ही पुढील वेळी थेट ईमेल/युझरनेम आणि पासवर्ड वापरून लॉगिन करू शकता.\n\n- पाटील इन्फ्राटेक टीम"
+                                        send_email_message(st.session_state.pending_email, subject, body)
+
+                                        st.session_state.app_user_name = custom_username
+                                        st.success("🎉 अकाउंट यशस्वीरित्या तयार झाले! डिटेल्स ईमेलवर पाठवले आहेत.")
+                                        time.sleep(1)
+                                        st.rerun()
+                        else:
+                            st.warning("⚠️ कृपया सर्व माहिती भरा!")
 
     st.write("---")
     
