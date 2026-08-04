@@ -369,21 +369,73 @@ st.markdown(f"""
         box-shadow: 0 0 18px {accent_glow} !important;
     }}
 
-    /* Dropdown Options List Fix */
-    ul[role="listbox"], div[data-baseweb="popover"], div[data-baseweb="menu"] {{
-        background-color: #0f172a !important;
+    /* 🛑 FORCE ALL INPUT CONTAINERS & DROPDOWNS TO STAY DARK */
+    
+    /* Dropdown Outer Wrapper Fix */
+    div[data-baseweb="select"], 
+    div[data-baseweb="select"] > div,
+    div[data-baseweb="popover"],
+    div[data-baseweb="menu"],
+    div[role="listbox"] {{
+        background-color: rgba(15, 23, 42, 0.95) !important;
+        background: rgba(15, 23, 42, 0.95) !important;
+        border-color: {accent_border} !important;
         color: #ffffff !important;
-        border: 1px solid {accent_border} !important;
-        border-radius: 12px !important;
     }}
 
+    /* Number Input (+ / - Buttons Area) Fix */
+    div[data-testid="stNumberInputContainer"],
+    div[data-testid="stNumberInputContainer"] > div,
+    div[data-testid="stNumberInputContainer"] button {{
+        background-color: rgba(15, 23, 42, 0.95) !important;
+        background: rgba(15, 23, 42, 0.95) !important;
+        border-color: rgba(0, 242, 254, 0.4) !important;
+        color: #ffffff !important;
+    }}
+
+    /* Input Base Override */
+    div[data-baseweb="base-input"],
+    div[data-baseweb="input"],
+    div[data-baseweb="input"] > div {{
+        background-color: rgba(15, 23, 42, 0.95) !important;
+        background: rgba(15, 23, 42, 0.95) !important;
+        color: #ffffff !important;
+        border-radius: 14px !important;
+    }}
+
+    /* Dropdown Arrow & Password Eye Icon Container Fix */
+    div[data-baseweb="icon"],
+    svg[data-baseweb="icon"],
+    div[data-baseweb="select"] svg,
+    button[aria-label="Show password"] {{
+        fill: {accent_border} !important;
+        color: {accent_border} !important;
+        background-color: transparent !important;
+    }}
+
+    /* Password Input Eye Button Background Fix */
+    div[data-baseweb="input"] button {{
+        background-color: transparent !important;
+        border: none !important;
+    }}
+
+    /* Options inside Select Menu Fix */
     li[role="option"] {{
         background-color: #0f172a !important;
         color: #ffffff !important;
     }}
-    li[role="option"]:hover {{
+    li[role="option"]:hover, li[aria-selected="true"] {{
         background-color: #1e293b !important;
         color: {accent_border} !important;
+    }}
+
+    /* Chrome/Safari Auto-fill Yellow/White Background Override */
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover, 
+    input:-webkit-autofill:focus {{
+        -webkit-text-fill-color: #ffffff !important;
+        -webkit-box-shadow: 0 0 0px 1000px #0f172a inset !important;
+        transition: background-color 5000s ease-in-out 0s;
     }}
 
     /* Tabs Override */
