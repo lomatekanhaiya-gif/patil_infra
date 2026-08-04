@@ -299,26 +299,30 @@ def check_user_premium_status(username):
 is_curr_premium, _ = check_user_premium_status(current_user_name)
 
 # ==========================================
-# 🎨 HIGH-END PREMIUM DUAL-THEME STYLING
+# 🎨 HIGH-END ULTRA-PREMIUM DUAL THEME STYLING
 # ==========================================
 if is_curr_premium:
-    # 👑 ROYAL METALLIC GOLD VIP THEME
-    bg_gradient = "linear-gradient(135deg, #090803 0%, #171205 50%, #0d0a03 100%)"
-    accent_border = "#FFD54F"
-    accent_glow = "rgba(255, 213, 79, 0.4)"
-    card_bg = "rgba(23, 18, 5, 0.9)"
-    card_border_color = "rgba(255, 213, 79, 0.6)"
-    header_gradient = "linear-gradient(135deg, #b8860b 0%, #ff1493 50%, #d4af37 100%)"
-    box_inner_shadow = "inset 0 0 15px rgba(255, 213, 79, 0.25)"
+    # 👑 ROYAL METALLIC GOLD & AMBER VIP THEME
+    bg_gradient = "linear-gradient(135deg, #0a0803 0%, #1a1408 50%, #0d0a03 100%)"
+    accent_border = "#f59e0b"
+    accent_glow = "rgba(245, 158, 11, 0.5)"
+    card_bg = "rgba(26, 20, 8, 0.85)"
+    card_border_color = "rgba(245, 158, 11, 0.5)"
+    header_gradient = "linear-gradient(135deg, #b45309 0%, #f59e0b 50%, #d97706 100%)"
+    box_inner_shadow = "inset 0 0 15px rgba(245, 158, 11, 0.2)"
+    primary_btn_bg = "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"
+    primary_btn_shadow = "rgba(245, 158, 11, 0.4)"
 else:
-    # 🌌 ULTRA ULTRA DARK ROYAL FREE THEME
-    bg_gradient = "linear-gradient(135deg, #050811 0%, #0a1122 50%, #060b18 100%)"
-    accent_border = "#3b82f6"
-    accent_glow = "rgba(59, 130, 246, 0.3)"
-    card_bg = "rgba(10, 17, 34, 0.9)"
-    card_border_color = "rgba(59, 130, 246, 0.4)"
-    header_gradient = "linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)"
-    box_inner_shadow = "inset 0 2px 6px rgba(0, 0, 0, 0.6)"
+    # 🌌 ULTRA MODERN DEEP OBSIDIAN & ELECTRIC CYAN THEME
+    bg_gradient = "linear-gradient(135deg, #030712 0%, #0f172a 50%, #020617 100%)"
+    accent_border = "#00f2fe"
+    accent_glow = "rgba(0, 242, 254, 0.4)"
+    card_bg = "rgba(15, 23, 42, 0.85)"
+    card_border_color = "rgba(0, 242, 254, 0.3)"
+    header_gradient = "linear-gradient(135deg, #0052d4 0%, #4364f7 50%, #6fb1fc 100%)"
+    box_inner_shadow = "inset 0 2px 8px rgba(0, 0, 0, 0.8)"
+    primary_btn_bg = "linear-gradient(135deg, #0052d4 0%, #4364f7 100%)"
+    primary_btn_shadow = "rgba(67, 100, 247, 0.4)"
 
 st.markdown(f"""
     <style>
@@ -335,136 +339,146 @@ st.markdown(f"""
 
     /* 🛑 FORCE APPS OVERRIDE (Mobile Light/Dark Mode Ignored) */
     html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"], [data-testid="stSidebar"] {{
-        background-color: #050811 !important;
+        background-color: #030712 !important;
         background: {bg_gradient} !important;
-        color: #ffffff !important;
+        color: #f8fafc !important;
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
     }}
 
     p, span, h1, h2, h3, h4, h5, h6, li, small, label, div {{
-        color: #ffffff !important;
+        color: #f8fafc !important;
     }}
 
-    /* Input Boxes Dark Theme Overrides */
+    /* Input Boxes Ultra Glassy Styling */
     div[data-baseweb="select"] > div,
     div[data-baseweb="input"] > div,
     div[data-baseweb="base-input"],
     input, select, textarea {{
         border: 1px solid {accent_border} !important;
         border-radius: 14px !important;
-        background-color: #0b1120 !important;
+        background-color: rgba(15, 23, 42, 0.9) !important;
         color: #ffffff !important;
         outline: none !important;
         font-weight: 500 !important;
         box-shadow: {box_inner_shadow} !important;
+        backdrop-filter: blur(10px);
     }}
 
     input:focus, select:focus, textarea:focus {{
         border-color: {accent_border} !important;
-        box-shadow: 0 0 15px {accent_glow} !important;
+        box-shadow: 0 0 18px {accent_glow} !important;
     }}
 
     /* Dropdown Options List Fix */
     ul[role="listbox"], div[data-baseweb="popover"], div[data-baseweb="menu"] {{
-        background-color: #0d1527 !important;
+        background-color: #0f172a !important;
         color: #ffffff !important;
-        border: 1px solid #1e293b !important;
+        border: 1px solid {accent_border} !important;
+        border-radius: 12px !important;
     }}
 
     li[role="option"] {{
-        background-color: #0d1527 !important;
+        background-color: #0f172a !important;
         color: #ffffff !important;
     }}
     li[role="option"]:hover {{
         background-color: #1e293b !important;
-        color: #60a5fa !important;
+        color: {accent_border} !important;
     }}
 
     /* Tabs Override */
     button[data-baseweb="tab"] {{
         background-color: transparent !important;
-        color: #9ca3af !important;
+        color: #94a3b8 !important;
+        font-weight: 600 !important;
     }}
     button[aria-selected="true"] {{
-        color: #60a5fa !important;
-        border-bottom: 2px solid #60a5fa !important;
+        color: {accent_border} !important;
+        border-bottom: 2px solid {accent_border} !important;
     }}
 
     /* Cards & Forms Overlay */
     div.stForm, div[data-testid="stExpander"] {{
         background: {card_bg} !important;
-        backdrop-filter: blur(20px);
+        backdrop-filter: blur(25px);
         border: 1px solid {card_border_color} !important;
         border-radius: 20px !important;
-        padding: 20px !important;
-        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.7);
+        padding: 22px !important;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8);
     }}
 
-    /* Buttons Override */
+    /* Primary Action Buttons */
     div.stButton > button[kind="primary"] {{
-        background: linear-gradient(90deg, #dc2626 0%, #ef4444 100%) !important;
+        background: {primary_btn_bg} !important;
         color: #ffffff !important;
-        font-weight: 700 !important;
+        font-weight: 800 !important;
         border-radius: 14px !important;
         border: none !important;
         padding: 12px 20px !important;
-        box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4);
+        box-shadow: 0 6px 20px {primary_btn_shadow} !important;
         width: 100%;
+        transition: all 0.3s ease;
+    }}
+    div.stButton > button[kind="primary"]:hover {{
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px {primary_btn_shadow} !important;
     }}
 
+    /* Secondary Buttons */
     div.stButton > button {{
-        color: #ffffff !important;
-        background-color: #111a2e !important;
-        border: 1px solid #1e293b !important;
+        color: #f8fafc !important;
+        background: rgba(30, 41, 59, 0.8) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
         border-radius: 14px !important;
+        backdrop-filter: blur(10px);
     }}
 
     .main-header {{
         background: {header_gradient};
-        padding: 22px 15px;
-        border-radius: 20px;
+        padding: 25px 15px;
+        border-radius: 22px;
         text-align: center;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-        margin-bottom: 20px;
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.6);
+        margin-bottom: 22px;
+        border: 1px solid rgba(255, 255, 255, 0.25);
     }}
 
     .gold-vip-badge {{
-        background: linear-gradient(135deg, #FFE082 0%, #FFB300 50%, #FF6F00 100%);
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
         color: #000000 !important;
-        padding: 8px 16px;
+        padding: 8px 18px;
         border-radius: 20px;
         font-weight: 900;
         font-size: 14px;
         letter-spacing: 0.5px;
-        box-shadow: 0 0 25px rgba(255, 179, 0, 0.8);
+        box-shadow: 0 0 25px rgba(245, 158, 11, 0.6);
         display: inline-block;
-        border: 1px solid #FFF59D;
+        border: 1px solid #fef3c7;
     }}
 
     .free-user-badge {{
-        background: rgba(31, 41, 55, 0.9);
-        color: #9ca3af !important;
-        padding: 6px 14px;
+        background: rgba(30, 41, 59, 0.9);
+        color: #38bdf8 !important;
+        padding: 6px 16px;
         border-radius: 20px;
         font-weight: 700;
         font-size: 13px;
-        border: 1px solid #374151;
+        border: 1px solid #0284c7;
         display: inline-block;
     }}
 
     .admin-command-center {{
         background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%) !important;
-        border: 2px solid #FFD54F !important;
+        border: 2px solid #f59e0b !important;
         border-radius: 24px !important;
         padding: 25px !important;
-        box-shadow: 0 15px 40px rgba(255, 179, 0, 0.25);
+        box-shadow: 0 15px 40px rgba(245, 158, 11, 0.25);
         margin-bottom: 25px;
     }}
 
     .admin-user-card {{
         background: rgba(15, 23, 42, 0.95);
-        border: 1px solid #FFB300;
+        border: 1px solid #f59e0b;
         border-radius: 18px;
         padding: 22px;
         margin-bottom: 18px;
@@ -487,7 +501,7 @@ def render_whatsapp_feature(encoded_msg, key_prefix):
     if wa_lock_setting == "Free" or is_prem:
         st.markdown(f'''
             <a href="https://wa.me/?text={encoded_msg}" target="_blank">
-                <button style="width: 100%; background-color: #25D366; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px;">
+                <button style="width: 100%; background: linear-gradient(135deg, #25D366 0%, #128C7E 100%); color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px; box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4);">
                     📱 Share Full Report on WhatsApp {'(🆓 Free Access)' if wa_lock_setting == 'Free' else '(👑 VIP Premium Active)'}
                 </button>
             </a>
@@ -569,8 +583,8 @@ if not st.session_state.welcome_completed:
             st.rerun()
 
         st.markdown("<br><br>", unsafe_allow_html=True)
-        st.markdown("<h1 style='text-align: center; color: #60a5fa;'>🏗️ WELCOME TO PATIL INFRATECH...</h1>", unsafe_allow_html=True)
-        st.markdown("<h3 style='text-align: center; color: #9ca3af;'>तुमचे स्वप्न, आमचे एस्टिमेशन!</h3>", unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align: center; color: #00f2fe;'>🏗️ WELCOME TO PATIL INFRATECH...</h1>", unsafe_allow_html=True)
+        st.markdown("<h3 style='text-align: center; color: #94a3b8;'>तुमचे स्वप्न, आमचे एस्टिमेशन!</h3>", unsafe_allow_html=True)
         
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -581,16 +595,16 @@ if not st.session_state.welcome_completed:
         for ad in ads_rows:
             ad_dict = dict(ad)
             st.markdown(f"""
-                <div style="background: rgba(17, 24, 39, 0.7); border: 1px solid rgba(59, 130, 246, 0.3); padding: 6px 10px; border-radius: 10px; text-align: center; margin: 15px auto; max-width: 280px;">
-                    <span style="font-size: 9px; color: #93c5fd; font-weight: bold;">⭐ SPONSOR</span><br>
-                    <b style="color: #ffffff; font-size: 12px;">{ad_dict.get('title')}</b>
-                    <p style="color: #9ca3af; font-size: 10px; margin: 2px 0;">{ad_dict.get('desc')}</p>
+                <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(0, 242, 254, 0.4); padding: 8px 12px; border-radius: 12px; text-align: center; margin: 15px auto; max-width: 280px; backdrop-filter: blur(10px);">
+                    <span style="font-size: 9px; color: #38bdf8; font-weight: bold;">⭐ SPONSOR</span><br>
+                    <b style="color: #ffffff; font-size: 13px;">{ad_dict.get('title')}</b>
+                    <p style="color: #94a3b8; font-size: 10px; margin: 2px 0;">{ad_dict.get('desc')}</p>
                     {"<img src='" + ad_dict.get('media_url') + "' style='max-height:50px; border-radius:6px; margin-top:3px;'/>" if ad_dict.get('media_type') == 'Photo (PNG/JPG)' and ad_dict.get('media_url') else ""}
-                    <br><a href="{ad_dict.get('link')}" target="_blank" style="color: #fbbf24; font-weight: bold; text-decoration: underline; font-size: 11px;">👉 Visit Link</a>
+                    <br><a href="{ad_dict.get('link')}" target="_blank" style="color: #f59e0b; font-weight: bold; text-decoration: underline; font-size: 11px;">👉 Visit Link</a>
                 </div>
             """, unsafe_allow_html=True)
 
-        st.caption("<p style='text-align: center; color: #6b7280;'>(पुढे जाण्यासाठी स्क्रीनवर कुठेही टच करा)</p>", unsafe_allow_html=True)
+        st.caption("<p style='text-align: center; color: #64748b;'>(पुढे जाण्यासाठी स्क्रीनवर कुठेही टच करा)</p>", unsafe_allow_html=True)
         
         progress_bar = st.progress(0)
         status_text = st.empty()
@@ -604,7 +618,7 @@ if not st.session_state.welcome_completed:
         ]
         
         for i in range(5):
-            status_text.markdown(f"<p style='text-align: center; font-size: 18px; font-weight: bold; color: #f3f4f6;'>{construction_stages[i]}</p>", unsafe_allow_html=True)
+            status_text.markdown(f"<p style='text-align: center; font-size: 18px; font-weight: bold; color: #f8fafc;'>{construction_stages[i]}</p>", unsafe_allow_html=True)
             progress_bar.progress((i + 1) * 20)
             time.sleep(0.5)
 
@@ -614,9 +628,9 @@ if not st.session_state.welcome_completed:
 # मुख्य टायटल बॅनर
 st.markdown("""
     <div class="main-header">
-        <h1 style='color: white; margin:0; font-size: 26px;'>🏗️ PATIL INFRATECH</h1>
-        <p style='color: #e0e7ff; margin:5px 0 0 0; font-size: 14px;'>📐 Quantity Surveyor & Cost Estimator</p>
-        <small style='color: #93c5fd;'>Concept & Logic by: Kanhaiya (Founder of Patil Infratech)</small>
+        <h1 style='color: white; margin:0; font-size: 28px; font-weight: 800;'>🏗️ PATIL INFRATECH</h1>
+        <p style='color: #e0f2fe; margin:5px 0 0 0; font-size: 15px;'>📐 Quantity Surveyor & Cost Estimator</p>
+        <small style='color: #bae6fd;'>Concept & Logic by: Kanhaiya (Founder of Patil Infratech)</small>
     </div>
 """, unsafe_allow_html=True)
 
@@ -626,7 +640,7 @@ st.markdown("""
 if st.session_state.is_admin_logged:
     st.markdown("""
         <div class="admin-command-center">
-            <h1 style='color: #FFD54F; margin:0; font-size: 28px; text-align: center;'>⚡ KANHAIYA'S EXECUTIVE COMMAND CENTER</h1>
+            <h1 style='color: #f59e0b; margin:0; font-size: 28px; text-align: center;'>⚡ KANHAIYA'S EXECUTIVE COMMAND CENTER</h1>
             <p style='color: #cbd5e1; margin:5px 0 0 0; font-size: 14px; text-align: center;'>👑 Patil Infratech Master Control & Management Hub</p>
         </div>
     """, unsafe_allow_html=True)
@@ -739,14 +753,14 @@ if st.session_state.is_admin_logged:
 
             status_badge = f"👑 VIP MEMBER: {u_name.upper()}" if u_prem else ("🚨 CODE REQUESTED!" if is_req else f"🆓 FREE: {u_name.upper()}")
 
-            st.markdown(f"#### 👤 MANAGE USER: <span style='color:#60a5fa;'>{u_name.upper()}</span>", unsafe_allow_html=True)
+            st.markdown(f"#### 👤 MANAGE USER: <span style='color:#00f2fe;'>{u_name.upper()}</span>", unsafe_allow_html=True)
             st.markdown(f"""
                 <div class="admin-user-card">
                     <p style="margin:5px 0; font-size:16px;"><b>माहिती/स्टेटस:</b> <span class="gold-vip-badge">{status_badge}</span></p>
-                    <p style="margin:5px 0; font-size:15px;"><b>Username/UID:</b> <code style="color:#60a5fa; font-size:15px;">{u_uid}</code> | <b>Password:</b> <code>{u_pin}</code> | <b>Email:</b> <code>{u_email}</code></p>
+                    <p style="margin:5px 0; font-size:15px;"><b>Username/UID:</b> <code style="color:#00f2fe; font-size:15px;">{u_uid}</code> | <b>Password:</b> <code>{u_pin}</code> | <b>Email:</b> <code>{u_email}</code></p>
                     <p style="margin:8px 0 5px 0; font-size:15px;"><b>प्रिमियम मुदत (Expiry):</b> <code>{exp_date}</code></p>
                     <p style="margin:5px 0; font-size:15px;"><b>ॲक्टिव्ह कोड (Unused):</b> <code style="color:#10b981; font-size:16px;">{assigned_code if assigned_code else 'काही नाही'}</code></p>
-                    <p style="margin:5px 0; font-size:14px; color:#9ca3af;"><b>युझर कमेंट:</b> {u_comm}</p>
+                    <p style="margin:5px 0; font-size:14px; color:#94a3b8;"><b>युझर कमेंट:</b> {u_comm}</p>
                 </div>
             """, unsafe_allow_html=True)
 
@@ -1131,11 +1145,11 @@ conn.close()
 
 for ad in ads_list:
     st.markdown(f"""
-        <div style="background: rgba(17, 24, 39, 0.7); border: 1px solid rgba(59, 130, 246, 0.3); padding: 6px 10px; border-radius: 10px; text-align: center; margin-bottom: 15px;">
-            <span style="font-size: 9px; color: #93c5fd; font-weight: bold;">📢 SPONSOR AD</span><br>
-            <b style="color: #fff; font-size: 12px;">{ad.get('title')}</b> — <span style="color: #cbd5e1; font-size: 11px;">{ad.get('desc')}</span>
+        <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(0, 242, 254, 0.3); padding: 8px 12px; border-radius: 12px; text-align: center; margin-bottom: 18px; backdrop-filter: blur(10px);">
+            <span style="font-size: 9px; color: #38bdf8; font-weight: bold;">📢 SPONSOR AD</span><br>
+            <b style="color: #fff; font-size: 13px;">{ad.get('title')}</b> — <span style="color: #cbd5e1; font-size: 11px;">{ad.get('desc')}</span>
             {"<img src='" + ad.get('media_url') + "' style='max-height:50px; border-radius:6px; margin-top:3px;'/>" if ad.get('media_type') == 'Photo (PNG/JPG)' and ad.get('media_url') else ""}
-            <a href="{ad.get('link')}" target="_blank" style="color: #fbbf24; font-weight: bold; text-decoration: underline; font-size: 11px; margin-left: 6px;">[Visit]</a>
+            <a href="{ad.get('link')}" target="_blank" style="color: #f59e0b; font-weight: bold; text-decoration: underline; font-size: 11px; margin-left: 6px;">[Visit]</a>
         </div>
     """, unsafe_allow_html=True)
 
@@ -1160,8 +1174,8 @@ disp_name_inbox = current_user_name if current_user_name else ""
 if current_user_data.get("unread_notification") == 1:
     admin_msg = current_user_data.get("admin_message", "")
     st.markdown(f"""
-        <div style="background: linear-gradient(135deg, #047857 0%, #065f46 100%); padding: 16px 20px; border-radius: 16px; margin-bottom: 15px; border: 1px solid #34d399; box-shadow: 0 4px 20px rgba(52, 211, 153, 0.3);">
-            <h4 style="color: #6ee7b7; margin: 0 0 5px 0;">🔔 नवीन नोटिफिकेशन</h4>
+        <div style="background: linear-gradient(135deg, #047857 0%, #065f46 100%); padding: 18px 22px; border-radius: 18px; margin-bottom: 18px; border: 1px solid #34d399; box-shadow: 0 6px 22px rgba(52, 211, 153, 0.35);">
+            <h4 style="color: #6ee7b7; margin: 0 0 6px 0;">🔔 नवीन नोटिफिकेशन</h4>
             <p style="color: #ffffff; font-size: 16px; margin: 0;">{admin_msg}</p>
         </div>
     """, unsafe_allow_html=True)
@@ -1286,7 +1300,7 @@ if ai_lock_setting == "Free" or is_user_premium:
                         ai_response_text = f"👷‍♂️ **Patil Infratech Expert Engineer Analysis:** Regarding your query *\"{user_ai_query}\"*, please use our Rate Analysis or BBS Calculator modules."
                     
                     st.markdown(f"""
-                        <div style="background: rgba(31, 41, 55, 0.95); border-left: 5px solid #FFB300; padding: 15px; border-radius: 12px; margin-top: 10px;">
+                        <div style="background: rgba(15, 23, 42, 0.95); border-left: 5px solid #00f2fe; padding: 18px; border-radius: 14px; margin-top: 12px; box-shadow: 0 4px 20px rgba(0, 242, 254, 0.2);">
                             <b>🎯 Civil AI Answer:</b><br><br>{ai_response_text}
                         </div>
                     """, unsafe_allow_html=True)
@@ -1307,10 +1321,10 @@ if st.session_state.selected_module is None:
     with col_icon1:
         calc_badge = "🆓 Free" if calc_lock == "Free" else "👑 Premium"
         st.markdown(f"""
-            <div style="text-align: center; background: rgba(31, 41, 55, 0.8); padding: 15px; border-radius: 18px; border: 1px solid rgba(59, 130, 246, 0.3);">
-                <h1 style="font-size: 35px; margin:0;">🧮</h1>
-                <h5 style="margin: 6px 0 2px 0; color: #f3f4f6;">Calculator</h5>
-                <p style="font-size: 10px; color: #9ca3af;">[{calc_badge}]</p>
+            <div style="text-align: center; background: rgba(15, 23, 42, 0.85); padding: 18px 10px; border-radius: 20px; border: 1px solid rgba(0, 242, 254, 0.3); backdrop-filter: blur(10px);">
+                <h1 style="font-size: 38px; margin:0;">🧮</h1>
+                <h5 style="margin: 8px 0 2px 0; color: #f8fafc; font-weight:700;">Calculator</h5>
+                <p style="font-size: 10px; color: #38bdf8; margin:0;">[{calc_badge}]</p>
             </div>
         """, unsafe_allow_html=True)
         if st.button("🧮 Calculator", key="btn_open_calc", use_container_width=True):
@@ -1323,10 +1337,10 @@ if st.session_state.selected_module is None:
     with col_icon2:
         ra_badge = "🆓 Free" if ra_lock == "Free" else "👑 Premium"
         st.markdown(f"""
-            <div style="text-align: center; background: rgba(31, 41, 55, 0.8); padding: 15px; border-radius: 18px; border: 1px solid rgba(59, 130, 246, 0.3);">
-                <h1 style="font-size: 35px; margin:0;">📊</h1>
-                <h5 style="margin: 6px 0 2px 0; color: #f3f4f6;">Rate Analysis</h5>
-                <p style="font-size: 10px; color: #9ca3af;">[{ra_badge}]</p>
+            <div style="text-align: center; background: rgba(15, 23, 42, 0.85); padding: 18px 10px; border-radius: 20px; border: 1px solid rgba(0, 242, 254, 0.3); backdrop-filter: blur(10px);">
+                <h1 style="font-size: 38px; margin:0;">📊</h1>
+                <h5 style="margin: 8px 0 2px 0; color: #f8fafc; font-weight:700;">Rate Analysis</h5>
+                <p style="font-size: 10px; color: #38bdf8; margin:0;">[{ra_badge}]</p>
             </div>
         """, unsafe_allow_html=True)
         if st.button("📊 Rate Analysis", key="btn_open_ra", use_container_width=True):
@@ -1339,10 +1353,10 @@ if st.session_state.selected_module is None:
     with col_icon3:
         bbs_badge = "🆓 Free" if bbs_lock == "Free" else "👑 Premium"
         st.markdown(f"""
-            <div style="text-align: center; background: rgba(31, 41, 55, 0.8); padding: 15px; border-radius: 18px; border: 1px solid rgba(59, 130, 246, 0.3);">
-                <h1 style="font-size: 35px; margin:0;">🏗️</h1>
-                <h5 style="margin: 6px 0 2px 0; color: #f3f4f6;">BBS</h5>
-                <p style="font-size: 10px; color: #9ca3af;">[{bbs_badge}]</p>
+            <div style="text-align: center; background: rgba(15, 23, 42, 0.85); padding: 18px 10px; border-radius: 20px; border: 1px solid rgba(0, 242, 254, 0.3); backdrop-filter: blur(10px);">
+                <h1 style="font-size: 38px; margin:0;">🏗️</h1>
+                <h5 style="margin: 8px 0 2px 0; color: #f8fafc; font-weight:700;">BBS</h5>
+                <p style="font-size: 10px; color: #38bdf8; margin:0;">[{bbs_badge}]</p>
             </div>
         """, unsafe_allow_html=True)
         if st.button("🏗️ Open BBS", key="btn_open_bbs", use_container_width=True):
@@ -1355,10 +1369,10 @@ if st.session_state.selected_module is None:
     with col_icon4:
         qs_badge = "🆓 Free" if qs_lock == "Free" else "👑 Premium"
         st.markdown(f"""
-            <div style="text-align: center; background: rgba(31, 41, 55, 0.8); padding: 15px; border-radius: 18px; border: 1px solid rgba(59, 130, 246, 0.3);">
-                <h1 style="font-size: 35px; margin:0;">📈</h1>
-                <h5 style="margin: 6px 0 2px 0; color: #f3f4f6;">Quantity Survey</h5>
-                <p style="font-size: 10px; color: #9ca3af;">[{qs_badge}]</p>
+            <div style="text-align: center; background: rgba(15, 23, 42, 0.85); padding: 18px 10px; border-radius: 20px; border: 1px solid rgba(0, 242, 254, 0.3); backdrop-filter: blur(10px);">
+                <h1 style="font-size: 38px; margin:0;">📈</h1>
+                <h5 style="margin: 8px 0 2px 0; color: #f8fafc; font-weight:700;">Quantity Survey</h5>
+                <p style="font-size: 10px; color: #38bdf8; margin:0;">[{qs_badge}]</p>
             </div>
         """, unsafe_allow_html=True)
         if st.button("📈 Quantity Survey", key="btn_open_qs", use_container_width=True):
@@ -1405,8 +1419,8 @@ elif st.session_state.selected_module == "Civil Calculator":
 
             st.success("✅ कनव्हर्शन निकाल (Results):")
             st.markdown(f"""
-                <div style="background: rgba(31, 41, 55, 0.95); padding: 18px; border-radius: 16px; border-left: 5px solid #3b82f6;">
-                    <p style="margin: 6px 0; font-size: 16px;"><b>📦 एकूण ब्रास (Brass):</b> <span style="color:#fbbf24; font-size:18px; font-weight:bold;">{brass:.4f} Brass</span></p>
+                <div style="background: rgba(15, 23, 42, 0.95); padding: 20px; border-radius: 18px; border-left: 5px solid #00f2fe; box-shadow: 0 6px 20px rgba(0,242,254,0.15);">
+                    <p style="margin: 6px 0; font-size: 16px;"><b>📦 एकूण ब्रास (Brass):</b> <span style="color:#f59e0b; font-size:19px; font-weight:bold;">{brass:.4f} Brass</span></p>
                     <p style="margin: 6px 0; font-size: 15px;"><b>📐 घन फूट (Cubic Feet / CFT):</b> <code>{cft:.2f} CFT</code></p>
                     <p style="margin: 6px 0; font-size: 15px;"><b>📏 घन मीटर (Cubic Meter / m³):</b> <code>{m3:.4f} m³</code></p>
                     <p style="margin: 6px 0; font-size: 15px;"><b>💧 लिटर (Liters):</b> <code>{liters:.2f} Ltrs</code></p>
@@ -1437,8 +1451,8 @@ elif st.session_state.selected_module == "Civil Calculator":
 
             st.success("✅ कनव्हर्शन निकाल (Results):")
             st.markdown(f"""
-                <div style="background: rgba(31, 41, 55, 0.95); padding: 18px; border-radius: 16px; border-left: 5px solid #3b82f6;">
-                    <p style="margin: 6px 0; font-size: 15px;"><b>📏 मीटर (Meters):</b> <span style="color:#fbbf24; font-weight:bold;">{meters:.4f} m</span></p>
+                <div style="background: rgba(15, 23, 42, 0.95); padding: 20px; border-radius: 18px; border-left: 5px solid #00f2fe; box-shadow: 0 6px 20px rgba(0,242,254,0.15);">
+                    <p style="margin: 6px 0; font-size: 15px;"><b>📏 मीटर (Meters):</b> <span style="color:#f59e0b; font-weight:bold;">{meters:.4f} m</span></p>
                     <p style="margin: 6px 0; font-size: 15px;"><b>🦶 फूट (Feet):</b> <code>{feet:.4f} ft</code></p>
                     <p style="margin: 6px 0; font-size: 15px;"><b>📐 इंच (Inches):</b> <code>{inches:.2f} inches</code></p>
                     <p style="margin: 6px 0; font-size: 15px;"><b>🔍 मिलिमीटर (mm):</b> <code>{mm:.2f} mm</code></p>
@@ -1467,8 +1481,8 @@ elif st.session_state.selected_module == "Civil Calculator":
 
             st.success("✅ कनव्हर्शन निकाल (Results):")
             st.markdown(f"""
-                <div style="background: rgba(31, 41, 55, 0.95); padding: 18px; border-radius: 16px; border-left: 5px solid #3b82f6;">
-                    <p style="margin: 6px 0; font-size: 15px;"><b>📐 स्क्वेअर फूट (Sq. Ft.):</b> <span style="color:#fbbf24; font-weight:bold;">{sqft:.2f} sq.ft.</span></p>
+                <div style="background: rgba(15, 23, 42, 0.95); padding: 20px; border-radius: 18px; border-left: 5px solid #00f2fe; box-shadow: 0 6px 20px rgba(0,242,254,0.15);">
+                    <p style="margin: 6px 0; font-size: 15px;"><b>📐 स्क्वेअर फूट (Sq. Ft.):</b> <span style="color:#f59e0b; font-weight:bold;">{sqft:.2f} sq.ft.</span></p>
                     <p style="margin: 6px 0; font-size: 15px;"><b>📏 स्क्वेअर मीटर (m²):</b> <code>{sqm:.2f} m²</code></p>
                     <p style="margin: 6px 0; font-size: 15px;"><b>🌾 गुंठा (Guntha):</b> <code>{guntha:.4f} Guntha</code></p>
                     <p style="margin: 6px 0; font-size: 15px;"><b>🌳 हेक्टर/एकर (Acre):</b> <code>{acre:.4f} Acre</code></p>
@@ -1487,7 +1501,7 @@ elif st.session_state.selected_module == "Rate Analysis":
     
     master_rates = get_market_rates()
     st.markdown(
-        f"<div style='background: linear-gradient(90deg, #1f2937 0%, #111827 100%); padding: 12px; border-radius: 14px; text-align: center; font-size: 13px; font-weight: bold; color: #f3f4f6; margin-bottom: 15px; border-left: 5px solid #3b82f6; border: 1px solid rgba(255,255,255,0.08);'>"
+        f"<div style='background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 14px; border-radius: 16px; text-align: center; font-size: 13px; font-weight: bold; color: #f8fafc; margin-bottom: 18px; border-left: 5px solid #00f2fe; border: 1px solid rgba(0,242,254,0.2); box-shadow: 0 4px 15px rgba(0,0,0,0.5);'>"
         f"📢 आजचे मार्केट दर 🏷️ cement: ₹{master_rates.get('cement', 400.0)}/bag | sand: ₹{master_rates.get('sand', 2500.0)}/m³ | aggregate: ₹{master_rates.get('aggregate', 2200.0)}/m³ | steel: ₹{master_rates.get('steel', 60.0)}/Kg | brick: ₹{master_rates.get('bricks', 8.0)}/nos"
         f"</div>", 
         unsafe_allow_html=True
@@ -1627,7 +1641,7 @@ elif st.session_state.selected_module == "Rate Analysis":
                 render_whatsapp_feature(encoded_msg, "ra_conc")
             with btn_col2:
                 st.markdown('''
-                    <button onclick="window.print()" style="width: 100%; background-color: #3b82f6; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px;">
+                    <button onclick="window.print()" style="width: 100%; background: linear-gradient(135deg, #0052d4 0%, #4364f7 100%); color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px; box-shadow: 0 4px 15px rgba(67, 100, 247, 0.4);">
                         📄 Print / Download A3 Size PDF
                     </button>
                 ''', unsafe_allow_html=True)
@@ -1755,7 +1769,7 @@ elif st.session_state.selected_module == "Rate Analysis":
                 render_whatsapp_feature(encoded_msg, "ra_bw")
             with btn_col2:
                 st.markdown('''
-                    <button onclick="window.print()" style="width: 100%; background-color: #3b82f6; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px;">
+                    <button onclick="window.print()" style="width: 100%; background: linear-gradient(135deg, #0052d4 0%, #4364f7 100%); color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px; box-shadow: 0 4px 15px rgba(67, 100, 247, 0.4);">
                         📄 Print / Download A3 Size PDF
                     </button>
                 ''', unsafe_allow_html=True)
@@ -1895,7 +1909,7 @@ elif st.session_state.selected_module == "Rate Analysis":
                 render_whatsapp_feature(encoded_msg, "ra_pl")
             with btn_col2:
                 st.markdown('''
-                    <button onclick="window.print()" style="width: 100%; background-color: #3b82f6; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px;">
+                    <button onclick="window.print()" style="width: 100%; background: linear-gradient(135deg, #0052d4 0%, #4364f7 100%); color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px; box-shadow: 0 4px 15px rgba(67, 100, 247, 0.4);">
                         📄 Print / Download A3 Size PDF
                     </button>
                 ''', unsafe_allow_html=True)
@@ -2165,7 +2179,7 @@ elif st.session_state.selected_module == "BBS":
             render_whatsapp_feature(encoded_msg, "bbs_main")
         with btn_col2:
             st.markdown('''
-                <button onclick="window.print()" style="width: 100%; background-color: #3b82f6; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px;">
+                <button onclick="window.print()" style="width: 100%; background: linear-gradient(135deg, #0052d4 0%, #4364f7 100%); color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px; box-shadow: 0 4px 15px rgba(67, 100, 247, 0.4);">
                     📄 Print / Save A3 Size PDF
                 </button>
             ''', unsafe_allow_html=True)
@@ -2420,7 +2434,7 @@ elif st.session_state.selected_module == "Quantity Surveying":
                 render_whatsapp_feature(encoded_msg, "qs_main")
             with btn_col2:
                 st.markdown('''
-                    <button onclick="window.print()" style="width: 100%; background-color: #3b82f6; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px;">
+                    <button onclick="window.print()" style="width: 100%; background: linear-gradient(135deg, #0052d4 0%, #4364f7 100%); color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px; box-shadow: 0 4px 15px rgba(67, 100, 247, 0.4);">
                         📄 Print / Save A3 Size PDF
                     </button>
                 ''', unsafe_allow_html=True)
