@@ -299,22 +299,22 @@ def check_user_premium_status(username):
 is_curr_premium, _ = check_user_premium_status(current_user_name)
 
 # ==========================================
-# 🎨 HIGH-END PURE OBSIDIAN DUAL THEME STYLING
+# 🎨 HIGH-END GALAXY & OBSIDIAN DUAL THEME STYLING
 # ==========================================
 if is_curr_premium:
-    # 👑 LUXURY ROYAL GOLD & EMERALD VIP THEME (NO NAVY BLUE)
-    bg_gradient = "linear-gradient(135deg, #051a14 0%, #030712 50%, #0d0a03 100%)"
-    accent_border = "#f59e0b"
-    accent_glow = "rgba(245, 158, 11, 0.6)"
-    card_bg = "#071c15"
-    card_border_color = "#f59e0b"
-    header_gradient = "linear-gradient(135deg, #047857 0%, #d97706 100%)"
-    box_inner_shadow = "inset 0 0 10px rgba(0, 0, 0, 0.9)"
-    primary_btn_bg = "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"
-    primary_btn_shadow = "rgba(245, 158, 11, 0.5)"
-    box_bg_color = "#0a1f18"
+    # 🌌 LUXURY COSMIC GALAXY VIP THEME (EXCLUSIVE FOR PREMIUM)
+    bg_gradient = "radial-gradient(circle at 50% -20%, #2a0845 0%, #03001e 50%, #050014 100%)"
+    accent_border = "#ec38bc"
+    accent_glow = "rgba(236, 56, 188, 0.6)"
+    card_bg = "rgba(20, 10, 38, 0.9)"
+    card_border_color = "linear-gradient(135deg, #ec38bc, #7303c0)"
+    header_gradient = "linear-gradient(135deg, #050014 0%, #7303c0 50%, #ec38bc 100%)"
+    box_inner_shadow = "inset 0 0 15px rgba(236, 56, 188, 0.25)"
+    primary_btn_bg = "linear-gradient(135deg, #7303c0 0%, #ec38bc 100%)"
+    primary_btn_shadow = "rgba(236, 56, 188, 0.5)"
+    box_bg_color = "#140a28"
 else:
-    # 🌌 PURE OBSIDIAN & ELECTRIC CYAN FREE THEME (NO NAVY BLUE)
+    # 🌌 PURE OBSIDIAN & ELECTRIC CYAN FREE THEME
     bg_gradient = "linear-gradient(135deg, #030712 0%, #0b0f19 50%, #020617 100%)"
     accent_border = "#00f2fe"
     accent_glow = "rgba(0, 242, 254, 0.4)"
@@ -339,7 +339,7 @@ st.markdown(f"""
     button[title="Increment"], button[title="Decrement"] {{ display: none !important; }}
     div[data-testid="stNumberInputStepUp"], div[data-testid="stNumberInputStepDown"] {{ display: none !important; }}
 
-    /* 🛑 FORCE PURE OBSIDIAN DARK OVERRIDE */
+    /* 🛑 FORCE GALAXY DARK OVERRIDE */
     html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"], [data-testid="stSidebar"] {{
         background-color: #030712 !important;
         background: {bg_gradient} !important;
@@ -352,8 +352,6 @@ st.markdown(f"""
     }}
 
     /* 🛡️ COMPLETE DEEP DARK OVERRIDE FOR ALL INPUT CONTAINERS & DROPDOWNS */
-    
-    /* Input Boxes Inner/Outer Layers */
     div[data-baseweb="input"],
     div[data-baseweb="input"] *,
     div[data-baseweb="base-input"],
@@ -367,7 +365,6 @@ st.markdown(f"""
         color: #ffffff !important;
     }}
 
-    /* Input Box Main Border & Corner Styling */
     div[data-baseweb="input"] > div,
     div[data-baseweb="base-input"],
     div[data-testid="stNumberInputContainer"],
@@ -379,7 +376,6 @@ st.markdown(f"""
         box-shadow: {box_inner_shadow} !important;
     }}
 
-    /* Number Input (+ / - Buttons) Full Dark Fix */
     div[data-testid="stNumberInputContainer"] button,
     div[data-testid="stNumberInputStepUp"],
     div[data-testid="stNumberInputStepDown"] {{
@@ -389,7 +385,6 @@ st.markdown(f"""
         border-color: rgba(255, 255, 255, 0.2) !important;
     }}
 
-    /* Icons (Dropdown Arrow & Eye Button) Background Transparent Fix */
     div[data-baseweb="icon"],
     svg[data-baseweb="icon"],
     button[aria-label="Show password"] {{
@@ -399,8 +394,7 @@ st.markdown(f"""
         background: transparent !important;
     }}
 
-    /* 🛑 ULTRA DEEP SELECTBOX / DROPDOWN DARK FIX */
-    
+    /* 🛑 SELECTBOX / DROPDOWN FIX */
     div[data-baseweb="select"],
     div[data-baseweb="select"] > div,
     div[data-baseweb="select"] * {{
@@ -410,7 +404,6 @@ st.markdown(f"""
         border-color: {accent_border} !important;
     }}
 
-    /* Inner Value Box Fix */
     div[data-baseweb="select"] [data-testid="stValueValue"],
     div[data-baseweb="select"] [role="button"],
     div[data-baseweb="select"] input {{
@@ -419,19 +412,16 @@ st.markdown(f"""
         color: #ffffff !important;
     }}
 
-    /* Force Border Radius */
     div[data-baseweb="select"] > div {{
         border-radius: 14px !important;
         border: 1px solid {accent_border} !important;
     }}
 
-    /* Dropdown Down-Arrow Icon Fix */
     div[data-baseweb="select"] svg {{
         fill: {accent_border} !important;
         color: {accent_border} !important;
     }}
 
-    /* Floating Options List */
     div[data-baseweb="popover"],
     div[data-baseweb="menu"],
     div[role="listbox"],
@@ -450,7 +440,6 @@ st.markdown(f"""
         color: {accent_border} !important;
     }}
 
-    /* Browser Auto-fill Yellow/White Background Override */
     input:-webkit-autofill,
     input:-webkit-autofill:hover, 
     input:-webkit-autofill:focus {{
@@ -459,7 +448,6 @@ st.markdown(f"""
         transition: background-color 5000s ease-in-out 0s;
     }}
 
-    /* Tabs Override */
     button[data-baseweb="tab"] {{
         background-color: transparent !important;
         color: #94a3b8 !important;
@@ -470,7 +458,6 @@ st.markdown(f"""
         border-bottom: 2px solid {accent_border} !important;
     }}
 
-    /* Cards & Forms Overlay */
     div.stForm, div[data-testid="stExpander"] {{
         background: {card_bg} !important;
         border: 1px solid {card_border_color} !important;
@@ -479,7 +466,6 @@ st.markdown(f"""
         box-shadow: 0 15px 35px rgba(0, 0, 0, 0.9);
     }}
 
-    /* Primary Action Buttons */
     div.stButton > button[kind="primary"] {{
         background: {primary_btn_bg} !important;
         color: #ffffff !important;
@@ -496,7 +482,6 @@ st.markdown(f"""
         box-shadow: 0 8px 25px {primary_btn_shadow} !important;
     }}
 
-    /* Secondary Buttons */
     div.stButton > button {{
         color: #f8fafc !important;
         background: {card_bg} !important;
@@ -515,16 +500,16 @@ st.markdown(f"""
     }}
 
     .gold-vip-badge {{
-        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-        color: #000000 !important;
+        background: linear-gradient(135deg, #7303c0 0%, #ec38bc 100%);
+        color: #ffffff !important;
         padding: 8px 18px;
         border-radius: 20px;
         font-weight: 900;
         font-size: 14px;
         letter-spacing: 0.5px;
-        box-shadow: 0 0 25px rgba(245, 158, 11, 0.6);
+        box-shadow: 0 0 25px rgba(236, 56, 188, 0.8);
         display: inline-block;
-        border: 1px solid #fef3c7;
+        border: 1px solid #f472b6;
     }}
 
     .free-user-badge {{
@@ -539,21 +524,39 @@ st.markdown(f"""
     }}
 
     .admin-command-center {{
-        background: #091310 !important;
-        border: 2px solid #f59e0b !important;
+        background: #140a28 !important;
+        border: 2px solid #ec38bc !important;
         border-radius: 24px !important;
         padding: 25px !important;
-        box-shadow: 0 15px 40px rgba(245, 158, 11, 0.25);
+        box-shadow: 0 15px 40px rgba(236, 56, 188, 0.3);
         margin-bottom: 25px;
     }}
 
     .admin-user-card {{
-        background: #0b1713;
-        border: 1px solid #f59e0b;
+        background: #1a0c33;
+        border: 1px solid #ec38bc;
         border-radius: 18px;
         padding: 22px;
         margin-bottom: 18px;
         box-shadow: 0 8px 25px rgba(0, 0, 0, 0.8);
+    }}
+
+    /* 🌌 GALAXY COSMIC LOADER ANIMATION */
+    .galaxy-loader {{
+        margin: 20px auto;
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        border: 4px solid transparent;
+        border-top-color: #00f2fe;
+        border-bottom-color: #ec38bc;
+        animation: spin-galaxy 1.5s linear infinite;
+        box-shadow: 0 0 30px rgba(0, 242, 254, 0.5);
+    }}
+    @keyframes spin-galaxy {{
+        0% {{ transform: rotate(0deg) scale(1); }}
+        50% {{ transform: rotate(180deg) scale(1.1); }}
+        100% {{ transform: rotate(360deg) scale(1); }}
     }}
     </style>
 """, unsafe_allow_html=True)
@@ -630,7 +633,7 @@ def render_whatsapp_feature(encoded_msg, key_prefix):
                     st.success("✅ ॲडमीनला कोडसाठी रिक्वेस्ट पाठवली आहे!")
 
 # ==========================================
-# --- १. वेलकम स्क्रीन ॲनिमेशन (BLUR FREE & NO SKIP BUTTON) ---
+# --- १. वेलकम स्क्रीन ॲनिमेशन (3D GALAXY ANIMATION) ---
 # ==========================================
 welcome_placeholder = st.empty()
 
@@ -639,9 +642,9 @@ if 'welcome_completed' not in st.session_state:
 
 if not st.session_state.welcome_completed:
     with welcome_placeholder.container():
-        st.markdown("<br><br>", unsafe_allow_html=True)
-        st.markdown("<h1 style='text-align: center; color: #00f2fe;'>🏗️ WELCOME TO PATIL INFRATECH...</h1>", unsafe_allow_html=True)
-        st.markdown("<h3 style='text-align: center; color: #94a3b8;'>तुमचे स्वप्न, आमचे एस्टिमेशन!</h3>", unsafe_allow_html=True)
+        st.markdown("<br><div class='galaxy-loader'></div>", unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align: center; color: #00f2fe; text-shadow: 0 0 20px #00f2fe;'>🌌 WELCOME TO PATIL INFRATECH</h1>", unsafe_allow_html=True)
+        st.markdown("<h4 style='text-align: center; color: #ec38bc;'>तुमचे स्वप्न, आमचे एस्टिमेशन! ✨</h4>", unsafe_allow_html=True)
         
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -652,7 +655,7 @@ if not st.session_state.welcome_completed:
         for ad in ads_rows:
             ad_dict = dict(ad)
             st.markdown(f"""
-                <div style="background: #111827; border: 1px solid #00f2fe; padding: 10px 14px; border-radius: 12px; text-align: center; margin: 15px auto; max-width: 300px;">
+                <div style="background: #0f172a; border: 1px solid #00f2fe; padding: 10px 14px; border-radius: 12px; text-align: center; margin: 15px auto; max-width: 300px; box-shadow: 0 0 15px rgba(0, 242, 254, 0.3);">
                     <span style="font-size: 10px; color: #38bdf8; font-weight: bold;">⭐ SPONSOR</span><br>
                     <b style="color: #ffffff; font-size: 14px;">{ad_dict.get('title')}</b>
                     <p style="color: #94a3b8; font-size: 11px; margin: 3px 0;">{ad_dict.get('desc')}</p>
@@ -695,7 +698,7 @@ st.markdown("""
 if st.session_state.is_admin_logged:
     st.markdown("""
         <div class="admin-command-center">
-            <h1 style='color: #f59e0b; margin:0; font-size: 28px; text-align: center;'>⚡ KANHAIYA'S EXECUTIVE COMMAND CENTER</h1>
+            <h1 style='color: #ec38bc; margin:0; font-size: 28px; text-align: center;'>⚡ KANHAIYA'S EXECUTIVE COMMAND CENTER</h1>
             <p style='color: #cbd5e1; margin:5px 0 0 0; font-size: 14px; text-align: center;'>👑 Patil Infratech Master Control & Management Hub</p>
         </div>
     """, unsafe_allow_html=True)
@@ -808,7 +811,7 @@ if st.session_state.is_admin_logged:
 
             status_badge = f"👑 VIP MEMBER: {u_name.upper()}" if u_prem else ("🚨 CODE REQUESTED!" if is_req else f"🆓 FREE: {u_name.upper()}")
 
-            st.markdown(f"#### 👤 MANAGE USER: <span style='color:#00f2fe;'>{u_name.upper()}</span>", unsafe_allow_html=True)
+            st.markdown(f"#### 👤 MANAGE USER: <span style='color:#ec38bc;'>{u_name.upper()}</span>", unsafe_allow_html=True)
             st.markdown(f"""
                 <div class="admin-user-card">
                     <p style="margin:5px 0; font-size:16px;"><b>माहिती/स्टेटस:</b> <span class="gold-vip-badge">{status_badge}</span></p>
