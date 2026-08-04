@@ -352,8 +352,6 @@ st.markdown(f"""
     /* 🛡️ COMPLETE DEEP DARK OVERRIDE FOR ALL INPUT CONTAINERS & DROPDOWNS */
     
     /* Input Boxes Inner/Outer Layers */
-    div[data-baseweb="select"], 
-    div[data-baseweb="select"] *,
     div[data-baseweb="input"],
     div[data-baseweb="input"] *,
     div[data-baseweb="base-input"],
@@ -368,7 +366,6 @@ st.markdown(f"""
     }}
 
     /* Input Box Main Border & Corner Styling */
-    div[data-baseweb="select"] > div,
     div[data-baseweb="input"] > div,
     div[data-baseweb="base-input"],
     div[data-testid="stNumberInputContainer"],
@@ -393,7 +390,6 @@ st.markdown(f"""
     /* Icons (Dropdown Arrow & Eye Button) Background Transparent Fix */
     div[data-baseweb="icon"],
     svg[data-baseweb="icon"],
-    div[data-baseweb="select"] svg,
     button[aria-label="Show password"] {{
         fill: {accent_border} !important;
         color: {accent_border} !important;
@@ -401,16 +397,47 @@ st.markdown(f"""
         background: transparent !important;
     }}
 
-    /* Dropdown Floating Options Menu (Popover) */
+    /* 🛑 ULTRA DEEP SELECTBOX / DROPDOWN DARK FIX */
+    
+    /* Base Container for Select Box */
+    div[data-baseweb="select"],
+    div[data-baseweb="select"] > div,
+    div[data-baseweb="select"] * {{
+        background-color: #0f172a !important;
+        background: #0f172a !important;
+        color: #ffffff !important;
+        border-color: #00f2fe !important;
+    }}
+
+    /* Inner Value Box Fix (Where 'M10' or 'Footing' text is displayed) */
+    div[data-baseweb="select"] [data-testid="stValueValue"],
+    div[data-baseweb="select"] [role="button"],
+    div[data-baseweb="select"] input {{
+        background-color: #0f172a !important;
+        background: #0f172a !important;
+        color: #ffffff !important;
+    }}
+
+    /* Force Border Radius & Height */
+    div[data-baseweb="select"] > div {{
+        border-radius: 14px !important;
+        border: 1px solid #00f2fe !important;
+    }}
+
+    /* Dropdown Down-Arrow Icon Fix */
+    div[data-baseweb="select"] svg {{
+        fill: #00f2fe !important;
+        color: #00f2fe !important;
+    }}
+
+    /* Floating Options List (When dropdown is opened) */
     div[data-baseweb="popover"],
     div[data-baseweb="menu"],
     div[role="listbox"],
     ul[role="listbox"] {{
         background-color: #0f172a !important;
         background: #0f172a !important;
-        border: 1px solid {accent_border} !important;
-        border-radius: 14px !important;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.9) !important;
+        border: 1px solid #00f2fe !important;
     }}
 
     li[role="option"] {{
@@ -419,7 +446,7 @@ st.markdown(f"""
     }}
     li[role="option"]:hover, li[aria-selected="true"] {{
         background-color: #1e293b !important;
-        color: {accent_border} !important;
+        color: #00f2fe !important;
     }}
 
     /* Browser Auto-fill Yellow/White Background Override */
