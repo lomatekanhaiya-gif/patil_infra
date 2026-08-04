@@ -299,30 +299,32 @@ def check_user_premium_status(username):
 is_curr_premium, _ = check_user_premium_status(current_user_name)
 
 # ==========================================
-# 🎨 HIGH-END ULTRA-PREMIUM DUAL THEME STYLING
+# 🎨 HIGH-END PURE OBSIDIAN DUAL THEME STYLING
 # ==========================================
 if is_curr_premium:
-    # 👑 ROYAL EMERALD & CHAMPAGNE GOLD VIP THEME
-    bg_gradient = "linear-gradient(135deg, #022c22 0%, #064e3b 50%, #021f17 100%)"
+    # 👑 LUXURY ROYAL GOLD & EMERALD VIP THEME (NO NAVY BLUE)
+    bg_gradient = "linear-gradient(135deg, #051a14 0%, #030712 50%, #0d0a03 100%)"
     accent_border = "#f59e0b"
     accent_glow = "rgba(245, 158, 11, 0.6)"
-    card_bg = "#064e3b"
+    card_bg = "#071c15"
     card_border_color = "#f59e0b"
     header_gradient = "linear-gradient(135deg, #047857 0%, #d97706 100%)"
-    box_inner_shadow = "inset 0 0 10px rgba(0, 0, 0, 0.8)"
+    box_inner_shadow = "inset 0 0 10px rgba(0, 0, 0, 0.9)"
     primary_btn_bg = "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"
     primary_btn_shadow = "rgba(245, 158, 11, 0.5)"
+    box_bg_color = "#0a1f18"
 else:
-    # 🌌 ULTRA MODERN DEEP OBSIDIAN & ELECTRIC CYAN THEME
-    bg_gradient = "linear-gradient(135deg, #030712 0%, #0f172a 50%, #020617 100%)"
+    # 🌌 PURE OBSIDIAN & ELECTRIC CYAN FREE THEME (NO NAVY BLUE)
+    bg_gradient = "linear-gradient(135deg, #030712 0%, #0b0f19 50%, #020617 100%)"
     accent_border = "#00f2fe"
     accent_glow = "rgba(0, 242, 254, 0.4)"
-    card_bg = "#0f172a"
+    card_bg = "#0b121e"
     card_border_color = "rgba(0, 242, 254, 0.4)"
-    header_gradient = "linear-gradient(135deg, #0052d4 0%, #4364f7 50%, #6fb1fc 100%)"
-    box_inner_shadow = "inset 0 2px 8px rgba(0, 0, 0, 0.8)"
-    primary_btn_bg = "linear-gradient(135deg, #0052d4 0%, #4364f7 100%)"
-    primary_btn_shadow = "rgba(67, 100, 247, 0.4)"
+    header_gradient = "linear-gradient(135deg, #0284c7 0%, #2563eb 100%)"
+    box_inner_shadow = "inset 0 2px 8px rgba(0, 0, 0, 0.9)"
+    primary_btn_bg = "linear-gradient(135deg, #0284c7 0%, #2563eb 100%)"
+    primary_btn_shadow = "rgba(2, 132, 199, 0.4)"
+    box_bg_color = "#111827"
 
 st.markdown(f"""
     <style>
@@ -337,7 +339,7 @@ st.markdown(f"""
     button[title="Increment"], button[title="Decrement"] {{ display: none !important; }}
     div[data-testid="stNumberInputStepUp"], div[data-testid="stNumberInputStepDown"] {{ display: none !important; }}
 
-    /* 🛑 FORCE APPS OVERRIDE (Mobile Light/Dark Mode Ignored) */
+    /* 🛑 FORCE PURE OBSIDIAN DARK OVERRIDE */
     html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"], [data-testid="stSidebar"] {{
         background-color: #030712 !important;
         background: {bg_gradient} !important;
@@ -360,8 +362,8 @@ st.markdown(f"""
     div[data-testid="stNumberInputContainer"] *,
     div[data-testid="stTextInput"],
     div[data-testid="stTextInput"] * {{
-        background-color: #0f172a !important;
-        background: #0f172a !important;
+        background-color: {box_bg_color} !important;
+        background: {box_bg_color} !important;
         color: #ffffff !important;
     }}
 
@@ -381,10 +383,10 @@ st.markdown(f"""
     div[data-testid="stNumberInputContainer"] button,
     div[data-testid="stNumberInputStepUp"],
     div[data-testid="stNumberInputStepDown"] {{
-        background-color: #1e293b !important;
-        background: #1e293b !important;
+        background-color: {card_bg} !important;
+        background: {card_bg} !important;
         color: {accent_border} !important;
-        border-color: rgba(0, 242, 254, 0.3) !important;
+        border-color: rgba(255, 255, 255, 0.2) !important;
     }}
 
     /* Icons (Dropdown Arrow & Eye Button) Background Transparent Fix */
@@ -399,12 +401,11 @@ st.markdown(f"""
 
     /* 🛑 ULTRA DEEP SELECTBOX / DROPDOWN DARK FIX */
     
-    /* Base Container for Select Box */
     div[data-baseweb="select"],
     div[data-baseweb="select"] > div,
     div[data-baseweb="select"] * {{
-        background-color: #0f172a !important;
-        background: #0f172a !important;
+        background-color: {box_bg_color} !important;
+        background: {box_bg_color} !important;
         color: #ffffff !important;
         border-color: {accent_border} !important;
     }}
@@ -413,12 +414,12 @@ st.markdown(f"""
     div[data-baseweb="select"] [data-testid="stValueValue"],
     div[data-baseweb="select"] [role="button"],
     div[data-baseweb="select"] input {{
-        background-color: #0f172a !important;
-        background: #0f172a !important;
+        background-color: {box_bg_color} !important;
+        background: {box_bg_color} !important;
         color: #ffffff !important;
     }}
 
-    /* Force Border Radius & Height */
+    /* Force Border Radius */
     div[data-baseweb="select"] > div {{
         border-radius: 14px !important;
         border: 1px solid {accent_border} !important;
@@ -435,17 +436,17 @@ st.markdown(f"""
     div[data-baseweb="menu"],
     div[role="listbox"],
     ul[role="listbox"] {{
-        background-color: #0f172a !important;
-        background: #0f172a !important;
+        background-color: {box_bg_color} !important;
+        background: {box_bg_color} !important;
         border: 1px solid {accent_border} !important;
     }}
 
     li[role="option"] {{
-        background-color: #0f172a !important;
+        background-color: {box_bg_color} !important;
         color: #ffffff !important;
     }}
     li[role="option"]:hover, li[aria-selected="true"] {{
-        background-color: #1e293b !important;
+        background-color: {card_bg} !important;
         color: {accent_border} !important;
     }}
 
@@ -454,7 +455,7 @@ st.markdown(f"""
     input:-webkit-autofill:hover, 
     input:-webkit-autofill:focus {{
         -webkit-text-fill-color: #ffffff !important;
-        -webkit-box-shadow: 0 0 0px 1000px #0f172a inset !important;
+        -webkit-box-shadow: 0 0 0px 1000px {box_bg_color} inset !important;
         transition: background-color 5000s ease-in-out 0s;
     }}
 
@@ -475,7 +476,7 @@ st.markdown(f"""
         border: 1px solid {card_border_color} !important;
         border-radius: 20px !important;
         padding: 22px !important;
-        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.9);
     }}
 
     /* Primary Action Buttons */
@@ -498,7 +499,7 @@ st.markdown(f"""
     /* Secondary Buttons */
     div.stButton > button {{
         color: #f8fafc !important;
-        background: rgba(30, 41, 59, 0.9) !important;
+        background: {card_bg} !important;
         border: 1px solid rgba(255, 255, 255, 0.15) !important;
         border-radius: 14px !important;
     }}
@@ -508,7 +509,7 @@ st.markdown(f"""
         padding: 25px 15px;
         border-radius: 22px;
         text-align: center;
-        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.6);
+        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.7);
         margin-bottom: 22px;
         border: 1px solid rgba(255, 255, 255, 0.25);
     }}
@@ -527,7 +528,7 @@ st.markdown(f"""
     }}
 
     .free-user-badge {{
-        background: rgba(30, 41, 59, 0.9);
+        background: #111827;
         color: #38bdf8 !important;
         padding: 6px 16px;
         border-radius: 20px;
@@ -538,7 +539,7 @@ st.markdown(f"""
     }}
 
     .admin-command-center {{
-        background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%) !important;
+        background: #091310 !important;
         border: 2px solid #f59e0b !important;
         border-radius: 24px !important;
         padding: 25px !important;
@@ -547,12 +548,12 @@ st.markdown(f"""
     }}
 
     .admin-user-card {{
-        background: rgba(15, 23, 42, 0.95);
+        background: #0b1713;
         border: 1px solid #f59e0b;
         border-radius: 18px;
         padding: 22px;
         margin-bottom: 18px;
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.8);
     }}
     </style>
 """, unsafe_allow_html=True)
@@ -651,7 +652,7 @@ if not st.session_state.welcome_completed:
         for ad in ads_rows:
             ad_dict = dict(ad)
             st.markdown(f"""
-                <div style="background: #0f172a; border: 1px solid #00f2fe; padding: 10px 14px; border-radius: 12px; text-align: center; margin: 15px auto; max-width: 300px;">
+                <div style="background: #111827; border: 1px solid #00f2fe; padding: 10px 14px; border-radius: 12px; text-align: center; margin: 15px auto; max-width: 300px;">
                     <span style="font-size: 10px; color: #38bdf8; font-weight: bold;">⭐ SPONSOR</span><br>
                     <b style="color: #ffffff; font-size: 14px;">{ad_dict.get('title')}</b>
                     <p style="color: #94a3b8; font-size: 11px; margin: 3px 0;">{ad_dict.get('desc')}</p>
@@ -1199,7 +1200,7 @@ conn.close()
 
 for ad in ads_list:
     st.markdown(f"""
-        <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(0, 242, 254, 0.3); padding: 8px 12px; border-radius: 12px; text-align: center; margin-bottom: 18px; backdrop-filter: blur(10px);">
+        <div style="background: #111827; border: 1px solid rgba(0, 242, 254, 0.3); padding: 8px 12px; border-radius: 12px; text-align: center; margin-bottom: 18px;">
             <span style="font-size: 9px; color: #38bdf8; font-weight: bold;">📢 SPONSOR AD</span><br>
             <b style="color: #fff; font-size: 13px;">{ad.get('title')}</b> — <span style="color: #cbd5e1; font-size: 11px;">{ad.get('desc')}</span>
             {"<img src='" + ad.get('media_url') + "' style='max-height:50px; border-radius:6px; margin-top:3px;'/>" if ad.get('media_type') == 'Photo (PNG/JPG)' and ad.get('media_url') else ""}
@@ -1354,7 +1355,7 @@ if ai_lock_setting == "Free" or is_user_premium:
                         ai_response_text = f"👷‍♂️ **Patil Infratech Expert Engineer Analysis:** Regarding your query *\"{user_ai_query}\"*, please use our Rate Analysis or BBS Calculator modules."
                     
                     st.markdown(f"""
-                        <div style="background: #0f172a; border-left: 5px solid #00f2fe; padding: 18px; border-radius: 14px; margin-top: 12px; box-shadow: 0 4px 20px rgba(0, 242, 254, 0.2);">
+                        <div style="background: #111827; border-left: 5px solid #00f2fe; padding: 18px; border-radius: 14px; margin-top: 12px; box-shadow: 0 4px 20px rgba(0, 242, 254, 0.2);">
                             <b>🎯 Civil AI Answer:</b><br><br>{ai_response_text}
                         </div>
                     """, unsafe_allow_html=True)
@@ -1375,7 +1376,7 @@ if st.session_state.selected_module is None:
     with col_icon1:
         calc_badge = "🆓 Free" if calc_lock == "Free" else "👑 Premium"
         st.markdown(f"""
-            <div style="text-align: center; background: #0f172a; padding: 18px 10px; border-radius: 20px; border: 1px solid rgba(0, 242, 254, 0.3);">
+            <div style="text-align: center; background: #111827; padding: 18px 10px; border-radius: 20px; border: 1px solid rgba(0, 242, 254, 0.3);">
                 <h1 style="font-size: 38px; margin:0;">🧮</h1>
                 <h5 style="margin: 8px 0 2px 0; color: #f8fafc; font-weight:700;">Calculator</h5>
                 <p style="font-size: 10px; color: #38bdf8; margin:0;">[{calc_badge}]</p>
@@ -1391,7 +1392,7 @@ if st.session_state.selected_module is None:
     with col_icon2:
         ra_badge = "🆓 Free" if ra_lock == "Free" else "👑 Premium"
         st.markdown(f"""
-            <div style="text-align: center; background: #0f172a; padding: 18px 10px; border-radius: 20px; border: 1px solid rgba(0, 242, 254, 0.3);">
+            <div style="text-align: center; background: #111827; padding: 18px 10px; border-radius: 20px; border: 1px solid rgba(0, 242, 254, 0.3);">
                 <h1 style="font-size: 38px; margin:0;">📊</h1>
                 <h5 style="margin: 8px 0 2px 0; color: #f8fafc; font-weight:700;">Rate Analysis</h5>
                 <p style="font-size: 10px; color: #38bdf8; margin:0;">[{ra_badge}]</p>
@@ -1407,7 +1408,7 @@ if st.session_state.selected_module is None:
     with col_icon3:
         bbs_badge = "🆓 Free" if bbs_lock == "Free" else "👑 Premium"
         st.markdown(f"""
-            <div style="text-align: center; background: #0f172a; padding: 18px 10px; border-radius: 20px; border: 1px solid rgba(0, 242, 254, 0.3);">
+            <div style="text-align: center; background: #111827; padding: 18px 10px; border-radius: 20px; border: 1px solid rgba(0, 242, 254, 0.3);">
                 <h1 style="font-size: 38px; margin:0;">🏗️</h1>
                 <h5 style="margin: 8px 0 2px 0; color: #f8fafc; font-weight:700;">BBS</h5>
                 <p style="font-size: 10px; color: #38bdf8; margin:0;">[{bbs_badge}]</p>
@@ -1423,7 +1424,7 @@ if st.session_state.selected_module is None:
     with col_icon4:
         qs_badge = "🆓 Free" if qs_lock == "Free" else "👑 Premium"
         st.markdown(f"""
-            <div style="text-align: center; background: #0f172a; padding: 18px 10px; border-radius: 20px; border: 1px solid rgba(0, 242, 254, 0.3);">
+            <div style="text-align: center; background: #111827; padding: 18px 10px; border-radius: 20px; border: 1px solid rgba(0, 242, 254, 0.3);">
                 <h1 style="font-size: 38px; margin:0;">📈</h1>
                 <h5 style="margin: 8px 0 2px 0; color: #f8fafc; font-weight:700;">Quantity Survey</h5>
                 <p style="font-size: 10px; color: #38bdf8; margin:0;">[{qs_badge}]</p>
@@ -1473,7 +1474,7 @@ elif st.session_state.selected_module == "Civil Calculator":
 
             st.success("✅ कनव्हर्शन निकाल (Results):")
             st.markdown(f"""
-                <div style="background: #0f172a; padding: 20px; border-radius: 18px; border-left: 5px solid #00f2fe; box-shadow: 0 6px 20px rgba(0,242,254,0.15);">
+                <div style="background: #111827; padding: 20px; border-radius: 18px; border-left: 5px solid #00f2fe; box-shadow: 0 6px 20px rgba(0,242,254,0.15);">
                     <p style="margin: 6px 0; font-size: 16px;"><b>📦 एकूण ब्रास (Brass):</b> <span style="color:#f59e0b; font-size:19px; font-weight:bold;">{brass:.4f} Brass</span></p>
                     <p style="margin: 6px 0; font-size: 15px;"><b>📐 घन फूट (Cubic Feet / CFT):</b> <code>{cft:.2f} CFT</code></p>
                     <p style="margin: 6px 0; font-size: 15px;"><b>📏 घन मीटर (Cubic Meter / m³):</b> <code>{m3:.4f} m³</code></p>
@@ -1505,7 +1506,7 @@ elif st.session_state.selected_module == "Civil Calculator":
 
             st.success("✅ कनव्हर्शन निकाल (Results):")
             st.markdown(f"""
-                <div style="background: #0f172a; padding: 20px; border-radius: 18px; border-left: 5px solid #00f2fe; box-shadow: 0 6px 20px rgba(0,242,254,0.15);">
+                <div style="background: #111827; padding: 20px; border-radius: 18px; border-left: 5px solid #00f2fe; box-shadow: 0 6px 20px rgba(0,242,254,0.15);">
                     <p style="margin: 6px 0; font-size: 15px;"><b>📏 मीटर (Meters):</b> <span style="color:#f59e0b; font-weight:bold;">{meters:.4f} m</span></p>
                     <p style="margin: 6px 0; font-size: 15px;"><b>🦶 फूट (Feet):</b> <code>{feet:.4f} ft</code></p>
                     <p style="margin: 6px 0; font-size: 15px;"><b>📐 इंच (Inches):</b> <code>{inches:.2f} inches</code></p>
@@ -1535,7 +1536,7 @@ elif st.session_state.selected_module == "Civil Calculator":
 
             st.success("✅ कनव्हर्शन निकाल (Results):")
             st.markdown(f"""
-                <div style="background: #0f172a; padding: 20px; border-radius: 18px; border-left: 5px solid #00f2fe; box-shadow: 0 6px 20px rgba(0,242,254,0.15);">
+                <div style="background: #111827; padding: 20px; border-radius: 18px; border-left: 5px solid #00f2fe; box-shadow: 0 6px 20px rgba(0,242,254,0.15);">
                     <p style="margin: 6px 0; font-size: 15px;"><b>📐 स्क्वेअर फूट (Sq. Ft.):</b> <span style="color:#f59e0b; font-weight:bold;">{sqft:.2f} sq.ft.</span></p>
                     <p style="margin: 6px 0; font-size: 15px;"><b>📏 स्क्वेअर मीटर (m²):</b> <code>{sqm:.2f} m²</code></p>
                     <p style="margin: 6px 0; font-size: 15px;"><b>🌾 गुंठा (Guntha):</b> <code>{guntha:.4f} Guntha</code></p>
@@ -1555,7 +1556,7 @@ elif st.session_state.selected_module == "Rate Analysis":
     
     master_rates = get_market_rates()
     st.markdown(
-        f"<div style='background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 14px; border-radius: 16px; text-align: center; font-size: 13px; font-weight: bold; color: #f8fafc; margin-bottom: 18px; border-left: 5px solid #00f2fe; border: 1px solid rgba(0,242,254,0.2); box-shadow: 0 4px 15px rgba(0,0,0,0.5);'>"
+        f"<div style='background: #111827; padding: 14px; border-radius: 16px; text-align: center; font-size: 13px; font-weight: bold; color: #f8fafc; margin-bottom: 18px; border-left: 5px solid #00f2fe; border: 1px solid rgba(0,242,254,0.2); box-shadow: 0 4px 15px rgba(0,0,0,0.5);'>"
         f"📢 आजचे मार्केट दर 🏷️ cement: ₹{master_rates.get('cement', 400.0)}/bag | sand: ₹{master_rates.get('sand', 2500.0)}/m³ | aggregate: ₹{master_rates.get('aggregate', 2200.0)}/m³ | steel: ₹{master_rates.get('steel', 60.0)}/Kg | brick: ₹{master_rates.get('bricks', 8.0)}/nos"
         f"</div>", 
         unsafe_allow_html=True
@@ -1695,7 +1696,7 @@ elif st.session_state.selected_module == "Rate Analysis":
                 render_whatsapp_feature(encoded_msg, "ra_conc")
             with btn_col2:
                 st.markdown('''
-                    <button onclick="window.print()" style="width: 100%; background: linear-gradient(135deg, #0052d4 0%, #4364f7 100%); color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px; box-shadow: 0 4px 15px rgba(67, 100, 247, 0.4);">
+                    <button onclick="window.print()" style="width: 100%; background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px; box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4);">
                         📄 Print / Download A3 Size PDF
                     </button>
                 ''', unsafe_allow_html=True)
@@ -1823,7 +1824,7 @@ elif st.session_state.selected_module == "Rate Analysis":
                 render_whatsapp_feature(encoded_msg, "ra_bw")
             with btn_col2:
                 st.markdown('''
-                    <button onclick="window.print()" style="width: 100%; background: linear-gradient(135deg, #0052d4 0%, #4364f7 100%); color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px; box-shadow: 0 4px 15px rgba(67, 100, 247, 0.4);">
+                    <button onclick="window.print()" style="width: 100%; background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px; box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4);">
                         📄 Print / Download A3 Size PDF
                     </button>
                 ''', unsafe_allow_html=True)
@@ -1963,7 +1964,7 @@ elif st.session_state.selected_module == "Rate Analysis":
                 render_whatsapp_feature(encoded_msg, "ra_pl")
             with btn_col2:
                 st.markdown('''
-                    <button onclick="window.print()" style="width: 100%; background: linear-gradient(135deg, #0052d4 0%, #4364f7 100%); color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px; box-shadow: 0 4px 15px rgba(67, 100, 247, 0.4);">
+                    <button onclick="window.print()" style="width: 100%; background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px; box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4);">
                         📄 Print / Download A3 Size PDF
                     </button>
                 ''', unsafe_allow_html=True)
@@ -2233,7 +2234,7 @@ elif st.session_state.selected_module == "BBS":
             render_whatsapp_feature(encoded_msg, "bbs_main")
         with btn_col2:
             st.markdown('''
-                <button onclick="window.print()" style="width: 100%; background: linear-gradient(135deg, #0052d4 0%, #4364f7 100%); color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px; box-shadow: 0 4px 15px rgba(67, 100, 247, 0.4);">
+                <button onclick="window.print()" style="width: 100%; background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px; box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4);">
                     📄 Print / Save A3 Size PDF
                 </button>
             ''', unsafe_allow_html=True)
@@ -2488,7 +2489,7 @@ elif st.session_state.selected_module == "Quantity Surveying":
                 render_whatsapp_feature(encoded_msg, "qs_main")
             with btn_col2:
                 st.markdown('''
-                    <button onclick="window.print()" style="width: 100%; background: linear-gradient(135deg, #0052d4 0%, #4364f7 100%); color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px; box-shadow: 0 4px 15px rgba(67, 100, 247, 0.4);">
+                    <button onclick="window.print()" style="width: 100%; background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px; box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4);">
                         📄 Print / Save A3 Size PDF
                     </button>
                 ''', unsafe_allow_html=True)
