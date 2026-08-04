@@ -302,23 +302,23 @@ is_curr_premium, _ = check_user_premium_status(current_user_name)
 # 🎨 HIGH-END ULTRA-PREMIUM DUAL THEME STYLING
 # ==========================================
 if is_curr_premium:
-    # 👑 ROYAL METALLIC GOLD & AMBER VIP THEME
-    bg_gradient = "linear-gradient(135deg, #0a0803 0%, #1a1408 50%, #0d0a03 100%)"
+    # 👑 ROYAL EMERALD & CHAMPAGNE GOLD VIP THEME
+    bg_gradient = "linear-gradient(135deg, #022c22 0%, #064e3b 50%, #021f17 100%)"
     accent_border = "#f59e0b"
-    accent_glow = "rgba(245, 158, 11, 0.5)"
-    card_bg = "rgba(26, 20, 8, 0.85)"
-    card_border_color = "rgba(245, 158, 11, 0.5)"
-    header_gradient = "linear-gradient(135deg, #b45309 0%, #f59e0b 50%, #d97706 100%)"
-    box_inner_shadow = "inset 0 0 15px rgba(245, 158, 11, 0.2)"
+    accent_glow = "rgba(245, 158, 11, 0.6)"
+    card_bg = "#064e3b"
+    card_border_color = "#f59e0b"
+    header_gradient = "linear-gradient(135deg, #047857 0%, #d97706 100%)"
+    box_inner_shadow = "inset 0 0 10px rgba(0, 0, 0, 0.8)"
     primary_btn_bg = "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"
-    primary_btn_shadow = "rgba(245, 158, 11, 0.4)"
+    primary_btn_shadow = "rgba(245, 158, 11, 0.5)"
 else:
     # 🌌 ULTRA MODERN DEEP OBSIDIAN & ELECTRIC CYAN THEME
     bg_gradient = "linear-gradient(135deg, #030712 0%, #0f172a 50%, #020617 100%)"
     accent_border = "#00f2fe"
     accent_glow = "rgba(0, 242, 254, 0.4)"
-    card_bg = "rgba(15, 23, 42, 0.85)"
-    card_border_color = "rgba(0, 242, 254, 0.3)"
+    card_bg = "#0f172a"
+    card_border_color = "rgba(0, 242, 254, 0.4)"
     header_gradient = "linear-gradient(135deg, #0052d4 0%, #4364f7 50%, #6fb1fc 100%)"
     box_inner_shadow = "inset 0 2px 8px rgba(0, 0, 0, 0.8)"
     primary_btn_bg = "linear-gradient(135deg, #0052d4 0%, #4364f7 100%)"
@@ -383,7 +383,7 @@ st.markdown(f"""
     div[data-testid="stNumberInputStepDown"] {{
         background-color: #1e293b !important;
         background: #1e293b !important;
-        color: #00f2fe !important;
+        color: {accent_border} !important;
         border-color: rgba(0, 242, 254, 0.3) !important;
     }}
 
@@ -406,10 +406,10 @@ st.markdown(f"""
         background-color: #0f172a !important;
         background: #0f172a !important;
         color: #ffffff !important;
-        border-color: #00f2fe !important;
+        border-color: {accent_border} !important;
     }}
 
-    /* Inner Value Box Fix (Where 'M10' or 'Footing' text is displayed) */
+    /* Inner Value Box Fix */
     div[data-baseweb="select"] [data-testid="stValueValue"],
     div[data-baseweb="select"] [role="button"],
     div[data-baseweb="select"] input {{
@@ -421,23 +421,23 @@ st.markdown(f"""
     /* Force Border Radius & Height */
     div[data-baseweb="select"] > div {{
         border-radius: 14px !important;
-        border: 1px solid #00f2fe !important;
+        border: 1px solid {accent_border} !important;
     }}
 
     /* Dropdown Down-Arrow Icon Fix */
     div[data-baseweb="select"] svg {{
-        fill: #00f2fe !important;
-        color: #00f2fe !important;
+        fill: {accent_border} !important;
+        color: {accent_border} !important;
     }}
 
-    /* Floating Options List (When dropdown is opened) */
+    /* Floating Options List */
     div[data-baseweb="popover"],
     div[data-baseweb="menu"],
     div[role="listbox"],
     ul[role="listbox"] {{
         background-color: #0f172a !important;
         background: #0f172a !important;
-        border: 1px solid #00f2fe !important;
+        border: 1px solid {accent_border} !important;
     }}
 
     li[role="option"] {{
@@ -446,7 +446,7 @@ st.markdown(f"""
     }}
     li[role="option"]:hover, li[aria-selected="true"] {{
         background-color: #1e293b !important;
-        color: #00f2fe !important;
+        color: {accent_border} !important;
     }}
 
     /* Browser Auto-fill Yellow/White Background Override */
@@ -472,7 +472,6 @@ st.markdown(f"""
     /* Cards & Forms Overlay */
     div.stForm, div[data-testid="stExpander"] {{
         background: {card_bg} !important;
-        backdrop-filter: blur(25px);
         border: 1px solid {card_border_color} !important;
         border-radius: 20px !important;
         padding: 22px !important;
@@ -499,10 +498,9 @@ st.markdown(f"""
     /* Secondary Buttons */
     div.stButton > button {{
         color: #f8fafc !important;
-        background: rgba(30, 41, 59, 0.8) !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        background: rgba(30, 41, 59, 0.9) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
         border-radius: 14px !important;
-        backdrop-filter: blur(10px);
     }}
 
     .main-header {{
@@ -631,7 +629,7 @@ def render_whatsapp_feature(encoded_msg, key_prefix):
                     st.success("✅ ॲडमीनला कोडसाठी रिक्वेस्ट पाठवली आहे!")
 
 # ==========================================
-# --- १. वेलकम स्क्रीन ॲनिमेशन ---
+# --- १. वेलकम स्क्रीन ॲनिमेशन (BLUR FREE & NO SKIP BUTTON) ---
 # ==========================================
 welcome_placeholder = st.empty()
 
@@ -640,20 +638,6 @@ if 'welcome_completed' not in st.session_state:
 
 if not st.session_state.welcome_completed:
     with welcome_placeholder.container():
-        st.markdown("""
-            <style>
-            div.stButton > button {
-                position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-                background-color: transparent !important; border: none !important;
-                color: transparent !important; z-index: 99999; cursor: pointer;
-            }
-            </style>
-        """, unsafe_allow_html=True)
-        
-        if st.button("Skip Welcome", key="invisible_skip_btn"):
-            st.session_state.welcome_completed = True
-            st.rerun()
-
         st.markdown("<br><br>", unsafe_allow_html=True)
         st.markdown("<h1 style='text-align: center; color: #00f2fe;'>🏗️ WELCOME TO PATIL INFRATECH...</h1>", unsafe_allow_html=True)
         st.markdown("<h3 style='text-align: center; color: #94a3b8;'>तुमचे स्वप्न, आमचे एस्टिमेशन!</h3>", unsafe_allow_html=True)
@@ -667,17 +651,15 @@ if not st.session_state.welcome_completed:
         for ad in ads_rows:
             ad_dict = dict(ad)
             st.markdown(f"""
-                <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(0, 242, 254, 0.4); padding: 8px 12px; border-radius: 12px; text-align: center; margin: 15px auto; max-width: 280px; backdrop-filter: blur(10px);">
-                    <span style="font-size: 9px; color: #38bdf8; font-weight: bold;">⭐ SPONSOR</span><br>
-                    <b style="color: #ffffff; font-size: 13px;">{ad_dict.get('title')}</b>
-                    <p style="color: #94a3b8; font-size: 10px; margin: 2px 0;">{ad_dict.get('desc')}</p>
+                <div style="background: #0f172a; border: 1px solid #00f2fe; padding: 10px 14px; border-radius: 12px; text-align: center; margin: 15px auto; max-width: 300px;">
+                    <span style="font-size: 10px; color: #38bdf8; font-weight: bold;">⭐ SPONSOR</span><br>
+                    <b style="color: #ffffff; font-size: 14px;">{ad_dict.get('title')}</b>
+                    <p style="color: #94a3b8; font-size: 11px; margin: 3px 0;">{ad_dict.get('desc')}</p>
                     {"<img src='" + ad_dict.get('media_url') + "' style='max-height:50px; border-radius:6px; margin-top:3px;'/>" if ad_dict.get('media_type') == 'Photo (PNG/JPG)' and ad_dict.get('media_url') else ""}
-                    <br><a href="{ad_dict.get('link')}" target="_blank" style="color: #f59e0b; font-weight: bold; text-decoration: underline; font-size: 11px;">👉 Visit Link</a>
+                    <br><a href="{ad_dict.get('link')}" target="_blank" style="color: #f59e0b; font-weight: bold; text-decoration: underline; font-size: 12px;">👉 Visit Link</a>
                 </div>
             """, unsafe_allow_html=True)
 
-        st.caption("<p style='text-align: center; color: #64748b;'>(पुढे जाण्यासाठी स्क्रीनवर कुठेही टच करा)</p>", unsafe_allow_html=True)
-        
         progress_bar = st.progress(0)
         status_text = st.empty()
         
@@ -692,7 +674,7 @@ if not st.session_state.welcome_completed:
         for i in range(5):
             status_text.markdown(f"<p style='text-align: center; font-size: 18px; font-weight: bold; color: #f8fafc;'>{construction_stages[i]}</p>", unsafe_allow_html=True)
             progress_bar.progress((i + 1) * 20)
-            time.sleep(0.5)
+            time.sleep(0.4)
 
     welcome_placeholder.empty()
     st.session_state.welcome_completed = True
@@ -1372,7 +1354,7 @@ if ai_lock_setting == "Free" or is_user_premium:
                         ai_response_text = f"👷‍♂️ **Patil Infratech Expert Engineer Analysis:** Regarding your query *\"{user_ai_query}\"*, please use our Rate Analysis or BBS Calculator modules."
                     
                     st.markdown(f"""
-                        <div style="background: rgba(15, 23, 42, 0.95); border-left: 5px solid #00f2fe; padding: 18px; border-radius: 14px; margin-top: 12px; box-shadow: 0 4px 20px rgba(0, 242, 254, 0.2);">
+                        <div style="background: #0f172a; border-left: 5px solid #00f2fe; padding: 18px; border-radius: 14px; margin-top: 12px; box-shadow: 0 4px 20px rgba(0, 242, 254, 0.2);">
                             <b>🎯 Civil AI Answer:</b><br><br>{ai_response_text}
                         </div>
                     """, unsafe_allow_html=True)
@@ -1393,7 +1375,7 @@ if st.session_state.selected_module is None:
     with col_icon1:
         calc_badge = "🆓 Free" if calc_lock == "Free" else "👑 Premium"
         st.markdown(f"""
-            <div style="text-align: center; background: rgba(15, 23, 42, 0.85); padding: 18px 10px; border-radius: 20px; border: 1px solid rgba(0, 242, 254, 0.3); backdrop-filter: blur(10px);">
+            <div style="text-align: center; background: #0f172a; padding: 18px 10px; border-radius: 20px; border: 1px solid rgba(0, 242, 254, 0.3);">
                 <h1 style="font-size: 38px; margin:0;">🧮</h1>
                 <h5 style="margin: 8px 0 2px 0; color: #f8fafc; font-weight:700;">Calculator</h5>
                 <p style="font-size: 10px; color: #38bdf8; margin:0;">[{calc_badge}]</p>
@@ -1409,7 +1391,7 @@ if st.session_state.selected_module is None:
     with col_icon2:
         ra_badge = "🆓 Free" if ra_lock == "Free" else "👑 Premium"
         st.markdown(f"""
-            <div style="text-align: center; background: rgba(15, 23, 42, 0.85); padding: 18px 10px; border-radius: 20px; border: 1px solid rgba(0, 242, 254, 0.3); backdrop-filter: blur(10px);">
+            <div style="text-align: center; background: #0f172a; padding: 18px 10px; border-radius: 20px; border: 1px solid rgba(0, 242, 254, 0.3);">
                 <h1 style="font-size: 38px; margin:0;">📊</h1>
                 <h5 style="margin: 8px 0 2px 0; color: #f8fafc; font-weight:700;">Rate Analysis</h5>
                 <p style="font-size: 10px; color: #38bdf8; margin:0;">[{ra_badge}]</p>
@@ -1425,7 +1407,7 @@ if st.session_state.selected_module is None:
     with col_icon3:
         bbs_badge = "🆓 Free" if bbs_lock == "Free" else "👑 Premium"
         st.markdown(f"""
-            <div style="text-align: center; background: rgba(15, 23, 42, 0.85); padding: 18px 10px; border-radius: 20px; border: 1px solid rgba(0, 242, 254, 0.3); backdrop-filter: blur(10px);">
+            <div style="text-align: center; background: #0f172a; padding: 18px 10px; border-radius: 20px; border: 1px solid rgba(0, 242, 254, 0.3);">
                 <h1 style="font-size: 38px; margin:0;">🏗️</h1>
                 <h5 style="margin: 8px 0 2px 0; color: #f8fafc; font-weight:700;">BBS</h5>
                 <p style="font-size: 10px; color: #38bdf8; margin:0;">[{bbs_badge}]</p>
@@ -1441,7 +1423,7 @@ if st.session_state.selected_module is None:
     with col_icon4:
         qs_badge = "🆓 Free" if qs_lock == "Free" else "👑 Premium"
         st.markdown(f"""
-            <div style="text-align: center; background: rgba(15, 23, 42, 0.85); padding: 18px 10px; border-radius: 20px; border: 1px solid rgba(0, 242, 254, 0.3); backdrop-filter: blur(10px);">
+            <div style="text-align: center; background: #0f172a; padding: 18px 10px; border-radius: 20px; border: 1px solid rgba(0, 242, 254, 0.3);">
                 <h1 style="font-size: 38px; margin:0;">📈</h1>
                 <h5 style="margin: 8px 0 2px 0; color: #f8fafc; font-weight:700;">Quantity Survey</h5>
                 <p style="font-size: 10px; color: #38bdf8; margin:0;">[{qs_badge}]</p>
@@ -1491,7 +1473,7 @@ elif st.session_state.selected_module == "Civil Calculator":
 
             st.success("✅ कनव्हर्शन निकाल (Results):")
             st.markdown(f"""
-                <div style="background: rgba(15, 23, 42, 0.95); padding: 20px; border-radius: 18px; border-left: 5px solid #00f2fe; box-shadow: 0 6px 20px rgba(0,242,254,0.15);">
+                <div style="background: #0f172a; padding: 20px; border-radius: 18px; border-left: 5px solid #00f2fe; box-shadow: 0 6px 20px rgba(0,242,254,0.15);">
                     <p style="margin: 6px 0; font-size: 16px;"><b>📦 एकूण ब्रास (Brass):</b> <span style="color:#f59e0b; font-size:19px; font-weight:bold;">{brass:.4f} Brass</span></p>
                     <p style="margin: 6px 0; font-size: 15px;"><b>📐 घन फूट (Cubic Feet / CFT):</b> <code>{cft:.2f} CFT</code></p>
                     <p style="margin: 6px 0; font-size: 15px;"><b>📏 घन मीटर (Cubic Meter / m³):</b> <code>{m3:.4f} m³</code></p>
@@ -1523,7 +1505,7 @@ elif st.session_state.selected_module == "Civil Calculator":
 
             st.success("✅ कनव्हर्शन निकाल (Results):")
             st.markdown(f"""
-                <div style="background: rgba(15, 23, 42, 0.95); padding: 20px; border-radius: 18px; border-left: 5px solid #00f2fe; box-shadow: 0 6px 20px rgba(0,242,254,0.15);">
+                <div style="background: #0f172a; padding: 20px; border-radius: 18px; border-left: 5px solid #00f2fe; box-shadow: 0 6px 20px rgba(0,242,254,0.15);">
                     <p style="margin: 6px 0; font-size: 15px;"><b>📏 मीटर (Meters):</b> <span style="color:#f59e0b; font-weight:bold;">{meters:.4f} m</span></p>
                     <p style="margin: 6px 0; font-size: 15px;"><b>🦶 फूट (Feet):</b> <code>{feet:.4f} ft</code></p>
                     <p style="margin: 6px 0; font-size: 15px;"><b>📐 इंच (Inches):</b> <code>{inches:.2f} inches</code></p>
@@ -1553,7 +1535,7 @@ elif st.session_state.selected_module == "Civil Calculator":
 
             st.success("✅ कनव्हर्शन निकाल (Results):")
             st.markdown(f"""
-                <div style="background: rgba(15, 23, 42, 0.95); padding: 20px; border-radius: 18px; border-left: 5px solid #00f2fe; box-shadow: 0 6px 20px rgba(0,242,254,0.15);">
+                <div style="background: #0f172a; padding: 20px; border-radius: 18px; border-left: 5px solid #00f2fe; box-shadow: 0 6px 20px rgba(0,242,254,0.15);">
                     <p style="margin: 6px 0; font-size: 15px;"><b>📐 स्क्वेअर फूट (Sq. Ft.):</b> <span style="color:#f59e0b; font-weight:bold;">{sqft:.2f} sq.ft.</span></p>
                     <p style="margin: 6px 0; font-size: 15px;"><b>📏 स्क्वेअर मीटर (m²):</b> <code>{sqm:.2f} m²</code></p>
                     <p style="margin: 6px 0; font-size: 15px;"><b>🌾 गुंठा (Guntha):</b> <code>{guntha:.4f} Guntha</code></p>
