@@ -1343,19 +1343,22 @@ if ai_lock_setting == "Free" or is_user_premium:
         if st.button("🚀 Ask Civil AI"):
             if user_ai_query.strip():
                 with st.spinner("🤖 Civil AI is analyzing... (कृपया ५ सेकंद वाट पाहा)"):
-                    time.sleep(5.0)
+                    time.sleep(1.0)
                     api_key = st.secrets.get("GEMINI_API_KEY", os.getenv("GEMINI_API_KEY", ""))
                     ai_response_text = ""
+                    
                     if HAS_GENAI and api_key:
                         try:
                             client = genai.Client(api_key=api_key)
-                            prompt = f"You are a Senior Civil Engineer for Patil Infratech. Provide a direct, professional, final answer to the user query without showing calculation steps: {user_ai_query}"
+                            prompt = f"You are a Senior Civil Engineer for Patil Infratech. Provide a direct, professional, expert answer to the user query: {user_ai_query}"
                             response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
-                            if response and response.text: ai_response_text = response.text
+                            if response and response.text:
+                                ai_response_text = response.text
                         except Exception as e:
                             ai_response_text = f"⚠️ AI Error: {e}"
+                    
                     if not ai_response_text or "Error" in ai_response_text:
-                        ai_response_text = f"👷‍♂️ **Patil Infratech Expert Engineer Analysis:** Regarding your query *\"{user_ai_query}\"*, please use our Rate Analysis or BBS Calculator modules."
+                        ai_response_text = f"👷‍♂️ **Patil Infratech Expert Engineer Analysis:** Regarding your query *\"{user_ai_query}\"*, please ensure valid API Key is provided or use our Rate Analysis or BBS Calculator modules."
                     
                     st.markdown(f"""
                         <div style="background: #111827; border-left: 5px solid #00f2fe; padding: 18px; border-radius: 14px; margin-top: 12px; box-shadow: 0 4px 20px rgba(0, 242, 254, 0.2);">
@@ -1574,7 +1577,7 @@ elif st.session_state.selected_module == "Rate Analysis":
             grade = st.selectbox("काँक्रीट ग्रेड निवडा:", ["M10 (1:3:6)", "M15 (1:2:4)", "M20 (1:1.5:3)", "M25 (1:1:2)"])
         with col2:
             component = st.selectbox("आरसीसी घटक (Component) निवडा:", 
-                                   ["Footing (0.8% Steel)", "Slab (1.0% Steel)", "Beam (2.0% Steel)", "Column (2.5% Steel)", "Plain Concrete (0% Steel)"])
+                                       ["Footing (0.8% Steel)", "Slab (1.0% Steel)", "Beam (2.0% Steel)", "Column (2.5% Steel)", "Plain Concrete (0% Steel)"])
 
         if "M10" in grade: cement_ratio, sand_ratio, aggregate_ratio = 1, 3, 6
         elif "M15" in grade: cement_ratio, sand_ratio, aggregate_ratio = 1, 2, 4
