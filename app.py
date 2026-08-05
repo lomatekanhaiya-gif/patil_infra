@@ -14,12 +14,43 @@ import re
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-# Official Google GenAI SDK Import
-try:
-    from google import genai
-    HAS_GENAI = True
-except ImportError:
-    HAS_GENAI = False
+locks_cfg = get_feature_locks()
+ai_lock_setting = locks_cfg.get("Civil AI Assistant", "Premium")
+
+if ai_lock_setting == "Free" or is_user_premium:
+    with st.expander("🤖 Patil Infratech Civil AI Assistant (Ask Anything)"):
+        user_ai_query = st.text_input("तुमचा प्रश्न किंवा शंका इथे लिहा:", placeholder="उदा. dry volume factor for concrete...", key="civil_ai_input")
+        if st.button("🚀 Ask Civil AI"):
+            if user_ai_query.strip():
+                with st.spinner("🤖 Civil AI विचार करत आहे..."):
+                    # 1. Streamlit Secrets किंवा OS Environment वरून Key मिळवा
+                    api_key = st.secrets.get("GEMINI_API_KEY", os.getenv("GEMINI_API_KEY", ""))
+                    
+                    if not api_key:
+                        st.error("❌ secrets.toml मध्ये 'GEMINI_API_KEY' सापडली नाही! कृपया Secrets मधील स्पेलिंग तपासा.")
+                    else:
+                        try:
+                            # 2. Google GenAI Client तयार करा
+                            if HAS_GENAI:
+                                client = genai.Client(api_key=api_key)
+                                prompt = f"You are a Senior Civil Engineer for Patil Infratech. Provide a direct, professional, expert answer to the user query: {user_ai_query}"
+                                response = client.models.generate_content(
+                                    model='gemini-2.5-flash', 
+                                    contents=prompt
+                                )
+                                
+                                if response and response.text:
+                                    st.markdown(f"""
+                                        <div style="background: #111827; border-left: 5px solid #00f2fe; padding: 18px; border-radius: 14px; margin-top: 12px; box-shadow: 0 4px 20px rgba(0, 242, 254, 0.2);">
+                                            <b>🎯 Civil AI Answer:</b><br><br>{response.text}
+                                        </div>
+                                    """, unsafe_allow_html=True)
+                                else:
+                                    st.warning("⚠️ AI कडून उत्तर मिळालेले नाही, पुन्हा प्रयत्न करा.")
+                            else:
+                                st.error("❌ 'google-genai' लायब्ररी इन्स्टॉल केलेली नाही. requirements.txt मध्ये 'google-genai' जोडा.")
+                        except Exception as e:
+                            st.error(f"🚨 Google AI कडून आलेला थेट एरर: {e}")
 
 # 🚨 १. Streamlit नियम: set_page_config नेहमी सर्वात आधी असावे!
 st.set_page_config(page_title="PATIL INFRATECH", page_icon="🏗️", layout="centered")
