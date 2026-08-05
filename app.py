@@ -21,7 +21,7 @@ try:
 except ImportError:
     HAS_GENAI = False
 
-# 🚨 १. Streamlit नियम: set_page_config नेहमी सर्वात आधी असावे!
+# 🚨 Streamlit नियम: set_page_config नेहमी सर्वात आधी असावे!
 st.set_page_config(page_title="PATIL INFRATECH", page_icon="🏗️", layout="centered")
 
 # ==========================================
@@ -68,7 +68,7 @@ def is_strong_password(password):
     return True, "Strong"
 
 # ==========================================
-# 🗄️ SQLITE DATABASE MANAGEMENT & HELPER FUNCTIONS
+# 🗄️ SQLITE DATABASE MANAGEMENT
 # ==========================================
 DB_FILE = "patil_infratech.db"
 
@@ -76,33 +76,6 @@ def get_db_connection():
     conn = sqlite3.connect(DB_FILE, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     return conn
-
-def get_user_data(user_key):
-    if not user_key: return None
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM users WHERE user_key = ?", (user_key,))
-    row = cursor.fetchone()
-    conn.close()
-    if row:
-        return dict(row)
-    return None
-
-def get_market_rates():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT material, rate FROM market_rates")
-    rows = cursor.fetchall()
-    conn.close()
-    return {row["material"]: row["rate"] for row in rows}
-
-def get_feature_locks():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT feature_name, access_level FROM feature_locks")
-    rows = cursor.fetchall()
-    conn.close()
-    return {row["feature_name"]: row["access_level"] for row in rows}
 
 def init_db():
     conn = get_db_connection()
@@ -216,8 +189,33 @@ def init_db():
 
 init_db()
 
-# 🚨 फंक्शन्स आणि DB इनिशियलायझेशन झाल्यानंतरच हे कॉल करा!
-locks_cfg = get_feature_locks()
+# DB Helper Functions
+def get_user_data(user_key):
+    if not user_key: return None
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM users WHERE user_key = ?", (user_key,))
+    row = cursor.fetchone()
+    conn.close()
+    if row:
+        return dict(row)
+    return None
+
+def get_market_rates():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT material, rate FROM market_rates")
+    rows = cursor.fetchall()
+    conn.close()
+    return {row["material"]: row["rate"] for row in rows}
+
+def get_feature_locks():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT feature_name, access_level FROM feature_locks")
+    rows = cursor.fetchall()
+    conn.close()
+    return {row["feature_name"]: row["access_level"] for row in rows}
 
 # Session State & Auto Login
 if "app_user_name" not in st.session_state:
@@ -304,6 +302,7 @@ is_curr_premium, _ = check_user_premium_status(current_user_name)
 # 🎨 HIGH-END GALAXY & OBSIDIAN DUAL THEME STYLING
 # ==========================================
 if is_curr_premium:
+    # 🌌 LUXURY COSMIC GALAXY VIP THEME (EXCLUSIVE FOR PREMIUM)
     bg_gradient = "radial-gradient(circle at 50% -20%, #2a0845 0%, #03001e 50%, #050014 100%)"
     accent_border = "#ec38bc"
     accent_glow = "rgba(236, 56, 188, 0.6)"
@@ -315,6 +314,7 @@ if is_curr_premium:
     primary_btn_shadow = "rgba(236, 56, 188, 0.5)"
     box_bg_color = "#140a28"
 else:
+    # 🌌 PURE OBSIDIAN & ELECTRIC CYAN FREE THEME
     bg_gradient = "linear-gradient(135deg, #030712 0%, #0b0f19 50%, #020617 100%)"
     accent_border = "#00f2fe"
     accent_glow = "rgba(0, 242, 254, 0.4)"
@@ -339,6 +339,7 @@ st.markdown(f"""
     button[title="Increment"], button[title="Decrement"] {{ display: none !important; }}
     div[data-testid="stNumberInputStepUp"], div[data-testid="stNumberInputStepDown"] {{ display: none !important; }}
 
+    /* 🛑 FORCE GALAXY DARK OVERRIDE */
     html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"], [data-testid="stSidebar"] {{
         background-color: #030712 !important;
         background: {bg_gradient} !important;
@@ -350,6 +351,7 @@ st.markdown(f"""
         color: #f8fafc !important;
     }}
 
+    /* 🛡️ COMPLETE DEEP DARK OVERRIDE FOR ALL INPUT CONTAINERS & DROPDOWNS */
     div[data-baseweb="input"],
     div[data-baseweb="input"] *,
     div[data-baseweb="base-input"],
@@ -392,6 +394,7 @@ st.markdown(f"""
         background: transparent !important;
     }}
 
+    /* 🛑 SELECTBOX / DROPDOWN FIX */
     div[data-baseweb="select"],
     div[data-baseweb="select"] > div,
     div[data-baseweb="select"] * {{
@@ -538,6 +541,7 @@ st.markdown(f"""
         box-shadow: 0 8px 25px rgba(0, 0, 0, 0.8);
     }}
 
+    /* 🌌 GALAXY COSMIC LOADER ANIMATION */
     .galaxy-loader {{
         margin: 20px auto;
         width: 80px;
@@ -565,6 +569,7 @@ def generate_random_code():
 # ==========================================
 def render_whatsapp_feature(encoded_msg, key_prefix):
     is_prem, status_str = check_user_premium_status(current_user_name)
+    locks_cfg = get_feature_locks()
     wa_lock_setting = locks_cfg.get("WhatsApp Share", "Premium")
 
     if wa_lock_setting == "Free" or is_prem:
@@ -1329,6 +1334,7 @@ if not is_user_premium:
                 conn.close()
                 st.success("✅ ॲडमीनला रिक्वेस्ट पाठवली!")
 
+locks_cfg = get_feature_locks()
 ai_lock_setting = locks_cfg.get("Civil AI Assistant", "Premium")
 
 if ai_lock_setting == "Free" or is_user_premium:
@@ -1337,22 +1343,19 @@ if ai_lock_setting == "Free" or is_user_premium:
         if st.button("🚀 Ask Civil AI"):
             if user_ai_query.strip():
                 with st.spinner("🤖 Civil AI is analyzing... (कृपया ५ सेकंद वाट पाहा)"):
-                    time.sleep(1.0)
+                    time.sleep(5.0)
                     api_key = st.secrets.get("GEMINI_API_KEY", os.getenv("GEMINI_API_KEY", ""))
                     ai_response_text = ""
-                    
                     if HAS_GENAI and api_key:
                         try:
                             client = genai.Client(api_key=api_key)
-                            prompt = f"You are a Senior Civil Engineer for Patil Infratech. Provide a direct, professional, expert answer to the user query: {user_ai_query}"
+                            prompt = f"You are a Senior Civil Engineer for Patil Infratech. Provide a direct, professional, final answer to the user query without showing calculation steps: {user_ai_query}"
                             response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
-                            if response and response.text:
-                                ai_response_text = response.text
+                            if response and response.text: ai_response_text = response.text
                         except Exception as e:
                             ai_response_text = f"⚠️ AI Error: {e}"
-                    
                     if not ai_response_text or "Error" in ai_response_text:
-                        ai_response_text = f"👷‍♂️ **Patil Infratech Expert Engineer Analysis:** Regarding your query *\"{user_ai_query}\"*, please ensure valid API Key is provided or use our Rate Analysis or BBS Calculator modules."
+                        ai_response_text = f"👷‍♂️ **Patil Infratech Expert Engineer Analysis:** Regarding your query *\"{user_ai_query}\"*, please use our Rate Analysis or BBS Calculator modules."
                     
                     st.markdown(f"""
                         <div style="background: #111827; border-left: 5px solid #00f2fe; padding: 18px; border-radius: 14px; margin-top: 12px; box-shadow: 0 4px 20px rgba(0, 242, 254, 0.2);">
@@ -1571,7 +1574,7 @@ elif st.session_state.selected_module == "Rate Analysis":
             grade = st.selectbox("काँक्रीट ग्रेड निवडा:", ["M10 (1:3:6)", "M15 (1:2:4)", "M20 (1:1.5:3)", "M25 (1:1:2)"])
         with col2:
             component = st.selectbox("आरसीसी घटक (Component) निवडा:", 
-                                       ["Footing (0.8% Steel)", "Slab (1.0% Steel)", "Beam (2.0% Steel)", "Column (2.5% Steel)", "Plain Concrete (0% Steel)"])
+                                   ["Footing (0.8% Steel)", "Slab (1.0% Steel)", "Beam (2.0% Steel)", "Column (2.5% Steel)", "Plain Concrete (0% Steel)"])
 
         if "M10" in grade: cement_ratio, sand_ratio, aggregate_ratio = 1, 3, 6
         elif "M15" in grade: cement_ratio, sand_ratio, aggregate_ratio = 1, 2, 4
@@ -1672,7 +1675,7 @@ elif st.session_state.selected_module == "Rate Analysis":
 | **GRAND TOTAL** | | | | **₹ {grand_total:.2f}/-** |
 """
             st.markdown(report_table)
-
+            
             msg_text = f"🏗️ *PATIL INFRATECH - RATE ANALYSIS REPORT*\n"
             msg_text += f"👤 *Prepared For:* {current_user_name}\n"
             msg_text += f"🧱 *Work:* Concrete Work ({component.split(' ')[0]})\n"
