@@ -51,6 +51,39 @@ if ai_lock_setting == "Free" or is_user_premium:
                             </div>
                         """, unsafe_allow_html=True)
 
+import sqlite3
+import streamlit as st
+
+# १. सर्वात आधी DB चे कनेक्शन आणि फंक्शन्स डीफाईन करा
+DB_FILE = "patil_infratech.db"
+
+
+def get_db_connection():
+    conn = sqlite3.connect(DB_FILE, check_same_thread=False)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def get_feature_locks():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT feature_name, access_level FROM feature_locks")
+    rows = cursor.fetchall()
+    conn.close()
+    return {row["feature_name"]: row["access_level"] for row in rows}
+
+
+# २. त्यानंतर init_db() कॉल करा
+def init_db():
+    # ... तुमचा init_db चा कोड ...
+    pass
+
+
+init_db()
+
+# ३. आता तुम्ही get_feature_locks() सुरक्षितपणे वापरू शकता
+locks_cfg = get_feature_locks()
+
 # 🚨 Streamlit नियम: set_page_config नेहमी सर्वात आधी असावे!
 st.set_page_config(page_title="PATIL INFRATECH", page_icon="🏗️", layout="centered")
 
