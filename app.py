@@ -14,39 +14,12 @@ import re
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-with st.expander("🤖 Patil Infratech Civil AI Assistant (Ask Anything)"):
-        user_ai_query = st.text_input("तुमचा प्रश्न किंवा शंका इथे लिहा:", placeholder="उदा. dry volume factor for concrete...", key="civil_ai_input")
-        if st.button("🚀 Ask Civil AI"):
-            if user_ai_query.strip():
-                with st.spinner("🤖 Civil AI विचार करत आहे..."):
-                    # 1. Streamlit Secrets किंवा OS Environment वरून Key मिळवा
-                    api_key = st.secrets.get("GEMINI_API_KEY", os.getenv("GEMINI_API_KEY", ""))
-                    
-                    if not api_key:
-                        st.error("❌ secrets.toml मध्ये 'GEMINI_API_KEY' सापडली नाही! कृपया Secrets मधील स्पेलिंग तपासा.")
-                    else:
-                        try:
-                            # 2. Google GenAI Client तयार करा
-                            if HAS_GENAI:
-                                client = genai.Client(api_key=api_key)
-                                prompt = f"You are a Senior Civil Engineer for Patil Infratech. Provide a direct, professional, expert answer to the user query: {user_ai_query}"
-                                response = client.models.generate_content(
-                                    model='gemini-2.5-flash', 
-                                    contents=prompt
-                                )
-                                
-                                if response and response.text:
-                                    st.markdown(f"""
-                                        <div style="background: #111827; border-left: 5px solid #00f2fe; padding: 18px; border-radius: 14px; margin-top: 12px; box-shadow: 0 4px 20px rgba(0, 242, 254, 0.2);">
-                                            <b>🎯 Civil AI Answer:</b><br><br>{response.text}
-                                        </div>
-                                    """, unsafe_allow_html=True)
-                                else:
-                                    st.warning("⚠️ AI कडून उत्तर मिळालेले नाही, पुन्हा प्रयत्न करा.")
-                            else:
-                                st.error("❌ 'google-genai' लायब्ररी इन्स्टॉल केलेली नाही. requirements.txt मध्ये 'google-genai' जोडा.")
-                        except Exception as e:
-                            st.error(f"🚨 Google AI कडून आलेला थेट एरर: {e}")
+# Official Google GenAI SDK Import
+try:
+    from google import genai
+    HAS_GENAI = True
+except ImportError:
+    HAS_GENAI = False
 
 # 🚨 १. Streamlit नियम: set_page_config नेहमी सर्वात आधी असावे!
 st.set_page_config(page_title="PATIL INFRATECH", page_icon="🏗️", layout="centered")
@@ -331,7 +304,6 @@ is_curr_premium, _ = check_user_premium_status(current_user_name)
 # 🎨 HIGH-END GALAXY & OBSIDIAN DUAL THEME STYLING
 # ==========================================
 if is_curr_premium:
-    # 🌌 LUXURY COSMIC GALAXY VIP THEME (EXCLUSIVE FOR PREMIUM)
     bg_gradient = "radial-gradient(circle at 50% -20%, #2a0845 0%, #03001e 50%, #050014 100%)"
     accent_border = "#ec38bc"
     accent_glow = "rgba(236, 56, 188, 0.6)"
@@ -343,7 +315,6 @@ if is_curr_premium:
     primary_btn_shadow = "rgba(236, 56, 188, 0.5)"
     box_bg_color = "#140a28"
 else:
-    # 🌌 PURE OBSIDIAN & ELECTRIC CYAN FREE THEME
     bg_gradient = "linear-gradient(135deg, #030712 0%, #0b0f19 50%, #020617 100%)"
     accent_border = "#00f2fe"
     accent_glow = "rgba(0, 242, 254, 0.4)"
@@ -368,7 +339,6 @@ st.markdown(f"""
     button[title="Increment"], button[title="Decrement"] {{ display: none !important; }}
     div[data-testid="stNumberInputStepUp"], div[data-testid="stNumberInputStepDown"] {{ display: none !important; }}
 
-    /* 🛑 FORCE GALAXY DARK OVERRIDE */
     html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"], [data-testid="stSidebar"] {{
         background-color: #030712 !important;
         background: {bg_gradient} !important;
@@ -380,7 +350,6 @@ st.markdown(f"""
         color: #f8fafc !important;
     }}
 
-    /* 🛡️ COMPLETE DEEP DARK OVERRIDE FOR ALL INPUT CONTAINERS & DROPDOWNS */
     div[data-baseweb="input"],
     div[data-baseweb="input"] *,
     div[data-baseweb="base-input"],
@@ -423,7 +392,6 @@ st.markdown(f"""
         background: transparent !important;
     }}
 
-    /* 🛑 SELECTBOX / DROPDOWN FIX */
     div[data-baseweb="select"],
     div[data-baseweb="select"] > div,
     div[data-baseweb="select"] * {{
@@ -570,7 +538,6 @@ st.markdown(f"""
         box-shadow: 0 8px 25px rgba(0, 0, 0, 0.8);
     }}
 
-    /* 🌌 GALAXY COSMIC LOADER ANIMATION */
     .galaxy-loader {{
         margin: 20px auto;
         width: 80px;
@@ -1705,7 +1672,7 @@ elif st.session_state.selected_module == "Rate Analysis":
 | **GRAND TOTAL** | | | | **₹ {grand_total:.2f}/-** |
 """
             st.markdown(report_table)
-            
+
             msg_text = f"🏗️ *PATIL INFRATECH - RATE ANALYSIS REPORT*\n"
             msg_text += f"👤 *Prepared For:* {current_user_name}\n"
             msg_text += f"🧱 *Work:* Concrete Work ({component.split(' ')[0]})\n"
