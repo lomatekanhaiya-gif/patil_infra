@@ -14,7 +14,7 @@ import re
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-    with st.expander("🤖 Patil Infratech Civil AI Assistant (Ask Anything)"):
+with st.expander("🤖 Patil Infratech Civil AI Assistant (Ask Anything)"):
         user_ai_query = st.text_input("तुमचा प्रश्न किंवा शंका इथे लिहा:", placeholder="उदा. dry volume factor for concrete...", key="civil_ai_input")
         if st.button("🚀 Ask Civil AI"):
             if user_ai_query.strip():
