@@ -14,12 +14,31 @@ import re
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
+import os
+import streamlit as st
+
 # Official Google GenAI SDK Import
 try:
     from google import genai
     HAS_GENAI = True
 except ImportError:
     HAS_GENAI = False
+
+# Secrets मधून API Key घेणे
+api_key = st.secrets.get("GEMINI_API_KEY", os.getenv("GEMINI_API_KEY", ""))
+
+if HAS_GENAI and api_key:
+    try:
+        client = genai.Client(api_key=api_key)
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents="Civil Engineering चा प्रश्न"
+        )
+        st.write(response.text)
+    except Exception as e:
+        st.error(f"⚠️ AI Error: {e}")
+else:
+    st.warning("⚠️ Google GenAI SDK इन्स्टॉल नाही किंवा GEMINI_API_KEY Secrets मध्ये जोडलेली नाही.")
 
 # 🚨 Streamlit नियम: set_page_config नेहमी सर्वात आधी असावे!
 st.set_page_config(page_title="PATIL INFRATECH", page_icon="🏗️", layout="centered")
