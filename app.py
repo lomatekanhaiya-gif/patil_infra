@@ -14,47 +14,14 @@ import re
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-# 'from google import genai' ऐवजी जुने पॅकेज इम्पोर्ट करा
-import google.generativeai as genai
+# Official Google GenAI SDK Import
+try:
+    from google import genai
+    HAS_GENAI = True
+except ImportError:
+    HAS_GENAI = False
 
-# ... बाकीचा कोड ...
-
-locks_cfg = get_feature_locks()
-ai_lock_setting = locks_cfg.get("Civil AI Assistant", "Premium")
-
-if ai_lock_setting == "Free" or is_user_premium:
-    with st.expander("🤖 Patil Infratech Civil AI Assistant (Ask Anything)"):
-        user_ai_query = st.text_input("तुमचा प्रश्न किंवा शंका इथे लिहा:", placeholder="उदा. dry volume factor for concrete...", key="civil_ai_input")
-        if st.button("🚀 Ask Civil AI"):
-            if user_ai_query.strip():
-                with st.spinner("🤖 Civil AI is analyzing..."):
-                    api_key = st.secrets.get("GEMINI_API_KEY", os.getenv("GEMINI_API_KEY", ""))
-                    ai_response_text = ""
-                    
-                    if api_key:
-                        try:
-                            # AI Configuration
-                            genai.configure(api_key=api_key)
-                            model = genai.GenerativeModel("gemini-1.5-flash")
-                            
-                            prompt = f"You are a Senior Civil Engineer for Patil Infratech. Provide a direct, professional answer to: {user_ai_query}"
-                            response = model.generate_content(prompt)
-                            
-                            if response and response.text:
-                                ai_response_text = response.text
-                        except Exception as e:
-                            ai_response_text = f"⚠️ AI Error: {e}"
-                    
-                    if not ai_response_text or "Error" in ai_response_text:
-                        ai_response_text = f"👷‍♂️ **Patil Infratech Expert Engineer Analysis:** Regarding your query *\"{user_ai_query}\"*, please ensure valid API Key is provided."
-                    
-                    st.markdown(f"""
-                        <div style="background: #111827; border-left: 5px solid #00f2fe; padding: 18px; border-radius: 14px; margin-top: 12px;">
-                            <b>🎯 Civil AI Answer:</b><br><br>{ai_response_text}
-                        </div>
-                    """, unsafe_allow_html=True)
-
-# 🚨 Streamlit नियम: set_page_config नेहमी सर्वात आधी असावे!
+# 🚨 १. Streamlit नियम: set_page_config नेहमी सर्वात आधी असावे!
 st.set_page_config(page_title="PATIL INFRATECH", page_icon="🏗️", layout="centered")
 
 # ==========================================
@@ -101,7 +68,7 @@ def is_strong_password(password):
     return True, "Strong"
 
 # ==========================================
-# 🗄️ SQLITE DATABASE MANAGEMENT
+# 🗄️ SQLITE DATABASE MANAGEMENT & HELPER FUNCTIONS
 # ==========================================
 DB_FILE = "patil_infratech.db"
 
@@ -109,6 +76,33 @@ def get_db_connection():
     conn = sqlite3.connect(DB_FILE, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     return conn
+
+def get_user_data(user_key):
+    if not user_key: return None
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM users WHERE user_key = ?", (user_key,))
+    row = cursor.fetchone()
+    conn.close()
+    if row:
+        return dict(row)
+    return None
+
+def get_market_rates():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT material, rate FROM market_rates")
+    rows = cursor.fetchall()
+    conn.close()
+    return {row["material"]: row["rate"] for row in rows}
+
+def get_feature_locks():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT feature_name, access_level FROM feature_locks")
+    rows = cursor.fetchall()
+    conn.close()
+    return {row["feature_name"]: row["access_level"] for row in rows}
 
 def init_db():
     conn = get_db_connection()
@@ -222,33 +216,8 @@ def init_db():
 
 init_db()
 
-# DB Helper Functions
-def get_user_data(user_key):
-    if not user_key: return None
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM users WHERE user_key = ?", (user_key,))
-    row = cursor.fetchone()
-    conn.close()
-    if row:
-        return dict(row)
-    return None
-
-def get_market_rates():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT material, rate FROM market_rates")
-    rows = cursor.fetchall()
-    conn.close()
-    return {row["material"]: row["rate"] for row in rows}
-
-def get_feature_locks():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT feature_name, access_level FROM feature_locks")
-    rows = cursor.fetchall()
-    conn.close()
-    return {row["feature_name"]: row["access_level"] for row in rows}
+# 🚨 फंक्शन्स आणि DB इनिशियलायझेशन झाल्यानंतरच हे कॉल करा!
+locks_cfg = get_feature_locks()
 
 # Session State & Auto Login
 if "app_user_name" not in st.session_state:
@@ -602,7 +571,6 @@ def generate_random_code():
 # ==========================================
 def render_whatsapp_feature(encoded_msg, key_prefix):
     is_prem, status_str = check_user_premium_status(current_user_name)
-    locks_cfg = get_feature_locks()
     wa_lock_setting = locks_cfg.get("WhatsApp Share", "Premium")
 
     if wa_lock_setting == "Free" or is_prem:
@@ -1367,7 +1335,6 @@ if not is_user_premium:
                 conn.close()
                 st.success("✅ ॲडमीनला रिक्वेस्ट पाठवली!")
 
-locks_cfg = get_feature_locks()
 ai_lock_setting = locks_cfg.get("Civil AI Assistant", "Premium")
 
 if ai_lock_setting == "Free" or is_user_premium:
