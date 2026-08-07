@@ -1443,6 +1443,100 @@ if st.session_state.selected_module is None:
     # --------------------------------------------------
     # SECTION 2: ESTIMATOR SECTION
     # --------------------------------------------------
+# --------------------------------------------------
+    # SECTION 2: ESTIMATOR SECTION
+    # --------------------------------------------------
+    st.markdown("#### 📐 2. Estimator Section")
+    
+    # 1. State variable for toggling the submenu
+    if "show_estimator_menu" not in st.session_state:
+        st.session_state.show_estimator_menu = False
+
+    # 2. Main Single Icon to hold all 4 tools
+    col_main_est, _ = st.columns([1, 3])
+    with col_main_est:
+        st.markdown(f"""
+            <div style="text-align: center; background: #111827; padding: 18px 10px; border-radius: 20px; border: 1px solid rgba(0, 242, 254, 0.3);">
+                <h1 style="font-size: 32px; margin:0;">🧮</h1>
+                <h5 style="margin: 8px 0 2px 0; color: #f8fafc; font-weight:700; font-size:13px;">Estimator Tools</h5>
+                <p style="font-size: 9px; color: #38bdf8; margin:0;">[4 Tools in 1]</p>
+            </div>
+        """, unsafe_allow_html=True)
+        
+        button_text = "🔼 Close Estimator Tools" if st.session_state.show_estimator_menu else "📐 Open Estimator Tools"
+        if st.button(button_text, key="btn_toggle_est_menu", use_container_width=True):
+            st.session_state.show_estimator_menu = not st.session_state.show_estimator_menu
+            st.rerun()
+
+    # 3. Show the 4 icons ONLY if the main button is clicked
+    if st.session_state.show_estimator_menu:
+        st.markdown("<br>##### 🔽 खालीलपैकी एक Estimator टूल निवडा:", unsafe_allow_html=True)
+        
+        col_icon1, col_icon2, col_icon3, col_icon4 = st.columns(4)
+        
+        with col_icon1:
+            calc_badge = "🆓 Free" if calc_lock == "Free" else "👑 Premium"
+            st.markdown(f"""
+                <div style="text-align: center; background: #111827; padding: 18px 10px; border-radius: 20px; border: 1px solid rgba(0, 242, 254, 0.3);">
+                    <h1 style="font-size: 32px; margin:0;">🧮</h1>
+                    <h5 style="margin: 8px 0 2px 0; color: #f8fafc; font-weight:700; font-size:13px;">Calculator</h5>
+                    <p style="font-size: 9px; color: #38bdf8; margin:0;">[{calc_badge}]</p>
+                </div>
+            """, unsafe_allow_html=True)
+            if st.button("🧮 Calculator", key="btn_open_calc", use_container_width=True):
+                if calc_lock == "Premium" and not is_user_premium:
+                    st.error("🔒 हे फीचर प्रिमियम युझर्ससाठी आहे!")
+                else:
+                    st.session_state.selected_module = "Civil Calculator"
+                    st.rerun()
+
+        with col_icon2:
+            ra_badge = "🆓 Free" if ra_lock == "Free" else "👑 Premium"
+            st.markdown(f"""
+                <div style="text-align: center; background: #111827; padding: 18px 10px; border-radius: 20px; border: 1px solid rgba(0, 242, 254, 0.3);">
+                    <h1 style="font-size: 32px; margin:0;">📊</h1>
+                    <h5 style="margin: 8px 0 2px 0; color: #f8fafc; font-weight:700; font-size:13px;">Rate Analysis</h5>
+                    <p style="font-size: 9px; color: #38bdf8; margin:0;">[{ra_badge}]</p>
+                </div>
+            """, unsafe_allow_html=True)
+            if st.button("📊 Rate Analysis", key="btn_open_ra", use_container_width=True):
+                if ra_lock == "Premium" and not is_user_premium:
+                    st.error("🔒 हे फीचर प्रिमियम युझर्ससाठी आहे!")
+                else:
+                    st.session_state.selected_module = "Rate Analysis"
+                    st.rerun()
+
+        with col_icon3:
+            bbs_badge = "🆓 Free" if bbs_lock == "Free" else "👑 Premium"
+            st.markdown(f"""
+                <div style="text-align: center; background: #111827; padding: 18px 10px; border-radius: 20px; border: 1px solid rgba(0, 242, 254, 0.3);">
+                    <h1 style="font-size: 32px; margin:0;">🏗️</h1>
+                    <h5 style="margin: 8px 0 2px 0; color: #f8fafc; font-weight:700; font-size:13px;">BBS</h5>
+                    <p style="font-size: 9px; color: #38bdf8; margin:0;">[{bbs_badge}]</p>
+                </div>
+            """, unsafe_allow_html=True)
+            if st.button("🏗️ Open BBS", key="btn_open_bbs", use_container_width=True):
+                if bbs_lock == "Premium" and not is_user_premium:
+                    st.error("🔒 हे फीचर प्रिमियम युझर्ससाठी आहे!")
+                else:
+                    st.session_state.selected_module = "BBS"
+                    st.rerun()
+
+        with col_icon4:
+            qs_badge = "🆓 Free" if qs_lock == "Free" else "👑 Premium"
+            st.markdown(f"""
+                <div style="text-align: center; background: #111827; padding: 18px 10px; border-radius: 20px; border: 1px solid rgba(0, 242, 254, 0.3);">
+                    <h1 style="font-size: 32px; margin:0;">📈</h1>
+                    <h5 style="margin: 8px 0 2px 0; color: #f8fafc; font-weight:700; font-size:13px;">Quantity Survey</h5>
+                    <p style="font-size: 9px; color: #38bdf8; margin:0;">[{qs_badge}]</p>
+                </div>
+            """, unsafe_allow_html=True)
+            if st.button("📈 Quantity Survey", key="btn_open_qs", use_container_width=True):
+                if qs_lock == "Premium" and not is_user_premium:
+                    st.error("🔒 हे फीचर प्रिमियम युझर्ससाठी आहे!")
+                else:
+                    st.session_state.selected_module = "Quantity Surveying"
+                    st.rerun()
     st.markdown("#### 📐 2. Estimator Section")
     col_icon1, col_icon2, col_icon3, col_icon4 = st.columns(4)
     
