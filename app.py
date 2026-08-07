@@ -1,4 +1,6 @@
-# KANHA_1p - पाटील इन्फ्राटेक (SQLite Database & Streamlit Web Application with Site Manager)
+# ==========================================
+# 📦 PATIL INFRATECH (SQLite Database & Streamlit Web Application)
+# ==========================================
 import streamlit as st
 import math
 import sqlite3
@@ -159,7 +161,7 @@ def init_db():
         )
     ''')
 
-    # 7. Daily Attendance Table (Updated to hold all labour types)
+    # 7. Daily Attendance Table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS site_attendance (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1335,7 +1337,7 @@ if not is_user_premium:
                 if input_code == "4528":
                     uses_count = u_info.get("master_code_uses", 0)
                     if uses_count >= 3:
-                        st.error("❌ हा मास्टर कोड तुम्ही आधीच ३ वेळा वापरला आहे! मर्यादा संपली आहे.")
+                        st.error("❌ हा मास्टर कोड तुम्ही आधीच ३ वेळा वापरला আশ্র आहे! मर्यादा संपली आहे.")
                     else:
                         exp_datetime = get_ist_time() + datetime.timedelta(hours=8)
                         exp_str = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
@@ -1435,7 +1437,7 @@ if ai_lock_setting == "Free" or is_user_premium:
                     """, unsafe_allow_html=True)
 
 # ==========================================
-# 🎛️ DASHBOARD / MODULE SELECTION SCREEN
+# 🎛️ DASHBOARD / MODULE SELECTION SCREEN (UI UPDATED - SIDE BY SIDE)
 # ==========================================
 if st.session_state.selected_module is None:
     st.markdown("### 🚀 तुम्हाला काय करायचे आहे ते निवडा:")
@@ -1446,41 +1448,39 @@ if st.session_state.selected_module is None:
     qs_lock = locks_cfg.get("Quantity Surveying", "Free")
     site_lock = locks_cfg.get("Site Manager", "Free")
 
+    # Creating two columns for Side by Side UI 
+    main_col1, main_col2 = st.columns(2)
+
     # --------------------------------------------------
     # SECTION 1: SITE MANAGER SECTION
     # --------------------------------------------------
-    st.markdown("#### 👷‍♂️ 1. Site Manager Section")
-    col_site_sec, _ = st.columns([1, 3])
-    with col_site_sec:
+    with main_col1:
+        st.markdown("#### 👷‍♂️ 1. Site Manager")
         site_badge = "🆓 Free" if site_lock == "Free" else "👑 Premium"
         st.markdown(f"""
-            <div style="text-align: center; background: #111827; padding: 18px 10px; border-radius: 20px; border: 1px solid rgba(0, 242, 254, 0.3);">
+            <div style="text-align: center; background: #111827; padding: 18px 10px; border-radius: 20px; border: 1px solid rgba(0, 242, 254, 0.3); margin-bottom: 12px;">
                 <h1 style="font-size: 32px; margin:0;">👷‍♂️</h1>
                 <h5 style="margin: 8px 0 2px 0; color: #f8fafc; font-weight:700; font-size:13px;">Site Manager</h5>
                 <p style="font-size: 9px; color: #38bdf8; margin:0;">[{site_badge}]</p>
             </div>
         """, unsafe_allow_html=True)
-        if st.button("👷‍♂️ Site Manager", key="btn_open_site", use_container_width=True):
+        if st.button("👷‍♂️ Open Site Manager", key="btn_open_site", use_container_width=True):
             if site_lock == "Premium" and not is_user_premium:
                 st.error("🔒 हे फीचर प्रिमियम युझर्ससाठी आहे!")
             else:
                 st.session_state.selected_module = "Site Manager"
                 st.rerun()
 
-    st.write("---")
-
     # --------------------------------------------------
-    # SECTION 2: ESTIMATOR SECTION (MODIFIED WITH SINGLE TOGGLE ICON)
+    # SECTION 2: ESTIMATOR SECTION
     # --------------------------------------------------
-    st.markdown("#### 📐 2. Estimator Section")
-    
-    if "show_estimator_menu" not in st.session_state:
-        st.session_state.show_estimator_menu = False
-
-    col_main_est, _ = st.columns([1, 3])
-    with col_main_est:
+    with main_col2:
+        st.markdown("#### 📐 2. Estimator Tools")
+        if "show_estimator_menu" not in st.session_state:
+            st.session_state.show_estimator_menu = False
+        
         st.markdown(f"""
-            <div style="text-align: center; background: #111827; padding: 18px 10px; border-radius: 20px; border: 1px solid rgba(0, 242, 254, 0.3);">
+            <div style="text-align: center; background: #111827; padding: 18px 10px; border-radius: 20px; border: 1px solid rgba(0, 242, 254, 0.3); margin-bottom: 12px;">
                 <h1 style="font-size: 32px; margin:0;">🧮</h1>
                 <h5 style="margin: 8px 0 2px 0; color: #f8fafc; font-weight:700; font-size:13px;">Estimator Tools</h5>
                 <p style="font-size: 9px; color: #38bdf8; margin:0;">[4 Tools in 1]</p>
@@ -1493,7 +1493,8 @@ if st.session_state.selected_module is None:
             st.rerun()
 
     if st.session_state.show_estimator_menu:
-        st.markdown("<br>##### 🔽 खालीलपैकी एक Estimator टूल निवडा:", unsafe_allow_html=True)
+        st.write("---")
+        st.markdown("##### 🔽 खालीलपैकी एक Estimator टूल निवडा:", unsafe_allow_html=True)
         
         col_icon1, col_icon2, col_icon3, col_icon4 = st.columns(4)
         
