@@ -1,6 +1,4 @@
-# ==========================================
-# 📦 PATIL INFRATECH (SQLite Database & Streamlit Web Application)
-# ==========================================
+# KANHA_1p - पाटील इन्फ्राटेक (SQLite Database & Streamlit Web Application with Site Manager)
 import streamlit as st
 import math
 import sqlite3
@@ -161,7 +159,7 @@ def init_db():
         )
     ''')
 
-    # 7. Daily Attendance Table
+    # 7. Daily Attendance Table (Updated to hold all labour types)
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS site_attendance (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1337,7 +1335,7 @@ if not is_user_premium:
                 if input_code == "4528":
                     uses_count = u_info.get("master_code_uses", 0)
                     if uses_count >= 3:
-                        st.error("❌ हा मास्टर कोड तुम्ही आधीच ३ वेळा वापरला আশ্র आहे! मर्यादा संपली आहे.")
+                        st.error("❌ हा मास्टर कोड तुम्ही आधीच ३ वेळा वापरला आहे! मर्यादा संपली आहे.")
                     else:
                         exp_datetime = get_ist_time() + datetime.timedelta(hours=8)
                         exp_str = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
@@ -1437,7 +1435,7 @@ if ai_lock_setting == "Free" or is_user_premium:
                     """, unsafe_allow_html=True)
 
 # ==========================================
-# 🎛️ DASHBOARD / MODULE SELECTION SCREEN (UI UPDATED - SIDE BY SIDE)
+# 🎛️ DASHBOARD / MODULE SELECTION SCREEN
 # ==========================================
 if st.session_state.selected_module is None:
     st.markdown("### 🚀 तुम्हाला काय करायचे आहे ते निवडा:")
@@ -1448,39 +1446,41 @@ if st.session_state.selected_module is None:
     qs_lock = locks_cfg.get("Quantity Surveying", "Free")
     site_lock = locks_cfg.get("Site Manager", "Free")
 
-    # Creating two columns for Side by Side UI 
-    main_col1, main_col2 = st.columns(2)
-
     # --------------------------------------------------
     # SECTION 1: SITE MANAGER SECTION
     # --------------------------------------------------
-    with main_col1:
-        st.markdown("#### 👷‍♂️ 1. Site Manager")
+    st.markdown("#### 👷‍♂️ 1. Site Manager Section")
+    col_site_sec, _ = st.columns([1, 3])
+    with col_site_sec:
         site_badge = "🆓 Free" if site_lock == "Free" else "👑 Premium"
         st.markdown(f"""
-            <div style="text-align: center; background: #111827; padding: 18px 10px; border-radius: 20px; border: 1px solid rgba(0, 242, 254, 0.3); margin-bottom: 12px;">
+            <div style="text-align: center; background: #111827; padding: 18px 10px; border-radius: 20px; border: 1px solid rgba(0, 242, 254, 0.3);">
                 <h1 style="font-size: 32px; margin:0;">👷‍♂️</h1>
                 <h5 style="margin: 8px 0 2px 0; color: #f8fafc; font-weight:700; font-size:13px;">Site Manager</h5>
                 <p style="font-size: 9px; color: #38bdf8; margin:0;">[{site_badge}]</p>
             </div>
         """, unsafe_allow_html=True)
-        if st.button("👷‍♂️ Open Site Manager", key="btn_open_site", use_container_width=True):
+        if st.button("👷‍♂️ Site Manager", key="btn_open_site", use_container_width=True):
             if site_lock == "Premium" and not is_user_premium:
                 st.error("🔒 हे फीचर प्रिमियम युझर्ससाठी आहे!")
             else:
                 st.session_state.selected_module = "Site Manager"
                 st.rerun()
 
+    st.write("---")
+
     # --------------------------------------------------
-    # SECTION 2: ESTIMATOR SECTION
+    # SECTION 2: ESTIMATOR SECTION (MODIFIED WITH SINGLE TOGGLE ICON)
     # --------------------------------------------------
-    with main_col2:
-        st.markdown("#### 📐 2. Estimator Tools")
-        if "show_estimator_menu" not in st.session_state:
-            st.session_state.show_estimator_menu = False
-        
+    st.markdown("#### 📐 2. Estimator Section")
+    
+    if "show_estimator_menu" not in st.session_state:
+        st.session_state.show_estimator_menu = False
+
+    col_main_est, _ = st.columns([1, 3])
+    with col_main_est:
         st.markdown(f"""
-            <div style="text-align: center; background: #111827; padding: 18px 10px; border-radius: 20px; border: 1px solid rgba(0, 242, 254, 0.3); margin-bottom: 12px;">
+            <div style="text-align: center; background: #111827; padding: 18px 10px; border-radius: 20px; border: 1px solid rgba(0, 242, 254, 0.3);">
                 <h1 style="font-size: 32px; margin:0;">🧮</h1>
                 <h5 style="margin: 8px 0 2px 0; color: #f8fafc; font-weight:700; font-size:13px;">Estimator Tools</h5>
                 <p style="font-size: 9px; color: #38bdf8; margin:0;">[4 Tools in 1]</p>
@@ -1493,8 +1493,7 @@ if st.session_state.selected_module is None:
             st.rerun()
 
     if st.session_state.show_estimator_menu:
-        st.write("---")
-        st.markdown("##### 🔽 खालीलपैकी एक Estimator टूल निवडा:", unsafe_allow_html=True)
+        st.markdown("<br>##### 🔽 खालीलपैकी एक Estimator टूल निवडा:", unsafe_allow_html=True)
         
         col_icon1, col_icon2, col_icon3, col_icon4 = st.columns(4)
         
@@ -2628,7 +2627,7 @@ elif st.session_state.selected_module == "Quantity Surveying":
                 conn.close()
 
 # ==========================================
-# 📦 MODULE 4: SITE MANAGER (WITH GRAPHICS DASHBOARD)
+# 📦 MODULE 4: SITE MANAGER (NEW INTEGRATED MODULE)
 # ==========================================
 elif st.session_state.selected_module == "Site Manager":
     if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_site"):
@@ -2638,21 +2637,22 @@ elif st.session_state.selected_module == "Site Manager":
     st.write("---")
     st.subheader("👷‍♂️ Construction Site Manager & Stock Tracker")
 
+    # 4th Tab Added for Weekly Dashboard
     site_tab1, site_tab2, site_tab3, site_tab4 = st.tabs([
         "👷 1. Attendance & Wages", 
         "📦 2. Material Inventory", 
         "📸 3. Progress Report",
-        "📊 4. Weekly Dashboard & Analytics"
+        "📊 4. Weekly Dashboard"
     ])
 
     # --------------------------------------------------
-    # TAB 1: DAILY ATTENDANCE (DEFAULT 0 FOR LABOURS)
+    # TAB 1: DAILY ATTENDANCE & WAGES (UPDATED WITH ALL LABOURS)
     # --------------------------------------------------
     with site_tab1:
         st.markdown("#### 👷 डेली हजेरी आणि मजुरी कॅल्क्युलेटर")
-        att_date = st.date_input("तारीख निवडा:", datetime.date.today(), key="site_att_date")
+        att_date = st.date_input("तारीख निवडा (Select Date):", datetime.date.today(), key="site_att_date")
         
-        st.markdown("##### 👥 कामगारांची संख्या भरा (संख्या टाकल्याशिवाय १ रुपयाही मोजला जाणार नाही):")
+        st.markdown("##### 👥 कामगारांची माहिती भरा:")
         w_cols = st.columns([1.5, 1, 1, 1])
         with w_cols[0]: st.markdown("**कामगार प्रकार**")
         with w_cols[1]: st.markdown("**संख्या (Nos)**")
@@ -2662,12 +2662,11 @@ elif st.session_state.selected_module == "Site Manager":
         w_data = {}
         total_labor_cost = 0.0
 
-        # सर्व कामगारांची संख्या बाय-डिफॉल्ट 0 (def_q = 0) केली आहे!
         labor_types = [
             ("supervisor", "मुकादम (Supervisor)", 0, 800.0),
-            ("mason", "गवंडी (Mason)", 0, 800.0),
-            ("labor", "मजूर (Labor/Helper)", 0, 500.0),
-            ("fitter", "फिटर/बार बेंडर (Fitter)", 0, 750.0),
+            ("mason", "गवंडी (Mason)", 4, 800.0),
+            ("labor", "मजूर (Labor/Helper)", 6, 500.0),
+            ("fitter", "फिटर/बार बेंडर (Fitter)", 2, 750.0),
             ("carpenter", "सुतार/सेंटरिंग (Carpenter)", 0, 800.0),
             ("plumber", "प्लंबर (Plumber)", 0, 700.0),
             ("electrician", "इलेक्ट्रिशियन (Electrician)", 0, 700.0),
@@ -2679,7 +2678,7 @@ elif st.session_state.selected_module == "Site Manager":
             with r_cols[0]:
                 st.markdown(f"<p style='margin-top:8px;'>{w_name}</p>", unsafe_allow_html=True)
             with r_cols[1]:
-                q = st.number_input(f"Qty {w_id}", min_value=0, value=0, step=1, key=f"q_{w_id}", label_visibility="collapsed")
+                q = st.number_input(f"Qty {w_id}", min_value=0, value=def_q, step=1, key=f"q_{w_id}", label_visibility="collapsed")
             with r_cols[2]:
                 r = st.number_input(f"Rate {w_id}", min_value=0.0, value=def_r, step=50.0, key=f"r_{w_id}", label_visibility="collapsed")
             with r_cols[3]:
@@ -2690,12 +2689,13 @@ elif st.session_state.selected_module == "Site Manager":
             w_data[w_id] = {"qty": q, "rate": r}
 
         st.markdown(f"""
-            <div style="background: #111827; padding: 18px; border-radius: 16px; border-left: 5px solid #10b981; margin-top: 12px;">
+            <div style="background: #111827; padding: 18px; border-radius: 16px; border-left: 5px solid #10b981; margin-top: 12px; box-shadow: 0 4px 20px rgba(16, 185, 129, 0.2);">
                 <h4 style="margin:0; color:#10b981;">💰 Today's Total Labor Cost: ₹ {total_labor_cost:.2f}/-</h4>
+                <p style="margin:5px 0 0 0; font-size:13px; color:#cbd5e1;">(सर्व कामगारांची एकूण मजुरी)</p>
             </div>
         """, unsafe_allow_html=True)
 
-        if st.button("💾 Save Attendance to Database", type="primary", key="save_att_btn"):
+        if st.button("💾 Save Attendance to SQLite Database", type="primary", key="save_att_btn"):
             conn = get_db_connection()
             cursor = conn.cursor()
             cursor.execute('''
@@ -2725,16 +2725,57 @@ elif st.session_state.selected_module == "Site Manager":
             ))
             conn.commit()
             conn.close()
-            st.success("✅ आजची हजेरी सेव्ह झाली!")
+            st.success("✅ आजची हजेरी आणि मजुरी बिल डेटाबेसमध्ये सेव्ह झाले!")
 
     # --------------------------------------------------
-    # TAB 2: MATERIAL INVENTORY
+    # TAB 2: MATERIAL INVENTORY & STOCK TRACKER
     # --------------------------------------------------
     with site_tab2:
-        st.markdown("#### 📦 Material Inventory & Stock Tracker")
-        mat_name = st.selectbox("साहित्य निवडा:", ["Cement Bags", "Steel (Kg)", "Sand (CFT)", "Bricks (Nos)"], key="inv_mat_type")
-        trans_type = st.radio("प्रकार:", ["Material IN (+)", "Material OUT (-)"], horizontal=True, key="inv_trans_type")
-        entry_qty = st.number_input("नग / प्रमाण:", min_value=1, value=10, step=1, key="inv_qty_val")
+        st.markdown("#### 📦 साहित्य ट्रॅकर (Material Inventory & Stock Tracker)")
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT material_name, transaction_type, quantity FROM site_inventory WHERE user_key = ?", (current_user_name,))
+        inv_rows = cursor.fetchall()
+        conn.close()
+
+        stock_dict = {}
+        for row in inv_rows:
+            mat = row["material_name"]
+            ttype = row["transaction_type"]
+            qty = row["quantity"]
+            
+            if mat not in stock_dict:
+                stock_dict[mat] = 0
+            if ttype == "Material IN (+)":
+                stock_dict[mat] += qty
+            else:
+                stock_dict[mat] -= qty
+
+        st.markdown("##### 📊 Live Cement & Material Stock Balance:")
+        if stock_dict:
+            for item, count in stock_dict.items():
+                if count <= 10:
+                    st.markdown(f"""
+                        <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; padding: 12px 16px; border-radius: 12px; margin-bottom: 8px;">
+                            <span style="color: #ef4444; font-weight: bold; font-size: 16px;">⚠️ Warning: {item} Stock Low! Re-order Soon</span><br>
+                            <span style="color: #ffffff; font-size: 14px;">Current Stock: <b>{count} Bags/Units</b></span>
+                        </div>
+                    """, unsafe_allow_html=True)
+                else:
+                    st.markdown(f"""
+                        <div style="background: #111827; border: 1px solid #00f2fe; padding: 10px 16px; border-radius: 12px; margin-bottom: 8px;">
+                            <span style="color: #38bdf8; font-weight: bold;">Current {item} Stock:</span> <code style="font-size:16px; color:#10b981;">{count} Bags/Units</code>
+                        </div>
+                    """, unsafe_allow_html=True)
+        else:
+            st.info("ℹ️ सध्या स्टॉकमध्ये कोणतीही एंट्री उपलब्ध नाही. खालील इन-आऊट फॉर्म भरा.")
+
+        st.write("---")
+        st.markdown("##### ➕/➖ Material IN-OUT Entry:")
+        mat_name = st.selectbox("साहित्य निवडा (Material):", ["Cement Bags", "Steel (Kg)", "Sand (CFT)", "Bricks (Nos)"], key="inv_mat_type")
+        trans_type = st.radio("इनपुट/आऊटपुट निवडा:", ["Material IN (+)", "Material OUT (-)"], horizontal=True, key="inv_trans_type")
+        entry_qty = st.number_input("बोरी / नग संख्या (Quantity):", min_value=1, value=100, step=1, key="inv_qty_val")
 
         if st.button("📥 Save Stock Entry", type="primary", key="save_inv_btn"):
             conn = get_db_connection()
@@ -2742,37 +2783,70 @@ elif st.session_state.selected_module == "Site Manager":
             cursor.execute('''
                 INSERT INTO site_inventory (user_key, date, material_name, transaction_type, quantity, unit)
                 VALUES (?, ?, ?, ?, ?, ?)
-            ''', (current_user_name, str(datetime.date.today()), mat_name, trans_type, entry_qty, "Units"))
+            ''', (current_user_name, str(datetime.date.today()), mat_name, trans_type, entry_qty, "Bags/Units"))
             conn.commit()
             conn.close()
-            st.success("✅ स्टॉक सेव्ह झाला!")
+            st.success("✅ स्टॉक एंट्री सेव्ह झाली!")
+            st.rerun()
 
     # --------------------------------------------------
-    # TAB 3: PROGRESS REPORT
+    # TAB 3: DAILY PROGRESS REPORT & PHOTO ATTACHMENT
     # --------------------------------------------------
     with site_tab3:
-        st.markdown("#### 📸 Daily Progress Report")
-        work_stage = st.text_input("कामाचा टप्पा:", value="Slab Casting", key="prog_stage_input")
-        work_percent = st.slider("प्रगती (%):", 0, 100, 50, key="prog_percent_slider")
+        st.markdown("#### 📸 साईट प्रोग्रेस रिपोर्ट (Daily Progress & Photo Upload)")
+        
+        work_stage = st.text_input("कामाचा टप्पा (Stage Name):", value="Plinth Level Completed", key="prog_stage_input")
+        work_percent = st.slider("Work % Slider (कामाची टक्केवारी):", 0, 100, 40, key="prog_percent_slider")
+        site_photo = st.file_uploader("मोबाईल किंवा कॅमेऱ्याने फोटो अपलोड करा:", type=["png", "jpg", "jpeg"], key="prog_photo_upload")
+        site_remark = st.text_area("कामाचा रिमार्क / शेरा:", placeholder="उदा. साईटवर प्लिंथ लेव्हल कास्टिंगचे काम पूर्ण झाले आहे...", key="prog_remark_input")
 
-        if st.button("📊 Save Progress", type="primary", key="save_prog_btn"):
+        if site_photo:
+            st.image(site_photo, caption="Uploaded Site Work Photo", use_column_width=True)
+
+        if st.button("📊 Generate Instant PDF Report & WhatsApp Summary", type="primary", key="save_prog_btn"):
             conn = get_db_connection()
             cursor = conn.cursor()
             cursor.execute('''
                 INSERT INTO site_progress (user_key, date, stage_name, progress_percent, remark)
                 VALUES (?, ?, ?, ?, ?)
-            ''', (current_user_name, str(datetime.date.today()), work_stage, work_percent, "In Progress"))
+            ''', (current_user_name, str(datetime.date.today()), work_stage, work_percent, site_remark))
             conn.commit()
             conn.close()
-            st.success("✅ प्रोग्रेस सेव्ह झाला!")
+
+            report_summary = f"""🏗️ *PATIL INFRATECH - DAILY SITE PROGRESS REPORT*
+👤 *Site Engineer:* {current_user_name}
+📅 *Date:* {datetime.date.today()}
+🚧 *Stage:* {work_stage}
+📈 *Work Completed:* {work_percent}%
+📝 *Remark:* {site_remark}
+--------------------------------
+_Daily Progress Report Generated_"""
+            
+            st.success("🎉 Daily Progress Report यशस्वीरित्या जनरेट झाला आहे!")
+            st.code(report_summary)
+            
+            encoded_prog_msg = urllib.parse.quote(report_summary)
+            
+            btn_col1, btn_col2 = st.columns(2)
+            with btn_col1:
+                try:
+                    render_whatsapp_feature(encoded_prog_msg, "site_prog_wa")
+                except:
+                    st.markdown(f"[Send WhatsApp](https://wa.me/?text={encoded_prog_msg})")
+            with btn_col2:
+                st.markdown('''
+                    <button onclick="window.print()" style="width: 100%; background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px; box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4);">
+                        📄 Download Instant PDF Report
+                    </button>
+                ''', unsafe_allow_html=True)
 
     # --------------------------------------------------
-    # TAB 4: WEEKLY DASHBOARD & LIVE COST ANALYTICS (GRAPHICS)
+    # TAB 4: WEEKLY DASHBOARD / REPORT (WITH DELETE OPTION)
     # --------------------------------------------------
     with site_tab4:
-        st.markdown("### 📊 Live Cost & Budget Analytics (ग्राफिक्स डॅशबोर्ड)")
-        st.caption("💡 तुमच्या साइटवरील एकूण खर्च (मजूर पगार + साहित्य खर्च) रंगीत ग्राफमध्ये पहा:")
-
+        st.markdown("#### 📊 मागील ७ दिवसांचा साइट रिपोर्ट (Weekly Site Dashboard)")
+        st.caption("💡 मागील ७ दिवसांमधील तुमची हजेरी (Attendance), मटेरियल खर्च आणि कामाची प्रगती. तुम्ही चुकीची एंट्री येथून डिलीट करू शकता.")
+        
         today = datetime.date.today()
         week_ago = today - datetime.timedelta(days=7)
         str_today = str(today)
@@ -2780,119 +2854,83 @@ elif st.session_state.selected_module == "Site Manager":
 
         conn = get_db_connection()
         
-        # 1. Attendance SQL Query
-        att_df = pd.read_sql_query(f"SELECT rowid as id, date as Date, total_cost as Daily_Wage_Cost FROM site_attendance WHERE user_key = '{current_user_name}' AND date BETWEEN '{str_week_ago}' AND '{str_today}' ORDER BY date ASC", conn)
+        # 1. Weekly Attendance Data (Added rowid as id)
+        att_df = pd.read_sql_query(f"SELECT rowid as id, date as Date, total_cost as Daily_Wage_Cost FROM site_attendance WHERE user_key = '{current_user_name}' AND date BETWEEN '{str_week_ago}' AND '{str_today}' ORDER BY date DESC", conn)
         
-        # 2. Inventory SQL Query
-        inv_df = pd.read_sql_query(f"SELECT rowid as id, date as Date, material_name as Material, transaction_type as Status, quantity as Qty FROM site_inventory WHERE user_key = '{current_user_name}' ORDER BY date DESC", conn)
-
-        # 3. Progress Query
-        prog_df = pd.read_sql_query(f"SELECT rowid as id, date as Date, stage_name as Work_Stage, progress_percent as Completed_Percent FROM site_progress WHERE user_key = '{current_user_name}' ORDER BY date DESC", conn)
-
+        # 2. Weekly Material Inventory Data (Added rowid as id)
+        inv_df = pd.read_sql_query(f"SELECT rowid as id, date as Date, material_name as Material, transaction_type as Status, quantity as Qty FROM site_inventory WHERE user_key = '{current_user_name}' AND date BETWEEN '{str_week_ago}' AND '{str_today}' ORDER BY date DESC", conn)
+        
+        # 3. Weekly Progress Data (Added rowid as id)
+        prog_df = pd.read_sql_query(f"SELECT rowid as id, date as Date, stage_name as Work_Stage, progress_percent as Completed_Percent FROM site_progress WHERE user_key = '{current_user_name}' AND date BETWEEN '{str_week_ago}' AND '{str_today}' ORDER BY date DESC", conn)
+        
         conn.close()
 
-        # ==========================================
-        # 🟢 GRAPHICS SECTION (CHARTS & ANALYTICS)
-        # ==========================================
-        st.markdown("---")
-        m_col1, m_col2 = st.columns(2)
-
-        # --- GRAPH 1: DAILY WAGE EXPENSE (BAR CHART) ---
-        with m_col1:
-            st.markdown("##### 📈 मागील ७ दिवसांचा रोजचा मजुरी खर्च")
+        # Render Attendance Table & Delete Option
+        with st.expander("👷 मागील ७ दिवसांची हजेरी आणि मजुरी खर्च (Wages)", expanded=True):
             if not att_df.empty:
-                # Streamlit Inbuilt Bar Chart (Simple & Compact)
-                chart_data = att_df.set_index("Date")[["Daily_Wage_Cost"]]
-                st.bar_chart(chart_data, height=220)
-            else:
-                st.info("ℹ️ ग्राफ दाखवण्यासाठी मजुरी डेटा उपलब्ध नाही.")
-
-        # --- GRAPH 2: TOTAL COST BREAKDOWN (PIE CHART) ---
-        with m_col2:
-            st.markdown("##### 🍩 एकूण खर्चाची विभागणी (Breakdown)")
-            
-            # कॅल्क्युलेशन फॉर पाई चार्ट
-            total_wages = att_df["Daily_Wage_Cost"].sum() if not att_df.empty else 0.0
-            
-            # बाजारातील अंदाजे दरांवरून साहित्याचा खर्च
-            m_rates = get_market_rates()
-            cement_cost = 0.0
-            steel_cost = 0.0
-            sand_cost = 0.0
-            
-            if not inv_df.empty:
-                for _, r in inv_df.iterrows():
-                    if r["Status"] == "Material IN (+)":
-                        if "Cement" in r["Material"]:
-                            cement_cost += r["Qty"] * m_rates.get("cement", 400.0)
-                        elif "Steel" in r["Material"]:
-                            steel_cost += r["Qty"] * m_rates.get("steel", 60.0)
-                        elif "Sand" in r["Material"]:
-                            sand_cost += r["Qty"] * m_rates.get("sand", 2500.0)
-
-            cost_data = {
-                "Category": ["मजुरी (Labour)", "सिमेंट (Cement)", "स्टील (Steel)", "वाळू (Sand)"],
-                "Amount": [total_wages, cement_cost, steel_cost, sand_cost]
-            }
-            df_cost = pd.DataFrame(cost_data)
-            df_cost = df_cost[df_cost["Amount"] > 0]
-
-            if not df_cost.empty and HAS_PLOTLY:
-                fig = px.pie(
-                    df_cost, 
-                    values='Amount', 
-                    names='Category', 
-                    hole=0.4,
-                    color_discrete_sequence=['#00f2fe', '#ec38bc', '#f59e0b', '#10b981']
-                )
-                fig.update_layout(
-                    margin=dict(t=10, b=10, l=10, r=10),
-                    height=220,
-                    showlegend=True,
-                    paper_bgcolor='rgba(0,0,0,0)',
-                    plot_bgcolor='rgba(0,0,0,0)',
-                    font=dict(color='#ffffff', size=11)
-                )
-                st.plotly_chart(fig, use_container_width=True)
-            else:
-                st.info("ℹ️ खर्चाचा पाई-चार्ट पाहण्यासाठी साईटवर एंट्री करा.")
-
-        st.write("---")
-
-        # --- TABLES & DELETE OPTION SECTION ---
-        with st.expander("👷 मजुरी हजेरी रेकॉर्ड व डिलीट पर्याय", expanded=False):
-            if not att_df.empty:
+                total_week_wage = att_df["Daily_Wage_Cost"].sum()
+                st.markdown(f"**💰 एकूण ७ दिवसांचा मजुरी खर्च:** <span style='color:#10b981; font-size:18px;'>₹ {total_week_wage:,.2f}</span>", unsafe_allow_html=True)
                 st.dataframe(att_df.drop(columns=['id']), use_container_width=True, hide_index=True)
+                
+                # Delete logic for Attendance
+                st.markdown("---")
                 c1, c2 = st.columns([3, 1])
                 with c1:
-                    att_del_opt = st.selectbox("❌ डिलीट करण्यासाठी रेकॉर्ड निवडा:", att_df.to_dict('records'), format_func=lambda x: f"तारीख: {x['Date']} | ₹ {x['Daily_Wage_Cost']}", key="sel_del_att")
+                    att_del_opt = st.selectbox("❌ डिलीट करण्यासाठी रेकॉर्ड निवडा:", att_df.to_dict('records'), format_func=lambda x: f"तारीख: {x['Date']} | रक्कम: ₹ {x['Daily_Wage_Cost']}", key="sel_del_att")
                 with c2:
-                    if st.button("🗑️ Delete", key="btn_del_att"):
+                    st.markdown("<div style='margin-top:28px;'></div>", unsafe_allow_html=True)
+                    if st.button("🗑️ Delete Record", key="btn_del_att", use_container_width=True):
                         conn = get_db_connection()
                         conn.execute("DELETE FROM site_attendance WHERE rowid=?", (att_del_opt['id'],))
                         conn.commit()
                         conn.close()
-                        st.success("✅ रेकॉर्ड डिलीट झाले!")
+                        st.success("✅ रेकॉर्ड यशस्वीरित्या डिलीट झाले!")
                         st.rerun()
+            else:
+                st.info("ℹ️ मागील ७ दिवसात कोणतीही हजेरी नोंदवली नाही.")
 
-        with st.expander("📦 मटेरियल स्टॉक रेकॉर्ड व डिलीट पर्याय", expanded=False):
+        # Render Inventory Table & Delete Option
+        with st.expander("📦 मागील ७ दिवसांचा मटेरियल ट्रॅकर (Material IN/OUT)"):
             if not inv_df.empty:
                 st.dataframe(inv_df.drop(columns=['id']), use_container_width=True, hide_index=True)
+                
+                # Delete logic for Inventory
+                st.markdown("---")
                 c1, c2 = st.columns([3, 1])
                 with c1:
-                    inv_del_opt = st.selectbox("❌ डिलीट करण्यासाठी रेकॉर्ड निवडा:", inv_df.to_dict('records'), format_func=lambda x: f"{x['Date']} | {x['Material']} ({x['Qty']})", key="sel_del_inv")
+                    inv_del_opt = st.selectbox("❌ डिलीट करण्यासाठी रेकॉर्ड निवडा:", inv_df.to_dict('records'), format_func=lambda x: f"{x['Date']} | {x['Material']} | {x['Status']} ({x['Qty']})", key="sel_del_inv")
                 with c2:
-                    if st.button("🗑️ Delete", key="btn_del_inv"):
+                    st.markdown("<div style='margin-top:28px;'></div>", unsafe_allow_html=True)
+                    if st.button("🗑️ Delete Record", key="btn_del_inv", use_container_width=True):
                         conn = get_db_connection()
                         conn.execute("DELETE FROM site_inventory WHERE rowid=?", (inv_del_opt['id'],))
                         conn.commit()
                         conn.close()
-                        st.success("✅ रेकॉर्ड डिलीट झाले!")
+                        st.success("✅ रेकॉर्ड यशस्वीरित्या डिलीट झाले!")
                         st.rerun()
+            else:
+                st.info("ℹ️ मागील ७ दिवसात कोणतेही मटेरियल IN/OUT नोंदवले नाही.")
 
-elif st.session_state.selected_module == "Civil Calculator":
-    if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)"):
-        st.session_state.selected_module = None
-        st.rerun()
-    st.subheader("🧮 Civil Smart Unit Converter")
-    st.info("💡 घनमीटर, ब्रास, स्क्वेअर फूट कनव्हर्जनसाठी हे टूल वापरा.")
+        # Render Progress Table & Delete Option
+        with st.expander("📸 मागील ७ दिवसांची कामाची प्रगती (Progress)"):
+            if not prog_df.empty:
+                for idx, row in prog_df.iterrows():
+                    st.markdown(f"**📅 Date:** `{row['Date']}` | **🚧 Work:** {row['Work_Stage']} | **📈 Progress:** `{row['Completed_Percent']}%`")
+                    st.progress(int(row['Completed_Percent']))
+                
+                # Delete logic for Progress
+                st.markdown("---")
+                c1, c2 = st.columns([3, 1])
+                with c1:
+                    prog_del_opt = st.selectbox("❌ डिलीट करण्यासाठी रेकॉर्ड निवडा:", prog_df.to_dict('records'), format_func=lambda x: f"{x['Date']} | {x['Work_Stage']}", key="sel_del_prog")
+                with c2:
+                    st.markdown("<div style='margin-top:28px;'></div>", unsafe_allow_html=True)
+                    if st.button("🗑️ Delete Record", key="btn_del_prog", use_container_width=True):
+                        conn = get_db_connection()
+                        conn.execute("DELETE FROM site_progress WHERE rowid=?", (prog_del_opt['id'],))
+                        conn.commit()
+                        conn.close()
+                        st.success("✅ रेकॉर्ड यशस्वीरित्या डिलीट झाले!")
+                        st.rerun()
+            else:
+                st.info("ℹ️ मागील ७ दिवसात कामाचा कोणताही प्रोग्रेस रिपोर्ट नोंदवला नाही.")
