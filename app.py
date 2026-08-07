@@ -2935,3 +2935,32 @@ _Daily Progress Report Generated_"""
                         st.rerun()
             else:
                 st.info("ℹ️ मागील ७ दिवसात कामाचा कोणताही प्रोग्रेस रिपोर्ट नोंदवला नाही.")
+
+import pandas as pd
+import streamlit as st
+
+# 1. डेटा तयार करणे (डेटाबेसवरून आलेली किंवा कॅल्क्युलेट झालेली रक्कम)
+expense_data = {
+    "खर्च प्रकार (Category)": [
+        "Masons (गवंडी)",
+        "Labors (मजूर)",
+        "Cement (सिमेंट)",
+        "Steel (स्टील)",
+        "Sand/Aggregate",
+    ],
+    "एकूण खर्च (₹)": [8000, 5000, 45000, 60000, 15000],
+}
+
+# 2. DataFrame बनवणे
+df = pd.DataFrame(expense_data)
+
+st.subheader("📊 Live Project Budget Analytics")
+
+# 3. Metrics (सोप्या भाषेत महत्त्वाचे आकडे)
+total_budget = df["एकूण खर्च (₹)"].sum()
+st.metric(
+    label="एकूण झालेला खर्च (Total Spent)", value=f"₹{total_budget:,}"
+)
+
+# 4. Bar Chart दाखवणे (फक्त एका ओळीत!)
+st.bar_chart(data=df, x="खर्च प्रकार (Category)", y="एकूण खर्च (₹)")
