@@ -159,21 +159,50 @@ def init_db():
         )
     ''')
 
-    # 7. Daily Attendance Table
+    # 7. Daily Attendance Table (Updated to hold all labour types)
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS site_attendance (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_key TEXT,
             date TEXT,
-            masons INTEGER,
-            labors INTEGER,
-            fitters INTEGER,
-            mason_rate REAL,
-            labor_rate REAL,
-            fitter_rate REAL,
-            total_cost REAL
+            masons INTEGER DEFAULT 0,
+            mason_rate REAL DEFAULT 0.0,
+            labors INTEGER DEFAULT 0,
+            labor_rate REAL DEFAULT 0.0,
+            fitters INTEGER DEFAULT 0,
+            fitter_rate REAL DEFAULT 0.0,
+            supervisor INTEGER DEFAULT 0,
+            supervisor_rate REAL DEFAULT 0.0,
+            carpenter INTEGER DEFAULT 0,
+            carpenter_rate REAL DEFAULT 0.0,
+            plumber INTEGER DEFAULT 0,
+            plumber_rate REAL DEFAULT 0.0,
+            electrician INTEGER DEFAULT 0,
+            electrician_rate REAL DEFAULT 0.0,
+            painter INTEGER DEFAULT 0,
+            painter_rate REAL DEFAULT 0.0,
+            total_cost REAL DEFAULT 0.0
         )
     ''')
+
+    # SAFE DB UPGRADE: If older DB exists, alter the table safely without crashing
+    new_labour_cols = [
+        ("supervisor", "INTEGER DEFAULT 0"),
+        ("supervisor_rate", "REAL DEFAULT 0.0"),
+        ("carpenter", "INTEGER DEFAULT 0"),
+        ("carpenter_rate", "REAL DEFAULT 0.0"),
+        ("plumber", "INTEGER DEFAULT 0"),
+        ("plumber_rate", "REAL DEFAULT 0.0"),
+        ("electrician", "INTEGER DEFAULT 0"),
+        ("electrician_rate", "REAL DEFAULT 0.0"),
+        ("painter", "INTEGER DEFAULT 0"),
+        ("painter_rate", "REAL DEFAULT 0.0")
+    ]
+    for col_name, col_type in new_labour_cols:
+        try:
+            cursor.execute(f"ALTER TABLE site_attendance ADD COLUMN {col_name} {col_type}")
+        except sqlite3.OperationalError:
+            pass  # Column already exists, safe to ignore
 
     # 8. Material Inventory Table
     cursor.execute('''
@@ -1657,7 +1686,7 @@ elif st.session_state.selected_module == "Rate Analysis":
         unsafe_allow_html=True
     )
 
-    main_choice = st.radio("**काय काम करायचे आहे ते निवडा :**", ["Concrete Work (काँक्रीट काम)", "Brickwork (वीटकाम)", "Plaster Work (प्लास्टर काम)"])
+    main_choice = st.radio("**काय काम करायचे ते निवडा :**", ["Concrete Work (काँक्रीट काम)", "Brickwork (वीटकाम)", "Plaster Work (प्लास्टर काम)"])
 
     if "Concrete Work" in main_choice:
         st.subheader("🧱 Concrete Work Estimation")
@@ -2615,29 +2644,53 @@ elif st.session_state.selected_module == "Site Manager":
     ])
 
     # --------------------------------------------------
-    # TAB 1: DAILY ATTENDANCE & WAGES
+    # TAB 1: DAILY ATTENDANCE & WAGES (UPDATED WITH ALL LABOURS)
     # --------------------------------------------------
     with site_tab1:
-        st.markdown("#### 👷 डेली हजेरी आणि मजुरी कॅल्क्युलेटर (In-App Attendance Form)")
+        st.markdown("#### 👷 डेली हजेरी आणि मजुरी कॅल्क्युलेटर")
         att_date = st.date_input("तारीख निवडा (Select Date):", datetime.date.today(), key="site_att_date")
         
-        col_m1, col_m2 = st.columns(2)
-        with col_m1:
-            masons = st.number_input("गवंडी संख्या (Masons):", min_value=0, value=4, step=1, key="site_masons")
-            labors = st.number_input("मजूर संख्या (Labors):", min_value=0, value=6, step=1, key="site_labors")
-            fitters = st.number_input("फिटर संख्या (Fitters):", min_value=0, value=2, step=1, key="site_fitters")
-        
-        with col_m2:
-            m_rate = st.number_input("गवंडी रोज (Mason Rate ₹):", min_value=0.0, value=800.0, step=50.0, key="site_m_rate")
-            l_rate = st.number_input("मजूर रोज (Labor Rate ₹):", min_value=0.0, value=500.0, step=50.0, key="site_l_rate")
-            f_rate = st.number_input("फिटर रोज (Fitter Rate ₹):", min_value=0.0, value=750.0, step=50.0, key="site_f_rate")
+        st.markdown("##### 👥 कामगारांची माहिती भरा:")
+        w_cols = st.columns([1.5, 1, 1, 1])
+        with w_cols[0]: st.markdown("**कामगार प्रकार**")
+        with w_cols[1]: st.markdown("**संख्या (Nos)**")
+        with w_cols[2]: st.markdown("**रोजंदारी (Rate ₹)**")
+        with w_cols[3]: st.markdown("**एकूण (Total ₹)**")
 
-        total_labor_cost = (masons * m_rate) + (labors * l_rate) + (fitters * f_rate)
+        # Variables and dictionary to hold current values
+        w_data = {}
+        total_labor_cost = 0.0
+
+        labor_types = [
+            ("supervisor", "मुकादम (Supervisor)", 0, 800.0),
+            ("mason", "गवंडी (Mason)", 4, 800.0),
+            ("labor", "मजूर (Labor/Helper)", 6, 500.0),
+            ("fitter", "फिटर/बार बेंडर (Fitter)", 2, 750.0),
+            ("carpenter", "सुतार/सेंटरिंग (Carpenter)", 0, 800.0),
+            ("plumber", "प्लंबर (Plumber)", 0, 700.0),
+            ("electrician", "इलेक्ट्रिशियन (Electrician)", 0, 700.0),
+            ("painter", "पेंटर (Painter)", 0, 600.0)
+        ]
+
+        for w_id, w_name, def_q, def_r in labor_types:
+            r_cols = st.columns([1.5, 1, 1, 1])
+            with r_cols[0]:
+                st.markdown(f"<p style='margin-top:8px;'>{w_name}</p>", unsafe_allow_html=True)
+            with r_cols[1]:
+                q = st.number_input(f"Qty {w_id}", min_value=0, value=def_q, step=1, key=f"q_{w_id}", label_visibility="collapsed")
+            with r_cols[2]:
+                r = st.number_input(f"Rate {w_id}", min_value=0.0, value=def_r, step=50.0, key=f"r_{w_id}", label_visibility="collapsed")
+            with r_cols[3]:
+                t = q * r
+                st.markdown(f"<p style='margin-top:8px; font-weight:bold;'>₹ {t:.2f}</p>", unsafe_allow_html=True)
+                total_labor_cost += t
+
+            w_data[w_id] = {"qty": q, "rate": r}
 
         st.markdown(f"""
             <div style="background: #111827; padding: 18px; border-radius: 16px; border-left: 5px solid #10b981; margin-top: 12px; box-shadow: 0 4px 20px rgba(16, 185, 129, 0.2);">
                 <h4 style="margin:0; color:#10b981;">💰 Today's Total Labor Cost: ₹ {total_labor_cost:.2f}/-</h4>
-                <p style="margin:5px 0 0 0; font-size:13px; color:#cbd5e1;">({masons} गवंडी x ₹{m_rate} + {labors} मजूर x ₹{l_rate} + {fitters} फिटर x ₹{f_rate})</p>
+                <p style="margin:5px 0 0 0; font-size:13px; color:#cbd5e1;">(सर्व कामगारांची एकूण मजुरी)</p>
             </div>
         """, unsafe_allow_html=True)
 
@@ -2645,9 +2698,30 @@ elif st.session_state.selected_module == "Site Manager":
             conn = get_db_connection()
             cursor = conn.cursor()
             cursor.execute('''
-                INSERT INTO site_attendance (user_key, date, masons, labors, fitters, mason_rate, labor_rate, fitter_rate, total_cost)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (current_user_name, str(att_date), masons, labors, fitters, m_rate, l_rate, f_rate, total_labor_cost))
+                INSERT INTO site_attendance (
+                    user_key, date,
+                    supervisor, supervisor_rate,
+                    masons, mason_rate,
+                    labors, labor_rate,
+                    fitters, fitter_rate,
+                    carpenter, carpenter_rate,
+                    plumber, plumber_rate,
+                    electrician, electrician_rate,
+                    painter, painter_rate,
+                    total_cost
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                current_user_name, str(att_date),
+                w_data['supervisor']['qty'], w_data['supervisor']['rate'],
+                w_data['mason']['qty'], w_data['mason']['rate'],
+                w_data['labor']['qty'], w_data['labor']['rate'],
+                w_data['fitter']['qty'], w_data['fitter']['rate'],
+                w_data['carpenter']['qty'], w_data['carpenter']['rate'],
+                w_data['plumber']['qty'], w_data['plumber']['rate'],
+                w_data['electrician']['qty'], w_data['electrician']['rate'],
+                w_data['painter']['qty'], w_data['painter']['rate'],
+                total_labor_cost
+            ))
             conn.commit()
             conn.close()
             st.success("✅ आजची हजेरी आणि मजुरी बिल डेटाबेसमध्ये सेव्ह झाले!")
