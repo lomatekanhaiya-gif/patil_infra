@@ -1,4 +1,4 @@
-# KANHA_1p - पाटील इन्फ्राटेक (SQLite Database & Streamlit Web Application with Email OTP)
+# KANHA_1p - पाटील इन्फ्राटेक (SQLite Database & Streamlit Web Application with Site Manager)
 import streamlit as st
 import math
 import sqlite3
@@ -159,6 +159,50 @@ def init_db():
         )
     ''')
 
+    # ----------------------------------------------------
+    # 🔥 नवीन टेबल्स (NEW FEATURE TABLES)
+    # ----------------------------------------------------
+    # 7. Daily Attendance Table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS site_attendance (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_key TEXT,
+            date TEXT,
+            masons INTEGER,
+            labors INTEGER,
+            fitters INTEGER,
+            mason_rate REAL,
+            labor_rate REAL,
+            fitter_rate REAL,
+            total_cost REAL
+        )
+    ''')
+
+    # 8. Material Inventory Table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS site_inventory (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_key TEXT,
+            date TEXT,
+            material_name TEXT,
+            transaction_type TEXT,
+            quantity INTEGER,
+            unit TEXT
+        )
+    ''')
+
+    # 9. Daily Progress Report Table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS site_progress (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_key TEXT,
+            date TEXT,
+            stage_name TEXT,
+            progress_percent INTEGER,
+            remark TEXT
+        )
+    ''')
+
     # Master Admin Default Entry
     cursor.execute("SELECT * FROM users WHERE user_key = ?", ("9999999999",))
     if not cursor.fetchone():
@@ -173,6 +217,7 @@ def init_db():
         "Rate Analysis": "Free",
         "BBS": "Free",
         "Quantity Surveying": "Free",
+        "Site Manager": "Free",
         "WhatsApp Share": "Premium",
         "Civil AI Assistant": "Premium"
     }
@@ -302,7 +347,6 @@ is_curr_premium, _ = check_user_premium_status(current_user_name)
 # 🎨 HIGH-END GALAXY & OBSIDIAN DUAL THEME STYLING
 # ==========================================
 if is_curr_premium:
-    # 🌌 LUXURY COSMIC GALAXY VIP THEME (EXCLUSIVE FOR PREMIUM)
     bg_gradient = "radial-gradient(circle at 50% -20%, #2a0845 0%, #03001e 50%, #050014 100%)"
     accent_border = "#ec38bc"
     accent_glow = "rgba(236, 56, 188, 0.6)"
@@ -314,7 +358,6 @@ if is_curr_premium:
     primary_btn_shadow = "rgba(236, 56, 188, 0.5)"
     box_bg_color = "#140a28"
 else:
-    # 🌌 PURE OBSIDIAN & ELECTRIC CYAN FREE THEME
     bg_gradient = "linear-gradient(135deg, #030712 0%, #0b0f19 50%, #020617 100%)"
     accent_border = "#00f2fe"
     accent_glow = "rgba(0, 242, 254, 0.4)"
@@ -759,6 +802,7 @@ if st.session_state.is_admin_logged:
         fl_ra = st.selectbox("Rate Analysis Module Access:", ["Free", "Premium"], index=0 if cur_locks.get("Rate Analysis", "Free") == "Free" else 1)
         fl_bbs = st.selectbox("BBS Calculator Access:", ["Free", "Premium"], index=0 if cur_locks.get("BBS", "Free") == "Free" else 1)
         fl_qs = st.selectbox("Quantity Surveying Access:", ["Free", "Premium"], index=0 if cur_locks.get("Quantity Surveying", "Free") == "Free" else 1)
+        fl_site = st.selectbox("Site Manager Access:", ["Free", "Premium"], index=0 if cur_locks.get("Site Manager", "Free") == "Free" else 1)
         fl_wa = st.selectbox("WhatsApp Full Report Share:", ["Free", "Premium"], index=0 if cur_locks.get("WhatsApp Share", "Free") == "Free" else 1)
         fl_ai = st.selectbox("Civil AI Assistant Access:", ["Free", "Premium"], index=0 if cur_locks.get("Civil AI Assistant", "Premium") == "Free" else 1)
 
@@ -770,6 +814,7 @@ if st.session_state.is_admin_logged:
                 "Rate Analysis": fl_ra,
                 "BBS": fl_bbs,
                 "Quantity Surveying": fl_qs,
+                "Site Manager": fl_site,
                 "WhatsApp Share": fl_wa,
                 "Civil AI Assistant": fl_ai
             }
@@ -1373,16 +1418,17 @@ if st.session_state.selected_module is None:
     ra_lock = locks_cfg.get("Rate Analysis", "Free")
     bbs_lock = locks_cfg.get("BBS", "Free")
     qs_lock = locks_cfg.get("Quantity Surveying", "Free")
+    site_lock = locks_cfg.get("Site Manager", "Free")
 
-    col_icon1, col_icon2, col_icon3, col_icon4 = st.columns(4)
+    col_icon1, col_icon2, col_icon3, col_icon4, col_icon5 = st.columns(5)
     
     with col_icon1:
         calc_badge = "🆓 Free" if calc_lock == "Free" else "👑 Premium"
         st.markdown(f"""
             <div style="text-align: center; background: #111827; padding: 18px 10px; border-radius: 20px; border: 1px solid rgba(0, 242, 254, 0.3);">
-                <h1 style="font-size: 38px; margin:0;">🧮</h1>
-                <h5 style="margin: 8px 0 2px 0; color: #f8fafc; font-weight:700;">Calculator</h5>
-                <p style="font-size: 10px; color: #38bdf8; margin:0;">[{calc_badge}]</p>
+                <h1 style="font-size: 32px; margin:0;">🧮</h1>
+                <h5 style="margin: 8px 0 2px 0; color: #f8fafc; font-weight:700; font-size:13px;">Calculator</h5>
+                <p style="font-size: 9px; color: #38bdf8; margin:0;">[{calc_badge}]</p>
             </div>
         """, unsafe_allow_html=True)
         if st.button("🧮 Calculator", key="btn_open_calc", use_container_width=True):
@@ -1396,9 +1442,9 @@ if st.session_state.selected_module is None:
         ra_badge = "🆓 Free" if ra_lock == "Free" else "👑 Premium"
         st.markdown(f"""
             <div style="text-align: center; background: #111827; padding: 18px 10px; border-radius: 20px; border: 1px solid rgba(0, 242, 254, 0.3);">
-                <h1 style="font-size: 38px; margin:0;">📊</h1>
-                <h5 style="margin: 8px 0 2px 0; color: #f8fafc; font-weight:700;">Rate Analysis</h5>
-                <p style="font-size: 10px; color: #38bdf8; margin:0;">[{ra_badge}]</p>
+                <h1 style="font-size: 32px; margin:0;">📊</h1>
+                <h5 style="margin: 8px 0 2px 0; color: #f8fafc; font-weight:700; font-size:13px;">Rate Analysis</h5>
+                <p style="font-size: 9px; color: #38bdf8; margin:0;">[{ra_badge}]</p>
             </div>
         """, unsafe_allow_html=True)
         if st.button("📊 Rate Analysis", key="btn_open_ra", use_container_width=True):
@@ -1412,9 +1458,9 @@ if st.session_state.selected_module is None:
         bbs_badge = "🆓 Free" if bbs_lock == "Free" else "👑 Premium"
         st.markdown(f"""
             <div style="text-align: center; background: #111827; padding: 18px 10px; border-radius: 20px; border: 1px solid rgba(0, 242, 254, 0.3);">
-                <h1 style="font-size: 38px; margin:0;">🏗️</h1>
-                <h5 style="margin: 8px 0 2px 0; color: #f8fafc; font-weight:700;">BBS</h5>
-                <p style="font-size: 10px; color: #38bdf8; margin:0;">[{bbs_badge}]</p>
+                <h1 style="font-size: 32px; margin:0;">🏗️</h1>
+                <h5 style="margin: 8px 0 2px 0; color: #f8fafc; font-weight:700; font-size:13px;">BBS</h5>
+                <p style="font-size: 9px; color: #38bdf8; margin:0;">[{bbs_badge}]</p>
             </div>
         """, unsafe_allow_html=True)
         if st.button("🏗️ Open BBS", key="btn_open_bbs", use_container_width=True):
@@ -1428,9 +1474,9 @@ if st.session_state.selected_module is None:
         qs_badge = "🆓 Free" if qs_lock == "Free" else "👑 Premium"
         st.markdown(f"""
             <div style="text-align: center; background: #111827; padding: 18px 10px; border-radius: 20px; border: 1px solid rgba(0, 242, 254, 0.3);">
-                <h1 style="font-size: 38px; margin:0;">📈</h1>
-                <h5 style="margin: 8px 0 2px 0; color: #f8fafc; font-weight:700;">Quantity Survey</h5>
-                <p style="font-size: 10px; color: #38bdf8; margin:0;">[{qs_badge}]</p>
+                <h1 style="font-size: 32px; margin:0;">📈</h1>
+                <h5 style="margin: 8px 0 2px 0; color: #f8fafc; font-weight:700; font-size:13px;">Quantity Survey</h5>
+                <p style="font-size: 9px; color: #38bdf8; margin:0;">[{qs_badge}]</p>
             </div>
         """, unsafe_allow_html=True)
         if st.button("📈 Quantity Survey", key="btn_open_qs", use_container_width=True):
@@ -1438,6 +1484,23 @@ if st.session_state.selected_module is None:
                 st.error("🔒 हे फीचर प्रिमियम युझर्ससाठी आहे!")
             else:
                 st.session_state.selected_module = "Quantity Surveying"
+                st.rerun()
+
+    # 📦 NEW FEATURE ITEM: SITE MANAGER
+    with col_icon5:
+        site_badge = "🆓 Free" if site_lock == "Free" else "👑 Premium"
+        st.markdown(f"""
+            <div style="text-align: center; background: #111827; padding: 18px 10px; border-radius: 20px; border: 1px solid rgba(0, 242, 254, 0.3);">
+                <h1 style="font-size: 32px; margin:0;">👷‍♂️</h1>
+                <h5 style="margin: 8px 0 2px 0; color: #f8fafc; font-weight:700; font-size:13px;">Site Manager</h5>
+                <p style="font-size: 9px; color: #38bdf8; margin:0;">[{site_badge}]</p>
+            </div>
+        """, unsafe_allow_html=True)
+        if st.button("👷‍♂️ Site Manager", key="btn_open_site", use_container_width=True):
+            if site_lock == "Premium" and not is_user_premium:
+                st.error("🔒 हे फीचर प्रिमियम युझर्ससाठी आहे!")
+            else:
+                st.session_state.selected_module = "Site Manager"
                 st.rerun()
 
 # ==========================================
@@ -2504,3 +2567,169 @@ elif st.session_state.selected_module == "Quantity Surveying":
                 cursor.execute("INSERT INTO history (user_key, timestamp, user_note, report_data) VALUES (?, ?, ?, ?)", (current_user_name, now_str, st.session_state.current_comment, final_report_html))
                 conn.commit()
                 conn.close()
+
+# ==========================================
+# 📦 MODULE 4: SITE MANAGER (NEW INTEGRATED MODULE)
+# ==========================================
+elif st.session_state.selected_module == "Site Manager":
+    if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_site"):
+        st.session_state.selected_module = None
+        st.rerun()
+
+    st.write("---")
+    st.subheader("👷‍♂️ Construction Site Manager & Stock Tracker")
+
+    site_tab1, site_tab2, site_tab3 = st.tabs([
+        "👷 1. Attendance & Wages", 
+        "📦 2. Material Inventory", 
+        "📸 3. Progress Report"
+    ])
+
+    # --------------------------------------------------
+    # TAB 1: DAILY ATTENDANCE & WAGES
+    # --------------------------------------------------
+    with site_tab1:
+        st.markdown("#### 👷 डेली हजेरी आणि मजुरी कॅल्क्युलेटर (In-App Attendance Form)")
+        att_date = st.date_input("तारीख निवडा (Select Date):", datetime.date.today(), key="site_att_date")
+        
+        col_m1, col_m2 = st.columns(2)
+        with col_m1:
+            masons = st.number_input("गवंडी संख्या (Masons):", min_value=0, value=4, step=1, key="site_masons")
+            labors = st.number_input("मजूर संख्या (Labors):", min_value=0, value=6, step=1, key="site_labors")
+            fitters = st.number_input("फिटर संख्या (Fitters):", min_value=0, value=2, step=1, key="site_fitters")
+        
+        with col_m2:
+            m_rate = st.number_input("गवंडी रोज (Mason Rate ₹):", min_value=0.0, value=800.0, step=50.0, key="site_m_rate")
+            l_rate = st.number_input("मजूर रोज (Labor Rate ₹):", min_value=0.0, value=500.0, step=50.0, key="site_l_rate")
+            f_rate = st.number_input("फिटर रोज (Fitter Rate ₹):", min_value=0.0, value=750.0, step=50.0, key="site_f_rate")
+
+        total_labor_cost = (masons * m_rate) + (labors * l_rate) + (fitters * f_rate)
+
+        st.markdown(f"""
+            <div style="background: #111827; padding: 18px; border-radius: 16px; border-left: 5px solid #10b981; margin-top: 12px; box-shadow: 0 4px 20px rgba(16, 185, 129, 0.2);">
+                <h4 style="margin:0; color:#10b981;">💰 Today's Total Labor Cost: ₹ {total_labor_cost:.2f}/-</h4>
+                <p style="margin:5px 0 0 0; font-size:13px; color:#cbd5e1;">({masons} गवंडी x ₹{m_rate} + {labors} मजूर x ₹{l_rate} + {fitters} फिटर x ₹{f_rate})</p>
+            </div>
+        """, unsafe_allow_html=True)
+
+        if st.button("💾 Save Attendance to SQLite Database", type="primary", key="save_att_btn"):
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute('''
+                INSERT INTO site_attendance (user_key, date, masons, labors, fitters, mason_rate, labor_rate, fitter_rate, total_cost)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (current_user_name, str(att_date), masons, labors, fitters, m_rate, l_rate, f_rate, total_labor_cost))
+            conn.commit()
+            conn.close()
+            st.success("✅ आजची हजेरी आणि मजुरी बिल डेटाबेसमध्ये सेव्ह झाले!")
+
+    # --------------------------------------------------
+    # TAB 2: MATERIAL INVENTORY & STOCK TRACKER
+    # --------------------------------------------------
+    with site_tab2:
+        st.markdown("#### 📦 साहित्य ट्रॅकर (Material Inventory & Stock Tracker)")
+        
+        # Calculate Current Stock Status
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT material_name, transaction_type, quantity FROM site_inventory WHERE user_key = ?", (current_user_name,))
+        inv_rows = cursor.fetchall()
+        conn.close()
+
+        stock_dict = {}
+        for row in inv_rows:
+            mat = row["material_name"]
+            ttype = row["transaction_type"]
+            qty = row["quantity"]
+            
+            if mat not in stock_dict:
+                stock_dict[mat] = 0
+            if ttype == "Material IN (+)":
+                stock_dict[mat] += qty
+            else:
+                stock_dict[mat] -= qty
+
+        st.markdown("##### 📊 Live Cement & Material Stock Balance:")
+        if stock_dict:
+            for item, count in stock_dict.items():
+                if count <= 10:
+                    st.markdown(f"""
+                        <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; padding: 12px 16px; border-radius: 12px; margin-bottom: 8px;">
+                            <span style="color: #ef4444; font-weight: bold; font-size: 16px;">⚠️ Warning: {item} Stock Low! Re-order Soon</span><br>
+                            <span style="color: #ffffff; font-size: 14px;">Current Stock: <b>{count} Bags/Units</b></span>
+                        </div>
+                    """, unsafe_allow_html=True)
+                else:
+                    st.markdown(f"""
+                        <div style="background: #111827; border: 1px solid #00f2fe; padding: 10px 16px; border-radius: 12px; margin-bottom: 8px;">
+                            <span style="color: #38bdf8; font-weight: bold;">Current {item} Stock:</span> <code style="font-size:16px; color:#10b981;">{count} Bags/Units</code>
+                        </div>
+                    """, unsafe_allow_html=True)
+        else:
+            st.info("ℹ️ सध्या स्टॉकमध्ये कोणतीही एंट्री उपलब्ध नाही. खालील इन-आऊट फॉर्म भरा.")
+
+        st.write("---")
+        st.markdown("##### ➕/➖ Material IN-OUT Entry:")
+        mat_name = st.selectbox("साहित्य निवडा (Material):", ["Cement Bags", "Steel (Kg)", "Sand (CFT)", "Bricks (Nos)"], key="inv_mat_type")
+        trans_type = st.radio("इनपुट/आऊटपुट निवडा:", ["Material IN (+)", "Material OUT (-)"], horizontal=True, key="inv_trans_type")
+        entry_qty = st.number_input("बोरी / नग संख्या (Quantity):", min_value=1, value=100, step=1, key="inv_qty_val")
+
+        if st.button("📥 Save Stock Entry", type="primary", key="save_inv_btn"):
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute('''
+                INSERT INTO site_inventory (user_key, date, material_name, transaction_type, quantity, unit)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ''', (current_user_name, str(datetime.date.today()), mat_name, trans_type, entry_qty, "Bags/Units"))
+            conn.commit()
+            conn.close()
+            st.success("✅ स्टॉक एंट्री सेव्ह झाली!")
+            st.rerun()
+
+    # --------------------------------------------------
+    # TAB 3: DAILY PROGRESS REPORT & PHOTO ATTACHMENT
+    # --------------------------------------------------
+    with site_tab3:
+        st.markdown("#### 📸 साईट प्रोग्रेस रिपोर्ट (Daily Progress & Photo Upload)")
+        
+        work_stage = st.text_input("कामाचा टप्पा (Stage Name):", value="Plinth Level Completed", key="prog_stage_input")
+        work_percent = st.slider("Work % Slider (कामाची टक्केवारी):", 0, 100, 40, key="prog_percent_slider")
+        site_photo = st.file_uploader("मोबाईल किंवा कॅमेऱ्याने फोटो अपलोड करा:", type=["png", "jpg", "jpeg"], key="prog_photo_upload")
+        site_remark = st.text_area("कामाचा रिमार्क / शेरा:", placeholder="उदा. साईटवर प्लिंथ लेव्हल कास्टिंगचे काम पूर्ण झाले आहे...", key="prog_remark_input")
+
+        if site_photo:
+            st.image(site_photo, caption="Uploaded Site Work Photo", use_column_width=True)
+
+        if st.button("📊 Generate Instant PDF Report & WhatsApp Summary", type="primary", key="save_prog_btn"):
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute('''
+                INSERT INTO site_progress (user_key, date, stage_name, progress_percent, remark)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (current_user_name, str(datetime.date.today()), work_stage, work_percent, site_remark))
+            conn.commit()
+            conn.close()
+
+            report_summary = f"""🏗️ *PATIL INFRATECH - DAILY SITE PROGRESS REPORT*
+👤 *Site Engineer:* {current_user_name}
+📅 *Date:* {datetime.date.today()}
+🚧 *Stage:* {work_stage}
+📈 *Work Completed:* {work_percent}%
+📝 *Remark:* {site_remark}
+--------------------------------
+_Daily Progress Report Generated_"""
+            
+            st.success("🎉 Daily Progress Report यशस्वीरित्या जनरेट झाला आहे!")
+            st.code(report_summary)
+            
+            encoded_prog_msg = urllib.parse.quote(report_summary)
+            
+            btn_col1, btn_col2 = st.columns(2)
+            with btn_col1:
+                render_whatsapp_feature(encoded_prog_msg, "site_prog_wa")
+            with btn_col2:
+                st.markdown('''
+                    <button onclick="window.print()" style="width: 100%; background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px; box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4);">
+                        📄 Download Instant PDF Report
+                    </button>
+                ''', unsafe_allow_html=True)
