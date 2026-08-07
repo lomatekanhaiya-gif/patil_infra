@@ -2637,10 +2637,12 @@ elif st.session_state.selected_module == "Site Manager":
     st.write("---")
     st.subheader("👷‍♂️ Construction Site Manager & Stock Tracker")
 
-    site_tab1, site_tab2, site_tab3 = st.tabs([
+    # 4th Tab Added for Weekly Dashboard
+    site_tab1, site_tab2, site_tab3, site_tab4 = st.tabs([
         "👷 1. Attendance & Wages", 
         "📦 2. Material Inventory", 
-        "📸 3. Progress Report"
+        "📸 3. Progress Report",
+        "📊 4. Weekly Dashboard"
     ])
 
     # --------------------------------------------------
@@ -2836,3 +2838,54 @@ _Daily Progress Report Generated_"""
                         📄 Download Instant PDF Report
                     </button>
                 ''', unsafe_allow_html=True)
+
+    # --------------------------------------------------
+    # TAB 4: WEEKLY DASHBOARD / REPORT
+    # --------------------------------------------------
+    with site_tab4:
+        st.markdown("#### 📊 मागील ७ दिवसांचा साइट रिपोर्ट (Weekly Site Dashboard)")
+        st.caption("💡 मागील ७ दिवसांमधील तुमची हजेरी (Attendance), मटेरियल खर्च आणि कामाची प्रगती.")
+        
+        # Calculate Date Range for last 7 days
+        today = datetime.date.today()
+        week_ago = today - datetime.timedelta(days=7)
+        str_today = str(today)
+        str_week_ago = str(week_ago)
+
+        conn = get_db_connection()
+        
+        # 1. Weekly Attendance Data
+        att_df = pd.read_sql_query(f"SELECT date as Date, total_cost as Daily_Wage_Cost FROM site_attendance WHERE user_key = '{current_user_name}' AND date BETWEEN '{str_week_ago}' AND '{str_today}' ORDER BY date DESC", conn)
+        
+        # 2. Weekly Material Inventory Data
+        inv_df = pd.read_sql_query(f"SELECT date as Date, material_name as Material, transaction_type as Status, quantity as Qty FROM site_inventory WHERE user_key = '{current_user_name}' AND date BETWEEN '{str_week_ago}' AND '{str_today}' ORDER BY date DESC", conn)
+        
+        # 3. Weekly Progress Data
+        prog_df = pd.read_sql_query(f"SELECT date as Date, stage_name as Work_Stage, progress_percent as Completed_Percent FROM site_progress WHERE user_key = '{current_user_name}' AND date BETWEEN '{str_week_ago}' AND '{str_today}' ORDER BY date DESC", conn)
+        
+        conn.close()
+
+        # Render Attendance Table
+        with st.expander("👷 मागील ७ दिवसांची हजेरी आणि मजुरी खर्च (Wages)", expanded=True):
+            if not att_df.empty:
+                total_week_wage = att_df["Daily_Wage_Cost"].sum()
+                st.markdown(f"**💰 एकूण ७ दिवसांचा मजुरी खर्च:** <span style='color:#10b981; font-size:18px;'>₹ {total_week_wage:,.2f}</span>", unsafe_allow_html=True)
+                st.dataframe(att_df, use_container_width=True, hide_index=True)
+            else:
+                st.info("ℹ️ मागील ७ दिवसात कोणतीही हजेरी नोंदवली नाही.")
+
+        # Render Inventory Table
+        with st.expander("📦 मागील ७ दिवसांचा मटेरियल ट्रॅकर (Material IN/OUT)"):
+            if not inv_df.empty:
+                st.dataframe(inv_df, use_container_width=True, hide_index=True)
+            else:
+                st.info("ℹ️ मागील ७ दिवसात कोणतेही मटेरियल IN/OUT नोंदवले नाही.")
+
+        # Render Progress Table
+        with st.expander("📸 मागील ७ दिवसांची कामाची प्रगती (Progress)"):
+            if not prog_df.empty:
+                for idx, row in prog_df.iterrows():
+                    st.markdown(f"**📅 Date:** `{row['Date']}` | **🚧 Work:** {row['Work_Stage']} | **📈 Progress:** `{row['Completed_Percent']}%`")
+                    st.progress(int(row['Completed_Percent']))
+            else:
+                st.info("ℹ️ मागील ७ दिवसात कामाचा कोणताही प्रोग्रेस रिपोर्ट नोंदवला नाही.")
