@@ -159,9 +159,6 @@ def init_db():
         )
     ''')
 
-    # ----------------------------------------------------
-    # 🔥 नवीन टेबल्स (NEW FEATURE TABLES)
-    # ----------------------------------------------------
     # 7. Daily Attendance Table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS site_attendance (
@@ -1420,7 +1417,34 @@ if st.session_state.selected_module is None:
     qs_lock = locks_cfg.get("Quantity Surveying", "Free")
     site_lock = locks_cfg.get("Site Manager", "Free")
 
-    col_icon1, col_icon2, col_icon3, col_icon4, col_icon5 = st.columns(5)
+    # --------------------------------------------------
+    # SECTION 1: SITE MANAGER SECTION
+    # --------------------------------------------------
+    st.markdown("#### 👷‍♂️ 1. Site Manager Section")
+    col_site_sec, _ = st.columns([1, 3])
+    with col_site_sec:
+        site_badge = "🆓 Free" if site_lock == "Free" else "👑 Premium"
+        st.markdown(f"""
+            <div style="text-align: center; background: #111827; padding: 18px 10px; border-radius: 20px; border: 1px solid rgba(0, 242, 254, 0.3);">
+                <h1 style="font-size: 32px; margin:0;">👷‍♂️</h1>
+                <h5 style="margin: 8px 0 2px 0; color: #f8fafc; font-weight:700; font-size:13px;">Site Manager</h5>
+                <p style="font-size: 9px; color: #38bdf8; margin:0;">[{site_badge}]</p>
+            </div>
+        """, unsafe_allow_html=True)
+        if st.button("👷‍♂️ Site Manager", key="btn_open_site", use_container_width=True):
+            if site_lock == "Premium" and not is_user_premium:
+                st.error("🔒 हे फीचर प्रिमियम युझर्ससाठी आहे!")
+            else:
+                st.session_state.selected_module = "Site Manager"
+                st.rerun()
+
+    st.write("---")
+
+    # --------------------------------------------------
+    # SECTION 2: ESTIMATOR SECTION
+    # --------------------------------------------------
+    st.markdown("#### 📐 2. Estimator Section")
+    col_icon1, col_icon2, col_icon3, col_icon4 = st.columns(4)
     
     with col_icon1:
         calc_badge = "🆓 Free" if calc_lock == "Free" else "👑 Premium"
@@ -1484,23 +1508,6 @@ if st.session_state.selected_module is None:
                 st.error("🔒 हे फीचर प्रिमियम युझर्ससाठी आहे!")
             else:
                 st.session_state.selected_module = "Quantity Surveying"
-                st.rerun()
-
-    # 📦 NEW FEATURE ITEM: SITE MANAGER
-    with col_icon5:
-        site_badge = "🆓 Free" if site_lock == "Free" else "👑 Premium"
-        st.markdown(f"""
-            <div style="text-align: center; background: #111827; padding: 18px 10px; border-radius: 20px; border: 1px solid rgba(0, 242, 254, 0.3);">
-                <h1 style="font-size: 32px; margin:0;">👷‍♂️</h1>
-                <h5 style="margin: 8px 0 2px 0; color: #f8fafc; font-weight:700; font-size:13px;">Site Manager</h5>
-                <p style="font-size: 9px; color: #38bdf8; margin:0;">[{site_badge}]</p>
-            </div>
-        """, unsafe_allow_html=True)
-        if st.button("👷‍♂️ Site Manager", key="btn_open_site", use_container_width=True):
-            if site_lock == "Premium" and not is_user_premium:
-                st.error("🔒 हे फीचर प्रिमियम युझर्ससाठी आहे!")
-            else:
-                st.session_state.selected_module = "Site Manager"
                 st.rerun()
 
 # ==========================================
