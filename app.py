@@ -27,6 +27,30 @@ except ImportError:
 st.set_page_config(page_title="PATIL INFRATECH", page_icon="🏗️", layout="centered")
 
 # ==========================================
+# 📱 MOBILE NATIVE BACK BUTTON INTERCEPTOR (JS ENGINE)
+# ==========================================
+st.markdown("""
+    <script>
+    // १. युझर कोणत्याही मॉड्यूलमध्ये असताना मोबाईलचा Back button दाबताच ट्रिगर होणारा इव्हेंट
+    window.onpopstate = function(event) {
+        const backButtons = Array.from(window.parent.document.querySelectorAll("button"));
+        const mainBackButton = backButtons.find(btn => 
+            btn.innerText.includes("मुख्य मेनूवर जा") || 
+            btn.innerText.includes("Back to Main") ||
+            btn.innerText.includes("Back to All Users List")
+        );
+        if (mainBackButton) {
+            mainBackButton.click();
+        }
+    };
+    </script>
+""", unsafe_allow_html=True)
+
+def trigger_push_state():
+    """जेव्हा युझर नवीन मॉड्यूलबटणावर क्लिक करेल तेव्हा ब्राउझर हिस्ट्रीमध्ये पुश करण्यासाठी हूक"""
+    st.markdown("<script>window.history.pushState({inSubModule: true}, '');</script>", unsafe_allow_html=True)
+
+# ==========================================
 # 🕒 भारतीय वेळ (IST - Indian Standard Time) मिळवण्याचे फंक्शन
 # ==========================================
 def get_ist_time():
@@ -1024,6 +1048,7 @@ if st.session_state.is_admin_logged:
                     if col_u2.button(f"👁️ View / Manage", key=f"open_user_win_{mob}"):
                         st.session_state.admin_view = "user_detail"
                         st.session_state.admin_selected_user = mob
+                        trigger_push_state()
                         st.rerun()
                     st.write("---")
             else:
@@ -1469,6 +1494,7 @@ if st.session_state.selected_module is None:
                 st.error("🔒 हे फीचर प्रिमियम युझर्ससाठी आहे!")
             else:
                 st.session_state.selected_module = "Site Manager"
+                trigger_push_state()
                 st.rerun()
 
     # --------------------------------------------------
@@ -1512,6 +1538,7 @@ if st.session_state.selected_module is None:
                     st.error("🔒 हे फीचर प्रिमियम युझर्ससाठी आहे!")
                 else:
                     st.session_state.selected_module = "Civil Calculator"
+                    trigger_push_state()
                     st.rerun()
 
         with col_icon2:
@@ -1528,6 +1555,7 @@ if st.session_state.selected_module is None:
                     st.error("🔒 हे फीचर प्रिमियम युझर्ससाठी आहे!")
                 else:
                     st.session_state.selected_module = "Rate Analysis"
+                    trigger_push_state()
                     st.rerun()
 
         with col_icon3:
@@ -1544,6 +1572,7 @@ if st.session_state.selected_module is None:
                     st.error("🔒 हे फीचर प्रिमियम युझर्ससाठी आहे!")
                 else:
                     st.session_state.selected_module = "BBS"
+                    trigger_push_state()
                     st.rerun()
 
         with col_icon4:
@@ -1560,6 +1589,7 @@ if st.session_state.selected_module is None:
                     st.error("🔒 हे फीचर प्रिमियम युझर्ससाठी आहे!")
                 else:
                     st.session_state.selected_module = "Quantity Surveying"
+                    trigger_push_state()
                     st.rerun()
 
 # ==========================================
