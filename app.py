@@ -2659,7 +2659,6 @@ elif st.session_state.selected_module == "Site Manager":
         with w_cols[2]: st.markdown("**रोजंदारी (Rate ₹)**")
         with w_cols[3]: st.markdown("**एकूण (Total ₹)**")
 
-        # Variables and dictionary to hold current values
         w_data = {}
         total_labor_cost = 0.0
 
@@ -2734,7 +2733,6 @@ elif st.session_state.selected_module == "Site Manager":
     with site_tab2:
         st.markdown("#### 📦 साहित्य ट्रॅकर (Material Inventory & Stock Tracker)")
         
-        # Calculate Current Stock Status
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT material_name, transaction_type, quantity FROM site_inventory WHERE user_key = ?", (current_user_name,))
@@ -2831,7 +2829,10 @@ _Daily Progress Report Generated_"""
             
             btn_col1, btn_col2 = st.columns(2)
             with btn_col1:
-                render_whatsapp_feature(encoded_prog_msg, "site_prog_wa")
+                try:
+                    render_whatsapp_feature(encoded_prog_msg, "site_prog_wa")
+                except:
+                    st.markdown(f"[Send WhatsApp](https://wa.me/?text={encoded_prog_msg})")
             with btn_col2:
                 st.markdown('''
                     <button onclick="window.print()" style="width: 100%; background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px; box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4);">
@@ -2840,13 +2841,12 @@ _Daily Progress Report Generated_"""
                 ''', unsafe_allow_html=True)
 
     # --------------------------------------------------
-    # TAB 4: WEEKLY DASHBOARD / REPORT
+    # TAB 4: WEEKLY DASHBOARD / REPORT (WITH DELETE OPTION)
     # --------------------------------------------------
     with site_tab4:
         st.markdown("#### 📊 मागील ७ दिवसांचा साइट रिपोर्ट (Weekly Site Dashboard)")
-        st.caption("💡 मागील ७ दिवसांमधील तुमची हजेरी (Attendance), मटेरियल खर्च आणि कामाची प्रगती.")
+        st.caption("💡 मागील ७ दिवसांमधील तुमची हजेरी (Attendance), मटेरियल खर्च आणि कामाची प्रगती. तुम्ही चुकीची एंट्री येथून डिलीट करू शकता.")
         
-        # Calculate Date Range for last 7 days
         today = datetime.date.today()
         week_ago = today - datetime.timedelta(days=7)
         str_today = str(today)
@@ -2854,38 +2854,83 @@ _Daily Progress Report Generated_"""
 
         conn = get_db_connection()
         
-        # 1. Weekly Attendance Data
-        att_df = pd.read_sql_query(f"SELECT date as Date, total_cost as Daily_Wage_Cost FROM site_attendance WHERE user_key = '{current_user_name}' AND date BETWEEN '{str_week_ago}' AND '{str_today}' ORDER BY date DESC", conn)
+        # 1. Weekly Attendance Data (Added rowid as id)
+        att_df = pd.read_sql_query(f"SELECT rowid as id, date as Date, total_cost as Daily_Wage_Cost FROM site_attendance WHERE user_key = '{current_user_name}' AND date BETWEEN '{str_week_ago}' AND '{str_today}' ORDER BY date DESC", conn)
         
-        # 2. Weekly Material Inventory Data
-        inv_df = pd.read_sql_query(f"SELECT date as Date, material_name as Material, transaction_type as Status, quantity as Qty FROM site_inventory WHERE user_key = '{current_user_name}' AND date BETWEEN '{str_week_ago}' AND '{str_today}' ORDER BY date DESC", conn)
+        # 2. Weekly Material Inventory Data (Added rowid as id)
+        inv_df = pd.read_sql_query(f"SELECT rowid as id, date as Date, material_name as Material, transaction_type as Status, quantity as Qty FROM site_inventory WHERE user_key = '{current_user_name}' AND date BETWEEN '{str_week_ago}' AND '{str_today}' ORDER BY date DESC", conn)
         
-        # 3. Weekly Progress Data
-        prog_df = pd.read_sql_query(f"SELECT date as Date, stage_name as Work_Stage, progress_percent as Completed_Percent FROM site_progress WHERE user_key = '{current_user_name}' AND date BETWEEN '{str_week_ago}' AND '{str_today}' ORDER BY date DESC", conn)
+        # 3. Weekly Progress Data (Added rowid as id)
+        prog_df = pd.read_sql_query(f"SELECT rowid as id, date as Date, stage_name as Work_Stage, progress_percent as Completed_Percent FROM site_progress WHERE user_key = '{current_user_name}' AND date BETWEEN '{str_week_ago}' AND '{str_today}' ORDER BY date DESC", conn)
         
         conn.close()
 
-        # Render Attendance Table
+        # Render Attendance Table & Delete Option
         with st.expander("👷 मागील ७ दिवसांची हजेरी आणि मजुरी खर्च (Wages)", expanded=True):
             if not att_df.empty:
                 total_week_wage = att_df["Daily_Wage_Cost"].sum()
                 st.markdown(f"**💰 एकूण ७ दिवसांचा मजुरी खर्च:** <span style='color:#10b981; font-size:18px;'>₹ {total_week_wage:,.2f}</span>", unsafe_allow_html=True)
-                st.dataframe(att_df, use_container_width=True, hide_index=True)
+                st.dataframe(att_df.drop(columns=['id']), use_container_width=True, hide_index=True)
+                
+                # Delete logic for Attendance
+                st.markdown("---")
+                c1, c2 = st.columns([3, 1])
+                with c1:
+                    att_del_opt = st.selectbox("❌ डिलीट करण्यासाठी रेकॉर्ड निवडा:", att_df.to_dict('records'), format_func=lambda x: f"तारीख: {x['Date']} | रक्कम: ₹ {x['Daily_Wage_Cost']}", key="sel_del_att")
+                with c2:
+                    st.markdown("<div style='margin-top:28px;'></div>", unsafe_allow_html=True)
+                    if st.button("🗑️ Delete Record", key="btn_del_att", use_container_width=True):
+                        conn = get_db_connection()
+                        conn.execute("DELETE FROM site_attendance WHERE rowid=?", (att_del_opt['id'],))
+                        conn.commit()
+                        conn.close()
+                        st.success("✅ रेकॉर्ड यशस्वीरित्या डिलीट झाले!")
+                        st.rerun()
             else:
                 st.info("ℹ️ मागील ७ दिवसात कोणतीही हजेरी नोंदवली नाही.")
 
-        # Render Inventory Table
+        # Render Inventory Table & Delete Option
         with st.expander("📦 मागील ७ दिवसांचा मटेरियल ट्रॅकर (Material IN/OUT)"):
             if not inv_df.empty:
-                st.dataframe(inv_df, use_container_width=True, hide_index=True)
+                st.dataframe(inv_df.drop(columns=['id']), use_container_width=True, hide_index=True)
+                
+                # Delete logic for Inventory
+                st.markdown("---")
+                c1, c2 = st.columns([3, 1])
+                with c1:
+                    inv_del_opt = st.selectbox("❌ डिलीट करण्यासाठी रेकॉर्ड निवडा:", inv_df.to_dict('records'), format_func=lambda x: f"{x['Date']} | {x['Material']} | {x['Status']} ({x['Qty']})", key="sel_del_inv")
+                with c2:
+                    st.markdown("<div style='margin-top:28px;'></div>", unsafe_allow_html=True)
+                    if st.button("🗑️ Delete Record", key="btn_del_inv", use_container_width=True):
+                        conn = get_db_connection()
+                        conn.execute("DELETE FROM site_inventory WHERE rowid=?", (inv_del_opt['id'],))
+                        conn.commit()
+                        conn.close()
+                        st.success("✅ रेकॉर्ड यशस्वीरित्या डिलीट झाले!")
+                        st.rerun()
             else:
                 st.info("ℹ️ मागील ७ दिवसात कोणतेही मटेरियल IN/OUT नोंदवले नाही.")
 
-        # Render Progress Table
+        # Render Progress Table & Delete Option
         with st.expander("📸 मागील ७ दिवसांची कामाची प्रगती (Progress)"):
             if not prog_df.empty:
                 for idx, row in prog_df.iterrows():
                     st.markdown(f"**📅 Date:** `{row['Date']}` | **🚧 Work:** {row['Work_Stage']} | **📈 Progress:** `{row['Completed_Percent']}%`")
                     st.progress(int(row['Completed_Percent']))
+                
+                # Delete logic for Progress
+                st.markdown("---")
+                c1, c2 = st.columns([3, 1])
+                with c1:
+                    prog_del_opt = st.selectbox("❌ डिलीट करण्यासाठी रेकॉर्ड निवडा:", prog_df.to_dict('records'), format_func=lambda x: f"{x['Date']} | {x['Work_Stage']}", key="sel_del_prog")
+                with c2:
+                    st.markdown("<div style='margin-top:28px;'></div>", unsafe_allow_html=True)
+                    if st.button("🗑️ Delete Record", key="btn_del_prog", use_container_width=True):
+                        conn = get_db_connection()
+                        conn.execute("DELETE FROM site_progress WHERE rowid=?", (prog_del_opt['id'],))
+                        conn.commit()
+                        conn.close()
+                        st.success("✅ रेकॉर्ड यशस्वीरित्या डिलीट झाले!")
+                        st.rerun()
             else:
                 st.info("ℹ️ मागील ७ दिवसात कामाचा कोणताही प्रोग्रेस रिपोर्ट नोंदवला नाही.")
