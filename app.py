@@ -15,6 +15,7 @@ import time
 import urllib.parse
 import pandas as pd
 import streamlit as st
+import streamlit.components.v1 as components
 
 # Official Google GenAI SDK Import
 try:
@@ -43,7 +44,8 @@ st.markdown(
             btn.innerText.includes("Back to Main") ||
             btn.innerText.includes("Back to All Users List") ||
             btn.innerText.includes("Back to Site Manager Menu") ||
-            btn.innerText.includes("Back to Estimator Menu")
+            btn.innerText.includes("Back to Estimator Menu") ||
+            btn.innerText.includes("Back to Other Menu")
         );
         if (mainBackButton) {
             mainBackButton.click();
@@ -70,6 +72,26 @@ def get_ist_time():
     utc_now = datetime.datetime.utcnow()
     ist_now = utc_now + datetime.timedelta(hours=5, minutes=30)
     return ist_now
+
+
+# ==========================================
+# 🌐 HAVERSINE FORMULA (२ GPS पॉईंटमधील अंतर मोजणे)
+# ==========================================
+def calculate_haversine_distance(lat1, lon1, lat2, lon2):
+    R = 6371000.0  # पृथ्वीची त्रिज्या (मीटरमध्ये)
+    phi1 = math.radians(lat1)
+    phi2 = math.radians(lat2)
+    delta_phi = math.radians(lat2 - lat1)
+    delta_lambda = math.radians(lon2 - lon1)
+
+    a = (
+        math.sin(delta_phi / 2.0) ** 2
+        + math.cos(phi1) * math.cos(phi2) * math.sin(delta_lambda / 2.0) ** 2
+    )
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+    distance = R * c
+    return distance
 
 
 # ==========================================
@@ -294,6 +316,33 @@ def init_db():
         )
     """)
 
+    # 11. Geofence Site Settings Table (नवीन टेबल)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS active_geofence (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            site_name TEXT,
+            lat REAL,
+            lon REAL,
+            radius REAL,
+            activated_by TEXT,
+            created_at TEXT
+        )
+    """)
+
+    # 12. Labor Geo Attendance Records Table (नवीन टेबल)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS labor_geo_attendance (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_key TEXT,
+            labor_name TEXT,
+            date_time TEXT,
+            lat REAL,
+            lon REAL,
+            distance_m REAL,
+            status TEXT
+        )
+    """)
+
     # Master Admin Default Entry
     cursor.execute("SELECT * FROM users WHERE user_key = ?", ("9999999999",))
     if not cursor.fetchone():
@@ -332,6 +381,7 @@ def init_db():
         "Site Manager": "Free",
         "WhatsApp Share": "Premium",
         "Civil AI Assistant": "Premium",
+        "Geofence Attendance": "Free",
     }
     for f_name, f_lvl in default_locks.items():
         cursor.execute(
@@ -429,6 +479,8 @@ if "selected_site_sub_module" not in st.session_state:
     st.session_state.selected_site_sub_module = None
 if "selected_estimator_sub_module" not in st.session_state:
     st.session_state.selected_estimator_sub_module = None
+if "selected_other_sub_module" not in st.session_state:
+    st.session_state.selected_other_sub_module = None
 if "admin_view" not in st.session_state:
     st.session_state.admin_view = "main"
 if "admin_selected_user" not in st.session_state:
@@ -1903,6 +1955,7 @@ if col_lo.button("🔄 Logout"):
     st.session_state.selected_module = None
     st.session_state.selected_site_sub_module = None
     st.session_state.selected_estimator_sub_module = None
+    st.session_state.selected_other_sub_module = None
     st.rerun()
 
 current_user_data = get_user_data(current_user_name) or {}
@@ -2131,7 +2184,7 @@ if ai_lock_setting == "Free" or is_user_premium:
                     )
 
 # ==========================================
-# 🎛️ DASHBOARD / MODULE SELECTION SCREEN (SIDE BY SIDE CARDS)
+# 🎛️ DASHBOARD / MODULE SELECTION SCREEN (MAIN MENU)
 # ==========================================
 if st.session_state.selected_module is None:
     st.markdown("### 🚀 तुम्हाला काय करायचे आहे ते निवडा:")
@@ -2142,7 +2195,7 @@ if st.session_state.selected_module is None:
     qs_lock = locks_cfg.get("Quantity Surveying", "Free")
     site_lock = locks_cfg.get("Site Manager", "Free")
 
-    main_col1, main_col2 = st.columns(2)
+    main_col1, main_col2, main_col3 = st.columns(3)
 
     # --------------------------------------------------
     # SECTION 1: SITE MANAGER SECTION
@@ -2195,6 +2248,31 @@ if st.session_state.selected_module is None:
         ):
             st.session_state.selected_module = "Estimator Tools"
             st.session_state.selected_estimator_sub_module = None
+            trigger_push_state()
+            st.rerun()
+
+    # --------------------------------------------------
+    # SECTION 3: OTHER SECTION (NEW CATEGORY)
+    # --------------------------------------------------
+    with main_col3:
+        st.markdown("#### ⚙️ 3. Other Features")
+        st.markdown(
+            """
+            <div style="text-align: center; background: #111827; padding: 18px 10px; border-radius: 20px; border: 1px solid #ec38bc; margin-bottom: 12px;">
+                <h1 style="font-size: 32px; margin:0;">⚙️</h1>
+                <h5 style="margin: 8px 0 2px 0; color: #ec38bc; font-weight:700; font-size:13px;">Other Features</h5>
+                <p style="font-size: 9px; color: #ec38bc; margin:0;">[GPS & Geofence]</p>
+            </div>
+        """,
+            unsafe_allow_html=True,
+        )
+        if st.button(
+            "⚙️ Open Other Features",
+            key="btn_open_other",
+            use_container_width=True,
+        ):
+            st.session_state.selected_module = "Other"
+            st.session_state.selected_other_sub_module = None
             trigger_push_state()
             st.rerun()
 
@@ -4973,3 +5051,154 @@ elif st.session_state.selected_module == "Site Manager":
                         "ℹ️ मागील ७ दिवसात कामाचा कोणताही प्रोग्रेस रिपोर्ट"
                         " नोंदवला नाही."
                     )
+
+# ==========================================
+# 🛠️ MODULE 3: OTHER FEATURES (NEW SECTION)
+# ==========================================
+elif st.session_state.selected_module == "Other":
+    if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_other"):
+        st.session_state.selected_module = None
+        st.session_state.selected_other_sub_module = None
+        st.rerun()
+
+    st.write("---")
+    st.subheader("⚙️ Other Special Features & Tools")
+
+    if st.session_state.selected_other_sub_module is None:
+        o_col1, o_col2 = st.columns(2)
+
+        # Sub Feature 1: Geofence Attendance
+        with o_col1:
+            st.markdown(
+                """
+                <div style="text-align: center; background: #111827; padding: 18px 10px; border-radius: 20px; border: 1px solid #00f2fe;">
+                    <h1 style="font-size: 32px; margin:0;">📍</h1>
+                    <h5 style="margin: 8px 0 2px 0;">GPS Geofence Attendance</h5>
+                    <p style="font-size: 10px; color: #38bdf8;">[100m Boundary & Selfie]</p>
+                </div>
+            """,
+                unsafe_allow_html=True,
+            )
+            if st.button("📍 Open Geo-Attendance", key="btn_geo_att", use_container_width=True):
+                st.session_state.selected_other_sub_module = "Geofence Attendance"
+                trigger_push_state()
+                st.rerun()
+
+    else:
+        if st.button("⬅️ Back to Other Menu", key="btn_back_other_menu"):
+            st.session_state.selected_other_sub_module = None
+            st.rerun()
+
+        st.write("---")
+        sub_other = st.session_state.selected_other_sub_module
+
+        # --------------------------------------------------
+        # 📍 GEOFENCE ATTENDANCE & LIVE SELFIE ENGINE
+        # --------------------------------------------------
+        if sub_other == "Geofence Attendance":
+            st.subheader("📍 Geofence & AI Selfie Attendance System")
+
+            tab_admin_geo, tab_labor_geo = st.tabs([
+                "👷 Admin / Engineer Control", 
+                "📱 Labor Attendance Verification"
+            ])
+
+            # --- TAB 1: ADMIN CONTROL (SET GEOFENCE) ---
+            with tab_admin_geo:
+                st.markdown("#### 📐 Active Site Boundary Setup (100m Radius)")
+                site_title = st.text_input("साइटचे नाव (Site Name):", value="Patil Site A")
+                
+                # JavaScript Geolocation Fetcher Component
+                geo_script = """
+                <script>
+                function getLocation() {
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(showPosition, showError);
+                    } else {
+                        document.getElementById("geo_out").innerHTML = "Geolocation is not supported by this browser.";
+                    }
+                }
+                function showPosition(position) {
+                    document.getElementById("geo_out").innerHTML = 
+                    "<b>Lat:</b> " + position.coords.latitude + " | <b>Lon:</b> " + position.coords.longitude;
+                }
+                function showError(error) {
+                    document.getElementById("geo_out").innerHTML = "Error getting location: " + error.message;
+                }
+                </script>
+                <div style="text-align:center; padding:10px;">
+                    <button onclick="getLocation()" style="background:#0284c7; color:white; border:none; padding:10px 15px; border-radius:8px; font-weight:bold; cursor:pointer;">
+                        📡 1. Capture Live Site GPS Coordinates
+                    </button>
+                    <p id="geo_out" style="color:#00f2fe; margin-top:10px; font-family:sans-serif;"></p>
+                </div>
+                """
+                components.html(geo_script, height=100)
+
+                c_lat = st.number_input("Captured Latitude:", format="%.7f", value=0.0)
+                c_lon = st.number_input("Captured Longitude:", format="%.7f", value=0.0)
+
+                if st.button("🚀 Activate 100m Site Boundary", type="primary"):
+                    if c_lat != 0.0 and c_lon != 0.0:
+                        conn = get_db_connection()
+                        cursor = conn.cursor()
+                        now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
+                        cursor.execute(
+                            "INSERT INTO active_geofence (site_name, lat, lon, radius, activated_by, created_at) VALUES (?, ?, ?, 100.0, ?, ?)",
+                            (site_title, c_lat, c_lon, current_user_name, now_str)
+                        )
+                        conn.commit()
+                        conn.close()
+                        st.success(f"✅ '{site_title}' साठी १००m ची वेस (Geofence Boundary) यशस्वीरित्या तयार झाली!")
+                    else:
+                        st.warning("⚠️ कृपया वरील बॉक्समध्ये अचूक Latitude आणि Longitude टाका!")
+
+            # --- TAB 2: LABOR VERIFICATION ---
+            with tab_labor_geo:
+                st.markdown("#### 📱 मजुरांची हजेरी (100m Check & Live Selfie)")
+                
+                conn = get_db_connection()
+                cursor = conn.cursor()
+                cursor.execute("SELECT * FROM active_geofence ORDER BY id DESC LIMIT 1")
+                active_site = cursor.fetchone()
+                conn.close()
+
+                if not active_site:
+                    st.error("🚨 सध्या कोणत्याही साइटची Geofence बाउंड्री ॲक्टिव्ह नाही! इंजिनिअरला आधी ॲक्टिव्हेट करायला सांगा.")
+                else:
+                    site_data = dict(active_site)
+                    st.info(f"📍 **Active Site:** {site_data['site_name']} (100 Meter Boundary Active)")
+
+                    labor_name_in = st.text_input("मजुराचे नाव (Labor Name):")
+                    
+                    st.caption("👇 १. तुमचे लोकेशन कन्फर्म करण्यासाठी खालील बॉक्समध्ये व्हॅल्यू तपासा:")
+                    
+                    u_lat = st.number_input("मजुराचे Latitude:", format="%.7f", value=0.0, key="u_lat_k")
+                    u_lon = st.number_input("मजुराचे Longitude:", format="%.7f", value=0.0, key="u_lon_k")
+
+                    if u_lat != 0.0 and u_lon != 0.0:
+                        dist_m = calculate_haversine_distance(site_data['lat'], site_data['lon'], u_lat, u_lon)
+                        
+                        st.write(f"📏 **साईटपासून तुमचे अंतर:** `{dist_m:.2f} Meters`")
+
+                        if dist_m <= 100.0:
+                            st.success("✅ तुम्ही १०० मीटरच्या आत उपस्थित आहात! कॅमेरा उघडला आहे.")
+                            
+                            # Live Selfie via Camera Input
+                            selfie_img = st.camera_input("📸 लाईव्ह सेल्फी काढा (गॅलरी चालणार नाही)")
+
+                            if selfie_img:
+                                if st.button("💾 Submit Attendance & Selfie", type="primary"):
+                                    now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
+                                    conn = get_db_connection()
+                                    cursor = conn.cursor()
+                                    cursor.execute(
+                                        "INSERT INTO labor_geo_attendance (user_key, labor_name, date_time, lat, lon, distance_m, status) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                                        (current_user_name, labor_name_in, now_str, u_lat, u_lon, dist_m, "VERIFIED_PRESENT")
+                                    )
+                                    conn.commit()
+                                    conn.close()
+                                    st.balloons()
+                                    st.success(f"🎉 {labor_name_in} ची हजेरी फोटो आणि GPS सह सेव्ह झाली!")
+                        else:
+                            st.error(f"❌ Error: तुम्ही साईटवर उपस्थित नाही आहात! (तुमचे अंतर: {dist_m:.1f}m - मर्यादा: 100m)")
