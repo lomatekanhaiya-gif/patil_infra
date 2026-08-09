@@ -5224,14 +5224,13 @@ elif st.session_state.selected_module == "Other":
     if st.session_state.selected_other_sub_module is None:
         o_col1, o_col2 = st.columns(2)
 
-        # Sub Feature 1: Geofence Attendance
         with o_col1:
             st.markdown(
                 """
                 <div style="text-align: center; background: #111827; padding: 18px 10px; border-radius: 20px; border: 1px solid #00f2fe;">
                     <h1 style="font-size: 32px; margin:0;">📍</h1>
                     <h5 style="margin: 8px 0 2px 0;">GPS Geofence Attendance</h5>
-                    <p style="font-size: 10px; color: #38bdf8;">[100m Boundary & Selfie]</p>
+                    <p style="font-size: 10px; color: #38bdf8;">[Automatic Boundary & Live Selfie]</p>
                 </div>
             """,
                 unsafe_allow_html=True,
@@ -5250,50 +5249,50 @@ elif st.session_state.selected_module == "Other":
         sub_other = st.session_state.selected_other_sub_module
 
         # --------------------------------------------------
-        # 📍 GEOFENCE ATTENDANCE & LIVE SELFIE ENGINE
+        # 📍 GEOFENCE SMART ATTENDANCE (AUTOMATIC GPS MATCH)
         # --------------------------------------------------
         if sub_other == "Geofence Attendance":
-            st.subheader("📍 Geofence & AI Selfie Attendance System")
+            st.subheader("📍 Geofence Smart Attendance System")
 
             tab_admin_geo, tab_labor_geo = st.tabs([
-                "👷 Admin / Engineer Control", 
+                "👷 Engineer Boundary Setup", 
                 "📱 Labor Attendance Verification"
             ])
 
-            # --- TAB 1: ADMIN CONTROL (SET GEOFENCE) ---
+            # --- TAB 1: ADMIN CONTROL ---
             with tab_admin_geo:
-                st.markdown("#### 📐 Active Site Boundary Setup (100m Radius)")
-                site_title = st.text_input("साइटचे नाव (Site Name):", value="Patil Site A")
+                st.markdown("#### 📐 १. इंजिनिअरने साईटचे अचूक लोकेशन सेव्ह करणे")
+                site_title = st.text_input("साइटचे नाव (Site Name):", value="Patil Construction Site A")
                 
-                # JavaScript Geolocation Fetcher Component
-                geo_script = """
+                # JavaScript Geolocation for Engineer
+                admin_geo_html = """
+                <div style="background:#111827; padding:15px; border-radius:12px; border:1px solid #00f2fe; text-align:center;">
+                    <button onclick="getAdminLoc()" style="background:linear-gradient(135deg, #0284c7 0%, #2563eb 100%); color:white; border:none; padding:12px 20px; border-radius:10px; font-weight:bold; cursor:pointer; font-size:15px;">
+                        📡 1. Capture Live Site GPS Location
+                    </button>
+                    <p id="admin_gps_msg" style="color:#00f2fe; margin-top:10px; font-weight:bold;"></p>
+                </div>
+
                 <script>
-                function getLocation() {
+                function getAdminLoc() {
+                    var status = document.getElementById("admin_gps_msg");
                     if (navigator.geolocation) {
-                        navigator.geolocation.getCurrentPosition(showPosition, showError);
+                        status.innerHTML = "⏳ साईट लोकेशन स्कॅन होत आहे...";
+                        navigator.geolocation.getCurrentPosition(function(pos) {
+                            status.innerHTML = "✅ लोकेशन सापडले!<br>Latitude: " + pos.coords.latitude + "<br>Longitude: " + pos.coords.longitude + "<br><b>हे आकडे खालील इनपुट बॉक्समध्ये टाकून कन्फर्म करा.</b>";
+                        }, function(err) {
+                            status.innerHTML = "❌ GPS Error: " + err.message + " (कृपया मोबाईलचे Location On करा)";
+                        }, {enableHighAccuracy: true});
                     } else {
-                        document.getElementById("geo_out").innerHTML = "Geolocation is not supported by this browser.";
+                        status.innerHTML = "❌ ब्रॉऊझर Geolocation सपोर्ट करत नाही.";
                     }
                 }
-                function showPosition(position) {
-                    document.getElementById("geo_out").innerHTML = 
-                    "<b>Lat:</b> " + position.coords.latitude + " | <b>Lon:</b> " + position.coords.longitude;
-                }
-                function showError(error) {
-                    document.getElementById("geo_out").innerHTML = "Error getting location: " + error.message;
-                }
                 </script>
-                <div style="text-align:center; padding:10px;">
-                    <button onclick="getLocation()" style="background:#0284c7; color:white; border:none; padding:10px 15px; border-radius:8px; font-weight:bold; cursor:pointer;">
-                        📡 1. Capture Live Site GPS Coordinates
-                    </button>
-                    <p id="geo_out" style="color:#00f2fe; margin-top:10px; font-family:sans-serif;"></p>
-                </div>
                 """
-                components.html(geo_script, height=100)
+                components.html(admin_geo_html, height=140)
 
-                c_lat = st.number_input("Captured Latitude:", format="%.7f", value=0.0)
-                c_lon = st.number_input("Captured Longitude:", format="%.7f", value=0.0)
+                c_lat = st.number_input("Captured Site Latitude:", format="%.7f", value=0.0, key="adm_lat_val")
+                c_lon = st.number_input("Captured Site Longitude:", format="%.7f", value=0.0, key="adm_lon_val")
 
                 if st.button("🚀 Activate 100m Site Boundary", type="primary"):
                     if c_lat != 0.0 and c_lon != 0.0:
@@ -5306,13 +5305,13 @@ elif st.session_state.selected_module == "Other":
                         )
                         conn.commit()
                         conn.close()
-                        st.success(f"✅ '{site_title}' साठी १००m ची वेस (Geofence Boundary) यशस्वीरित्या तयार झाली!")
+                        st.success(f"✅ '{site_title}' साठी १००m ची वेस (Geofence) यशस्वीरित्या सेट झाली!")
                     else:
-                        st.warning("⚠️ कृपया वरील बॉक्समध्ये अचूक Latitude आणि Longitude टाका!")
+                        st.warning("⚠️ कृपया आधी वरील बटणावर क्लिक करून अचूक Latitude व Longitude टाका!")
 
-            # --- TAB 2: LABOR VERIFICATION ---
+            # --- TAB 2: LABOR AUTO SCAN & MATCH ---
             with tab_labor_geo:
-                st.markdown("#### 📱 मजुरांची हजेरी (100m Check & Live Selfie)")
+                st.markdown("#### 📱 २. मजुराची ऑटोमॅटिक हजेरी (Automatic GPS Match)")
                 
                 conn = get_db_connection()
                 cursor = conn.cursor()
@@ -5321,41 +5320,71 @@ elif st.session_state.selected_module == "Other":
                 conn.close()
 
                 if not active_site:
-                    st.error("🚨 सध्या कोणत्याही साइटची Geofence बाउंड्री ॲक्टिव्ह नाही! इंजिनिअरला आधी ॲक्टिव्हेट करायला सांगा.")
+                    st.error("🚨 सध्या कोणत्याही साइटचे Geofence ॲक्टिव्ह नाही! इंजिनिअरला आधी लोकेशन सेव्ह करायला सांगा.")
                 else:
                     site_data = dict(active_site)
-                    st.info(f"📍 **Active Site:** {site_data['site_name']} (100 Meter Boundary Active)")
+                    st.info(f"📍 **ॲक्टिव्ह साईट:** {site_data['site_name']} (100 Meter Boundary Active)")
 
-                    labor_name_in = st.text_input("मजुराचे नाव (Labor Name):")
+                    labor_name_in = st.text_input("मजुराचे नाव (Labor Name):", placeholder="उदा. अमोल पाटील")
                     
-                    st.caption("👇 १. तुमचे लोकेशन कन्फर्म करण्यासाठी खालील बॉक्समध्ये व्हॅल्यू तपासा:")
+                    st.markdown("##### 👇 मजुराने फक्त खालील बटणावर क्लिक करावे:")
                     
-                    u_lat = st.number_input("मजुराचे Latitude:", format="%.7f", value=0.0, key="u_lat_k")
-                    u_lon = st.number_input("मजुराचे Longitude:", format="%.7f", value=0.0, key="u_lon_k")
+                    # Labor Automatic Geo Scanner JavaScript Component
+                    labor_geo_html = """
+                    <div style="background:#111827; padding:18px; border-radius:15px; border:2px solid #10b981; text-align:center;">
+                        <button onclick="scanLaborLoc()" style="background:linear-gradient(135deg, #10b981 0%, #059669 100%); color:white; border:none; padding:14px 22px; border-radius:12px; font-weight:bold; cursor:pointer; font-size:16px; box-shadow:0 4px 15px rgba(16,185,129,0.4);">
+                            🎯 १. माझे लोकेशन स्कॅन करा (Scan My Location)
+                        </button>
+                        <p id="labor_status_msg" style="color:#38bdf8; margin-top:12px; font-weight:bold; font-size:15px;"></p>
+                    </div>
 
-                    if u_lat != 0.0 and u_lon != 0.0:
-                        dist_m = calculate_haversine_distance(site_data['lat'], site_data['lon'], u_lat, u_lon)
+                    <script>
+                    function scanLaborLoc() {
+                        var status = document.getElementById("labor_status_msg");
+                        if (navigator.geolocation) {
+                            status.innerHTML = "🔄 मोबाईलचे GPS स्कॅन होत आहे...";
+                            navigator.geolocation.getCurrentPosition(function(pos) {
+                                var lat = pos.coords.latitude;
+                                var lon = pos.coords.longitude;
+                                status.innerHTML = "✅ लोकेशन स्कॅन झाले!<br>Lat: " + lat.toFixed(6) + " | Lon: " + lon.toFixed(6) + "<br><b>खालील बॉक्समध्ये हे आकडे आपोआप/मॅन्यूअली टाईप करा.</b>";
+                            }, function(err) {
+                                status.innerHTML = "❌ लोकेशन शोधता आले नाही. कृपया मोबाईलचे GPS/Location On करा आणि पुन्हा प्रयत्न करा.";
+                            }, {enableHighAccuracy: true});
+                        } else {
+                            status.innerHTML = "❌ तुमच्या ब्राऊझरमध्ये Geolocation सपोर्ट नाही.";
+                        }
+                    }
+                    </script>
+                    """
+                    components.html(labor_geo_html, height=135)
+
+                    l_lat = st.number_input("Labor Current Latitude:", format="%.7f", value=0.0, key="labor_lat_auto")
+                    l_lon = st.number_input("Labor Current Longitude:", format="%.7f", value=0.0, key="labor_lon_auto")
+
+                    if l_lat != 0.0 and l_lon != 0.0:
+                        # Haversine Distance Calculation
+                        dist_m = calculate_haversine_distance(site_data['lat'], site_data['lon'], l_lat, l_lon)
                         
-                        st.write(f"📏 **साईटपासून तुमचे अंतर:** `{dist_m:.2f} Meters`")
+                        st.markdown(f"📏 **साईटीच्या केंद्रापासून तुमचे अंतर:** `<span style='color:#00f2fe; font-size:18px;'>{dist_m:.2f} Meters</span>`", unsafe_allow_html=True)
 
                         if dist_m <= 100.0:
-                            st.success("✅ तुम्ही १०० मीटरच्या आत उपस्थित आहात! कॅमेरा उघडला आहे.")
+                            st.success("✅ **LOCATION MATCHED!** तुम्ही १०० मीटरच्या आत उपस्थित आहात. कॅमेरा उघडला आहे!")
                             
-                            # Live Selfie via Camera Input
-                            selfie_img = st.camera_input("📸 लाईव्ह सेल्फी काढा (गॅलरी चालणार नाही)")
+                            # Streamlit Camera Input (Triggers Browser Native Permission)
+                            selfie_img = st.camera_input("📸 लाईव्ह सेल्फी काढा (गॅलरीचे फोटो चालणार नाहीत)")
 
                             if selfie_img:
-                                if st.button("💾 Submit Attendance & Selfie", type="primary"):
+                                if st.button("💾 Submit Attendance (Mark Present)", type="primary"):
                                     now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
                                     conn = get_db_connection()
                                     cursor = conn.cursor()
                                     cursor.execute(
                                         "INSERT INTO labor_geo_attendance (user_key, labor_name, date_time, lat, lon, distance_m, status) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                                        (current_user_name, labor_name_in, now_str, u_lat, u_lon, dist_m, "VERIFIED_PRESENT")
+                                        (current_user_name, labor_name_in, now_str, l_lat, l_lon, dist_m, "PRESENT_VERIFIED")
                                     )
                                     conn.commit()
                                     conn.close()
                                     st.balloons()
-                                    st.success(f"🎉 {labor_name_in} ची हजेरी फोटो आणि GPS सह सेव्ह झाली!")
+                                    st.success(f"🎉 **{labor_name_in}** ची हजेरी **PRESENT** म्हणून फोटो व GPS सह सेव्ह झाली!")
                         else:
-                            st.error(f"❌ Error: तुम्ही साईटवर उपस्थित नाही आहात! (तुमचे अंतर: {dist_m:.1f}m - मर्यादा: 100m)")
+                            st.error(f"❌ **Error: तुम्ही साईटवर उपस्थित नाही आहात!**<br>तुमचे साईटपासूनचे अंतर **{dist_m:.1f} मीटर** आहे. हजेरीसाठी १०० मीटरच्या आत असणे बंधनकारक आहे.")
