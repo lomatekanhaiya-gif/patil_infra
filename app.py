@@ -73,6 +73,24 @@ def get_ist_time():
 
 
 # ==========================================
+# 🌐 HAVERSINE FORMULA (DISTANCE CALCULATION IN METERS)
+# ==========================================
+def calculate_haversine_distance(lat1, lon1, lat2, lon2):
+    R = 6371000.0  # पृथ्वीची त्रिज्या मीटरमध्ये
+    phi1 = math.radians(lat1)
+    phi2 = math.radians(lat2)
+    delta_phi = math.radians(lat2 - lat1)
+    delta_lambda = math.radians(lon2 - lon1)
+
+    a = (
+        math.sin(delta_phi / 2.0) ** 2
+        + math.cos(phi1) * math.cos(phi2) * math.sin(delta_lambda / 2.0) ** 2
+    )
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    return R * c
+
+
+# ==========================================
 # 📧 EMAIL OTP & CREDENTIALS SENDING FUNCTION
 # ==========================================
 def send_email_message(receiver_email, subject, body_text):
@@ -127,6 +145,24 @@ def get_db_connection():
     conn = sqlite3.connect(DB_FILE, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     return conn
+
+
+def auto_cleanup_30day_attendance():
+    """३० दिवसांपेक्षा जुना हजेरीचा डेटा आपोआप डिलीट करणारा ऑटोमॅटिक क्लीनअप इंजिन"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cutoff_date = (get_ist_time() - datetime.timedelta(days=30)).strftime(
+            "%Y-%m-%d"
+        )
+        cursor.execute(
+            "DELETE FROM labor_attendance_records WHERE date < ?",
+            (cutoff_date,),
+        )
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        pass
 
 
 def init_db():
@@ -294,6 +330,55 @@ def init_db():
         )
     """)
 
+    # 11. Labor Master Table (न्यू फीचर)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS labor_master (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_key TEXT,
+            labor_name TEXT,
+            mobile TEXT UNIQUE,
+            created_at TEXT
+        )
+    """)
+
+    # 12. Site Geo-Fence Config Table (न्यू फीचर)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS site_geo_config (
+            user_key TEXT PRIMARY KEY,
+            site_name TEXT,
+            latitude REAL,
+            longitude REAL,
+            radius_meters REAL DEFAULT 100.0,
+            updated_at TEXT
+        )
+    """)
+
+    # 13. Dynamic Attendance Tokens Table (न्यू फीचर)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS attendance_tokens (
+            token TEXT PRIMARY KEY,
+            user_key TEXT,
+            type TEXT,
+            date TEXT,
+            created_at TEXT
+        )
+    """)
+
+    # 14. Labor Attendance Live Verification Records Table (न्यू फीचर - Tamper-Proof & 30-Day Auto Delete Engine)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS labor_attendance_records (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_key TEXT,
+            labor_mobile TEXT,
+            labor_name TEXT,
+            date TEXT,
+            entry_type TEXT,
+            timestamp TEXT,
+            distance_m REAL,
+            selfie_status TEXT
+        )
+    """)
+
     # Master Admin Default Entry
     cursor.execute("SELECT * FROM users WHERE user_key = ?", ("9999999999",))
     if not cursor.fetchone():
@@ -332,6 +417,7 @@ def init_db():
         "Site Manager": "Free",
         "WhatsApp Share": "Premium",
         "Civil AI Assistant": "Premium",
+        "Labor Geo-Attendance": "Free",
     }
     for f_name, f_lvl in default_locks.items():
         cursor.execute(
@@ -359,6 +445,7 @@ def init_db():
 
 
 init_db()
+auto_cleanup_30day_attendance()
 
 
 # DB Helper Functions
@@ -398,6 +485,11 @@ if "app_user_name" not in st.session_state:
     st.session_state.app_user_name = None
 
 query_params = st.query_params
+
+# Dynamic Link labor direct entry interceptor
+if "att_token" in query_params:
+    st.session_state["public_att_token"] = query_params["att_token"]
+
 if st.session_state.app_user_name is None and "saved_user" in query_params:
     saved_key = query_params["saved_user"]
     conn = get_db_connection()
@@ -884,6 +976,186 @@ def render_whatsapp_feature(encoded_msg, key_prefix):
 
 
 # ==========================================
+# 🌐 PUBLIC LABOR DYNAMIC LINK VERIFICATION FLOW (INTERCEPTOR)
+# ==========================================
+if "public_att_token" in st.session_state:
+    p_token = st.session_state["public_att_token"]
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT * FROM attendance_tokens WHERE token = ?", (p_token,)
+    )
+    tok_row = cursor.fetchone()
+
+    st.markdown(
+        """
+        <div class="main-header">
+            <h1 style='color: white; margin:0; font-size: 26px; font-weight: 800;'>👷‍♂️ LABOR GEO-ATTENDANCE PORTAL</h1>
+            <p style='color: #e0f2fe; margin:5px 0 0 0; font-size: 14px;'>PATIL INFRATECH LIVE VERIFICATION</p>
+        </div>
+    """,
+        unsafe_allow_html=True,
+    )
+
+    if not tok_row:
+        st.error(
+            "⚠️ हा हजेरीचा टोकन किंवा लिंक अवैध आहे / एक्सपायर झाली आहे!"
+        )
+        st.stop()
+
+    tok_info = dict(tok_row)
+    eng_key = tok_info["user_key"]
+    att_type = tok_info["type"]  # IN or OUT
+
+    # Get Geo Config
+    cursor.execute(
+        "SELECT * FROM site_geo_config WHERE user_key = ?", (eng_key,)
+    )
+    geo_row = cursor.fetchone()
+    conn.close()
+
+    if not geo_row:
+        st.error(
+            "⚠️ साईट इंजिनिअरने अजून लाईव्ह जीपीएस लोकेशन सेट केले नाही!"
+        )
+        st.stop()
+
+    geo_info = dict(geo_row)
+    target_lat = geo_info["latitude"]
+    target_lon = geo_info["longitude"]
+    allowed_radius = geo_info["radius_meters"]
+
+    st.info(
+        f"🏗️ **Site Name:** {geo_info['site_name']} | **Entry:**"
+        f" `{att_type.upper()}` | **Allowed Radius:** `{allowed_radius}m`"
+    )
+
+    # Labor Selection
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT * FROM labor_master WHERE user_key = ?", (eng_key,)
+    )
+    labors_list = cursor.fetchall()
+    conn.close()
+
+    if not labors_list:
+        st.error(
+            "⚠️ या साईटसाठी मास्टर लेबर एंट्री सापडली नाही. इंजिनिअरशी संपर्क"
+            " साधा."
+        )
+        st.stop()
+
+    labor_options = {
+        f"{l['labor_name']} ({l['mobile']})": l["mobile"] for l in labors_list
+    }
+    selected_labor_str = st.selectbox(
+        "तुमचे नाव निवडा (Select Labor Name):", list(labor_options.keys())
+    )
+    sel_labor_mob = labor_options[selected_labor_str]
+    sel_labor_name = selected_labor_str.split(" (")[0]
+
+    st.write("---")
+    st.markdown("#### 📍 १. तुमचे लाईव्ह लोकेशन व्हॅरिफाय करा:")
+
+    st.components.v1.html(
+        """
+        <script>
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(showPosition, showError, {enableHighAccuracy: true});
+            } else {
+                alert("Geolocation is not supported by this browser.");
+            }
+        }
+        function showPosition(position) {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            const urlParams = new URLSearchParams(window.location.search);
+            urlParams.set('user_lat', lat);
+            urlParams.set('user_lon', lon);
+            window.parent.location.search = urlParams.toString();
+        }
+        function showError(error) {
+            alert("Error getting location: " + error.message);
+        }
+        </script>
+        <button onclick="getLocation()" style="width:100%; background: #00f2fe; color:#030712; padding:12px; font-weight:bold; border-radius:12px; border:none; cursor:pointer;">
+            📍 Get My Current Live Location
+        </button>
+    """,
+        height=60,
+    )
+
+    user_lat = st.query_params.get("user_lat", None)
+    user_lon = st.query_params.get("user_lon", None)
+
+    if user_lat and user_lon:
+        u_lat = float(user_lat)
+        u_lon = float(user_lon)
+        dist = calculate_haversine_distance(
+            u_lat, u_lon, target_lat, target_lon
+        )
+
+        st.write(
+            f"📏 **तुमचे साईटपासून अंतर:** `{dist:.1f} मीटर` (मर्यादा:"
+            f" {allowed_radius}m)"
+        )
+
+        if dist > allowed_radius:
+            st.error(
+                f"⚠️ तुम्ही साईटच्या {allowed_radius:.0f} मीटर"
+                " परिघाबाहेर आहात! तुमची हजेरी ब्लॉक केली आहे."
+            )
+        else:
+            st.success(
+                f"✅ तुम्ही साईटच्या {allowed_radius:.0f} मीटर परिघात आहात!"
+            )
+            st.markdown("#### 📸 २. लाईव्ह सेल्फी काढून हजेरी लावा:")
+            selfie_img = st.camera_input("Selfie Verification Camera")
+
+            if selfie_img:
+                if st.button("🚀 Submit Attendance Now", type="primary"):
+                    conn = get_db_connection()
+                    cursor = conn.cursor()
+                    now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
+                    today_date = get_ist_time().strftime("%Y-%m-%d")
+
+                    cursor.execute(
+                        """
+                        INSERT INTO labor_attendance_records 
+                        (user_key, labor_mobile, labor_name, date, entry_type, timestamp, distance_m, selfie_status)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                        (
+                            eng_key,
+                            sel_labor_mob,
+                            sel_labor_name,
+                            today_date,
+                            att_type,
+                            now_str,
+                            dist,
+                            "Verified Selfie",
+                        ),
+                    )
+                    conn.commit()
+                    conn.close()
+
+                    st.balloons()
+                    st.success(
+                        f"🎉 {sel_labor_name}! तुमची {att_type.upper()} हजेरी"
+                        " यशस्वीरित्या नोंदवली गेली आहे."
+                    )
+                    st.stop()
+    else:
+        st.warning(
+            "⚠️ कृपया वरील बटणावर क्लिक करून मोबाईलचे लोकेशन चालू करा."
+        )
+
+    st.stop()
+
+
+# ==========================================
 # --- १. वेलकम स्क्रीन ॲनिमेशन (3D GALAXY ANIMATION) ---
 # ==========================================
 welcome_placeholder = st.empty()
@@ -1111,6 +1383,13 @@ if st.session_state.is_admin_logged:
             if cur_locks.get("Civil AI Assistant", "Premium") == "Free"
             else 1,
         )
+        fl_geo = st.selectbox(
+            "Labor Geo-Attendance Module:",
+            ["Free", "Premium"],
+            index=0
+            if cur_locks.get("Labor Geo-Attendance", "Free") == "Free"
+            else 1,
+        )
 
         if st.button("💾 Save Feature Lock Settings", type="primary"):
             conn = get_db_connection()
@@ -1123,6 +1402,7 @@ if st.session_state.is_admin_logged:
                 "Site Manager": fl_site,
                 "WhatsApp Share": fl_wa,
                 "Civil AI Assistant": fl_ai,
+                "Labor Geo-Attendance": fl_geo,
             }
             for f_name, f_lvl in new_locks.items():
                 cursor.execute(
@@ -2141,6 +2421,7 @@ if st.session_state.selected_module is None:
     bbs_lock = locks_cfg.get("BBS", "Free")
     qs_lock = locks_cfg.get("Quantity Surveying", "Free")
     site_lock = locks_cfg.get("Site Manager", "Free")
+    geo_lock = locks_cfg.get("Labor Geo-Attendance", "Free")
 
     main_col1, main_col2 = st.columns(2)
 
@@ -2195,6 +2476,37 @@ if st.session_state.selected_module is None:
         ):
             st.session_state.selected_module = "Estimator Tools"
             st.session_state.selected_estimator_sub_module = None
+            trigger_push_state()
+            st.rerun()
+
+    st.write("---")
+
+    # --------------------------------------------------
+    # SECTION 3: OTHER FEATURES (NEW LABOR GEO-ATTENDANCE ENGINE)
+    # --------------------------------------------------
+    st.markdown("#### 🌐 3. Other Features (Labor Geo-Attendance Engine)")
+    geo_badge = "🆓 Free" if geo_lock == "Free" else "👑 Premium"
+
+    st.markdown(
+        f"""
+        <div style="text-align: center; background: #111827; padding: 18px 10px; border-radius: 20px; border: 1px solid rgba(236, 56, 188, 0.4); margin-bottom: 12px;">
+            <h1 style="font-size: 32px; margin:0;">📍</h1>
+            <h5 style="margin: 8px 0 2px 0; color: #f8fafc; font-weight:700; font-size:14px;">Labor Geo-Fence Attendance Engine</h5>
+            <p style="font-size: 10px; color: #ec38bc; margin:0;">[{geo_badge} - Live Location Verification & Dynamic Links]</p>
+        </div>
+    """,
+        unsafe_allow_html=True,
+    )
+
+    if st.button(
+        "🌐 Open Labor Geo-Attendance System",
+        key="btn_open_geo_att",
+        use_container_width=True,
+    ):
+        if geo_lock == "Premium" and not is_user_premium:
+            st.error("🔒 हे फीचर प्रिमियम युझर्ससाठी आहे!")
+        else:
+            st.session_state.selected_module = "Labor Geo-Attendance"
             trigger_push_state()
             st.rerun()
 
@@ -4649,8 +4961,8 @@ elif st.session_state.selected_module == "Site Manager":
                 for text in default_chk_items:
                     cursor.execute(
                         "INSERT INTO pre_concreting_checklist (user_key,"
-                        " item_text, is_checked, created_at) VALUES (?, ?, 0,"
-                        " ?)",
+                        " item_text, is_checked, created_at) VALUES (?, ?,"
+                        " 0, ?)",
                         (current_user_name, text, now_time_str),
                     )
                 conn.commit()
@@ -4973,3 +5285,305 @@ elif st.session_state.selected_module == "Site Manager":
                         "ℹ️ मागील ७ दिवसात कामाचा कोणताही प्रोग्रेस रिपोर्ट"
                         " नोंदवला नाही."
                     )
+
+# ==========================================
+# 🌐 MODULE 3: LABOR GEO-ATTENDANCE SYSTEM (NEW FEATURE ENGINE)
+# ==========================================
+elif st.session_state.selected_module == "Labor Geo-Attendance":
+    if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_geo_main"):
+        st.session_state.selected_module = None
+        st.rerun()
+
+    st.write("---")
+    st.subheader("📍 Labor Geo-Fence & Dynamic Attendance Control Center")
+
+    geo_tab1, geo_tab2, geo_tab3, geo_tab4 = st.tabs([
+        "१. Register Labor Master",
+        "२. Site Geo-Fence Config",
+        "३. Dynamic Links Generator",
+        "४. Tamper-Proof Attendance Logs",
+    ])
+
+    # 1. Labor Master Registration
+    with geo_tab1:
+        st.markdown("#### 👥 कायमस्वरूपी कामगारांची नावे (Labor Master Entry)")
+        st.caption(
+            "💡 इथे एकदाच मजुराचे नाव आणि मोबाईल नंबर सेव्ह करून ठेवा."
+        )
+
+        with st.form("add_labor_form"):
+            l_name = st.text_input("कामगाराचे पूर्ण नाव (Labor Name):").strip()
+            l_mob = st.text_input(
+                "कामगाराचा १० अंकी मोबाईल नंबर (Mobile No):", max_chars=10
+            ).strip()
+            sub_l = st.form_submit_button(
+                "➕ Register Labor", type="primary"
+            )
+
+            if sub_l:
+                if l_name and len(l_mob) == 10 and l_mob.isdigit():
+                    try:
+                        conn = get_db_connection()
+                        cursor = conn.cursor()
+                        cursor.execute(
+                            "INSERT INTO labor_master (user_key, labor_name,"
+                            " mobile, created_at) VALUES (?, ?, ?, ?)",
+                            (
+                                current_user_name,
+                                l_name,
+                                l_mob,
+                                get_ist_time().strftime("%Y-%m-%d %H:%M:%S"),
+                            ),
+                        )
+                        conn.commit()
+                        conn.close()
+                        st.success(f"✅ मजूर '{l_name}' नोंदवला गेला!")
+                        st.rerun()
+                    except sqlite3.IntegrityError:
+                        st.error(
+                            "❌ हा मोबाईल नंबर आधीच रजिस्टर झालेला आहे!"
+                        )
+                else:
+                    st.warning("⚠️ कृपया नाव आणि अचूक १० अंकी मोबाईल नंबर टाका!")
+
+        st.write("---")
+        st.markdown("##### 📋 रजिस्टर मजुरांची यादी:")
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT * FROM labor_master WHERE user_key = ?",
+            (current_user_name,),
+        )
+        l_rows = cursor.fetchall()
+        conn.close()
+
+        if l_rows:
+            for l in l_rows:
+                lc1, lc2 = st.columns([3, 1])
+                lc1.write(f"👤 **{l['labor_name']}** (`{l['mobile']}`)")
+                if lc2.button("🗑️ Delete", key=f"del_lab_{l['id']}"):
+                    conn = get_db_connection()
+                    cursor = conn.cursor()
+                    cursor.execute(
+                        "DELETE FROM labor_master WHERE id = ?", (l["id"],)
+                    )
+                    conn.commit()
+                    conn.close()
+                    st.success("🗑️ कामगार डिलीट केला!")
+                    st.rerun()
+        else:
+            st.info("ℹ️ अजून एकही कामगार रजिस्टर केलेला नाही.")
+
+    # 2. Geo Fence Config
+    with geo_tab2:
+        st.markdown("#### 📍 साईट जीपीएस लोकेशन आणि Geo-Fence सेटिंग")
+        st.caption(
+            "💡 साईटवर उभे राहून तुमचे लाईव्ह लोकेशन फिक्स करा व Radius सेट"
+            " करा."
+        )
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT * FROM site_geo_config WHERE user_key = ?",
+            (current_user_name,),
+        )
+        curr_geo = cursor.fetchone()
+        conn.close()
+
+        curr_geo_dict = dict(curr_geo) if curr_geo else {}
+
+        site_name_val = st.text_input(
+            "साईटीचे नाव (Site Name):",
+            value=curr_geo_dict.get("site_name", "Main Site Project"),
+        )
+        radius_val = st.number_input(
+            "मर्यादित अंतर परिघ (Radius in Meters):",
+            min_value=10.0,
+            value=float(curr_geo_dict.get("radius_meters", 100.0)),
+            step=10.0,
+        )
+
+        st.components.v1.html(
+            """
+            <script>
+            function getEngineerLocation() {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(showEngPosition, showEngError, {enableHighAccuracy: true});
+                } else {
+                    alert("Geolocation is not supported by this browser.");
+                }
+            }
+            function showEngPosition(position) {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                const urlParams = new URLSearchParams(window.location.search);
+                urlParams.set('eng_lat', lat);
+                urlParams.set('eng_lon', lon);
+                window.parent.location.search = urlParams.toString();
+            }
+            function showEngError(error) {
+                alert("Error getting location: " + error.message);
+            }
+            </script>
+            <button onclick="getEngineerLocation()" style="width:100%; background: #00f2fe; color:#030712; padding:12px; font-weight:bold; border-radius:12px; border:none; cursor:pointer;">
+                🎯 Fetch Current Engineer Site GPS Location
+            </button>
+        """,
+            height=60,
+        )
+
+        eng_lat = st.query_params.get(
+            "eng_lat", curr_geo_dict.get("latitude", 0.0)
+        )
+        eng_lon = st.query_params.get(
+            "eng_lon", curr_geo_dict.get("longitude", 0.0)
+        )
+
+        st.write(
+            f"📍 **Captured Geo Coordinates:** Latitude: `{eng_lat}` | Longitude:"
+            f" `{eng_lon}`"
+        )
+
+        if st.button("💾 Save Site Geo-Fence Settings", type="primary"):
+            if float(eng_lat) != 0.0 and float(eng_lon) != 0.0:
+                conn = get_db_connection()
+                cursor = conn.cursor()
+                cursor.execute(
+                    """
+                    REPLACE INTO site_geo_config (user_key, site_name, latitude, longitude, radius_meters, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                    (
+                        current_user_name,
+                        site_name_val,
+                        float(eng_lat),
+                        float(eng_lon),
+                        radius_val,
+                        get_ist_time().strftime("%Y-%m-%d %H:%M:%S"),
+                    ),
+                )
+                conn.commit()
+                conn.close()
+                st.success("✅ साईटचे जीपीएस लोकेशन आणि जिओ-फेन्स सेव्ह झाले!")
+            else:
+                st.error("❌ कृपया आधी वरील बटणावर क्लिक करून लोकेशन मिळवा!")
+
+    # 3. Dynamic Links Generator
+    with geo_tab3:
+        st.markdown("#### 🔗 Dynamic Link Generator (IN / OUT Links)")
+        st.caption(
+            "💡 एका क्लिकवर आजच्या हजेरीसाठी २ युनिक लिंक्स बनवा व व्हॉट्सॲपवर"
+            " शेअर करा."
+        )
+
+        if st.button("🚀 Generate Today's Dynamic Links", type="primary"):
+            today_date_str = get_ist_time().strftime("%Y-%m-%d")
+            in_token = "IN-" + "".join(
+                random.choices(string.ascii_uppercase + string.digits, k=8)
+            )
+            out_token = "OUT-" + "".join(
+                random.choices(string.ascii_uppercase + string.digits, k=8)
+            )
+
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
+
+            cursor.execute(
+                "INSERT INTO attendance_tokens (token, user_key, type, date,"
+                " created_at) VALUES (?, ?, 'IN', ?, ?)",
+                (in_token, current_user_name, today_date_str, now_str),
+            )
+            cursor.execute(
+                "INSERT INTO attendance_tokens (token, user_key, type, date,"
+                " created_at) VALUES (?, ?, 'OUT', ?, ?)",
+                (out_token, current_user_name, today_date_str, now_str),
+            )
+            conn.commit()
+            conn.close()
+
+            st.success("🎉 आजच्या नवीन हजेरी लिंक्स तयार झाल्या!")
+
+        # Show Latest Active Tokens
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        today_date_str = get_ist_time().strftime("%Y-%m-%d")
+        cursor.execute(
+            "SELECT * FROM attendance_tokens WHERE user_key = ? AND date = ?"
+            " ORDER BY rowid DESC LIMIT 2",
+            (current_user_name, today_date_str),
+        )
+        toks = cursor.fetchall()
+        conn.close()
+
+        if toks:
+            base_app_url = "https://patil-infratech.streamlit.app"  # युझरची मूळ यूआरएल
+            for t in toks:
+                t_type = t["type"]
+                t_code = t["token"]
+                link_url = f"{base_app_url}/?att_token={t_code}"
+
+                st.markdown(
+                    f"##### 🟢 Today's {t_type} Attendance Dynamic Link:"
+                )
+                st.code(link_url)
+
+                msg = (
+                    f"🏗️ *PATIL INFRATECH - LIVE LABOR ATTENDANCE ({t_type.upper()})*\n"
+                    f"📅 *Date:* {today_date_str}\n"
+                    "👉 हजेरी लावण्यासाठी खालील लिंकवर क्लिक करा:\n"
+                    f"{link_url}"
+                )
+                enc_msg = urllib.parse.quote(msg)
+
+                st.markdown(
+                    f"""
+                    <a href="https://wa.me/?text={enc_msg}" target="_blank">
+                        <button style="background:#25D366; color:white; border:none; padding:8px 16px; border-radius:10px; font-weight:bold; cursor:pointer;">
+                            📱 Share {t_type} Link on WhatsApp
+                        </button>
+                    </a>
+                """,
+                    unsafe_allow_html=True,
+                )
+                st.write("---")
+
+    # 4. Attendance Records
+    with geo_tab4:
+        st.markdown("#### 🔒 Tamper-Proof Live Labor Attendance Records")
+        st.caption(
+            "🛡️ ही सिस्टीम टेंपर-प्रूफ आहे. सबमिट झालेली हजेरी इंजिनिअर एडिट"
+            " किंवा डिलीट करू शकत नाही. ३० दिवसांनंतर डेटा आपोआप ऑटो-क्लीन"
+            " होईल."
+        )
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT * FROM labor_attendance_records WHERE user_key = ? ORDER"
+            " BY id DESC",
+            (current_user_name,),
+        )
+        logs = cursor.fetchall()
+        conn.close()
+
+        if logs:
+            log_df = pd.DataFrame([dict(r) for r in logs])
+            st.dataframe(
+                log_df[
+                    [
+                        "date",
+                        "labor_name",
+                        "labor_mobile",
+                        "entry_type",
+                        "timestamp",
+                        "distance_m",
+                        "selfie_status",
+                    ]
+                ],
+                use_container_width=True,
+                hide_index=True,
+            )
+        else:
+            st.info("ℹ️ आज अजून एकही कामगाराने हजेरी लावलेली नाही.")
