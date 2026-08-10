@@ -43,8 +43,7 @@ st.markdown(
             btn.innerText.includes("Back to Main") ||
             btn.innerText.includes("Back to All Users List") ||
             btn.innerText.includes("Back to Site Manager Menu") ||
-            btn.innerText.includes("Back to Estimator Menu") ||
-            btn.innerText.includes("Back to Other Menu")
+            btn.innerText.includes("Back to Estimator Menu")
         );
         if (mainBackButton) {
             mainBackButton.click();
@@ -71,25 +70,6 @@ def get_ist_time():
     utc_now = datetime.datetime.utcnow()
     ist_now = utc_now + datetime.timedelta(hours=5, minutes=30)
     return ist_now
-
-
-# ==========================================
-# 🌐 HAVERSINE FORMULA (GPS GEAN-FENCING DISTANCE CALCULATOR)
-# ==========================================
-def calculate_haversine_distance(lat1, lon1, lat2, lon2):
-    """दोन GPS कोऑर्डिनेट्समधील अंतर मीटर (Meters) मध्ये मोजण्याचे गणिती सूत्र"""
-    R = 6371000.0  # पृथ्वीची त्रिज्या मीटरमध्ये
-    phi1 = math.radians(lat1)
-    phi2 = math.radians(lat2)
-    delta_phi = math.radians(lat2 - lat1)
-    delta_lambda = math.radians(lon2 - lon1)
-
-    a = (
-        math.sin(delta_phi / 2.0) ** 2
-        + math.cos(phi1) * math.cos(phi2) * math.sin(delta_lambda / 2.0) ** 2
-    )
-    c = 2.0 * math.atan2(math.sqrt(a), math.sqrt(1.0 - a))
-    return R * c
 
 
 # ==========================================
@@ -314,46 +294,6 @@ def init_db():
         )
     """)
 
-    # 11. Labor Master Table (कायमस्वरूपी मजुरांची यादी)
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS labor_master (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_key TEXT,
-            labor_name TEXT,
-            mobile_number TEXT UNIQUE,
-            registered_at TEXT
-        )
-    """)
-
-    # 12. Geo-Fence Dynamic Links Table
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS geofence_links (
-            token TEXT PRIMARY KEY,
-            user_key TEXT,
-            site_name TEXT,
-            latitude REAL,
-            longitude REAL,
-            radius_m REAL,
-            link_type TEXT,
-            created_at TEXT
-        )
-    """)
-
-    # 13. Geo-Fenced Selfie Verification Logs Table (Tamper-Proof Ledger)
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS geofence_attendance_logs (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            token TEXT,
-            user_key TEXT,
-            labor_mobile TEXT,
-            labor_name TEXT,
-            attendance_type TEXT,
-            timestamp TEXT,
-            distance_m REAL,
-            status TEXT
-        )
-    """)
-
     # Master Admin Default Entry
     cursor.execute("SELECT * FROM users WHERE user_key = ?", ("9999999999",))
     if not cursor.fetchone():
@@ -392,7 +332,6 @@ def init_db():
         "Site Manager": "Free",
         "WhatsApp Share": "Premium",
         "Civil AI Assistant": "Premium",
-        "Geo-Fence Attendance": "Free",
     }
     for f_name, f_lvl in default_locks.items():
         cursor.execute(
@@ -420,35 +359,6 @@ def init_db():
 
 
 init_db()
-
-
-# ==========================================
-# 🧹 AUTOMATIC 30-DAY DATABASE CLEANUP ENGINE
-# ==========================================
-def run_30_day_auto_cleanup():
-    """३० दिवसांपेक्षा जुना झालेला जीईओ-फेन्स हजेरीचा डेटा आपोआप डिलीट करून सर्व्हर क्लीन ठेवणारा इंजिन"""
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cutoff_date = (get_ist_time() - datetime.timedelta(days=30)).strftime(
-            "%Y-%m-%d %H:%M:%S"
-        )
-
-        cursor.execute(
-            "DELETE FROM geofence_attendance_logs WHERE timestamp < ?",
-            (cutoff_date,),
-        )
-        cursor.execute(
-            "DELETE FROM geofence_links WHERE created_at < ?", (cutoff_date,)
-        )
-
-        conn.commit()
-        conn.close()
-    except Exception:
-        pass
-
-
-run_30_day_auto_cleanup()
 
 
 # DB Helper Functions
@@ -519,8 +429,6 @@ if "selected_site_sub_module" not in st.session_state:
     st.session_state.selected_site_sub_module = None
 if "selected_estimator_sub_module" not in st.session_state:
     st.session_state.selected_estimator_sub_module = None
-if "selected_other_sub_module" not in st.session_state:
-    st.session_state.selected_other_sub_module = None
 if "admin_view" not in st.session_state:
     st.session_state.admin_view = "main"
 if "admin_selected_user" not in st.session_state:
@@ -576,7 +484,7 @@ def check_user_premium_status(username):
                     else:
                         mins = max(1, diff.seconds // 60)
                         return True, f"{mins} Mins Left"
-            except Exception:
+            except:
                 pass
         return True, "Active"
     return False, "Free"
@@ -973,146 +881,6 @@ def render_whatsapp_feature(encoded_msg, key_prefix):
                     conn.commit()
                     conn.close()
                     st.success("✅ ॲडमीनला कोडसाठी रिक्वेस्ट पाठवली आहे!")
-
-
-# ==========================================
-# --- 🌐 EXTERNAL LABOR VERIFICATION FLOW (URL PARAMETER INTERCEPTOR) ---
-# ==========================================
-if "token" in query_params:
-    token_val = query_params["token"]
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        "SELECT * FROM geofence_links WHERE token = ?", (token_val,)
-    )
-    link_data = cursor.fetchone()
-
-    st.markdown(
-        """
-        <div class="main-header">
-            <h1 style='color: white; margin:0; font-size: 26px; font-weight: 800;'>🏗️ PATIL INFRATECH</h1>
-            <p style='color: #e0f2fe; margin:5px 0 0 0; font-size: 14px;'>📍 मजूर डिजिटल जीपीएस हजेरी प्रणाली</p>
-        </div>
-    """,
-        unsafe_allow_html=True,
-    )
-
-    if not link_data:
-        st.error(
-            "⚠️ ही हजेरी लिंक अवैध आहे किंवा मुदत संपली आहे! (Invalid Token)"
-        )
-        st.stop()
-
-    link_info = dict(link_data)
-    site_lat = link_info["latitude"]
-    site_lon = link_info["longitude"]
-    radius = link_info["radius_m"]
-    link_type = link_info["link_type"]
-    site_name = link_info["site_name"]
-
-    st.info(
-        f"🏗️ **साईट:** {site_name} | 🎯 **हजेरी प्रकार:**"
-        f" {'सकाळी येतानाची हजेरी (IN)' if link_type=='IN' else 'संध्याकाळी जातानाची हजेरी (OUT/GO)'}"
-    )
-
-    cursor.execute(
-        "SELECT labor_name, mobile_number FROM labor_master WHERE user_key ="
-        " ?",
-        (link_info["user_key"],),
-    )
-    registered_labors = {
-        row["mobile_number"]: row["labor_name"] for row in cursor.fetchall()
-    }
-    conn.close()
-
-    if not registered_labors:
-        st.warning(
-            "⚠️ या साईटवर अजून एकही मजूर रजिस्टर केलेला नाही. इंजिनिअरने आधी"
-            " Master Entry मध्ये नावे जोडावीत."
-        )
-        st.stop()
-
-    selected_mobile = st.selectbox(
-        "तुमचा मोबाईल नंबर व नाव निवडा:",
-        options=list(registered_labors.keys()),
-        format_func=lambda x: f"{registered_labors[x]} ({x})",
-    )
-
-    st.markdown("---")
-    st.markdown("#### 📍 १. लाईव्ह जीपीएस अंतर पडताळणी (GPS Verification):")
-
-    c1, c2 = st.columns(2)
-    with c1:
-        labor_lat = st.number_input(
-            "तुमचे Latitude (GPS):",
-            value=site_lat,
-            format="%.6f",
-            key="lbl_lat",
-        )
-    with c2:
-        labor_lon = st.number_input(
-            "तुमचे Longitude (GPS):",
-            value=site_lon,
-            format="%.6f",
-            key="lbl_lon",
-        )
-
-    distance = calculate_haversine_distance(
-        site_lat, site_lon, labor_lat, labor_lon
-    )
-
-    if distance > radius:
-        st.error(
-            f"⚠️ **तुम्ही साईटच्या {int(radius)} मीटर परिघाबाहेर आहात!**\n"
-            f"तुमचे साईटपासून सध्याचे अंतर: **{distance:.1f} मीटर** आहे."
-            " हजेरी लॉक केली आहे!"
-        )
-        st.stop()
-    else:
-        st.success(
-            f"✅ **GPS जुळले!** तुम्ही साईटच्या **{distance:.1f} मीटर** आत"
-            " आहात."
-        )
-
-    st.markdown("---")
-    st.markdown("#### 📸 २. लाईव्ह सेल्फी व्हेरीफिकेशन (Selfie Verification):")
-    selfie_img = st.camera_input("कॅमेरा ओपन करा आणि लाईव्ह फोटो काढा:")
-
-    if selfie_img:
-        if st.button("🚀 हजेरी सबमिट करा (Submit Attendance)", type="primary"):
-            conn = get_db_connection()
-            cursor = conn.cursor()
-            now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
-
-            cursor.execute(
-                """
-                INSERT INTO geofence_attendance_logs 
-                (token, user_key, labor_mobile, labor_name, attendance_type, timestamp, distance_m, status)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-                (
-                    token_val,
-                    link_info["user_key"],
-                    selected_mobile,
-                    registered_labors[selected_mobile],
-                    link_type,
-                    now_str,
-                    distance,
-                    "VERIFIED_PRESENT",
-                ),
-            )
-            conn.commit()
-            conn.close()
-
-            st.balloons()
-            st.success(
-                f"🎉 **धन्यवाद {registered_labors[selected_mobile]}!** तुमची"
-                f" **{link_type}** हजेरी फोटो आणि जीपीएस लोकेशनसह सेव्ह झाली"
-                " आहे!"
-            )
-            st.stop()
-
-    st.stop()
 
 
 # ==========================================
@@ -1628,7 +1396,7 @@ if st.session_state.is_admin_logged:
                             ).total_seconds()
                             if diff_seconds <= 120:
                                 is_online = True
-                        except Exception:
+                        except:
                             pass
 
                     status_indicator = (
@@ -2135,7 +1903,6 @@ if col_lo.button("🔄 Logout"):
     st.session_state.selected_module = None
     st.session_state.selected_site_sub_module = None
     st.session_state.selected_estimator_sub_module = None
-    st.session_state.selected_other_sub_module = None
     st.rerun()
 
 current_user_data = get_user_data(current_user_name) or {}
@@ -2375,7 +2142,7 @@ if st.session_state.selected_module is None:
     qs_lock = locks_cfg.get("Quantity Surveying", "Free")
     site_lock = locks_cfg.get("Site Manager", "Free")
 
-    main_col1, main_col2, main_col3 = st.columns(3)
+    main_col1, main_col2 = st.columns(2)
 
     # --------------------------------------------------
     # SECTION 1: SITE MANAGER SECTION
@@ -2428,31 +2195,6 @@ if st.session_state.selected_module is None:
         ):
             st.session_state.selected_module = "Estimator Tools"
             st.session_state.selected_estimator_sub_module = None
-            trigger_push_state()
-            st.rerun()
-
-    # --------------------------------------------------
-    # SECTION 3: OTHER SECTION (NEWLY ADDED MODULE)
-    # --------------------------------------------------
-    with main_col3:
-        st.markdown("#### ⚡ 3. Other Section")
-        st.markdown(
-            """
-            <div style="text-align: center; background: #111827; padding: 18px 10px; border-radius: 20px; border: 1px solid rgba(236, 56, 188, 0.4); margin-bottom: 12px;">
-                <h1 style="font-size: 32px; margin:0;">📍</h1>
-                <h5 style="margin: 8px 0 2px 0; color: #f8fafc; font-weight:700; font-size:13px;">Other Features</h5>
-                <p style="font-size: 9px; color: #ec38bc; margin:0;">[Geo-Fence Link & Master]</p>
-            </div>
-        """,
-            unsafe_allow_html=True,
-        )
-        if st.button(
-            "⚡ Open Other Section",
-            key="btn_open_other",
-            use_container_width=True,
-        ):
-            st.session_state.selected_module = "Other Section"
-            st.session_state.selected_other_sub_module = None
             trigger_push_state()
             st.rerun()
 
@@ -4855,7 +4597,7 @@ elif st.session_state.selected_module == "Site Manager":
                 with btn_col1:
                     try:
                         render_whatsapp_feature(encoded_prog_msg, "site_prog_wa")
-                    except Exception:
+                    except:
                         st.markdown(
                             "[Send"
                             f" WhatsApp](https://wa.me/?text={encoded_prog_msg})"
@@ -5231,223 +4973,3 @@ elif st.session_state.selected_module == "Site Manager":
                         "ℹ️ मागील ७ दिवसात कामाचा कोणताही प्रोग्रेस रिपोर्ट"
                         " नोंदवला नाही."
                     )
-
-# --------------------------------------------------
-        # OTHER SUB 2: ENGINEER SITE CODE & GPS SETUP (६-अंकी कोड सिस्टीम)
-        # --------------------------------------------------
-        elif oth_sub_mod == "Link Generator":
-            st.subheader("📍 लाईव्ह लोकेशन आणि ६-अंकी कोड जनरेटर (Daily Code Creation)")
-            st.caption("💡 इंजिनिअर साईटवर उभा राहून जीपीएस लोकेशन स्कॅन करेल आणि मजुरांसाठी ६-अंकी अटेंडन्स कोड जनरेट करेल.")
-
-            tab_eng, tab_lbr = st.tabs(["👷‍♂️ इंजिनिअर: कोड जनरेट करा", "📱 मजूर: कोड टाकून हजेरी लावा"])
-
-            # ---- TAB 1: इंजिनिअर कोड जनरेटर ----
-            with tab_eng:
-                st.markdown("#### १. साईट जीईओ-फेन्स व कोड सेट करा:")
-                s_name = st.text_input("साईटचे नाव (Site Name):", value="Patil Main Site", key="eng_sname").strip()
-                session_type = st.radio("हजेरी प्रकार निवडा:", ["IN (सकाळी येताना)", "OUT (संध्याकाळी जाताना)"], horizontal=True, key="eng_stype")
-
-                st.markdown("#### 📍 जीपीएस लोकेशन स्कॅन करा:")
-                
-                # HTML5 Auto GPS Fetcher Widget
-                components.html("""
-                    <div style="text-align: center;">
-                        <button onclick="getLocation()" style="
-                            background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
-                            color: #000; font-weight: bold; padding: 12px 20px;
-                            border: none; border-radius: 12px; cursor: pointer;
-                            font-size: 15px; width: 100%; box-shadow: 0 4px 15px rgba(0, 242, 254, 0.4);
-                        ">
-                            📡 इंजिनिअरचे लाईव्ह लोकेशन स्कॅन करा
-                        </button>
-                        <p id="gps_status" style="color: #38bdf8; font-size: 12px; margin-top: 6px;"></p>
-                    </div>
-                    <script>
-                    function getLocation() {
-                        document.getElementById('gps_status').innerHTML = "⏳ जीपीएस स्कॅन होत आहे...";
-                        if (navigator.geolocation) {
-                            navigator.geolocation.getCurrentPosition(showPosition, showError, {enableHighAccuracy: true});
-                        } else {
-                            document.getElementById('gps_status').innerHTML = "❌ GPS सपोर्ट उपलब्ध नाही.";
-                        }
-                    }
-                    function showPosition(position) {
-                        const lat = position.coords.latitude;
-                        const lon = position.coords.longitude;
-                        const url = new URL(window.parent.location.href);
-                        url.searchParams.set('scanned_lat', lat);
-                        url.searchParams.set('scanned_lon', lon);
-                        window.parent.location.href = url.href;
-                    }
-                    function showError(error) {
-                        document.getElementById('gps_status').innerHTML = "⚠️ कृपया मोबाईलचे Location Permission चालू करा!";
-                    }
-                    </script>
-                """, height=75)
-
-                scanned_lat = st.query_params.get("scanned_lat", None)
-                scanned_lon = st.query_params.get("scanned_lon", None)
-
-                c1, c2, c3 = st.columns(3)
-                with c1:
-                    site_lat = st.number_input("Site Latitude:", value=float(scanned_lat) if scanned_lat else 18.520430, format="%.6f", key="eng_lat")
-                with c2:
-                    site_lon = st.number_input("Site Longitude:", value=float(scanned_lon) if scanned_lon else 73.856744, format="%.6f", key="eng_lon")
-                with c3:
-                    radius_m = st.number_input("Radius (Meters):", min_value=10, max_value=500, value=100, step=10, key="eng_rad")
-
-                if scanned_lat and scanned_lon:
-                    st.success("✅ इंजिनिअरचे लाईव्ह GPS लोकेशन स्कॅन झाले!")
-
-                st.write("---")
-                if st.button("🚀 जनरेट करा हजेरी कोड (Generate Today's Code)", type="primary", key="btn_gen_code"):
-                    generated_site_code = "".join(random.choices(string.digits, k=6))
-                    now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
-
-                    conn = get_db_connection()
-                    cursor = conn.cursor()
-                    cursor.execute("""
-                        INSERT OR REPLACE INTO geofence_links 
-                        (token, user_key, site_name, latitude, longitude, radius_m, link_type, created_at)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                    """, (generated_site_code, current_user_name, s_name, site_lat, site_lon, radius_m, session_type, now_str))
-                    conn.commit()
-                    conn.close()
-
-                    st.markdown(f"""
-                        <div style="background: #111827; border: 2px solid #00f2fe; padding: 20px; border-radius: 18px; text-align: center; margin-top: 15px;">
-                            <h3 style="color: #38bdf8; margin: 0;">🎉 आजचा हजेरी कोड जनरेट झाला:</h3>
-                            <h1 style="color: #00f2fe; font-size: 48px; letter-spacing: 6px; margin: 10px 0;">{generated_site_code}</h1>
-                            <p style="color: #f8fafc; font-size: 14px; margin: 0;">हा ६-अंकी कोड मजुरांना सांगा किंवा व्हॉट्सॲप ग्रुपवर पाठवा.</p>
-                        </div>
-                    """, unsafe_allow_html=True)
-
-                    wa_msg = f"🏗️ *{s_name} - आजचा हजेरी कोड*\n\n🔑 *हजेरी कोड:* `{generated_site_code}` ({session_type})\n📍 *परिघ:* {radius_m} मीटर\n\n_हा कोड पाटील इन्फ्राटेक ॲपमध्ये टाकून हजेरी लावा._"
-                    render_whatsapp_feature(urllib.parse.quote(wa_msg), "wa_site_code_share")
-
-            # ---- TAB 2: मजूर कोड अटेंडन्स इनपुट ----
-            with tab_lbr:
-                st.markdown("#### 📱 मजूर हजेरी कोड इनपुट:")
-                entered_code = st.text_input("६ अंकी साईट कोड टाका (Enter Code):", max_chars=6, key="lbr_code_in").strip()
-
-                if entered_code:
-                    conn = get_db_connection()
-                    cursor = conn.cursor()
-                    cursor.execute("SELECT * FROM geofence_links WHERE token = ?", (entered_code,))
-                    code_data = cursor.fetchone()
-
-                    if not code_data:
-                        st.error("❌ चुकीचा किंवा एक्सपायर झालेला हजेरी कोड!")
-                        conn.close()
-                    else:
-                        c_info = dict(code_data)
-                        site_lat = c_info["latitude"]
-                        site_lon = c_info["longitude"]
-                        radius_m = c_info["radius_m"]
-                        s_name = c_info["site_name"]
-                        s_type = c_info["link_type"]
-
-                        st.info(f"🏗️ **साईट:** {s_name} | 🎯 **सेशन:** {s_type} | 📐 **परिघ:** {radius_m}m")
-
-                        cursor.execute("SELECT labor_name, mobile_number FROM labor_master WHERE user_key = ?", (c_info["user_key"],))
-                        registered_labors = {row["mobile_number"]: row["labor_name"] for row in cursor.fetchall()}
-                        conn.close()
-
-                        if not registered_labors:
-                            st.warning("⚠️ या साईटवर अजून एकही मजूर रजिस्टर केलेला नाही. आधी Master Entry करा.")
-                        else:
-                            selected_mobile = st.selectbox("तुमचा मोबाईल नंबर व नाव निवडा:", options=list(registered_labors.keys()), format_func=lambda x: f"{registered_labors[x]} ({x})", key="lbr_mob_sel")
-
-                            st.markdown("#### 📍 १. मजुराचे लाईव्ह जीपीएस स्कॅन करा:")
-                            components.html("""
-                                <div style="text-align: center;">
-                                    <button onclick="getLocation()" style="
-                                        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-                                        color: #fff; font-weight: bold; padding: 12px 20px;
-                                        border: none; border-radius: 12px; cursor: pointer;
-                                        font-size: 15px; width: 100%; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
-                                    ">
-                                        📡 मजुराचे लाईव्ह लोकेशन स्कॅन करा
-                                    </button>
-                                    <p id="lbr_gps_status" style="color: #34d399; font-size: 12px; margin-top: 6px;"></p>
-                                </div>
-                                <script>
-                                function getLocation() {
-                                    document.getElementById('lbr_gps_status').innerHTML = "⏳ जीपीएस स्कॅन होत आहे...";
-                                    if (navigator.geolocation) {
-                                        navigator.geolocation.getCurrentPosition(showPosition, showError, {enableHighAccuracy: true});
-                                    } else {
-                                        document.getElementById('lbr_gps_status').innerHTML = "❌ GPS सपोर्ट उपलब्ध नाही.";
-                                    }
-                                }
-                                function showPosition(position) {
-                                    const lat = position.coords.latitude;
-                                    const lon = position.coords.longitude;
-                                    const url = new URL(window.parent.location.href);
-                                    url.searchParams.set('scanned_lat', lat);
-                                    url.searchParams.set('scanned_lon', lon);
-                                    window.parent.location.href = url.href;
-                                }
-                                function showError(error) {
-                                    document.getElementById('lbr_gps_status').innerHTML = "⚠️ कृपया मोबाईलचे Location Permission चालू करा!";
-                                }
-                                </script>
-                            """, height=75)
-
-                            scanned_lat = st.query_params.get("scanned_lat", None)
-                            scanned_lon = st.query_params.get("scanned_lon", None)
-
-                            col_l1, col_l2 = st.columns(2)
-                            with col_l1:
-                                l_lat = st.number_input("Labor Latitude:", value=float(scanned_lat) if scanned_lat else site_lat, format="%.6f", key="lbr_lat_val")
-                            with col_l2:
-                                l_lon = st.number_input("Labor Longitude:", value=float(scanned_lon) if scanned_lon else site_lon, format="%.6f", key="lbr_lon_val")
-
-                            distance = calculate_haversine_distance(site_lat, site_lon, l_lat, l_lon)
-
-                            if distance > radius_m:
-                                st.error(f"⚠️ **तुम्ही साईटच्या {int(radius_m)} मीटर परिघाबाहेर आहात!**\nतुमचे सध्याचे अंतर: **{distance:.1f} मीटर** आहे. हजेरी ब्लॉक केली आहे!")
-                            else:
-                                st.success(f"✅ **GPS व्हॅलिडेट झाले!** तुम्ही साईटपासून **{distance:.1f} मीटर** अंतरावर आहात.")
-
-                                st.markdown("#### 📸 २. लाईव्ह सेल्फी व्हेरीफिकेशन:")
-                                selfie_img = st.camera_input("कॅमेरा उघडून लाईव्ह फोटो काढा:", key="lbr_selfie")
-
-                                if selfie_img:
-                                    if st.button("🚀 हजेरी सेव्ह करा (Submit Attendance)", type="primary", key="btn_sub_lbr_att"):
-                                        conn = get_db_connection()
-                                        cursor = conn.cursor()
-                                        now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
-
-                                        cursor.execute("""
-                                            INSERT INTO geofence_attendance_logs 
-                                            (token, user_key, labor_mobile, labor_name, attendance_type, timestamp, distance_m, status)
-                                            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                                        """, (entered_code, c_info["user_key"], selected_mobile, registered_labors[selected_mobile], s_type, now_str, distance, "VERIFIED_PRESENT"))
-                                        conn.commit()
-                                        conn.close()
-
-                                        st.balloons()
-                                        st.success(f"🎉 **धन्यवाद {registered_labors[selected_mobile]}!** तुमची **{s_type}** हजेरी फोटो व जीपीएससह नोंदवली गेली आहे.")
-
-            st.write("---")
-            st.markdown("##### 🛡️ टॅम्पर-प्रूफ हजेरी नोंदी (Zero Engineer Control Ledger):")
-            conn = get_db_connection()
-            cursor = conn.cursor()
-            cursor.execute(
-                "SELECT labor_name, labor_mobile, attendance_type, timestamp,"
-                " distance_m, status FROM geofence_attendance_logs WHERE"
-                " user_key = ? ORDER BY id DESC",
-                (current_user_name,),
-            )
-            logs = cursor.fetchall()
-            conn.close()
-
-            if logs:
-                st.dataframe(
-                    pd.DataFrame([dict(r) for r in logs]),
-                    use_container_width=True,
-                    hide_index=True,
-                )
-            else:
-                st.info("ℹ️ आज अजून एकाही मजुराने हजेरी लावलेली नाही.")
