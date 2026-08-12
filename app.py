@@ -30,7 +30,7 @@ st.set_page_config(
 )
 
 # ==========================================
-# 📱 MOBILE NATIVE BACK BUTTON INTERCEPTOR (JS ENGINE)
+# 💾 BROWSER LOCALSTORAGE PERSISTENCE & MOBILE BACK BUTTON
 # ==========================================
 st.markdown(
     """
@@ -49,6 +49,14 @@ st.markdown(
             mainBackButton.click();
         }
     };
+
+    // २. स्लीप मोडनंतर किंवा स्क्रीन रिफ्रेश झाल्यावर LocalStorage मधून लॉगिन पूर्ववत करणे
+    const savedUser = localStorage.getItem("patil_app_user");
+    const urlParams = new URLSearchParams(window.location.search);
+    if (savedUser && !urlParams.has("saved_user")) {
+        urlParams.set("saved_user", savedUser);
+        window.location.search = urlParams.toString();
+    }
     </script>
 """,
     unsafe_allow_html=True,
@@ -393,7 +401,7 @@ def get_feature_locks():
     return {row["feature_name"]: row["access_level"] for row in rows}
 
 
-# Session State & Auto Login
+# Session State & Auto Login (SMART PERSISTENCE FIX)
 if "app_user_name" not in st.session_state:
     st.session_state.app_user_name = None
 
@@ -409,6 +417,7 @@ if st.session_state.app_user_name is None and "saved_user" in query_params:
     conn.close()
     if row:
         st.session_state.app_user_name = row["user_key"]
+        st.session_state.otp_verified = True
 
 if "pending_email" not in st.session_state:
     st.session_state.pending_email = None
@@ -1602,6 +1611,14 @@ if st.session_state.app_user_name is None:
                         found_user = row["user_key"]
                         st.session_state.app_user_name = found_user
                         st.query_params["saved_user"] = found_user
+                        
+                        # Browser LocalStorage मध्ये सेव्ह करा
+                        st.markdown(f"""
+                            <script>
+                                localStorage.setItem("patil_app_user", "{found_user}");
+                            </script>
+                        """, unsafe_allow_html=True)
+                        
                         st.success(
                             "🎉 यशस्वीरित्या लॉगिन झाले! (तुमचे सेशन या"
                             " डिव्हाइसवर सेव्ह केले आहे)"
@@ -1683,10 +1700,19 @@ if st.session_state.app_user_name is None:
 
             if row:
                 user_data = dict(row)
-                st.session_state.app_user_name = user_data["user_key"]
-                st.query_params["saved_user"] = user_data["user_key"]
+                found_user = user_data["user_key"]
+                st.session_state.app_user_name = found_user
+                st.query_params["saved_user"] = found_user
+                
+                # LocalStorage मध्ये सेव्ह करणे
+                st.markdown(f"""
+                    <script>
+                        localStorage.setItem("patil_app_user", "{found_user}");
+                    </script>
+                """, unsafe_allow_html=True)
+                
                 st.success(
-                    f"🎉 स्वागत आहे {user_data['user_key']}! लॉगिन होत आहे..."
+                    f"🎉 स्वागत आहे {found_user}! लॉगिन होत आहे..."
                 )
                 time.sleep(1)
                 st.rerun()
@@ -1810,6 +1836,14 @@ if st.session_state.app_user_name is None:
                                         st.query_params["saved_user"] = (
                                             custom_username
                                         )
+                                        
+                                        # LocalStorage मध्ये सेव्ह करणे
+                                        st.markdown(f"""
+                                            <script>
+                                                localStorage.setItem("patil_app_user", "{custom_username}");
+                                            </script>
+                                        """, unsafe_allow_html=True)
+
                                         st.success(
                                             "🎉 अकाउंट यशस्वीरित्या तयार झाले!"
                                             " डिटेल्स ईमेलवर पाठवले आहेत."
@@ -1903,6 +1937,13 @@ if col_lo.button("🔄 Logout"):
     st.session_state.selected_module = None
     st.session_state.selected_site_sub_module = None
     st.session_state.selected_estimator_sub_module = None
+    
+    # LocalStorage मधून डेटा डिलीट करणे
+    st.markdown("""
+        <script>
+            localStorage.removeItem("patil_app_user");
+        </script>
+    """, unsafe_allow_html=True)
     st.rerun()
 
 current_user_data = get_user_data(current_user_name) or {}
@@ -4649,8 +4690,8 @@ elif st.session_state.selected_module == "Site Manager":
                 for text in default_chk_items:
                     cursor.execute(
                         "INSERT INTO pre_concreting_checklist (user_key,"
-                        " item_text, is_checked, created_at) VALUES (?, ?, 0,"
-                        " ?)",
+                        " item_text, is_checked, created_at) VALUES (?, ?,"
+                        " 0, ?)",
                         (current_user_name, text, now_time_str),
                     )
                 conn.commit()
