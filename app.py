@@ -35,9 +35,9 @@ except ImportError:
 # 📌 विभाग २: STREAMLIT पेज कॉन्फिगरेशन
 # ==========================================
 st.set_page_config(
-    page_title="PATIL INFRATECH",
+    page_title="PATIL INFRATECH | Civil Engineering Suite",
     page_icon="🏗️",
-    layout="centered",
+    layout="wide",
     initial_sidebar_state="collapsed",
 )
 
@@ -551,156 +551,126 @@ else:
   primary_btn_shadow = "rgba(2, 132, 199, 0.4)"
   box_bg_color = "#111827"
 
+# ==========================================
+# 📌 विभाग ८: BRANDED CONSTRUCTION THEME CSS
+# ==========================================
 st.markdown(
-    f"""
+    """
     <style>
-    #MainMenu {{ visibility: hidden; }}
-    header[data-testid="stHeader"] {{ visibility: hidden; height: 0%; display: none !important; }}
-    footer {{ visibility: hidden; display: none !important; }}
-    .stAppHeader {{ display: none !important; }}
-    [data-testid="stToolbar"] {{ visibility: hidden !important; display: none !important; }}
-    [data-testid="stDecoration"] {{ display: none !important; }}
-    [data-testid="stStatusWidget"] {{ visibility: hidden !important; }}
-    
-    button[title="Increment"], button[title="Decrement"] {{ display: none !important; }}
-    div[data-testid="stNumberInputStepUp"], div[data-testid="stNumberInputStepDown"] {{ display: none !important; }}
+    /* १. अनावश्यक Streamlit घटक लपवणे */
+    #MainMenu { visibility: hidden; }
+    header[data-testid="stHeader"] { visibility: hidden; height: 0%; display: none !important; }
+    footer { visibility: hidden; display: none !important; }
+    .stAppHeader { display: none !important; }
+    [data-testid="stToolbar"] { visibility: hidden !important; display: none !important; }
+    [data-testid="stDecoration"] { display: none !important; }
+    [data-testid="stStatusWidget"] { visibility: hidden !important; }
+    button[title="Increment"], button[title="Decrement"] { display: none !important; }
+    div[data-testid="stNumberInputStepUp"], div[data-testid="stNumberInputStepDown"] { display: none !important; }
 
-    html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"], [data-testid="stSidebar"] {{
-        background-color: #030712 !important;
-        background: {bg_gradient} !important;
+    /* २. मुख्य बॅकग्राउंड - डार्क कंक्रीट/स्लेट फिनिश */
+    html, body, .stApp, [data-testid="stAppViewContainer"] {
+        background: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 50%, #020617 100%) !important;
         color: #f8fafc !important;
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
-    }}
+        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+    }
 
-    p, span, h1, h2, h3, h4, h5, h6, li, small, label, div {{
-        color: #f8fafc !important;
-    }}
-
-    div[data-baseweb="input"],
-    div[data-baseweb="input"] *,
-    div[data-baseweb="base-input"],
-    div[data-baseweb="base-input"] *,
-    div[data-testid="stNumberInputContainer"],
-    div[data-testid="stNumberInputContainer"] *,
-    div[data-testid="stTextInput"],
-    div[data-testid="stTextInput"] * {{
-        background-color: {box_bg_color} !important;
-        background: {box_bg_color} !important;
-        color: #ffffff !important;
-    }}
-
-    div[data-baseweb="input"] > div,
-    div[data-baseweb="base-input"],
-    div[data-testid="stNumberInputContainer"],
-    input, select, textarea {{
-        border: 1px solid {accent_border} !important;
-        border-radius: 14px !important;
-        outline: none !important;
-        font-weight: 500 !important;
-        box-shadow: {box_inner_shadow} !important;
-    }}
-
-    div[data-testid="stNumberInputContainer"] button,
-    div[data-testid="stNumberInputStepUp"],
-    div[data-testid="stNumberInputStepDown"] {{
-        background-color: {card_bg} !important;
-        background: {card_bg} !important;
-        color: {accent_border} !important;
-        border-color: rgba(255, 255, 255, 0.2) !important;
-    }}
-
-    div[data-baseweb="select"],
-    div[data-baseweb="select"] > div,
-    div[data-baseweb="select"] * {{
-        background-color: {box_bg_color} !important;
-        background: {box_bg_color} !important;
-        color: #ffffff !important;
-        border-color: {accent_border} !important;
-    }}
-
-    div[data-baseweb="select"] [data-testid="stValueValue"],
-    div[data-baseweb="select"] [role="button"],
-    div[data-baseweb="select"] input {{
-        background-color: {box_bg_color} !important;
-        background: {box_bg_color} !important;
-        color: #ffffff !important;
-    }}
-
-    div[data-baseweb="select"] > div {{
-        border-radius: 14px !important;
-        border: 1px solid {accent_border} !important;
-    }}
-
-    div[data-baseweb="popover"],
-    div[data-baseweb="menu"],
-    div[role="listbox"],
-    ul[role="listbox"] {{
-        background-color: {box_bg_color} !important;
-        background: {box_bg_color} !important;
-        border: 1px solid {accent_border} !important;
-    }}
-
-    li[role="option"] {{
-        background-color: {box_bg_color} !important;
-        color: #ffffff !important;
-    }}
-    li[role="option"]:hover, li[aria-selected="true"] {{
-        background-color: {card_bg} !important;
-        color: {accent_border} !important;
-    }}
-
-    div.stForm, div[data-testid="stExpander"] {{
-        background: {card_bg} !important;
-        border: 1px solid {card_border_color} !important;
-        border-radius: 20px !important;
-        padding: 22px !important;
-        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.9);
-    }}
-
-    div.stButton > button[kind="primary"] {{
-        background: {primary_btn_bg} !important;
-        color: #ffffff !important;
-        font-weight: 800 !important;
-        border-radius: 14px !important;
-        border: none !important;
-        padding: 12px 20px !important;
-        box-shadow: 0 6px 20px {primary_btn_shadow} !important;
-        width: 100%;
-        transition: all 0.3s ease;
-    }}
-
-    div.stButton > button {{
-        color: #f8fafc !important;
-        background: {card_bg} !important;
-        border: 1px solid rgba(255, 255, 255, 0.15) !important;
-        border-radius: 14px !important;
-    }}
-
-    .main-header {{
-        background: {header_gradient};
-        padding: 25px 15px;
-        border-radius: 22px;
+    /* ३. ब्रँडेड हेडर बॅनर */
+    .brand-header {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #334155 100%);
+        border: 1px solid rgba(245, 158, 11, 0.4);
+        border-top: 4px solid #f59e0b;
+        padding: 24px 20px;
+        border-radius: 16px;
         text-align: center;
-        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.7);
-        margin-bottom: 22px;
-        border: 1px solid rgba(255, 255, 255, 0.25);
-    }}
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6), 0 0 20px rgba(245, 158, 11, 0.15);
+        margin-bottom: 24px;
+    }
 
-    .gold-vip-badge {{
-        background: linear-gradient(135deg, #7303c0 0%, #ec38bc 100%);
+    /* ४. इनपुट बॉक्सेस (Inputs & Dropdowns) */
+    div[data-baseweb="input"],
+    div[data-baseweb="base-input"],
+    div[data-testid="stNumberInputContainer"],
+    div[data-testid="stTextInput"] {
+        background-color: #0f172a !important;
         color: #ffffff !important;
-        padding: 8px 18px;
-        border-radius: 20px;
-        font-weight: 900;
-        font-size: 14px;
-        letter-spacing: 0.5px;
-        box-shadow: 0 0 25px rgba(236, 56, 188, 0.8);
-        display: inline-block;
-        border: 1px solid #f472b6;
-    }}
+    }
 
-    .free-user-badge {{
-        background: #111827;
+    input, select, textarea {
+        background-color: #0f172a !important;
+        color: #ffffff !important;
+        border: 1px solid #334155 !important;
+        border-radius: 10px !important;
+        font-weight: 500 !important;
+    }
+    input:focus, textarea:focus {
+        border-color: #f59e0b !important;
+        box-shadow: 0 0 10px rgba(245, 158, 11, 0.3) !important;
+    }
+
+    /* ५. प्रायमरी बटन्स (Construction Yellow/Gold & Blue Accents) */
+    div.stButton > button[kind="primary"] {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+        color: #000000 !important;
+        font-weight: 800 !important;
+        border-radius: 10px !important;
+        border: none !important;
+        padding: 12px 24px !important;
+        box-shadow: 0 4px 15px rgba(245, 158, 11, 0.35) !important;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        transition: all 0.2s ease-in-out;
+    }
+    div.stButton > button[kind="primary"]:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(245, 158, 11, 0.5) !important;
+        background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%) !important;
+    }
+
+    /* ६. दुय्यम बटन्स */
+    div.stButton > button {
+        background: #1e293b !important;
+        color: #f8fafc !important;
+        border: 1px solid #334155 !important;
+        border-radius: 10px !important;
+        font-weight: 600 !important;
+        transition: all 0.2s ease;
+    }
+    div.stButton > button:hover {
+        border-color: #f59e0b !important;
+        color: #f59e0b !important;
+    }
+
+    /* ७. कार्ड्स आणि कंटेनर्स */
+    .module-card {
+        background: rgba(30, 41, 59, 0.7);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        padding: 22px 16px;
+        text-align: center;
+        backdrop-filter: blur(8px);
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    }
+    .module-card:hover {
+        border-color: #f59e0b;
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(245, 158, 11, 0.2);
+    }
+
+    /* ८. व्हीआयपी आणि फ्री बॅज */
+    .gold-vip-badge {
+        background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);
+        color: #000000 !important;
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-weight: 800;
+        font-size: 13px;
+        display: inline-block;
+        box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+    }
+    .free-user-badge {
+        background: #1e293b;
         color: #38bdf8 !important;
         padding: 6px 16px;
         border-radius: 20px;
@@ -708,42 +678,7 @@ st.markdown(
         font-size: 13px;
         border: 1px solid #0284c7;
         display: inline-block;
-    }}
-
-    .admin-command-center {{
-        background: #140a28 !important;
-        border: 2px solid #ec38bc !important;
-        border-radius: 24px !important;
-        padding: 25px !important;
-        box-shadow: 0 15px 40px rgba(236, 56, 188, 0.3);
-        margin-bottom: 25px;
-    }}
-
-    .admin-user-card {{
-        background: #1a0c33;
-        border: 1px solid #ec38bc;
-        border-radius: 18px;
-        padding: 22px;
-        margin-bottom: 18px;
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.8);
-    }}
-
-    .galaxy-loader {{
-        margin: 20px auto;
-        width: 80px;
-        height: 80px;
-        border-radius: 50%;
-        border: 4px solid transparent;
-        border-top-color: #00f2fe;
-        border-bottom-color: #ec38bc;
-        animation: spin-galaxy 1.5s linear infinite;
-        box-shadow: 0 0 30px rgba(0, 242, 254, 0.5);
-    }}
-    @keyframes spin-galaxy {{
-        0% {{ transform: rotate(0deg) scale(1); }}
-        50% {{ transform: rotate(180deg) scale(1.1); }}
-        100% {{ transform: rotate(360deg) scale(1); }}
-    }}
+    }
     </style>
 """,
     unsafe_allow_html=True,
@@ -869,10 +804,20 @@ if not st.session_state.welcome_completed:
         "<br><div class='galaxy-loader'></div>", unsafe_allow_html=True
     )
     st.markdown(
-        "<h1 style='text-align: center; color: #00f2fe; text-shadow: 0 0 20px"
-        " #00f2fe;'>🌌 WELCOME TO PATIL INFRATECH</h1>",
-        unsafe_allow_html=True,
-    )
+    """
+    <div class="brand-header">
+        <div style="font-size: 38px; margin-bottom: 4px;">🏗️</div>
+        <h1 style='color: #ffffff; margin:0; font-size: 30px; font-weight: 900; letter-spacing: 1px;'>PATIL INFRATECH</h1>
+        <p style='color: #f59e0b; margin:6px 0 0 0; font-size: 15px; font-weight: 700; text-transform: uppercase;'>
+            Civil Engineering • Quantity Surveying • Site Management
+        </p>
+        <div style="margin-top: 10px; display: inline-block; background: rgba(0,0,0,0.3); padding: 4px 14px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);">
+            <small style='color: #94a3b8; font-size: 12px;'>Concept & Logic by: <b style="color:#f8fafc;">Kanhaiya (Founder)</b></small>
+        </div>
+    </div>
+""",
+    unsafe_allow_html=True,
+)
     st.markdown(
         "<h4 style='text-align: center; color: #ec38bc;'>तुमचे स्वप्न, आमचे"
         " एस्टिमेशन! ✨</h4>",
@@ -2055,34 +2000,37 @@ if ai_lock_setting == "Free" or is_user_premium:
 # 📌 विभाग १५: मुख्य मॉड्यूल निवडीचे डॅशबोर्ड कार्ड्स (Side-by-Side)
 # ==========================================
 if st.session_state.selected_module is None:
-  st.markdown("### 🚀 तुम्हाला काय करायचे आहे ते निवडा:")
+  st.markdown(
+      "<h3 style='text-align:center; margin-bottom:20px;'>🚀 कृपया मॉड्यूल"
+      " निवडा</h3>",
+      unsafe_allow_html=True,
+  )
 
   calc_lock = locks_cfg.get("Civil Calculator", "Free")
-  ra_lock = locks_cfg.get("Rate Analysis", "Free")
-  bbs_lock = locks_cfg.get("BBS", "Free")
-  qs_lock = locks_cfg.get("Quantity Surveying", "Free")
   site_lock = locks_cfg.get("Site Manager", "Free")
 
   main_col1, main_col2 = st.columns(2)
 
   # १. साईट मॅनेजर कार्ड
   with main_col1:
-    st.markdown("#### 👷‍♂️ 1. Site Manager")
-    site_badge = "🆓 Free" if site_lock == "Free" else "👑 Premium"
+    site_badge = "🆓 Free Access" if site_lock == "Free" else "👑 VIP Premium"
     st.markdown(
         f"""
-            <div style="text-align: center; background: #111827; padding: 18px 10px; border-radius: 20px; border: 1px solid rgba(0, 242, 254, 0.3); margin-bottom: 12px;">
-                <h1 style="font-size: 32px; margin:0;">👷‍♂️</h1>
-                <h5 style="margin: 8px 0 2px 0; color: #f8fafc; font-weight:700; font-size:13px;">Site Manager</h5>
-                <p style="font-size: 9px; color: #38bdf8; margin:0;">[{site_badge}]</p>
+            <div class="module-card">
+                <div style="font-size: 42px; margin-bottom: 8px;">👷‍♂️</div>
+                <h3 style="margin: 0; color: #ffffff; font-weight: 800;">Site Manager</h3>
+                <p style="color: #94a3b8; font-size: 13px; margin: 6px 0 12px 0;">हजेरी, मजुरी, साहित्य ट्रॅकर व दैनिक प्रोग्रेस रिपोर्ट</p>
+                <span style="font-size: 11px; font-weight: bold; color: {'#38bdf8' if site_lock == 'Free' else '#f59e0b'}; background: rgba(0,0,0,0.3); padding: 4px 12px; border-radius: 12px;">[{site_badge}]</span>
             </div>
         """,
         unsafe_allow_html=True,
     )
+    st.write(" ")
     if st.button(
         "👷‍♂️ Open Site Manager",
         key="btn_open_site",
         use_container_width=True,
+        type="primary",
     ):
       if site_lock == "Premium" and not is_user_premium:
         st.error("🔒 हे फीचर प्रिमियम युझर्ससाठी आहे!")
@@ -2094,27 +2042,28 @@ if st.session_state.selected_module is None:
 
   # २. एस्टिमेटर टूल्स कार्ड
   with main_col2:
-    st.markdown("#### 📐 2. Estimator Tools")
     st.markdown(
         """
-            <div style="text-align: center; background: #111827; padding: 18px 10px; border-radius: 20px; border: 1px solid rgba(0, 242, 254, 0.3); margin-bottom: 12px;">
-                <h1 style="font-size: 32px; margin:0;">🧮</h1>
-                <h5 style="margin: 8px 0 2px 0; color: #f8fafc; font-weight:700; font-size:13px;">Estimator Tools</h5>
-                <p style="font-size: 9px; color: #38bdf8; margin:0;">[4 Tools in 1]</p>
+            <div class="module-card">
+                <div style="font-size: 42px; margin-bottom: 8px;">📐</div>
+                <h3 style="margin: 0; color: #ffffff; font-weight: 800;">Estimator Tools</h3>
+                <p style="color: #94a3b8; font-size: 13px; margin: 6px 0 12px 0;">Rate Analysis, BBS Schedule, QS & Unit Converter</p>
+                <span style="font-size: 11px; font-weight: bold; color: #f59e0b; background: rgba(0,0,0,0.3); padding: 4px 12px; border-radius: 12px;">[4 Advanced Tools]</span>
             </div>
         """,
         unsafe_allow_html=True,
     )
+    st.write(" ")
     if st.button(
         "📐 Open Estimator Tools",
         key="btn_open_estimator",
         use_container_width=True,
+        type="primary",
     ):
       st.session_state.selected_module = "Estimator Tools"
       st.session_state.selected_estimator_sub_module = None
       trigger_push_state()
       st.rerun()
-
 # ==========================================
 # 📌 विभाग १६: ESTIMATOR TOOLS मॉड्यूल (Sub-modules)
 # ==========================================
