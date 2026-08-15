@@ -2103,157 +2103,165 @@ elif st.session_state.selected_module == "Estimator Tools":
   bbs_lock = locks_cfg.get("BBS", "Free")
   qs_lock = locks_cfg.get("Quantity Surveying", "Free")
 
-  # --- १६.१ मास्टर ३-इन-१ कंबाइन्ड PDF रिपोर्ट फंक्शन (येथे वर डिफाईन केले आहे) ---
-  def render_combined_master_report(user_key, site_name):
-    st.subheader(f"📑 Master Project Estimate: {site_name}")
-    st.caption(
-        "💡 मागील २ दिवसांमधील Rate Analysis, BBS आणि Quantity Survey चा"
-        " एकत्रित IS-Code फॉरमॅट रिपोर्ट."
-    )
+def render_combined_master_report(user_key, site_name):
+  st.subheader(f"📑 Master Project Estimate: {site_name}")
+  st.caption(
+      "💡 मागील २ दिवसांमधील Rate Analysis, BBS आणि Quantity Survey चा एकत्रित"
+      " IS-Code फॉरमॅट रिपोर्ट."
+  )
 
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    two_days_ago = (get_ist_time() - datetime.timedelta(days=2)).strftime(
-        "%Y-%m-%d 00:00:00"
-    )
-    cursor.execute(
-        """
-            SELECT timestamp, report_data FROM history 
-            WHERE user_key = ? AND (site_name = ? OR site_name IS NULL) AND timestamp >= ?
-            ORDER BY id ASC
-        """,
-        (user_key, site_name, two_days_ago),
-    )
-    records = cursor.fetchall()
-    conn.close()
+  conn = get_db_connection()
+  cursor = conn.cursor()
+  two_days_ago = (get_ist_time() - datetime.timedelta(days=2)).strftime(
+      "%Y-%m-%d 00:00:00"
+  )
+  cursor.execute(
+      """
+        SELECT timestamp, report_data FROM history 
+        WHERE user_key = ? AND (site_name = ? OR site_name IS NULL) AND timestamp >= ?
+        ORDER BY id ASC
+    """,
+      (user_key, site_name, two_days_ago),
+  )
+  records = cursor.fetchall()
+  conn.close()
 
-    if not records:
-      st.warning(
-          f"⚠️ '{site_name}' साठी मागील २ दिवसांत कोणतेही कॅल्क्युलेशन सेव्ह"
-          " केलेले नाही."
-      )
-      return
+  if not records:
+    st.warning(
+        f"⚠️ '{site_name}' साठी मागील २ दिवसांत कोणतेही कॅल्क्युलेशन सेव्ह"
+        " केलेले नाही."
+    )
+    return
 
-    watermark_css = """
-        <style>
-        @media print {
-            body { background: #ffffff !important; color: #000000 !important; }
-            .no-print { display: none !important; }
+  # वॉटरमार्क व परफेक्ट A4 प्रिंट स्टाईल
+  st.markdown(
+      """
+    <style>
+    @media print {
+        /* प्रिंट करताना नको असलेले बटणे व हेडर लपवणे */
+        header, footer, [data-testid="stToolbar"], .no-print, button, .stButton, div[data-testid="stPopover"] {
+            display: none !important;
+        }
+        body, .stApp, [data-testid="stAppViewContainer"] {
+            background: #ffffff !important;
+            color: #000000 !important;
+            padding: 0 !important;
         }
         .print-report-container {
-            position: relative;
-            background: #ffffff;
-            color: #000000;
-            padding: 30px;
-            border-radius: 12px;
-            font-family: Arial, sans-serif;
-            overflow: hidden;
-            margin-bottom: 20px;
+            box-shadow: none !important;
+            border: 1px solid #000000 !important;
+            padding: 20px !important;
         }
-        .watermark-text {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) rotate(-30deg);
-            font-size: 32px;
-            font-weight: 900;
-            color: rgba(0, 0, 0, 0.05);
-            text-transform: uppercase;
-            white-space: nowrap;
-            pointer-events: none;
-            z-index: 1;
-        }
-        .report-content { position: relative; z-index: 2; }
-        </style>
-        """
+    }
+    .print-report-container {
+        position: relative;
+        background: #ffffff;
+        color: #000000;
+        padding: 35px;
+        border-radius: 12px;
+        font-family: Arial, sans-serif;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+        overflow: hidden;
+        margin-bottom: 20px;
+    }
+    .watermark-text {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) rotate(-30deg);
+        font-size: 34px;
+        font-weight: 900;
+        color: rgba(0, 0, 0, 0.06);
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        white-space: nowrap;
+        pointer-events: none;
+        user-select: none;
+        z-index: 1;
+        border: 4px dashed rgba(0, 0, 0, 0.06);
+        padding: 15px 30px;
+        border-radius: 16px;
+    }
+    .report-content {
+        position: relative;
+        z-index: 2;
+    }
+    </style>
+    """,
+      unsafe_allow_html=True,
+  )
 
-    header_html = f"""
-        {watermark_css}
-        <div class="print-report-container">
-            <div class="watermark-text">KANHAIYA • FOUNDER OF PATIL INFRATECH</div>
-            <div class="report-content">
-                <div style="border-bottom: 3px solid #0f172a; padding-bottom: 10px; margin-bottom: 20px; text-align: center;">
-                    <h1 style="margin:0; color: #0f172a; font-size: 26px; font-weight: 900;">PATIL INFRATECH</h1>
-                    <p style="margin:4px 0; font-size: 13px; font-weight: bold; color: #475569;">Civil Engineers • Consultants • Quantity Surveyors</p>
-                    <p style="margin:0; font-size: 11px; color: #64748b;">(Compliant with IS 1200 & IS 2502 Standards)</p>
-                </div>
-                <table style="width: 100%; margin-bottom: 20px; font-size: 13px; border: none; color: #0f172a;">
-                    <tr>
-                        <td><b>📍 Project / Site:</b> {site_name}</td>
-                        <td style="text-align: right;"><b>📅 Report Date:</b> {get_ist_time().strftime('%d-%m-%Y')}</td>
-                    </tr>
-                    <tr>
-                        <td><b>👤 Engineer:</b> {user_key}</td>
-                        <td style="text-align: right;"><b>⏱️ Period:</b> Last 48 Hours</td>
-                    </tr>
-                </table>
-                <hr style="border: 0.5px solid #cbd5e1; margin-bottom: 20px;">
-        """
+  # हेडर आणि प्रोजेक्ट माहिती
+  header_html = f"""
+    <div class="print-report-container">
+        <div class="watermark-text">KANHAIYA • FOUNDER OF PATIL INFRATECH</div>
+        <div class="report-content">
+            <div style="border-bottom: 3px solid #0f172a; padding-bottom: 10px; margin-bottom: 20px; text-align: center;">
+                <h1 style="margin:0; color: #0f172a; font-size: 26px; font-weight: 900; letter-spacing: 1px;">PATIL INFRATECH</h1>
+                <p style="margin:4px 0; font-size: 13px; font-weight: bold; color: #475569; text-transform: uppercase;">Civil Engineers • Consultants • Quantity Surveyors</p>
+                <p style="margin:0; font-size: 11px; color: #64748b;">(Compliant with IS 1200 & IS 2502 Standards)</p>
+            </div>
+            <table style="width: 100%; margin-bottom: 20px; font-size: 13px; border: none; color: #0f172a;">
+                <tr>
+                    <td><b>📍 Project / Site:</b> <span style="color:#d97706; font-weight:bold;">{site_name}</span></td>
+                    <td style="text-align: right;"><b>📅 Report Date:</b> {get_ist_time().strftime('%d-%m-%Y')}</td>
+                </tr>
+                <tr>
+                    <td><b>👤 Engineer:</b> {user_key}</td>
+                    <td style="text-align: right;"><b>⏱️ Period:</b> Last 48 Hours Calculation</td>
+                </tr>
+            </table>
+            <hr style="border: 0.5px solid #cbd5e1; margin-bottom: 20px;">
+    """
+  st.markdown(header_html, unsafe_allow_html=True)
 
-    st.markdown(header_html, unsafe_allow_html=True)
+  # टेबल डेटा
+  for idx, r in enumerate(records, 1):
+    st.markdown(
+        f"<h4 style='color: #0284c7; margin-top: 15px;'>📋 विभाग #{idx}"
+        f" ({r['timestamp']})</h4>",
+        unsafe_allow_html=True,
+    )
+    st.markdown(r["report_data"])
+    st.write("---")
 
-    for idx, r in enumerate(records, 1):
-      st.markdown(
-          f"<h4 style='color: #0284c7; margin-top: 15px;'>📋 विभाग #{idx}"
-          f" ({r['timestamp']})</h4>",
-          unsafe_allow_html=True,
-      )
-      st.markdown(r["report_data"])
-      st.write("---")
-
-    footer_html = """
-                <br><br>
-                <table style="width: 100%; margin-top: 30px; font-size: 13px; border: none; color: #0f172a;">
-                    <tr>
-                        <td style="width: 50%;">__________________________<br><b>Site Engineer Signature</b></td>
-                        <td style="width: 50%; text-align: right;">__________________________<br><b>Authorized Checker</b></td>
-                    </tr>
-                </table>
-                <div style="text-align: center; margin-top: 25px; font-size: 11px; color: #94a3b8;">
-                    Verified & Certified by: <b>Kanhaiya (Founder of Patil Infratech)</b>
-                </div>
+  # फूटर आणि स्वाक्षरी
+  footer_html = """
+            <br><br>
+            <table style="width: 100%; margin-top: 30px; font-size: 13px; border: none; color: #0f172a;">
+                <tr>
+                    <td style="width: 50%;">__________________________<br><b>Site Engineer Signature</b></td>
+                    <td style="width: 50%; text-align: right;">__________________________<br><b>Authorized Checker</b></td>
+                </tr>
+            </table>
+            <div style="text-align: center; margin-top: 25px; font-size: 11px; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 8px;">
+                Verified & Certified by: <b>Kanhaiya (Founder of Patil Infratech)</b>
             </div>
         </div>
+    </div>
+    """
+  st.markdown(footer_html, unsafe_allow_html=True)
+
+  st.write("---")
+  c1, c2 = st.columns(2)
+  with c1:
+    # ✅ window.parent.print() ने प्रिंट डायलॉग त्वरित उघडेल
+    st.markdown(
         """
-    st.markdown(footer_html, unsafe_allow_html=True)
-
-    st.write("---")
-    c1, c2 = st.columns(2)
-    with c1:
-      st.markdown(
-          """
-                <button onclick="window.print()" style="width: 100%; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: black; border: none; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer;">
-                    📄 Print / Download Master 3-in-1 PDF
-                </button>
-            """,
-          unsafe_allow_html=True,
-      )
-    with c2:
-      wa_text = (
-          f"🏗️ *PATIL INFRATECH - MASTER ESTIMATE REPORT*\n📍 *Site:*"
-          f" {site_name}\n👤 *Engineer:* {user_key}\n📅 *Date:*"
-          f" {get_ist_time().strftime('%d-%m-%Y')}\n\n✅ 3-in-1 Report"
-          " Generated."
-      )
-      render_whatsapp_feature(urllib.parse.quote(wa_text), "master_pdf_wa")
-
-  # --- मेनू पर्याय (Grid Selection) ---
-  if st.session_state.selected_estimator_sub_module is None:
-    st.markdown("##### 🔽 खालीलपैकी एक Estimator टूल निवडा:")
-
-    e_col1, e_col2 = st.columns(2)
-
-    with e_col1:
-      calc_badge = "🆓 Free" if calc_lock == "Free" else "👑 Premium"
-      st.markdown(
-          f"""
-                <div style="text-align: center; background: #111827; padding: 18px 10px; border-radius: 20px; border: 1px solid rgba(0, 242, 254, 0.3);">
-                    <h1 style="font-size: 32px; margin:0;">🧮</h1>
-                    <h5 style="margin: 8px 0 2px 0; color: #f8fafc; font-weight:700; font-size:13px;">Civil Calculator</h5>
-                    <p style="font-size: 9px; color: #38bdf8; margin:0;">[{calc_badge}]</p>
-                </div>
-            """,
-          unsafe_allow_html=True,
+            <button onclick="window.parent.print()" style="width: 100%; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: black; border: none; padding: 14px 20px; border-radius: 12px; font-weight: 800; cursor: pointer; font-size: 15px; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.35);">
+                📄 Print / Download Master 3-in-1 PDF
+            </button>
+        """,
+        unsafe_allow_html=True,
+    )
+  with c2:
+    wa_text = (
+        f"🏗️ *PATIL INFRATECH - MASTER ESTIMATE REPORT*\n📍 *Site:*"
+        f" {site_name}\n👤 *Engineer:* {user_key}\n📅 *Date:*"
+        f" {get_ist_time().strftime('%d-%m-%Y')}\n\n✅ 3-in-1 Estimation"
+        " Report Generated.\n_Certified by: Kanhaiya (Founder)_"
+    )
+    render_whatsapp_feature(urllib.parse.quote(wa_text), "master_pdf_wa")
       )
       if st.button(
           "🧮 Calculator", key="btn_est_calc", use_container_width=True
