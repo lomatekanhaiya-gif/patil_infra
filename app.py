@@ -2106,7 +2106,7 @@ elif st.session_state.selected_module == "Estimator Tools":
     bbs_lock = locks_cfg.get("BBS", "Free")
     qs_lock = locks_cfg.get("Quantity Surveying", "Free")
 
-  # १६.१ मास्टर ३-इन-१ कंबाइन्ड PDF रिपोर्ट फंक्शन
+  # १६.१ मास्टर ३-इन-१ कंबाइन्ड PDF रिपोर्ट फंक्शन (Indentation Fix)
     def render_combined_master_report(user_key, site_name):
         st.subheader(f"📑 Master Project Estimate: {site_name}")
         st.caption(
@@ -2117,7 +2117,6 @@ elif st.session_state.selected_module == "Estimator Tools":
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # मागील ४८ तासांतील डेटा मिळवणे
         two_days_ago = (get_ist_time() - datetime.timedelta(days=2)).strftime(
             "%Y-%m-%d 00:00:00"
         )
@@ -2139,110 +2138,92 @@ elif st.session_state.selected_module == "Estimator Tools":
             )
             return
 
-        # वॉटरमार्क व A4 प्रिंट स्टाईल
-        watermark_css = """
-        <style>
-        @media print {
-            body {
-                background: #ffffff !important;
-                color: #000000 !important;
-            }
-            .no-print {
-                display: none !important;
-            }
-        }
-        .print-container {
-            position: relative;
-            background: #ffffff;
-            color: #000000;
-            padding: 30px;
-            border-radius: 8px;
-            font-family: Arial, sans-serif;
-            border: 1.5px solid #0f172a;
-            overflow: hidden;
-            margin-bottom: 20px;
-        }
-        .watermark {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) rotate(-30deg);
-            font-size: 24px;
-            font-weight: 900;
-            color: rgba(0, 0, 0, 0.08);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            text-align: center;
-            width: 85%;
-            max-width: 600px;
-            line-height: 1.4;
-            pointer-events: none;
-            user-select: none;
-            border: 3px dashed rgba(0, 0, 0, 0.08);
-            padding: 15px 25px;
-            border-radius: 14px;
-            z-index: 1;
-        }
-        .content-box {
-            position: relative;
-            z-index: 2;
-        }
-        </style>
-        """
+        watermark_css = (
+            "<style>"
+            "@media print {"
+            "  body { background: #ffffff !important; color: #000000 !important; }"
+            "  .no-print { display: none !important; }"
+            "}"
+            ".print-container {"
+            "  position: relative;"
+            "  background: #ffffff;"
+            "  color: #000000;"
+            "  padding: 30px;"
+            "  border-radius: 8px;"
+            "  font-family: Arial, sans-serif;"
+            "  border: 1.5px solid #0f172a;"
+            "  overflow: hidden;"
+            "  margin-bottom: 20px;"
+            "}"
+            ".watermark {"
+            "  position: absolute;"
+            "  top: 50%;"
+            "  left: 50%;"
+            "  transform: translate(-50%, -50%) rotate(-30deg);"
+            "  font-size: 24px;"
+            "  font-weight: 900;"
+            "  color: rgba(0, 0, 0, 0.08);"
+            "  text-transform: uppercase;"
+            "  letter-spacing: 2px;"
+            "  text-align: center;"
+            "  width: 85%;"
+            "  max-width: 600px;"
+            "  line-height: 1.4;"
+            "  pointer-events: none;"
+            "  user-select: none;"
+            "  border: 3px dashed rgba(0, 0, 0, 0.08);"
+            "  padding: 15px 25px;"
+            "  border-radius: 14px;"
+            "  z-index: 1;"
+            "}"
+            ".content-box { position: relative; z-index: 2; }"
+            "</style>"
+        )
 
-        header_html = f"""
-        {watermark_css}
-        <div class="print-container">
-            <div class="watermark">KANHAIYA<br>FOUNDER OF PATIL INFRATECH</div>
-            <div class="content-box">
-                <div style="border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 15px; text-align: center;">
-                    <h2 style="margin:0; color:#000;">PATIL INFRATECH</h2>
-                    <p style="margin:2px 0; font-size:12px; font-weight:bold;">CIVIL ENGINEERS & QUANTITY SURVEYORS</p>
-                    <p style="margin:0; font-size:11px; color:#555;">IS 1200 & IS 2502 Compliant Report</p>
-                </div>
-                <table style="width: 100%; margin-bottom: 15px; font-size: 12px; color: #000;">
-                    <tr>
-                        <td><b>Project / Site:</b> {site_name}</td>
-                        <td style="text-align: right;"><b>Date:</b> {get_ist_time().strftime('%d-%m-%Y')}</td>
-                    </tr>
-                    <tr>
-                        <td><b>Prepared By:</b> {user_key}</td>
-                        <td style="text-align: right;"><b>Period:</b> Last 48 Hours Estimation</td>
-                    </tr>
-                </table>
-                <hr style="border: 0.5px solid #ccc; margin-bottom: 15px;">
-        """
+        header_html = (
+            f"{watermark_css}"
+            "<div class='print-container'>"
+            "<div class='watermark'>KANHAIYA<br>FOUNDER OF PATIL INFRATECH</div>"
+            "<div class='content-box'>"
+            "<div style='border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 15px; text-align: center;'>"
+            "<h2 style='margin:0; color:#000;'>PATIL INFRATECH</h2>"
+            "<p style='margin:2px 0; font-size:12px; font-weight:bold;'>CIVIL ENGINEERS & QUANTITY SURVEYORS</p>"
+            "<p style='margin:0; font-size:11px; color:#555;'>IS 1200 & IS 2502 Compliant Report</p>"
+            "</div>"
+            "<table style='width: 100%; margin-bottom: 15px; font-size: 12px; color: #000;'>"
+            f"<tr><td><b>Project / Site:</b> {site_name}</td>"
+            f"<td style='text-align: right;'><b>Date:</b> {get_ist_time().strftime('%d-%m-%Y')}</td></tr>"
+            f"<tr><td><b>Prepared By:</b> {user_key}</td>"
+            "<td style='text-align: right;'><b>Period:</b> Last 48 Hours Estimation</td></tr>"
+            "</table>"
+            "<hr style='border: 0.5px solid #ccc; margin-bottom: 15px;'>"
+        )
 
         records_html = ""
         for idx, r in enumerate(records, 1):
-            records_html += f"""
-                <div style="margin-bottom: 15px;">
-                    <h4 style="color: #0284c7; margin: 0 0 5px 0;">विभाग #{idx} ({r['timestamp']})</h4>
-                    <div style="font-size: 12px; background: #f8fafc; color: #000; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0;">
-                        <pre style="white-space: pre-wrap; font-family: inherit; margin: 0;">{r['report_data']}</pre>
-                    </div>
-                </div>
-            """
+            clean_data = r['report_data'].strip()
+            records_html += (
+                "<div style='margin-bottom: 15px;'>"
+                f"<h4 style='color: #0284c7; margin: 0 0 5px 0;'>विभाग #{idx} ({r['timestamp']})</h4>"
+                "<div style='font-size: 12px; background: #f8fafc; color: #000; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0;'>"
+                f"<pre style='white-space: pre-wrap; font-family: inherit; margin: 0;'>{clean_data}</pre>"
+                "</div>"
+                "</div>"
+            )
 
-        footer_html = """
-                <table style="width: 100%; margin-top: 30px; font-size: 12px; color: #000;">
-                    <tr>
-                        <td style="width: 50%;">
-                            ___________________<br>
-                            <b>Site Engineer</b>
-                        </td>
-                        <td style="width: 50%; text-align: right;">
-                            ___________________<br>
-                            <b>Consultant / Checker</b>
-                        </td>
-                    </tr>
-                </table>
-                <div style="text-align: center; margin-top: 20px; font-size: 11px; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 6px;">
-                    Certified & Generated by: <b>Kanhaiya (Founder of Patil Infratech)</b>
-                </div>
-            </div>
-        </div>
-        """
+        footer_html = (
+            "<table style='width: 100%; margin-top: 30px; font-size: 12px; color: #000;'>"
+            "<tr>"
+            "<td style='width: 50%;'>___________________<br><b>Site Engineer</b></td>"
+            "<td style='width: 50%; text-align: right;'>___________________<br><b>Consultant / Checker</b></td>"
+            "</tr>"
+            "</table>"
+            "<div style='text-align: center; margin-top: 20px; font-size: 11px; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 6px;'>"
+            "Certified & Generated by: <b>Kanhaiya (Founder of Patil Infratech)</b>"
+            "</div>"
+            "</div>"
+            "</div>"
+        )
 
         full_report_html = header_html + records_html + footer_html
         st.markdown(full_report_html, unsafe_allow_html=True)
