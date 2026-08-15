@@ -191,6 +191,7 @@ def init_db():
             timestamp TEXT,
             user_note TEXT,
             report_data TEXT,
+            site_name TEXT DEFAULT 'Default Site',
             FOREIGN KEY (user_key) REFERENCES users (user_key)
         )
     """)
@@ -260,7 +261,8 @@ def init_db():
             electrician_rate REAL DEFAULT 0.0,
             painter INTEGER DEFAULT 0,
             painter_rate REAL DEFAULT 0.0,
-            total_cost REAL DEFAULT 0.0
+            total_cost REAL DEFAULT 0.0,
+            site_name TEXT DEFAULT 'Default Site'
         )
     """)
 
@@ -294,7 +296,8 @@ def init_db():
             material_name TEXT,
             transaction_type TEXT,
             quantity INTEGER,
-            unit TEXT
+            unit TEXT,
+            site_name TEXT DEFAULT 'Default Site'
         )
     """)
 
@@ -306,7 +309,8 @@ def init_db():
             date TEXT,
             stage_name TEXT,
             progress_percent INTEGER,
-            remark TEXT
+            remark TEXT,
+            site_name TEXT DEFAULT 'Default Site'
         )
     """)
 
@@ -317,7 +321,8 @@ def init_db():
             user_key TEXT,
             item_text TEXT,
             is_checked INTEGER DEFAULT 0,
-            created_at TEXT
+            created_at TEXT,
+            site_name TEXT DEFAULT 'Default Site'
         )
     """)
 
@@ -387,21 +392,22 @@ def init_db():
         (mat, rat),
     )
 
-  # ५.१ सर्व मुख्य टेबल्समध्ये site_name कॉलम सुरक्षितपणे जोडणे
-tables_to_update = [
-    "history",
-    "site_attendance",
-    "site_inventory",
-    "site_progress",
-    "pre_concreting_checklist",
-]
-for tbl in tables_to_update:
-  try:
-    cursor.execute(
-        f"ALTER TABLE {tbl} ADD COLUMN site_name TEXT DEFAULT 'Default Site'"
-    )
-  except sqlite3.OperationalError:
-    pass
+  # सर्व मुख्य टेबल्समध्ये site_name कॉलम सुरक्षितपणे जोडणे
+  tables_to_update = [
+      "history",
+      "site_attendance",
+      "site_inventory",
+      "site_progress",
+      "pre_concreting_checklist",
+  ]
+  for tbl in tables_to_update:
+    try:
+      cursor.execute(
+          f"ALTER TABLE {tbl} ADD COLUMN site_name TEXT DEFAULT 'Default Site'"
+      )
+    except sqlite3.OperationalError:
+      pass
+
   conn.commit()
   conn.close()
 
@@ -472,6 +478,7 @@ for key, default in [
     ("selected_estimator_sub_module", None),
     ("admin_view", "main"),
     ("admin_selected_user", None),
+    ("current_site_name", "साई रेसिडेन्सी - साईट १"),
 ]:
   if key not in st.session_state:
     st.session_state[key] = default
@@ -536,43 +543,11 @@ def check_user_premium_status(username):
 is_curr_premium, _ = check_user_premium_status(current_user_name)
 
 # ==========================================
-# 📌 विभाग ८: UI थीम आणि CSS स्टाईलिंग (Galaxy & Obsidian Dual Theme)
-# ==========================================
-if is_curr_premium:
-  bg_gradient = (
-      "radial-gradient(circle at 50% -20%, #2a0845 0%, #03001e 50%, #050014"
-      " 100%)"
-  )
-  accent_border = "#ec38bc"
-  accent_glow = "rgba(236, 56, 188, 0.6)"
-  card_bg = "rgba(20, 10, 38, 0.9)"
-  card_border_color = "linear-gradient(135deg, #ec38bc, #7303c0)"
-  header_gradient = (
-      "linear-gradient(135deg, #050014 0%, #7303c0 50%, #ec38bc 100%)"
-  )
-  box_inner_shadow = "inset 0 0 15px rgba(236, 56, 188, 0.25)"
-  primary_btn_bg = "linear-gradient(135deg, #7303c0 0%, #ec38bc 100%)"
-  primary_btn_shadow = "rgba(236, 56, 188, 0.5)"
-  box_bg_color = "#140a28"
-else:
-  bg_gradient = "linear-gradient(135deg, #030712 0%, #0b0f19 50%, #020617 100%)"
-  accent_border = "#00f2fe"
-  accent_glow = "rgba(0, 242, 254, 0.4)"
-  card_bg = "#0b121e"
-  card_border_color = "rgba(0, 242, 254, 0.4)"
-  header_gradient = "linear-gradient(135deg, #0284c7 0%, #2563eb 100%)"
-  box_inner_shadow = "inset 0 2px 8px rgba(0, 0, 0, 0.9)"
-  primary_btn_bg = "linear-gradient(135deg, #0284c7 0%, #2563eb 100%)"
-  primary_btn_shadow = "rgba(2, 132, 199, 0.4)"
-  box_bg_color = "#111827"
-
-# ==========================================
 # 📌 विभाग ८: BRANDED CONSTRUCTION THEME CSS
 # ==========================================
 st.markdown(
     """
     <style>
-    /* १. अनावश्यक Streamlit घटक लपवणे */
     #MainMenu { visibility: hidden; }
     header[data-testid="stHeader"] { visibility: hidden; height: 0%; display: none !important; }
     footer { visibility: hidden; display: none !important; }
@@ -583,14 +558,12 @@ st.markdown(
     button[title="Increment"], button[title="Decrement"] { display: none !important; }
     div[data-testid="stNumberInputStepUp"], div[data-testid="stNumberInputStepDown"] { display: none !important; }
 
-    /* २. मुख्य बॅकग्राउंड - डार्क कंक्रीट/स्लेट फिनिश */
     html, body, .stApp, [data-testid="stAppViewContainer"] {
         background: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 50%, #020617 100%) !important;
         color: #f8fafc !important;
         font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
     }
 
-    /* ३. ब्रँडेड हेडर बॅनर */
     .brand-header {
         background: linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #334155 100%);
         border: 1px solid rgba(245, 158, 11, 0.4);
@@ -602,7 +575,6 @@ st.markdown(
         margin-bottom: 24px;
     }
 
-    /* ४. इनपुट बॉक्सेस (Inputs & Dropdowns) */
     div[data-baseweb="input"],
     div[data-baseweb="base-input"],
     div[data-testid="stNumberInputContainer"],
@@ -623,7 +595,6 @@ st.markdown(
         box-shadow: 0 0 10px rgba(245, 158, 11, 0.3) !important;
     }
 
-    /* ५. प्रायमरी बटन्स (Construction Yellow/Gold & Blue Accents) */
     div.stButton > button[kind="primary"] {
         background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
         color: #000000 !important;
@@ -642,7 +613,6 @@ st.markdown(
         background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%) !important;
     }
 
-    /* ६. दुय्यम बटन्स */
     div.stButton > button {
         background: #1e293b !important;
         color: #f8fafc !important;
@@ -656,7 +626,6 @@ st.markdown(
         color: #f59e0b !important;
     }
 
-    /* ७. कार्ड्स आणि कंटेनर्स */
     .module-card {
         background: rgba(30, 41, 59, 0.7);
         border: 1px solid rgba(255, 255, 255, 0.08);
@@ -673,13 +642,6 @@ st.markdown(
         box-shadow: 0 8px 25px rgba(245, 158, 11, 0.2);
     }
 
-    # ७.१ Active Site Name डिफॉल्ट सेट करणे
-if (
-    "current_site_name" not in st.session_state
-    or not st.session_state.current_site_name
-):
-  st.session_state.current_site_name = "साई रेसिडेन्सी - साईट १"
-    /* ८. व्हीआयपी आणि फ्री बॅज */
     .gold-vip-badge {
         background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);
         color: #000000 !important;
@@ -699,6 +661,23 @@ if (
         font-size: 13px;
         border: 1px solid #0284c7;
         display: inline-block;
+    }
+
+    .galaxy-loader {
+        margin: 20px auto;
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        border: 4px solid transparent;
+        border-top-color: #f59e0b;
+        border-bottom-color: #00f2fe;
+        animation: spin-galaxy 1.5s linear infinite;
+        box-shadow: 0 0 30px rgba(245, 158, 11, 0.5);
+    }
+    @keyframes spin-galaxy {
+        0% { transform: rotate(0deg) scale(1); }
+        50% { transform: rotate(180deg) scale(1.1); }
+        100% { transform: rotate(360deg) scale(1); }
     }
     </style>
 """,
@@ -825,23 +804,18 @@ if not st.session_state.welcome_completed:
         "<br><div class='galaxy-loader'></div>", unsafe_allow_html=True
     )
     st.markdown(
-    """
-    <div class="brand-header">
-        <div style="font-size: 38px; margin-bottom: 4px;">🏗️</div>
-        <h1 style='color: #ffffff; margin:0; font-size: 30px; font-weight: 900; letter-spacing: 1px;'>PATIL INFRATECH</h1>
-        <p style='color: #f59e0b; margin:6px 0 0 0; font-size: 15px; font-weight: 700; text-transform: uppercase;'>
-            Civil Engineering • Quantity Surveying • Site Management
-        </p>
-        <div style="margin-top: 10px; display: inline-block; background: rgba(0,0,0,0.3); padding: 4px 14px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);">
-            <small style='color: #94a3b8; font-size: 12px;'>Concept & Logic by: <b style="color:#f8fafc;">Kanhaiya (Founder)</b></small>
+        """
+        <div class="brand-header">
+            <div style="font-size: 38px; margin-bottom: 4px;">🏗️</div>
+            <h1 style='color: #ffffff; margin:0; font-size: 30px; font-weight: 900; letter-spacing: 1px;'>PATIL INFRATECH</h1>
+            <p style='color: #f59e0b; margin:6px 0 0 0; font-size: 15px; font-weight: 700; text-transform: uppercase;'>
+                Civil Engineering • Quantity Surveying • Site Management
+            </p>
+            <div style="margin-top: 10px; display: inline-block; background: rgba(0,0,0,0.3); padding: 4px 14px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);">
+                <small style='color: #94a3b8; font-size: 12px;'>Concept & Logic by: <b style="color:#f8fafc;">Kanhaiya (Founder)</b></small>
+            </div>
         </div>
-    </div>
-""",
-    unsafe_allow_html=True,
-)
-    st.markdown(
-        "<h4 style='text-align: center; color: #ec38bc;'>तुमचे स्वप्न, आमचे"
-        " एस्टिमेशन! ✨</h4>",
+    """,
         unsafe_allow_html=True,
     )
 
@@ -858,8 +832,8 @@ if not st.session_state.welcome_completed:
       ad_dict = dict(ad)
       st.markdown(
           f"""
-                <div style="background: #0f172a; border: 1px solid #00f2fe; padding: 10px 14px; border-radius: 12px; text-align: center; margin: 15px auto; max-width: 300px; box-shadow: 0 0 15px rgba(0, 242, 254, 0.3);">
-                    <span style="font-size: 10px; color: #38bdf8; font-weight: bold;">⭐ SPONSOR</span><br>
+                <div style="background: #0f172a; border: 1px solid #f59e0b; padding: 10px 14px; border-radius: 12px; text-align: center; margin: 15px auto; max-width: 300px; box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);">
+                    <span style="font-size: 10px; color: #f59e0b; font-weight: bold;">⭐ SPONSOR</span><br>
                     <b style="color: #ffffff; font-size: 14px;">{ad_dict.get('title')}</b>
                     <p style="color: #94a3b8; font-size: 11px; margin: 3px 0;">{ad_dict.get('desc')}</p>
                     {"<img src='" + ad_dict.get('media_url') + "' style='max-height:50px; border-radius:6px; margin-top:3px;'/>" if ad_dict.get('media_type') == 'Photo (PNG/JPG)' and ad_dict.get('media_url') else ""}
@@ -895,10 +869,15 @@ if not st.session_state.welcome_completed:
 # मुख्य ॲप हेडर बॅनर
 st.markdown(
     """
-    <div class="main-header">
-        <h1 style='color: white; margin:0; font-size: 28px; font-weight: 800;'>🏗️ PATIL INFRATECH</h1>
-        <p style='color: #e0f2fe; margin:5px 0 0 0; font-size: 15px;'>📐 Quantity Surveyor & Cost Estimator</p>
-        <small style='color: #bae6fd;'>Concept & Logic by: Kanhaiya (Founder of Patil Infratech)</small>
+    <div class="brand-header">
+        <div style="font-size: 38px; margin-bottom: 4px;">🏗️</div>
+        <h1 style='color: #ffffff; margin:0; font-size: 30px; font-weight: 900; letter-spacing: 1px;'>PATIL INFRATECH</h1>
+        <p style='color: #f59e0b; margin:6px 0 0 0; font-size: 15px; font-weight: 700; text-transform: uppercase;'>
+            Civil Engineering • Quantity Surveying • Site Management
+        </p>
+        <div style="margin-top: 10px; display: inline-block; background: rgba(0,0,0,0.3); padding: 4px 14px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);">
+            <small style='color: #94a3b8; font-size: 12px;'>Concept & Logic by: <b style="color:#f8fafc;">Kanhaiya (Founder)</b></small>
+        </div>
     </div>
 """,
     unsafe_allow_html=True,
@@ -1802,6 +1781,7 @@ with st.container():
         st.session_state.current_site_name = new_site_input.strip()
         st.success("✅ साईट अपडेट झाली!")
         st.rerun()
+
 if col_lo.button("🔄 Logout"):
   st.session_state.app_user_name = None
   st.session_state.otp_verified = False
@@ -2092,7 +2072,7 @@ if st.session_state.selected_module is None:
                 <div style="font-size: 42px; margin-bottom: 8px;">📐</div>
                 <h3 style="margin: 0; color: #ffffff; font-weight: 800;">Estimator Tools</h3>
                 <p style="color: #94a3b8; font-size: 13px; margin: 6px 0 12px 0;">Rate Analysis, BBS Schedule, QS & Unit Converter</p>
-                <span style="font-size: 11px; font-weight: bold; color: #f59e0b; background: rgba(0,0,0,0.3); padding: 4px 12px; border-radius: 12px;">[4 Advanced Tools]</span>
+                <span style="font-size: 11px; font-weight: bold; color: #f59e0b; background: rgba(0,0,0,0.3); padding: 4px 12px; border-radius: 12px;">[5 Advanced Tools]</span>
             </div>
         """,
         unsafe_allow_html=True,
@@ -2108,6 +2088,7 @@ if st.session_state.selected_module is None:
       st.session_state.selected_estimator_sub_module = None
       trigger_push_state()
       st.rerun()
+
 # ==========================================
 # 📌 विभाग १६: ESTIMATOR TOOLS मॉड्यूल (Sub-modules)
 # ==========================================
@@ -2124,6 +2105,101 @@ elif st.session_state.selected_module == "Estimator Tools":
   ra_lock = locks_cfg.get("Rate Analysis", "Free")
   bbs_lock = locks_cfg.get("BBS", "Free")
   qs_lock = locks_cfg.get("Quantity Surveying", "Free")
+
+  # १६.१ मास्टर ३-इन-१ कंबाइन्ड PDF रिपोर्ट फंक्शन
+  def render_combined_master_report(user_key, site_name):
+    st.subheader(f"📑 Master Project Estimate: {site_name}")
+    st.caption(
+        "💡 मागील २ दिवसांमधील Rate Analysis, BBS आणि Quantity Survey चा"
+        " एकत्रित IS-Code फॉरमॅट रिपोर्ट."
+    )
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # मागील ४८ तासांतील डेटा मिळवणे
+    two_days_ago = (get_ist_time() - datetime.timedelta(days=2)).strftime(
+        "%Y-%m-%d 00:00:00"
+    )
+    cursor.execute(
+        """
+            SELECT timestamp, report_data FROM history 
+            WHERE user_key = ? AND (site_name = ? OR site_name IS NULL) AND timestamp >= ?
+            ORDER BY id ASC
+        """,
+        (user_key, site_name, two_days_ago),
+    )
+
+    records = cursor.fetchall()
+    conn.close()
+
+    if not records:
+      st.warning(
+          f"⚠️ '{site_name}' साठी मागील २ दिवसांत कोणतेही कॅल्क्युलेशन सेव्ह"
+          " केलेले नाही."
+      )
+      return
+
+    combined_html = f"""
+        <div style="background: #ffffff; color: #000000; padding: 25px; border-radius: 8px; font-family: Arial, sans-serif;">
+            <div style="border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 15px; text-align: center;">
+                <h2 style="margin:0; color:#000;">PATIL INFRATECH</h2>
+                <p style="margin:2px 0; font-size:12px; font-weight:bold;">CIVIL ENGINEERS & QUANTITY SURVEYORS</p>
+                <p style="margin:0; font-size:11px; color:#555;">IS 1200 & IS 2502 Compliant Report</p>
+            </div>
+            <table style="width: 100%; margin-bottom: 15px; font-size: 12px;">
+                <tr>
+                    <td><b>Project / Site:</b> {site_name}</td>
+                    <td style="text-align: right;"><b>Date:</b> {get_ist_time().strftime('%d-%m-%Y')}</td>
+                </tr>
+                <tr>
+                    <td><b>Prepared By:</b> {user_key}</td>
+                    <td style="text-align: right;"><b>Period:</b> Last 48 Hours Estimation</td>
+                </tr>
+            </table>
+            <hr style="border: 0.5px solid #ccc;">
+        """
+
+    for idx, r in enumerate(records, 1):
+      combined_html += f"""
+            <div style="margin-bottom: 20px;">
+                <h4 style="color: #0284c7; margin-bottom: 5px;">विभाग #{idx} ({r['timestamp']})</h4>
+                <div style="font-size: 11px;">{r['report_data']}</div>
+            </div>
+            """
+
+    combined_html += """
+            <br>
+            <table style="width: 100%; margin-top: 30px; font-size: 12px;">
+                <tr>
+                    <td>___________________<br><b>Site Engineer</b></td>
+                    <td style="text-align: right;">___________________<br><b>Consultant / Checker</b></td>
+                </tr>
+            </table>
+        </div>
+        """
+
+    st.markdown(combined_html, unsafe_allow_html=True)
+    st.write("---")
+
+    c1, c2 = st.columns(2)
+    with c1:
+      st.markdown(
+          """
+                <button onclick="window.print()" style="width: 100%; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: black; border: none; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer;">
+                    📄 Print / Download Master 3-in-1 PDF
+                </button>
+            """,
+          unsafe_allow_html=True,
+      )
+    with c2:
+      wa_text = (
+          f"🏗️ *PATIL INFRATECH - MASTER ESTIMATE REPORT*\n📍 *Site:*"
+          f" {site_name}\n👤 *Engineer:* {user_key}\n📅 *Date:*"
+          f" {get_ist_time().strftime('%d-%m-%Y')}\n\n✅ 3-in-1 Estimation"
+          " Report Generated."
+      )
+      render_whatsapp_feature(urllib.parse.quote(wa_text), "master_pdf_wa")
 
   if st.session_state.selected_estimator_sub_module is None:
     st.markdown("##### 🔽 खालीलपैकी एक Estimator टूल निवडा:")
@@ -2221,6 +2297,29 @@ elif st.session_state.selected_module == "Estimator Tools":
           trigger_push_state()
           st.rerun()
 
+    st.write(" ")
+    # ५ वे मास्टर कंबाइन्ड PDF रिपोर्ट कार्ड
+    st.markdown(
+        """
+            <div style="text-align: center; background: #111827; padding: 18px 10px; border-radius: 20px; border: 1px solid #f59e0b;">
+                <h1 style="font-size: 32px; margin:0;">📑</h1>
+                <h5 style="margin: 8px 0 2px 0; color: #f59e0b; font-weight:800; font-size:14px;">3-in-1 Master Estimate PDF</h5>
+                <p style="font-size: 10px; color: #cbd5e1; margin:0;">[Rate Analysis + BBS + QS कंबाइन्ड रिपोर्ट]</p>
+            </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.write(" ")
+    if st.button(
+        "📑 Open 3-in-1 Master PDF Generator",
+        key="btn_est_master_pdf",
+        use_container_width=True,
+        type="primary",
+    ):
+      st.session_state.selected_estimator_sub_module = "Master PDF"
+      trigger_push_state()
+      st.rerun()
+
   else:
     if st.button("⬅️ Back to Estimator Menu", key="btn_back_estimator_menu"):
       st.session_state.selected_estimator_sub_module = None
@@ -2230,9 +2329,17 @@ elif st.session_state.selected_module == "Estimator Tools":
     est_sub_mod = st.session_state.selected_estimator_sub_module
 
     # --------------------------------------------------
+    # ०. Master 3-in-1 Combined Estimate PDF
+    # --------------------------------------------------
+    if est_sub_mod == "Master PDF":
+      render_combined_master_report(
+          current_user_name, st.session_state.current_site_name
+      )
+
+    # --------------------------------------------------
     # १. Civil Calculator & Smart Unit Converter
     # --------------------------------------------------
-    if est_sub_mod == "Calculator":
+    elif est_sub_mod == "Calculator":
       st.subheader("🧮 Civil Smart Unit Converter")
       st.caption(
           "💡 एकाच बॉक्समध्ये मूल्य भरा आणि सर्व युनिट्समधील अचूक हिशोब एकाच"
@@ -2705,12 +2812,13 @@ elif st.session_state.selected_module == "Estimator Tools":
             now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
             cursor.execute(
                 "INSERT INTO history (user_key, timestamp, user_note,"
-                " report_data) VALUES (?, ?, ?, ?)",
+                " report_data, site_name) VALUES (?, ?, ?, ?, ?)",
                 (
                     current_user_name,
                     now_str,
                     st.session_state.current_comment,
                     report_table,
+                    st.session_state.current_site_name,
                 ),
             )
             conn.commit()
@@ -2947,12 +3055,13 @@ elif st.session_state.selected_module == "Estimator Tools":
             now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
             cursor.execute(
                 "INSERT INTO history (user_key, timestamp, user_note,"
-                " report_data) VALUES (?, ?, ?, ?)",
+                " report_data, site_name) VALUES (?, ?, ?, ?, ?)",
                 (
                     current_user_name,
                     now_str,
                     st.session_state.current_comment,
                     report_table,
+                    st.session_state.current_site_name,
                 ),
             )
             conn.commit()
@@ -3205,12 +3314,13 @@ elif st.session_state.selected_module == "Estimator Tools":
             now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
             cursor.execute(
                 "INSERT INTO history (user_key, timestamp, user_note,"
-                " report_data) VALUES (?, ?, ?, ?)",
+                " report_data, site_name) VALUES (?, ?, ?, ?, ?)",
                 (
                     current_user_name,
                     now_str,
                     st.session_state.current_comment,
                     report_table,
+                    st.session_state.current_site_name,
                 ),
             )
             conn.commit()
@@ -3732,12 +3842,13 @@ elif st.session_state.selected_module == "Estimator Tools":
           now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
           cursor.execute(
               "INSERT INTO history (user_key, timestamp, user_note,"
-              " report_data) VALUES (?, ?, ?, ?)",
+              " report_data, site_name) VALUES (?, ?, ?, ?, ?)",
               (
                   current_user_name,
                   now_str,
                   st.session_state.current_comment,
                   report_table,
+                  st.session_state.current_site_name,
               ),
           )
           conn.commit()
@@ -4186,111 +4297,18 @@ elif st.session_state.selected_module == "Estimator Tools":
             now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
             cursor.execute(
                 "INSERT INTO history (user_key, timestamp,"
-                " user_note, report_data) VALUES (?, ?, ?, ?)",
+                " user_note, report_data, site_name) VALUES (?, ?, ?, ?, ?)",
                 (
                     current_user_name,
                     now_str,
                     st.session_state.current_comment,
                     final_report_html,
+                    st.session_state.current_site_name,
                 ),
             )
             conn.commit()
             conn.close()
 
-# १६.१ मास्टर ३-इन-१ कंबाइन्ड PDF रिपोर्ट फंक्शन
-def render_combined_master_report(user_key, site_name):
-  st.subheader(f"📑 Master Project Estimate: {site_name}")
-  st.caption(
-      "💡 मागील २ दिवसांमधील Rate Analysis, BBS आणि Quantity Survey चा एकत्रित"
-      " IS-Code फॉरमॅट रिपोर्ट."
-  )
-
-  conn = get_db_connection()
-  cursor = conn.cursor()
-
-  # मागील ४८ तासांतील डेटा मिळवणे
-  two_days_ago = (get_ist_time() - datetime.timedelta(days=2)).strftime(
-      "%Y-%m-%d 00:00:00"
-  )
-  cursor.execute(
-      """
-        SELECT timestamp, report_data FROM history 
-        WHERE user_key = ? AND (site_name = ? OR site_name IS NULL) AND timestamp >= ?
-        ORDER BY id ASC
-    """,
-      (user_key, site_name, two_days_ago),
-  )
-
-  records = cursor.fetchall()
-  conn.close()
-
-  if not records:
-    st.warning(
-        f"⚠️ '{site_name}' साठी मागील २ दिवसांत कोणतेही कॅल्क्युलेशन सेव्ह"
-        " केलेले नाही."
-    )
-    return
-
-  combined_html = f"""
-    <div style="background: #ffffff; color: #000000; padding: 25px; border-radius: 8px; font-family: Arial, sans-serif;">
-        <div style="border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 15px; text-align: center;">
-            <h2 style="margin:0; color:#000;">PATIL INFRATECH</h2>
-            <p style="margin:2px 0; font-size:12px; font-weight:bold;">CIVIL ENGINEERS & QUANTITY SURVEYORS</p>
-            <p style="margin:0; font-size:11px; color:#555;">IS 1200 & IS 2502 Compliant Report</p>
-        </div>
-        <table style="width: 100%; margin-bottom: 15px; font-size: 12px;">
-            <tr>
-                <td><b>Project / Site:</b> {site_name}</td>
-                <td style="text-align: right;"><b>Date:</b> {get_ist_time().strftime('%d-%m-%Y')}</td>
-            </tr>
-            <tr>
-                <td><b>Prepared By:</b> {user_key}</td>
-                <td style="text-align: right;"><b>Period:</b> Last 48 Hours Estimation</td>
-            </tr>
-        </table>
-        <hr style="border: 0.5px solid #ccc;">
-    """
-
-  for idx, r in enumerate(records, 1):
-    combined_html += f"""
-        <div style="margin-bottom: 20px;">
-            <h4 style="color: #0284c7; margin-bottom: 5px;">विभाग #{idx} ({r['timestamp']})</h4>
-            <div style="font-size: 11px;">{r['report_data']}</div>
-        </div>
-        """
-
-  combined_html += """
-        <br>
-        <table style="width: 100%; margin-top: 30px; font-size: 12px;">
-            <tr>
-                <td>___________________<br><b>Site Engineer</b></td>
-                <td style="text-align: right;">___________________<br><b>Consultant / Checker</b></td>
-            </tr>
-        </table>
-    </div>
-    """
-
-  st.markdown(combined_html, unsafe_allow_html=True)
-  st.write("---")
-
-  c1, c2 = st.columns(2)
-  with c1:
-    st.markdown(
-        """
-            <button onclick="window.print()" style="width: 100%; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: black; border: none; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer;">
-                📄 Print / Download Master 3-in-1 PDF
-            </button>
-        """,
-        unsafe_allow_html=True,
-    )
-  with c2:
-    wa_text = (
-        f"🏗️ *PATIL INFRATECH - MASTER ESTIMATE REPORT*\n📍 *Site:*"
-        f" {site_name}\n👤 *Engineer:* {user_key}\n📅 *Date:*"
-        f" {get_ist_time().strftime('%d-%m-%Y')}\n\n✅ 3-in-1 Estimation Report"
-        " Generated."
-    )
-    render_whatsapp_feature(urllib.parse.quote(wa_text), "master_pdf_wa")
 # ==========================================
 # 📌 विभाग १७: SITE MANAGER मॉड्यूल (Attendance, Inventory, Progress, Checklist, Weekly)
 # ==========================================
@@ -4511,8 +4529,8 @@ elif st.session_state.selected_module == "Site Manager":
                         plumber, plumber_rate,
                         electrician, electrician_rate,
                         painter, painter_rate,
-                        total_cost
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        total_cost, site_name
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
             (
                 current_user_name,
@@ -4534,6 +4552,7 @@ elif st.session_state.selected_module == "Site Manager":
                 w_data["painter"]["qty"],
                 w_data["painter"]["rate"],
                 total_labor_cost,
+                st.session_state.current_site_name,
             ),
         )
         conn.commit()
@@ -4629,8 +4648,8 @@ elif st.session_state.selected_module == "Site Manager":
         cursor = conn.cursor()
         cursor.execute(
             """
-                    INSERT INTO site_inventory (user_key, date, material_name, transaction_type, quantity, unit)
-                    VALUES (?, ?, ?, ?, ?, ?)
+                    INSERT INTO site_inventory (user_key, date, material_name, transaction_type, quantity, unit, site_name)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
                 """,
             (
                 current_user_name,
@@ -4639,6 +4658,7 @@ elif st.session_state.selected_module == "Site Manager":
                 trans_type,
                 entry_qty,
                 "Bags/Units",
+                st.session_state.current_site_name,
             ),
         )
         conn.commit()
@@ -4695,8 +4715,8 @@ elif st.session_state.selected_module == "Site Manager":
         cursor = conn.cursor()
         cursor.execute(
             """
-                    INSERT INTO site_progress (user_key, date, stage_name, progress_percent, remark)
-                    VALUES (?, ?, ?, ?, ?)
+                    INSERT INTO site_progress (user_key, date, stage_name, progress_percent, remark, site_name)
+                    VALUES (?, ?, ?, ?, ?, ?)
                 """,
             (
                 current_user_name,
@@ -4704,6 +4724,7 @@ elif st.session_state.selected_module == "Site Manager":
                 work_stage,
                 work_percent,
                 site_remark,
+                st.session_state.current_site_name,
             ),
         )
         conn.commit()
@@ -4711,7 +4732,8 @@ elif st.session_state.selected_module == "Site Manager":
 
         report_summary = (
             "🏗️ *PATIL INFRATECH - DAILY SITE PROGRESS REPORT*\n👤 *Site"
-            f" Engineer:* {current_user_name}\n📅 *Date:*"
+            f" Engineer:* {current_user_name}\n📍 *Site:*"
+            f" {st.session_state.current_site_name}\n📅 *Date:*"
             f" {datetime.date.today()}\n🚧 *Stage:* {work_stage}\n📈 *Work"
             f" Completed:* {work_percent}%\n📝 *Remark:*"
             f" {site_remark}\n--------------------------------\n_Daily"
@@ -4781,8 +4803,13 @@ elif st.session_state.selected_module == "Site Manager":
         for text in default_chk_items:
           cursor.execute(
               "INSERT INTO pre_concreting_checklist (user_key, item_text,"
-              " is_checked, created_at) VALUES (?, ?, 0, ?)",
-              (current_user_name, text, now_time_str),
+              " is_checked, created_at, site_name) VALUES (?, ?, 0, ?, ?)",
+              (
+                  current_user_name,
+                  text,
+                  now_time_str,
+                  st.session_state.current_site_name,
+              ),
           )
         conn.commit()
         cursor.execute(
@@ -4846,11 +4873,12 @@ elif st.session_state.selected_module == "Site Manager":
             cursor = conn.cursor()
             cursor.execute(
                 "INSERT INTO pre_concreting_checklist (user_key, item_text,"
-                " is_checked, created_at) VALUES (?, ?, 0, ?)",
+                " is_checked, created_at, site_name) VALUES (?, ?, 0, ?, ?)",
                 (
                     current_user_name,
                     new_chk_text.strip(),
                     get_ist_time().strftime("%Y-%m-%d %H:%M:%S"),
+                    st.session_state.current_site_name,
                 ),
             )
             conn.commit()
