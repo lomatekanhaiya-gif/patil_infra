@@ -2106,7 +2106,7 @@ elif st.session_state.selected_module == "Estimator Tools":
     bbs_lock = locks_cfg.get("BBS", "Free")
     qs_lock = locks_cfg.get("Quantity Surveying", "Free")
 
-  # १६.१ मास्टर ३-इन-१ कंबाइन्ड PDF व Excel रिपोर्ट फंक्शन (Clean Tables & Fixed Watermark)
+ # १६.१ मास्टर ३-इन-१ कंबाइन्ड PDF व Excel रिपोर्ट फंक्शन (Visible Overlay Watermark)
     def render_combined_master_report(user_key, site_name):
         st.subheader(f"📑 Master Project Estimate: {site_name}")
         st.caption(
@@ -2138,11 +2138,11 @@ elif st.session_state.selected_module == "Estimator Tools":
             )
             return
 
-        # Markdown टेबलचे HTML टेबलमध्ये रूपांतर करणारे हेल्पर
+        # Markdown टेबलचे HTML मध्ये रूपांतर
         def markdown_to_html_table(md_text):
             lines = [line.strip() for line in md_text.strip().split("\n") if line.strip().startswith("|")]
             if not lines:
-                return f"<div style='padding:8px; background:#f8fafc;'>{md_text}</div>"
+                return f"<div style='padding:8px; background:rgba(248, 250, 252, 0.85);'>{md_text}</div>"
             
             html_table = "<table class='custom-data-table'>"
             for i, line in enumerate(lines):
@@ -2206,28 +2206,29 @@ elif st.session_state.selected_module == "Estimator Tools":
                     border: 1.5px solid #0f172a;
                     box-sizing: border-box;
                     min-height: 1020px;
+                    overflow: hidden;
                 }}
-                /* 🌊 सुरक्षित व न कापणारा वॉटरमार्क */
+                /* 🌊 स्पष्ट आणि सर्व डेटाच्या वर पारदर्शक दिसणारा वॉटरमार्क */
                 .watermark {{
                     position: absolute;
                     top: 50%;
                     left: 50%;
-                    transform: translate(-50%, -50%) rotate(-25deg);
-                    font-size: 20px;
+                    transform: translate(-50%, -50%) rotate(-28deg);
+                    font-size: 22px;
                     font-weight: 900;
-                    color: rgba(15, 23, 42, 0.06);
+                    color: rgba(15, 23, 42, 0.09);
                     text-transform: uppercase;
-                    letter-spacing: 2px;
+                    letter-spacing: 2.5px;
                     text-align: center;
-                    width: 80%;
-                    max-width: 520px;
+                    width: 78%;
+                    max-width: 500px;
                     line-height: 1.5;
                     pointer-events: none;
                     user-select: none;
-                    border: 3px dashed rgba(15, 23, 42, 0.06);
-                    padding: 12px 20px;
+                    border: 3px dashed rgba(15, 23, 42, 0.09);
+                    padding: 15px 25px;
                     border-radius: 12px;
-                    z-index: 1;
+                    z-index: 999; /* टेबल्सच्या वर दिसण्यासाठी */
                 }}
                 .content-box {{
                     position: relative;
@@ -2270,7 +2271,6 @@ elif st.session_state.selected_module == "Estimator Tools":
                     border-radius: 4px;
                     margin: 12px 0 8px 0;
                 }}
-                /* 📊 स्वच्छ व स्पष्ट Rows/Columns टेबल */
                 table.custom-data-table {{
                     width: 100%;
                     border-collapse: collapse;
@@ -2283,12 +2283,12 @@ elif st.session_state.selected_module == "Estimator Tools":
                     text-align: left;
                 }}
                 table.custom-data-table th {{
-                    background-color: #f1f5f9;
+                    background-color: rgba(241, 245, 249, 0.85);
                     font-weight: bold;
                     color: #0f172a;
                 }}
                 table.custom-data-table tr:nth-child(even) {{
-                    background-color: #f8fafc;
+                    background-color: rgba(248, 250, 252, 0.6);
                 }}
                 .signature-box {{
                     margin-top: 35px;
