@@ -2103,39 +2103,41 @@ elif st.session_state.selected_module == "Estimator Tools":
   bbs_lock = locks_cfg.get("BBS", "Free")
   qs_lock = locks_cfg.get("Quantity Surveying", "Free")
 
-  # --- १६.१ मास्टर ३-इन-१ कंबाइन्ड PDF व Excel रिपोर्ट फंक्शन ---
-  def render_combined_master_report(user_key, site_name):
-    st.subheader(f"📑 Master Project Estimate: {site_name}")
-    st.caption(
-        "💡 मागील २ दिवसांमधील Rate Analysis, BBS आणि Quantity Survey चा एकत्रित"
-        " IS-Code फॉरमॅट ३-पेज रिपोर्ट."
-    )
+ # ==========================================
+    # १६.१ मास्टर ३-इन-१ कंबाइन्ड PDF व Excel रिपोर्ट फंक्शन (Fixed & Complete)
+    # ==========================================
+    def render_combined_master_report(user_key, site_name):
+      st.subheader(f"📑 Master Project Estimate: {site_name}")
+      st.caption(
+          "💡 मागील २ दिवसांमधील Rate Analysis, BBS आणि Quantity Survey चा एकत्रित"
+          " IS-Code फॉरमॅट ३-पेज रिपोर्ट."
+      )
 
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    two_days_ago = (get_ist_time() - datetime.timedelta(days=2)).strftime(
-        "%Y-%m-%d 00:00:00"
-    )
-    cursor.execute(
-        """
+      conn = get_db_connection()
+      cursor = conn.cursor()
+      two_days_ago = (get_ist_time() - datetime.timedelta(days=2)).strftime(
+          "%Y-%m-%d 00:00:00"
+      )
+      cursor.execute(
+          """
             SELECT timestamp, user_note, report_data FROM history 
             WHERE user_key = ? AND (site_name = ? OR site_name IS NULL) AND timestamp >= ?
             ORDER BY id ASC
         """,
-        (user_key, site_name, two_days_ago),
-    )
-    records = cursor.fetchall()
-    conn.close()
-
-    if not records:
-      st.warning(
-          f"⚠️ '{site_name}' साठी मागील २ दिवसांत कोणतेही कॅल्क्युलेशन सेव्ह"
-          " केलेले नाही. कृपया आधी टूल्स वापरून रिपोर्ट तयार करा."
+          (user_key, site_name, two_days_ago),
       )
-      return
+      records = cursor.fetchall()
+      conn.close()
 
-    # ३ स्वतंत्र पेजेससाठी HTML & CSS तयार करणे
-    full_html_doc = f"""<!DOCTYPE html>
+      if not records:
+        st.warning(
+            f"⚠️ '{site_name}' साठी मागील २ दिवसांत कोणतेही कॅल्क्युलेशन सेव्ह"
+            " केलेले नाही. कृपया आधी टूल्स वापरून रिपोर्ट तयार करा."
+        )
+        return
+
+      # पूर्ण दिसणारा वॉटरमार्क व A4 पेज-ब्रेक स्टाईल
+      full_html_doc = f"""<!DOCTYPE html>
         <html>
         <head>
             <meta charset="utf-8">
@@ -2143,7 +2145,7 @@ elif st.session_state.selected_module == "Estimator Tools":
             <style>
                 @page {{
                     size: A4 portrait;
-                    margin: 12mm;
+                    margin: 10mm;
                 }}
                 @media print {{
                     body {{
@@ -2178,22 +2180,26 @@ elif st.session_state.selected_module == "Estimator Tools":
                     box-sizing: border-box;
                     min-height: 1050px;
                 }}
+                /* 🌊 सुस्पष्ट आणि पूर्ण दिसणारा वॉटरमार्क */
                 .watermark {{
                     position: absolute;
                     top: 50%;
                     left: 50%;
-                    transform: translate(-50%, -50%) rotate(-35deg);
-                    font-size: 32px;
+                    transform: translate(-50%, -50%) rotate(-30deg);
+                    font-size: 24px;
                     font-weight: 900;
-                    color: rgba(0, 0, 0, 0.05);
+                    color: rgba(0, 0, 0, 0.08);
                     text-transform: uppercase;
                     letter-spacing: 2px;
-                    white-space: nowrap;
+                    text-align: center;
+                    width: 85%;
+                    max-width: 600px;
+                    line-height: 1.4;
                     pointer-events: none;
                     user-select: none;
-                    border: 3px dashed rgba(0, 0, 0, 0.05);
-                    padding: 20px 35px;
-                    border-radius: 16px;
+                    border: 3px dashed rgba(0, 0, 0, 0.08);
+                    padding: 15px 25px;
+                    border-radius: 14px;
                     z-index: 1;
                 }}
                 .content-box {{
@@ -2264,18 +2270,22 @@ elif st.session_state.selected_module == "Estimator Tools":
         <body>
         """
 
-    # प्रत्येक सेव्ह केलेल्या रेकॉर्डसाठी नवीन A4 पेज तयार करणे
-    for idx, r in enumerate(records, 1):
-      page_break_class = "page-break" if idx > 1 else ""
-      sec_title = (
-          "Rate Analysis"
-          if idx == 1
-          else ("Bar Bending Schedule (BBS)" if idx == 2 else "Quantity Survey")
-      )
+      # प्रत्येक सेव्ह केलेल्या नोंदीसाठी स्वतंत्र A4 पेज
+      for idx, r in enumerate(records, 1):
+        page_break_class = "page-break" if idx > 1 else ""
+        sec_title = (
+            "Rate Analysis"
+            if idx == 1
+            else (
+                "Bar Bending Schedule (BBS)"
+                if idx == 2
+                else "Quantity Surveying"
+            )
+        )
 
-      full_html_doc += f"""
+        full_html_doc += f"""
             <div class="a4-page {page_break_class}">
-                <div class="watermark">KANHAIYA • FOUNDER OF PATIL INFRATECH</div>
+                <div class="watermark">KANHAIYA<br>FOUNDER OF PATIL INFRATECH</div>
                 <div class="content-box">
                     <div class="header-title">
                         <h1>PATIL INFRATECH</h1>
@@ -2296,7 +2306,7 @@ elif st.session_state.selected_module == "Estimator Tools":
                     <hr style="border: 0.5px solid #cbd5e1; margin-bottom: 12px;">
 
                     <div class="section-header">
-                        विभाग #{idx}: {sec_title} (वेळ: {r['timestamp']})
+                        विभाग #{idx}: {sec_title} (नोंद वेळ: {r['timestamp']})
                     </div>
 
                     <pre class="data-render">{r['report_data']}</pre>
@@ -2323,71 +2333,64 @@ elif st.session_state.selected_module == "Estimator Tools":
             </div>
             """
 
-    full_html_doc += """
+      full_html_doc += """
         </body>
         </html>
         """
 
-    # स्क्रीनवर HTML प्रीव्ह्यू दाखवणे
-    st.components.v1.html(full_html_doc, height=520, scrolling=True)
+      # प्रीव्ह्यू
+      st.components.v1.html(full_html_doc, height=520, scrolling=True)
 
-    # Excel डेटा तयार करणे
-    excel_data_list = []
-    for r in records:
-      excel_data_list.append({
-          "Site Name": site_name,
-          "User": user_key,
-          "Timestamp": r["timestamp"],
-          "Estimation Details": r["report_data"],
-      })
-    excel_df = pd.DataFrame(excel_data_list)
+      # Excel / CSV एक्स्पोर्ट डेटा तयार करणे (openpyxl वर विसंबून न राहता थेट सुसंगत फॉरमॅट)
+      excel_data_list = []
+      for r in records:
+        excel_data_list.append({
+            "Site Name": site_name,
+            "User": user_key,
+            "Timestamp": r["timestamp"],
+            "Report Data": r["report_data"].replace("|", " ").strip(),
+        })
+      excel_df = pd.DataFrame(excel_data_list)
+      csv_bytes = excel_df.to_csv(index=False).encode("utf-8-sig")
 
-    # Excel फाईल मेमरीमध्ये तयार करणे
-    import io
+      st.write("---")
+      c1, c2, c3 = st.columns(3)
 
-    excel_buffer = io.BytesIO()
-    with pd.ExcelWriter(excel_buffer, engine="openpyxl") as writer:
-      excel_df.to_excel(writer, index=False, sheet_name="Master Estimate")
-    excel_bytes = excel_buffer.getvalue()
+      with c1:
+        # १. मास्टर HTML/PDF फाईल डाऊनलोड
+        st.download_button(
+            label="📥 Download Master Report",
+            data=full_html_doc,
+            file_name=(
+                f"Patil_Infratech_{site_name.replace(' ', '_')}_Report.html"
+            ),
+            mime="text/html",
+            type="primary",
+            use_container_width=True,
+        )
 
-    st.write("---")
-    c1, c2, c3 = st.columns(3)
+      with c2:
+        # २. Excel सुसंगत CSV डाऊनलोड (Zero Dependency)
+        st.download_button(
+            label="📊 Export Excel Data (.csv)",
+            data=csv_bytes,
+            file_name=(
+                f"Patil_Infratech_{site_name.replace(' ', '_')}_Estimate.csv"
+            ),
+            mime="text/csv",
+            use_container_width=True,
+        )
 
-    with c1:
-      # १. डायरेक्ट HTML/PDF फाईल डाऊनलोड बटण
-      st.download_button(
-          label="📥 Download Master PDF File",
-          data=full_html_doc,
-          file_name=(
-              f"Patil_Infratech_{site_name.replace(' ', '_')}_MasterReport.html"
-          ),
-          mime="text/html",
-          type="primary",
-          use_container_width=True,
-      )
-
-    with c2:
-      # २. थेट Excel Sheet डाऊनलोड बटण
-      st.download_button(
-          label="📊 Export to Excel Sheet (.xlsx)",
-          data=excel_bytes,
-          file_name=f"Patil_Infratech_{site_name.replace(' ', '_')}_Estimate.xlsx",
-          mime=(
-              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-          ),
-          use_container_width=True,
-      )
-
-    with c3:
-      # ३. थेट प्रिंट / Save as PDF डायलॉग
-      st.markdown(
-          """
+      with c3:
+        # ३. थेट प्रिंट / Save as PDF
+        st.markdown(
+            """
                 <button onclick="window.parent.print()" style="width: 100%; background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); color: white; border: none; padding: 10px 14px; border-radius: 8px; font-weight: bold; cursor: pointer; height: 38px; box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4);">
                     🖨️ Instant Print (A4)
                 </button>
             """,
-          unsafe_allow_html=True,
-      )
+            unsafe_allow_html=True,
+        )
 
   # --- मेनू पर्याय (Icon Grid Selection) ---
   if st.session_state.selected_estimator_sub_module is None:
