@@ -478,7 +478,7 @@ for key, default in [
     ("selected_estimator_sub_module", None),
     ("admin_view", "main"),
     ("admin_selected_user", None),
-    ("current_site_name", "साई रेसिडेन्सी - साईट १"),
+    ("current_site_name", "पाटील रेसिडेन्सी - साईट १"),
 ]:
   if key not in st.session_state:
     st.session_state[key] = default
