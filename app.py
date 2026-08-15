@@ -2103,162 +2103,213 @@ elif st.session_state.selected_module == "Estimator Tools":
   bbs_lock = locks_cfg.get("BBS", "Free")
   qs_lock = locks_cfg.get("Quantity Surveying", "Free")
 
-  # --- १६.१ मास्टर ३-इन-१ कंबाइन्ड PDF रिपोर्ट फंक्शन (Working Print & Watermark) ---
   def render_combined_master_report(user_key, site_name):
-    st.subheader(f"📑 Master Project Estimate: {site_name}")
-    st.caption(
-        "💡 मागील २ दिवसांमधील Rate Analysis, BBS आणि Quantity Survey चा"
-        " एकत्रित IS-Code फॉरमॅट रिपोर्ट."
-    )
+  st.subheader(f"📑 Master Project Estimate: {site_name}")
+  st.caption(
+      "💡 मागील २ दिवसांमधील Rate Analysis, BBS आणि Quantity Survey चा एकत्रित"
+      " IS-Code फॉरमॅट रिपोर्ट."
+  )
 
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    two_days_ago = (get_ist_time() - datetime.timedelta(days=2)).strftime(
-        "%Y-%m-%d 00:00:00"
-    )
-    cursor.execute(
-        """
-            SELECT timestamp, report_data FROM history 
-            WHERE user_key = ? AND (site_name = ? OR site_name IS NULL) AND timestamp >= ?
-            ORDER BY id ASC
-        """,
-        (user_key, site_name, two_days_ago),
-    )
-    records = cursor.fetchall()
-    conn.close()
+  conn = get_db_connection()
+  cursor = conn.cursor()
+  two_days_ago = (get_ist_time() - datetime.timedelta(days=2)).strftime(
+      "%Y-%m-%d 00:00:00"
+  )
+  cursor.execute(
+      """
+        SELECT timestamp, report_data FROM history 
+        WHERE user_key = ? AND (site_name = ? OR site_name IS NULL) AND timestamp >= ?
+        ORDER BY id ASC
+    """,
+      (user_key, site_name, two_days_ago),
+  )
+  records = cursor.fetchall()
+  conn.close()
 
-    if not records:
-      st.warning(
-          f"⚠️ '{site_name}' साठी मागील २ दिवसांत कोणतेही कॅल्क्युलेशन सेव्ह"
-          " केलेले नाही. कृपया आधी टूल्स वापरून रिपोर्ट तयार करा."
-      )
-      return
+  if not records:
+    st.warning(
+        f"⚠️ '{site_name}' साठी मागील २ दिवसांत कोणतेही कॅल्क्युलेशन सेव्ह"
+        " केलेले नाही. कृपया आधी टूल्स वापरून रिपोर्ट तयार करा."
+    )
+    return
 
-    # वॉटरमार्क व A4 प्रिंट स्टाईल
-    st.markdown(
-        """
+  # संपूर्ण HTML डॉक्युमेंट तयार करणे (PDF प्रिंट व डाऊनलोडसाठी)
+  full_html_report = f"""<!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <title>PATIL INFRATECH - {site_name} Report</title>
         <style>
-        @media print {
-            header, footer, [data-testid="stToolbar"], .no-print, button, .stButton, div[data-testid="stPopover"] {
-                display: none !important;
-            }
-            body, .stApp, [data-testid="stAppViewContainer"] {
-                background: #ffffff !important;
-                color: #000000 !important;
-                padding: 0 !important;
-            }
-            .print-report-container {
-                box-shadow: none !important;
-                border: 1px solid #000000 !important;
-                padding: 20px !important;
-            }
-        }
-        .print-report-container {
-            position: relative;
-            background: #ffffff;
-            color: #000000;
-            padding: 35px;
-            border-radius: 12px;
-            font-family: Arial, sans-serif;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.25);
-            overflow: hidden;
-            margin-bottom: 20px;
-        }
-        .watermark-text {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) rotate(-30deg);
-            font-size: 34px;
-            font-weight: 900;
-            color: rgba(0, 0, 0, 0.06);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            white-space: nowrap;
-            pointer-events: none;
-            user-select: none;
-            z-index: 1;
-            border: 4px dashed rgba(0, 0, 0, 0.06);
-            padding: 15px 30px;
-            border-radius: 16px;
-        }
-        .report-content {
-            position: relative;
-            z-index: 2;
-        }
+            @page {{
+                size: A4 portrait;
+                margin: 15mm;
+            }}
+            body {{
+                background-color: #ffffff;
+                color: #000000;
+                font-family: 'Segoe UI', Arial, sans-serif;
+                margin: 0;
+                padding: 10px;
+            }}
+            .print-container {{
+                position: relative;
+                border: 1.5px solid #0f172a;
+                padding: 25px;
+                border-radius: 8px;
+            }}
+            .watermark {{
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%) rotate(-35deg);
+                font-size: 32px;
+                font-weight: 900;
+                color: rgba(0, 0, 0, 0.05);
+                text-transform: uppercase;
+                letter-spacing: 2px;
+                white-space: nowrap;
+                pointer-events: none;
+                border: 3px dashed rgba(0, 0, 0, 0.05);
+                padding: 15px 30px;
+                border-radius: 12px;
+            }}
+            .header {{
+                text-align: center;
+                border-bottom: 2px solid #0f172a;
+                padding-bottom: 10px;
+                margin-bottom: 15px;
+            }}
+            .header h1 {{
+                margin: 0;
+                font-size: 24px;
+                color: #0f172a;
+            }}
+            .header p {{
+                margin: 3px 0;
+                font-size: 12px;
+                font-weight: bold;
+                color: #475569;
+            }}
+            table.meta-table {{
+                width: 100%;
+                margin-bottom: 15px;
+                font-size: 12px;
+                border-collapse: collapse;
+            }}
+            table.meta-table td {{
+                padding: 4px 0;
+            }}
+            .section-title {{
+                color: #0284c7;
+                font-size: 14px;
+                border-bottom: 1px solid #cbd5e1;
+                padding-bottom: 4px;
+                margin-top: 15px;
+            }}
+            table.report-table {{
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 8px;
+                font-size: 11px;
+            }}
+            table.report-table th, table.report-table td {{
+                border: 1px solid #94a3b8;
+                padding: 6px;
+                text-align: left;
+            }}
+            table.report-table th {{
+                background-color: #f1f5f9;
+            }}
+            .footer {{
+                margin-top: 30px;
+                width: 100%;
+                font-size: 12px;
+            }}
         </style>
-        """,
-        unsafe_allow_html=True,
-    )
+    </head>
+    <body>
+        <div class="print-container">
+            <div class="watermark">KANHAIYA • FOUNDER OF PATIL INFRATECH</div>
+            <div class="header">
+                <h1>PATIL INFRATECH</h1>
+                <p>CIVIL ENGINEERS • CONSULTANTS • QUANTITY SURVEYORS</p>
+                <small style="color: #64748b;">(Compliant with IS 1200 & IS 2502 Standards)</small>
+            </div>
+            
+            <table class="meta-table">
+                <tr>
+                    <td><b>📍 Project / Site:</b> {site_name}</td>
+                    <td style="text-align: right;"><b>📅 Report Date:</b> {get_ist_time().strftime('%d-%m-%Y')}</td>
+                </tr>
+                <tr>
+                    <td><b>👤 Site Engineer:</b> {user_key}</td>
+                    <td style="text-align: right;"><b>⏱️ Period:</b> Last 48 Hours Calculation</td>
+                </tr>
+            </table>
+            <hr style="border: 0.5px solid #cbd5e1;">
+    """
 
-    header_html = f"""
-        <div class="print-report-container">
-            <div class="watermark-text">KANHAIYA • FOUNDER OF PATIL INFRATECH</div>
-            <div class="report-content">
-                <div style="border-bottom: 3px solid #0f172a; padding-bottom: 10px; margin-bottom: 20px; text-align: center;">
-                    <h1 style="margin:0; color: #0f172a; font-size: 26px; font-weight: 900; letter-spacing: 1px;">PATIL INFRATECH</h1>
-                    <p style="margin:4px 0; font-size: 13px; font-weight: bold; color: #475569; text-transform: uppercase;">Civil Engineers • Consultants • Quantity Surveyors</p>
-                    <p style="margin:0; font-size: 11px; color: #64748b;">(Compliant with IS 1200 & IS 2502 Standards)</p>
-                </div>
-                <table style="width: 100%; margin-bottom: 20px; font-size: 13px; border: none; color: #0f172a;">
-                    <tr>
-                        <td><b>📍 Project / Site:</b> <span style="color:#d97706; font-weight:bold;">{site_name}</span></td>
-                        <td style="text-align: right;"><b>📅 Report Date:</b> {get_ist_time().strftime('%d-%m-%Y')}</td>
-                    </tr>
-                    <tr>
-                        <td><b>👤 Engineer:</b> {user_key}</td>
-                        <td style="text-align: right;"><b>⏱️ Period:</b> Last 48 Hours Calculation</td>
-                    </tr>
-                </table>
-                <hr style="border: 0.5px solid #cbd5e1; margin-bottom: 20px;">
+  # Markdown टेबलचे HTML मध्ये रूपांतर
+  for idx, r in enumerate(records, 1):
+    full_html_report += f"""
+            <div class="section-title"><b>विभाग #{idx} (वेळ: {r['timestamp']})</b></div>
+            <div style="font-size: 12px; margin-top: 6px;">
+                <pre style="white-space: pre-wrap; font-family: inherit; background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0;">{r['report_data']}</pre>
+            </div>
         """
-    st.markdown(header_html, unsafe_allow_html=True)
 
-    for idx, r in enumerate(records, 1):
-      st.markdown(
-          f"<h4 style='color: #0284c7; margin-top: 15px;'>📋 विभाग #{idx}"
-          f" ({r['timestamp']})</h4>",
-          unsafe_allow_html=True,
-      )
-      st.markdown(r["report_data"])
-      st.write("---")
-
-    footer_html = """
-                <br><br>
-                <table style="width: 100%; margin-top: 30px; font-size: 13px; border: none; color: #0f172a;">
-                    <tr>
-                        <td style="width: 50%;">__________________________<br><b>Site Engineer Signature</b></td>
-                        <td style="width: 50%; text-align: right;">__________________________<br><b>Authorized Checker</b></td>
-                    </tr>
-                </table>
-                <div style="text-align: center; margin-top: 25px; font-size: 11px; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 8px;">
-                    Verified & Certified by: <b>Kanhaiya (Founder of Patil Infratech)</b>
-                </div>
+  full_html_report += """
+            <table class="footer">
+                <tr>
+                    <td style="width: 50%;">
+                        <br><br>
+                        __________________________<br>
+                        <b>Site Engineer Signature</b>
+                    </td>
+                    <td style="width: 50%; text-align: right;">
+                        <br><br>
+                        __________________________<br>
+                        <b>Authorized Consultant / Checker</b>
+                    </td>
+                </tr>
+            </table>
+            <div style="text-align: center; margin-top: 20px; font-size: 10px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 5px;">
+                Verified & Certified by: <b>Kanhaiya (Founder of Patil Infratech)</b>
             </div>
         </div>
-        """
-    st.markdown(footer_html, unsafe_allow_html=True)
+    </body>
+    </html>
+    """
 
-    st.write("---")
-    c1, c2 = st.columns(2)
-    with c1:
-      st.markdown(
-          """
-                <button onclick="window.parent.print()" style="width: 100%; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: black; border: none; padding: 14px 20px; border-radius: 12px; font-weight: 800; cursor: pointer; font-size: 15px; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.35);">
-                    📄 Print / Download Master 3-in-1 PDF
-                </button>
-            """,
-          unsafe_allow_html=True,
-      )
-    with c2:
-      wa_text = (
-          f"🏗️ *PATIL INFRATECH - MASTER ESTIMATE REPORT*\n📍 *Site:*"
-          f" {site_name}\n👤 *Engineer:* {user_key}\n📅 *Date:*"
-          f" {get_ist_time().strftime('%d-%m-%Y')}\n\n✅ 3-in-1 Estimation"
-          " Report Generated.\n_Certified by: Kanhaiya (Founder)_"
-      )
-      render_whatsapp_feature(urllib.parse.quote(wa_text), "master_pdf_wa")
+  # स्क्रीनवर प्रीव्ह्यू दाखवणे
+  st.components.v1.html(full_html_report, height=450, scrolling=True)
 
+  st.write("---")
+  c1, c2 = st.columns(2)
+
+  with c1:
+    # ✅ Streamlit चे मूळ डाऊनलोड बटण (PC मध्ये थेट फाईल डाऊनलोड होते)
+    st.download_button(
+        label="📥 Download Master PDF / Print File",
+        data=full_html_report,
+        file_name=f"Patil_Infratech_{site_name.replace(' ', '_')}_Report.html",
+        mime="text/html",
+        type="primary",
+        use_container_width=True,
+    )
+    st.caption(
+        "💡 डाऊनलोड झालेली फाईल उघडून तुम्ही **Ctrl + P** दाबून थेट PDF सेव्ह"
+        " करू शकता."
+    )
+
+  with c2:
+    wa_text = (
+        f"🏗️ *PATIL INFRATECH - MASTER ESTIMATE REPORT*\n📍 *Site:*"
+        f" {site_name}\n👤 *Engineer:* {user_key}\n📅 *Date:*"
+        f" {get_ist_time().strftime('%d-%m-%Y')}\n\n✅ 3-in-1 Estimation Report"
+        " Generated.\n_Certified by: Kanhaiya (Founder)_"
+    )
+    render_whatsapp_feature(urllib.parse.quote(wa_text), "master_pdf_wa")
   # --- मेनू पर्याय (Icon Grid Selection) ---
   if st.session_state.selected_estimator_sub_module is None:
     st.markdown("##### 🔽 खालीलपैकी एक Estimator टूल निवडा:")
