@@ -2106,264 +2106,176 @@ elif st.session_state.selected_module == "Estimator Tools":
     bbs_lock = locks_cfg.get("BBS", "Free")
     qs_lock = locks_cfg.get("Quantity Surveying", "Free")
 
-    # --- १६.१ मास्टर ३-इन-१ कंबाइन्ड PDF व Excel रिपोर्ट फंक्शन ---
+    # १६.१ मास्टर ३-इन-१ कंबाइन्ड PDF रिपोर्ट फंक्शन
     def render_combined_master_report(user_key, site_name):
         st.subheader(f"📑 Master Project Estimate: {site_name}")
-        st.caption("💡 मागील २ दिवसांमधील Rate Analysis, BBS आणि Quantity Survey चा एकत्रित IS-Code फॉरमॅट ३-पेज रिपोर्ट.")
+        st.caption(
+            "💡 मागील २ दिवसांमधील Rate Analysis, BBS आणि Quantity Survey चा"
+            " एकत्रित IS-Code फॉरमॅट रिपोर्ट."
+        )
 
         conn = get_db_connection()
         cursor = conn.cursor()
-        two_days_ago = (get_ist_time() - datetime.timedelta(days=2)).strftime("%Y-%m-%d 00:00:00")
-        cursor.execute("""
-            SELECT timestamp, user_note, report_data FROM history 
+
+        # मागील ४८ तासांतील डेटा मिळवणे
+        two_days_ago = (get_ist_time() - datetime.timedelta(days=2)).strftime(
+            "%Y-%m-%d 00:00:00"
+        )
+        cursor.execute(
+            """
+            SELECT timestamp, report_data FROM history 
             WHERE user_key = ? AND (site_name = ? OR site_name IS NULL) AND timestamp >= ?
             ORDER BY id ASC
-        """, (user_key, site_name, two_days_ago))
+        """,
+            (user_key, site_name, two_days_ago),
+        )
+
         records = cursor.fetchall()
         conn.close()
 
         if not records:
-            st.warning(f"⚠️ '{site_name}' साठी मागील २ दिवसांत कोणतेही कॅल्क्युलेशन सेव्ह केलेले नाही. कृपया आधी टूल्स वापरून रिपोर्ट तयार करा.")
+            st.warning(
+                f"⚠️ '{site_name}' साठी मागील २ दिवसांत कोणतेही कॅल्क्युलेशन सेव्ह"
+                " केलेले नाही."
+            )
             return
 
-        full_html_doc = f"""<!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="utf-8">
-            <title>PATIL INFRATECH - {site_name} Master Estimate</title>
-            <style>
-                @page {{
-                    size: A4 portrait;
-                    margin: 10mm;
-                }}
-                @media print {{
-                    body {{
-                        background: #ffffff !important;
-                        color: #000000 !important;
-                    }}
-                    .no-print {{
-                        display: none !important;
-                    }}
-                    .page-break {{
-                        page-break-before: always !important;
-                        break-before: page !important;
-                    }}
-                }}
-                body {{
-                    background-color: #f1f5f9;
-                    font-family: 'Segoe UI', Arial, sans-serif;
-                    margin: 0;
-                    padding: 10px;
-                    color: #000000;
-                }}
-                .a4-page {{
-                    position: relative;
-                    background: #ffffff;
-                    width: 100%;
-                    max-width: 800px;
-                    margin: 0 auto 25px auto;
-                    padding: 30px;
-                    border-radius: 8px;
-                    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-                    border: 1.5px solid #0f172a;
-                    box-sizing: border-box;
-                    min-height: 1050px;
-                }}
-                .watermark {{
-                    position: absolute;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%) rotate(-30deg);
-                    font-size: 24px;
-                    font-weight: 900;
-                    color: rgba(0, 0, 0, 0.08);
-                    text-transform: uppercase;
-                    letter-spacing: 2px;
-                    text-align: center;
-                    width: 85%;
-                    max-width: 600px;
-                    line-height: 1.4;
-                    pointer-events: none;
-                    user-select: none;
-                    border: 3px dashed rgba(0, 0, 0, 0.08);
-                    padding: 15px 25px;
-                    border-radius: 14px;
-                    z-index: 1;
-                }}
-                .content-box {{
-                    position: relative;
-                    z-index: 2;
-                }}
-                .header-title {{
-                    text-align: center;
-                    border-bottom: 2.5px solid #0f172a;
-                    padding-bottom: 8px;
-                    margin-bottom: 15px;
-                }}
-                .header-title h1 {{
-                    margin: 0;
-                    font-size: 24px;
-                    color: #0f172a;
-                    font-weight: 900;
-                }}
-                .header-title p {{
-                    margin: 3px 0;
-                    font-size: 12px;
-                    font-weight: bold;
-                    color: #475569;
-                }}
-                table.info-table {{
-                    width: 100%;
-                    margin-bottom: 15px;
-                    font-size: 12px;
-                    border-collapse: collapse;
-                }}
-                table.info-table td {{
-                    padding: 4px 0;
-                }}
-                .section-header {{
-                    background: #0f172a;
-                    color: #ffffff;
-                    padding: 6px 12px;
-                    font-size: 13px;
-                    font-weight: bold;
-                    border-radius: 4px;
-                    margin: 15px 0 10px 0;
-                }}
-                pre.data-render {{
-                    white-space: pre-wrap;
-                    font-family: inherit;
-                    background: #f8fafc;
-                    padding: 12px;
-                    border-radius: 6px;
-                    border: 1px solid #cbd5e1;
-                    font-size: 11px;
-                    line-height: 1.5;
-                }}
-                .signature-box {{
-                    margin-top: 40px;
-                    width: 100%;
-                    font-size: 12px;
-                }}
-                .footer-stamp {{
-                    text-align: center;
-                    margin-top: 25px;
-                    font-size: 11px;
-                    color: #64748b;
-                    border-top: 1px solid #e2e8f0;
-                    padding-top: 6px;
-                }}
-            </style>
-        </head>
-        <body>
+        # पूर्ण दिसणारा वॉटरमार्क व प्रिंट स्टाईल
+        watermark_css = """
+        <style>
+        @media print {
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+        .print-container {
+            position: relative;
+            background: #ffffff;
+            color: #000000;
+            padding: 30px;
+            border-radius: 8px;
+            font-family: Arial, sans-serif;
+            border: 1.5px solid #0f172a;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        .watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-30deg);
+            font-size: 24px;
+            font-weight: 900;
+            color: rgba(0, 0, 0, 0.08);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-align: center;
+            width: 85%;
+            max-width: 600px;
+            line-height: 1.4;
+            pointer-events: none;
+            user-select: none;
+            border: 3px dashed rgba(0, 0, 0, 0.08);
+            padding: 15px 25px;
+            border-radius: 14px;
+            z-index: 1;
+        }
+        .content-box {
+            position: relative;
+            z-index: 2;
+        }
+        </style>
+        """
+
+        combined_html = f"""
+        {watermark_css}
+        <div class="print-container">
+            <div class="watermark">KANHAIYA<br>FOUNDER OF PATIL INFRATECH</div>
+            <div class="content-box">
+                <div style="border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 15px; text-align: center;">
+                    <h2 style="margin:0; color:#000;">PATIL INFRATECH</h2>
+                    <p style="margin:2px 0; font-size:12px; font-weight:bold;">CIVIL ENGINEERS & QUANTITY SURVEYORS</p>
+                    <p style="margin:0; font-size:11px; color:#555;">IS 1200 & IS 2502 Compliant Report</p>
+                </div>
+                <table style="width: 100%; margin-bottom: 15px; font-size: 12px;">
+                    <tr>
+                        <td><b>Project / Site:</b> {site_name}</td>
+                        <td style="text-align: right;"><b>Date:</b> {get_ist_time().strftime('%d-%m-%Y')}</td>
+                    </tr>
+                    <tr>
+                        <td><b>Prepared By:</b> {user_key}</td>
+                        <td style="text-align: right;"><b>Period:</b> Last 48 Hours Estimation</td>
+                    </tr>
+                </table>
+                <hr style="border: 0.5px solid #ccc;">
         """
 
         for idx, r in enumerate(records, 1):
-            page_break_class = "page-break" if idx > 1 else ""
-            sec_title = "Rate Analysis" if idx == 1 else ("Bar Bending Schedule (BBS)" if idx == 2 else "Quantity Survey")
-
-            full_html_doc += f"""
-            <div class="a4-page {page_break_class}">
-                <div class="watermark">KANHAIYA<br>FOUNDER OF PATIL INFRATECH</div>
-                <div class="content-box">
-                    <div class="header-title">
-                        <h1>PATIL INFRATECH</h1>
-                        <p>CIVIL ENGINEERS • CONSULTANTS • QUANTITY SURVEYORS</p>
-                        <small style="color: #64748b;">(Compliant with IS 1200 & IS 2502 Standards)</small>
-                    </div>
-
-                    <table class="info-table">
-                        <tr>
-                            <td><b>📍 Project / Site:</b> <span style="color:#d97706; font-weight:bold;">{site_name}</span></td>
-                            <td style="text-align: right;"><b>📅 Report Date:</b> {get_ist_time().strftime('%d-%m-%Y')}</td>
-                        </tr>
-                        <tr>
-                            <td><b>👤 Site Engineer:</b> {user_key}</td>
-                            <td style="text-align: right;"><b>📄 Page:</b> {idx} of {len(records)}</td>
-                        </tr>
-                    </table>
-                    <hr style="border: 0.5px solid #cbd5e1; margin-bottom: 12px;">
-
-                    <div class="section-header">
-                        विभाग #{idx}: {sec_title} (नोंद वेळ: {r['timestamp']})
-                    </div>
-
-                    <pre class="data-render">{r['report_data']}</pre>
-
-                    <table class="signature-box">
-                        <tr>
-                            <td style="width: 50%;">
-                                <br><br>
-                                __________________________<br>
-                                <b>Site Engineer Signature</b>
-                            </td>
-                            <td style="width: 50%; text-align: right;">
-                                <br><br>
-                                __________________________<br>
-                                <b>Authorized Checker</b>
-                            </td>
-                        </tr>
-                    </table>
-
-                    <div class="footer-stamp">
-                        Certified & Generated by: <b>Kanhaiya (Founder of Patil Infratech)</b>
+            combined_html += f"""
+                <div style="margin-bottom: 20px;">
+                    <h4 style="color: #0284c7; margin-bottom: 5px;">विभाग #{idx} ({r['timestamp']})</h4>
+                    <div style="font-size: 12px; background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                        <pre style="white-space: pre-wrap; font-family: inherit; margin: 0;">{r['report_data']}</pre>
                     </div>
                 </div>
-            </div>
             """
 
-        full_html_doc += """
-        </body>
-        </html>
+        combined_html += """
+                <br>
+                <table style="width: 100%; margin-top: 30px; font-size: 12px;">
+                    <tr>
+                        <td>___________________<br><b>Site Engineer</b></td>
+                        <td style="text-align: right;">___________________<br><b>Consultant / Checker</b></td>
+                    </tr>
+                </table>
+                <div style="text-align: center; margin-top: 20px; font-size: 11px; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 6px;">
+                    Certified & Generated by: <b>Kanhaiya (Founder of Patil Infratech)</b>
+                </div>
+            </div>
+        </div>
         """
 
-        st.components.v1.html(full_html_doc, height=520, scrolling=True)
-
-        excel_data_list = []
-        for r in records:
-            excel_data_list.append({
-                "Site Name": site_name,
-                "User": user_key,
-                "Timestamp": r["timestamp"],
-                "Report Data": r["report_data"].replace("|", " ").strip()
-            })
-        excel_df = pd.DataFrame(excel_data_list)
-        csv_bytes = excel_df.to_csv(index=False).encode('utf-8-sig')
-
+        st.markdown(combined_html, unsafe_allow_html=True)
         st.write("---")
-        c1, c2, c3 = st.columns(3)
 
+        c1, c2 = st.columns(2)
         with c1:
             st.download_button(
                 label="📥 Download Master Report",
-                data=full_html_doc,
+                data=combined_html,
                 file_name=f"Patil_Infratech_{site_name.replace(' ', '_')}_Report.html",
                 mime="text/html",
                 type="primary",
                 use_container_width=True
             )
-
         with c2:
-            st.download_button(
-                label="📊 Export Excel Data (.csv)",
-                data=csv_bytes,
-                file_name=f"Patil_Infratech_{site_name.replace(' ', '_')}_Estimate.csv",
-                mime="text/csv",
-                use_container_width=True
+            st.markdown(
+                """
+                <button onclick="window.parent.print()" style="width: 100%; background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); color: white; border: none; padding: 10px 14px; border-radius: 8px; font-weight: bold; cursor: pointer; height: 38px; box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4);">
+                    🖨️ Instant Print / Save PDF
+                </button>
+                """,
+                unsafe_allow_html=True,
             )
 
-        with c3:
-            st.markdown("""
-                <button onclick="window.parent.print()" style="width: 100%; background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); color: white; border: none; padding: 10px 14px; border-radius: 8px; font-weight: bold; cursor: pointer; height: 38px; box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4);">
-                    🖨️ Instant Print (A4)
-                </button>
-            """, unsafe_allow_html=True)
+        wa_text = (
+            f"🏗️ *PATIL INFRATECH - MASTER ESTIMATE REPORT*\n📍 *Site:*"
+            f" {site_name}\n👤 *Engineer:* {user_key}\n📅 *Date:*"
+            f" {get_ist_time().strftime('%d-%m-%Y')}\n\n✅ 3-in-1 Estimation"
+            " Report Generated."
+        )
+        st.write(" ")
+        render_whatsapp_feature(urllib.parse.quote(wa_text), "master_pdf_wa")
 
-    # --- मेनू पर्याय (Icon Grid Selection) ---
     if st.session_state.selected_estimator_sub_module is None:
         st.markdown("##### 🔽 खालीलपैकी एक Estimator टूल निवडा:")
 
         e_col1, e_col2 = st.columns(2)
+
         with e_col1:
             calc_badge = "🆓 Free" if calc_lock == "Free" else "👑 Premium"
             st.markdown(
@@ -2376,7 +2288,9 @@ elif st.session_state.selected_module == "Estimator Tools":
             """,
                 unsafe_allow_html=True,
             )
-            if st.button("🧮 Calculator", key="btn_est_calc", use_container_width=True):
+            if st.button(
+                "🧮 Calculator", key="btn_est_calc", use_container_width=True
+            ):
                 if calc_lock == "Premium" and not is_user_premium:
                     st.error("🔒 हे फीचर प्रिमियम युझर्ससाठी आहे!")
                 else:
@@ -2396,7 +2310,9 @@ elif st.session_state.selected_module == "Estimator Tools":
             """,
                 unsafe_allow_html=True,
             )
-            if st.button("📊 Rate Analysis", key="btn_est_ra", use_container_width=True):
+            if st.button(
+                "📊 Rate Analysis", key="btn_est_ra", use_container_width=True
+            ):
                 if ra_lock == "Premium" and not is_user_premium:
                     st.error("🔒 हे फीचर प्रिमियम युझर्ससाठी आहे!")
                 else:
@@ -2439,32 +2355,41 @@ elif st.session_state.selected_module == "Estimator Tools":
             """,
                 unsafe_allow_html=True,
             )
-            if st.button("📈 Quantity Survey", key="btn_est_qs", use_container_width=True):
+            if st.button(
+                "📈 Quantity Survey", key="btn_est_qs", use_container_width=True
+            ):
                 if qs_lock == "Premium" and not is_user_premium:
                     st.error("🔒 हे फीचर प्रिमियम युझर्ससाठी आहे!")
                 else:
-                    st.session_state.selected_estimator_sub_module = "Quantity Surveying"
+                    st.session_state.selected_estimator_sub_module = (
+                        "Quantity Surveying"
+                    )
                     trigger_push_state()
                     st.rerun()
 
         st.write(" ")
+        # ५ वे मास्टर कंबाइन्ड PDF रिपोर्ट कार्ड
         st.markdown(
             """
             <div style="text-align: center; background: #111827; padding: 18px 10px; border-radius: 20px; border: 1px solid #f59e0b;">
                 <h1 style="font-size: 32px; margin:0;">📑</h1>
-                <h5 style="margin: 8px 0 2px 0; color: #f59e0b; font-weight:800; font-size:14px;">3-in-1 Master Estimate PDF & Excel</h5>
-                <p style="font-size: 10px; color: #cbd5e1; margin:0;">[Rate Analysis + BBS + QS ३ स्वतंत्र पेजेसचा रिपोर्ट]</p>
+                <h5 style="margin: 8px 0 2px 0; color: #f59e0b; font-weight:800; font-size:14px;">3-in-1 Master Estimate PDF</h5>
+                <p style="font-size: 10px; color: #cbd5e1; margin:0;">[Rate Analysis + BBS + QS कंबाइन्ड रिपोर्ट]</p>
             </div>
         """,
             unsafe_allow_html=True,
         )
         st.write(" ")
-        if st.button("📑 Open 3-in-1 Master Report Generator", key="btn_est_master_pdf", use_container_width=True, type="primary"):
+        if st.button(
+            "📑 Open 3-in-1 Master PDF Generator",
+            key="btn_est_master_pdf",
+            use_container_width=True,
+            type="primary",
+        ):
             st.session_state.selected_estimator_sub_module = "Master PDF"
             trigger_push_state()
             st.rerun()
 
-    # --- टूल्स उघडल्यानंतरची रचना ---
     else:
         if st.button("⬅️ Back to Estimator Menu", key="btn_back_estimator_menu"):
             st.session_state.selected_estimator_sub_module = None
@@ -2473,14 +2398,23 @@ elif st.session_state.selected_module == "Estimator Tools":
         st.write("---")
         est_sub_mod = st.session_state.selected_estimator_sub_module
 
+        # --------------------------------------------------
         # ०. Master 3-in-1 Combined Estimate PDF
+        # --------------------------------------------------
         if est_sub_mod == "Master PDF":
-            render_combined_master_report(current_user_name, st.session_state.current_site_name)
+            render_combined_master_report(
+                current_user_name, st.session_state.current_site_name
+            )
 
+        # --------------------------------------------------
         # १. Civil Calculator & Smart Unit Converter
+        # --------------------------------------------------
         elif est_sub_mod == "Calculator":
             st.subheader("🧮 Civil Smart Unit Converter")
-            st.caption("💡 एकाच बॉक्समध्ये मूल्य भरा आणि सर्व युनिट्समधील अचूक हिशोब एकाच झटक्यात मिळवा!")
+            st.caption(
+                "💡 एकाच बॉक्समध्ये मूल्य भरा आणि सर्व युनिट्समधील अचूक हिशोब एकाच"
+                " झटक्यात मिळवा!"
+            )
 
             conv_category = st.selectbox("कनव्हर्शन प्रकार निवडा:", [
                 "📦 Volume / Brass Converter (घनफळ आणि ब्रास)",
@@ -2490,7 +2424,13 @@ elif st.session_state.selected_module == "Estimator Tools":
 
             if "Volume / Brass" in conv_category:
                 st.markdown("#### 📦 Volume & Brass Converter")
-                val = st.number_input("मूल्य भरा (Value):", min_value=0.0, value=1.0, step=0.1, key="v_val")
+                val = st.number_input(
+                    "मूल्य भरा (Value):",
+                    min_value=0.0,
+                    value=1.0,
+                    step=0.1,
+                    key="v_val",
+                )
                 unit_from = st.selectbox("मूळ युनिट (From Unit):", [
                     "Cubic Meter (m³)",
                     "Cubic Feet (CFT)",
@@ -2524,7 +2464,13 @@ elif st.session_state.selected_module == "Estimator Tools":
 
             elif "Length Converter" in conv_category:
                 st.markdown("#### 📏 Length Converter")
-                val = st.number_input("लांबी भरा (Length Value):", min_value=0.0, value=1.0, step=0.1, key="l_val")
+                val = st.number_input(
+                    "लांबी भरा (Length Value):",
+                    min_value=0.0,
+                    value=1.0,
+                    step=0.1,
+                    key="l_val",
+                )
                 unit_from = st.selectbox("मूळ युनिट (From Unit):", [
                     "Meters",
                     "Feet",
@@ -2566,7 +2512,13 @@ elif st.session_state.selected_module == "Estimator Tools":
 
             else:
                 st.markdown("#### 📐 Area Converter")
-                val = st.number_input("क्षेत्रफळ भरा (Area Value):", min_value=0.0, value=100.0, step=10.0, key="a_val")
+                val = st.number_input(
+                    "क्षेत्रफळ भरा (Area Value):",
+                    min_value=0.0,
+                    value=100.0,
+                    step=10.0,
+                    key="a_val",
+                )
                 unit_from = st.selectbox("मूळ युनिट (From Unit):", [
                     "Sq. Meters (m²)",
                     "Sq. Feet (Sq. Ft.)",
@@ -2574,7 +2526,9 @@ elif st.session_state.selected_module == "Estimator Tools":
                     "Acre",
                 ])
 
-                if st.button("⚡ Convert Now", type="primary", key="btn_conv_area"):
+                if st.button(
+                    "⚡ Convert Now", type="primary", key="btn_conv_area"
+                ):
                     if "Sq. Feet" in unit_from:
                         sqft = val
                     elif "Sq. Meters" in unit_from:
@@ -2601,12 +2555,22 @@ elif st.session_state.selected_module == "Estimator Tools":
                         unsafe_allow_html=True,
                     )
 
-        # २. Rate Analysis Module
+        # --------------------------------------------------
+        # २. Rate Analysis Module (Concrete, Brickwork, Plaster)
+        # --------------------------------------------------
         elif est_sub_mod == "Rate Analysis":
             master_rates = get_market_rates()
             st.markdown(
-                "<div style='background: #111827; padding: 14px; border-radius: 16px; text-align: center; font-size: 13px; font-weight: bold; color: #f8fafc; margin-bottom: 18px; border-left: 5px solid #00f2fe; border: 1px solid rgba(0,242,254,0.2); box-shadow: 0 4px 15px rgba(0,0,0,0.5);'>"
-                f"📢 आजचे मार्केट दर 🏷️ cement: ₹{master_rates.get('cement', 400.0)}/bag | sand: ₹{master_rates.get('sand', 2500.0)}/m³ | aggregate: ₹{master_rates.get('aggregate', 2200.0)}/m³ | steel: ₹{master_rates.get('steel', 60.0)}/Kg | brick: ₹{master_rates.get('bricks', 8.0)}/nos</div>",
+                "<div style='background: #111827; padding: 14px; border-radius:"
+                " 16px; text-align: center; font-size: 13px; font-weight: bold;"
+                " color: #f8fafc; margin-bottom: 18px; border-left: 5px solid"
+                " #00f2fe; border: 1px solid rgba(0,242,254,0.2); box-shadow: 0 4px"
+                " 15px rgba(0,0,0,0.5);'>📢 आजचे मार्केट दर 🏷️ cement:"
+                f" ₹{master_rates.get('cement', 400.0)}/bag | sand:"
+                f" ₹{master_rates.get('sand', 2500.0)}/m³ | aggregate:"
+                f" ₹{master_rates.get('aggregate', 2200.0)}/m³ | steel:"
+                f" ₹{master_rates.get('steel', 60.0)}/Kg | brick:"
+                f" ₹{master_rates.get('bricks', 8.0)}/nos</div>",
                 unsafe_allow_html=True,
             )
 
@@ -2655,58 +2619,194 @@ elif st.session_state.selected_module == "Estimator Tools":
                 else:
                     steel_percentage = 0.0
 
-                st.markdown("#### [A] साहित्याची माहिती आणि दर")
+                st.markdown("#### [A] साहित्याची माहिती आणि दर (थेट टाईप करा)")
                 v_col1, v_col2 = st.columns(2)
                 with v_col1:
-                    volume = st.number_input("एकूण काँक्रीट घनफळ (Volume in m³):", min_value=0.0, value=1.0, key="cc_vol")
-                    cement_rate = st.number_input("सिमेंट दर प्रति बॅग (₹):", min_value=0.0, value=float(master_rates.get("cement", 400.0)), key="cc_cem_r")
-                    sand_rate = st.number_input("वाळूचा दर प्रति m³ (₹):", min_value=0.0, value=float(master_rates.get("sand", 2500.0)), key="cc_snd_r")
+                    volume = st.number_input(
+                        "एकूण काँक्रीट घनफळ भरा (Volume in m³):",
+                        min_value=0.0,
+                        value=1.0,
+                        key="cc_vol",
+                    )
+                    cement_rate = st.number_input(
+                        "सिमेंट दर प्रति बॅग (₹):",
+                        min_value=0.0,
+                        value=float(master_rates.get("cement", 400.0)),
+                        key="cc_cem_r",
+                    )
+                    sand_rate = st.number_input(
+                        "वाळूचा दर प्रति m³ (₹):",
+                        min_value=0.0,
+                        value=float(master_rates.get("sand", 2500.0)),
+                        key="cc_snd_r",
+                    )
                 with v_col2:
-                    aggregate_rate = st.number_input("खडीचा दर प्रति m³ (₹):", min_value=0.0, value=float(master_rates.get("aggregate", 2200.0)), key="cc_agg_r")
-                    steel_rate = st.number_input("स्टीलचा दर प्रति किलो (₹/Kg):", min_value=0.0, value=float(master_rates.get("steel", 60.0)), key="cc_stl_r") if steel_percentage > 0 else 0.0
+                    aggregate_rate = st.number_input(
+                        "खडीचा दर प्रति m³ (₹):",
+                        min_value=0.0,
+                        value=float(master_rates.get("aggregate", 2200.0)),
+                        key="cc_agg_r",
+                    )
+                    steel_rate = (
+                        st.number_input(
+                            "स्टीलचा दर प्रति किलो (₹/Kg):",
+                            min_value=0.0,
+                            value=float(master_rates.get("steel", 60.0)),
+                            key="cc_stl_r",
+                        )
+                        if steel_percentage > 0
+                        else 0.0
+                    )
 
-                st.markdown("#### [B] लेबर खर्च")
+                st.markdown("#### [B] लेबर खर्च (नसल्यास ० ठेवा)")
                 l_col1, l_col2, l_col3 = st.columns(3)
                 with l_col1:
-                    mason_qty = st.number_input("मेसन संख्या:", min_value=0.0, value=0.0, key="cc_msn_q")
-                    mason_rate = st.number_input("मेसन दर (₹/Day):", min_value=0.0, value=600.0, key="cc_msn_r")
+                    mason_qty = st.number_input(
+                        "मेसन संख्या (Days):",
+                        min_value=0.0,
+                        value=0.0,
+                        key="cc_msn_q",
+                    )
+                    mason_rate = st.number_input(
+                        "मेसन दर (₹/Day):",
+                        min_value=0.0,
+                        value=600.0,
+                        key="cc_msn_r",
+                    )
                 with l_col2:
-                    mazdoor_qty = st.number_input("मजदूर संख्या:", min_value=0.0, value=0.0, key="cc_mzd_q")
-                    mazdoor_rate = st.number_input("मजदूर दर (₹/Day):", min_value=0.0, value=400.0, key="cc_mzd_r")
+                    mazdoor_qty = st.number_input(
+                        "मजदूर संख्या (Days):",
+                        min_value=0.0,
+                        value=0.0,
+                        key="cc_mzd_q",
+                    )
+                    mazdoor_rate = st.number_input(
+                        "मजदूर दर (₹/Day):",
+                        min_value=0.0,
+                        value=400.0,
+                        key="cc_mzd_r",
+                    )
                 with l_col3:
-                    bb_qty = st.number_input("बार बेंडर संख्या:", min_value=0.0, value=0.0, key="cc_bb_q")
-                    bb_rate = st.number_input("बार बेंडर दर (₹/Day):", min_value=0.0, value=550.0, key="cc_bb_r")
+                    bb_qty = st.number_input(
+                        "बार बेंडर संख्या:", min_value=0.0, value=0.0, key="cc_bb_q"
+                    )
+                    bb_rate = st.number_input(
+                        "बार बेंडर दर (₹/Day):",
+                        min_value=0.0,
+                        value=550.0,
+                        key="cc_bb_r",
+                    )
 
-                st.markdown("#### [C] अवांतर खर्च व नफा")
+                st.markdown("#### [C] अवांतर खर्च व टक्केवारी")
                 o_col1, o_col2 = st.columns(2)
                 with o_col1:
-                    scaffolding_cost = st.number_input("सेंटरिंग खर्च (₹):", min_value=0.0, value=0.0, key="cc_scaf")
-                    contingency_cost = st.number_input("आकस्मिक खर्च (₹):", min_value=0.0, value=0.0, key="cc_cont")
+                    scaffolding_cost = st.number_input(
+                        "स्कॅफोल्डिंग/सेंटरिंग खर्च (₹):",
+                        min_value=0.0,
+                        value=0.0,
+                        key="cc_scaf",
+                    )
+                    contingency_cost = st.number_input(
+                        "आकस्मिक खर्च (Contingencies) (₹):",
+                        min_value=0.0,
+                        value=0.0,
+                        key="cc_cont",
+                    )
                 with o_col2:
-                    water_pct = st.number_input("वॉटर charge (%):", min_value=0.0, value=1.0, key="cc_wat_p")
-                    profit_pct = st.number_input("कंत्राटदार नफा (%):", min_value=0.0, value=10.0, key="cc_prof_p")
+                    water_pct = st.number_input(
+                        "वॉटर charge टक्केवारी (%):",
+                        min_value=0.0,
+                        value=1.0,
+                        key="cc_wat_p",
+                    )
+                    profit_pct = st.number_input(
+                        "कंत्राटदार नफा टक्केवारी (%):",
+                        min_value=0.0,
+                        value=10.0,
+                        key="cc_prof_p",
+                    )
 
-                if st.button("📊 GENERATE RATE ANALYSIS REPORT", type="primary", key="cc_report_btn"):
+                st.markdown("#### 💬 कमेंट पॅनल (Comment Panel)")
+                user_note = st.text_area(
+                    "या एस्टिमेशन संदर्भात काही नोट किंवा कमेंट लिहायची असल्यास"
+                    " इथे लिहा:",
+                    placeholder="उदा. ग्राउंड फ्लोअर काम...",
+                    key="cc_note",
+                )
+                if st.button("💬 कमेंट सबमिट करा", key="cc_comm_btn"):
+                    if user_note.strip():
+                        st.session_state.current_comment = user_note.strip()
+                        conn = get_db_connection()
+                        cursor = conn.cursor()
+                        cursor.execute(
+                            "UPDATE users SET comment = ? WHERE user_key = ?",
+                            (user_note.strip(), current_user_name),
+                        )
+                        conn.commit()
+                        conn.close()
+                        st.success("✅ कमेंट सेव्ह झाली!")
+
+                if st.button(
+                    "📊 GENERATE RATE ANALYSIS REPORT",
+                    type="primary",
+                    key="cc_report_btn",
+                ):
                     dry_volume = volume * 1.54
                     total_parts = cement_ratio + sand_ratio + aggregate_ratio
-                    c_bags = math.ceil(((cement_ratio / total_parts) * dry_volume) * 28.8) if total_parts > 0 else 0
-                    s_m3 = (sand_ratio / total_parts) * dry_volume if total_parts > 0 else 0.0
-                    a_m3 = (aggregate_ratio / total_parts) * dry_volume if total_parts > 0 else 0.0
-                    steel_qty = volume * (steel_percentage / 100) * 7850 if steel_percentage > 0 else 0.0
+                    c_bags = (
+                        math.ceil(
+                            ((cement_ratio / total_parts) * dry_volume) * 28.8
+                        )
+                        if total_parts > 0
+                        else 0
+                    )
+                    s_m3 = (
+                        (sand_ratio / total_parts) * dry_volume
+                        if total_parts > 0
+                        else 0.0
+                    )
+                    a_m3 = (
+                        (aggregate_ratio / total_parts) * dry_volume
+                        if total_parts > 0
+                        else 0.0
+                    )
+                    steel_qty = (
+                        volume * (steel_percentage / 100) * 7850
+                        if steel_percentage > 0
+                        else 0.0
+                    )
 
                     total_cement_cost = c_bags * cement_rate
                     total_sand_cost = s_m3 * sand_rate
                     total_aggregate_cost = a_m3 * aggregate_rate
                     total_steel_cost = steel_qty * steel_rate
 
-                    mat_cost = total_cement_cost + total_aggregate_cost + total_sand_cost + total_steel_cost
-                    lab_cost = (mason_qty * mason_rate) + (mazdoor_qty * mazdoor_rate) + (bb_qty * bb_rate)
-                    base_total = mat_cost + lab_cost + scaffolding_cost + contingency_cost
+                    mat_cost = (
+                        total_cement_cost
+                        + total_aggregate_cost
+                        + total_sand_cost
+                        + total_steel_cost
+                    )
+                    lab_cost = (
+                        (mason_qty * mason_rate)
+                        + (mazdoor_qty * mazdoor_rate)
+                        + (bb_qty * bb_rate)
+                    )
+                    base_total = (
+                        mat_cost + lab_cost + scaffolding_cost + contingency_cost
+                    )
                     w_amt = base_total * (water_pct / 100)
                     p_amt = base_total * (profit_pct / 100)
                     grand_total = base_total + w_amt + p_amt
 
-                    st.success("🎉 रिपोर्ट तयार झाला आहे!")
+                    st.success("🎉 रिपोर्ट यशस्वीरित्या तयार झाला आहे!")
+                    st.markdown("### 📊 RATE ANALYSIS SHEET - CONCRETE WORK")
+                    st.info(
+                        f"👤 **Prepared For:** {current_user_name} | **घटक:**"
+                        f" {component.split(' ')[0]} | **ग्रेड:** {grade.split(' ')[0]}"
+                        f" | **एकूण घनफळ:** {volume} m³"
+                    )
+
                     report_table = f"""
 | Description | Quantity | Unit | Rate (₹) | Amount (₹) |
 | :--- | :--- | :--- | :--- | :--- |
@@ -2729,148 +2829,1555 @@ elif st.session_state.selected_module == "Estimator Tools":
 """
                     st.markdown(report_table)
 
+                    msg_text = "🏗️ *PATIL INFRATECH - RATE ANALYSIS REPORT*\n"
+                    msg_text += f"👤 *Prepared For:* {current_user_name}\n"
+                    msg_text += (
+                        f"🧱 *Work:* Concrete Work ({component.split(' ')[0]})\n"
+                    )
+                    msg_text += (
+                        f"📅 *Date:* {get_ist_time().strftime('%d-%m-%Y')}\n\n"
+                    )
+                    msg_text += "📋 *DETAILS:*\n"
+                    msg_text += (
+                        f"• Cement: {c_bags} Bags @ ₹{cement_rate} ="
+                        f" ₹{total_cement_cost:.2f}\n"
+                    )
+                    msg_text += (
+                        f"• Sand: {s_m3:.2f} m³ @ ₹{sand_rate} ="
+                        f" ₹{total_sand_cost:.2f}\n"
+                    )
+                    msg_text += (
+                        f"• Aggregate: {a_m3:.2f} m³ @ ₹{aggregate_rate} ="
+                        f" ₹{total_aggregate_cost:.2f}\n"
+                    )
+                    if steel_percentage > 0:
+                        msg_text += (
+                            f"• Steel: {steel_qty:.2f} Kg @ ₹{steel_rate} ="
+                            f" ₹{total_steel_cost:.2f}\n"
+                        )
+                    msg_text += f"• Labour Total: ₹{lab_cost:.2f}\n"
+                    msg_text += "--------------------------------\n"
+                    msg_text += f"💰 *GRAND TOTAL:* ₹{grand_total:.2f}/-\n"
+                    msg_text += "--------------------------------\n"
+                    msg_text += "_Generated by Patil Infratech_"
+
+                    encoded_msg = urllib.parse.quote(msg_text)
+
+                    btn_col1, btn_col2 = st.columns(2)
+                    with btn_col1:
+                        render_whatsapp_feature(encoded_msg, "ra_conc")
+                    with btn_col2:
+                        st.markdown(
+                            """
+                            <button onclick="window.parent.print()" style="width: 100%; background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px; box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4);">
+                                📄 Print / Download A3 Size PDF
+                            </button>
+                            """,
+                            unsafe_allow_html=True,
+                        )
+
                     if current_user_name:
                         conn = get_db_connection()
                         cursor = conn.cursor()
+                        now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
                         cursor.execute(
-                            "INSERT INTO history (user_key, timestamp, user_note, report_data, site_name) VALUES (?, ?, ?, ?, ?)",
-                            (current_user_name, get_ist_time().strftime("%Y-%m-%d %H:%M:%S"), "Concrete Rate Analysis", report_table, st.session_state.current_site_name)
+                            "INSERT INTO history (user_key, timestamp, user_note,"
+                            " report_data, site_name) VALUES (?, ?, ?, ?, ?)",
+                            (
+                                current_user_name,
+                                now_str,
+                                st.session_state.current_comment,
+                                report_table,
+                                st.session_state.current_site_name,
+                            ),
                         )
                         conn.commit()
                         conn.close()
 
             elif "Brickwork" in main_choice:
                 st.subheader("🧱 Brickwork Estimation")
-                mortar_choice = st.selectbox("मॉर्टर मिक्स गुणोत्तर निवडा:", ["1:3", "1:4", "1:5", "1:6"])
-                c_part, s_part = (1, 3) if mortar_choice == "1:3" else ((1, 4) if mortar_choice == "1:4" else (1, 6))
-                volume = st.number_input("वीटकामाचे घनफळ (m³):", min_value=0.1, value=1.0, key="bw_vol")
-                brick_rate = st.number_input("विटांचा दर (प्रति १००० नग ₹):", value=8000.0, key="bw_br")
-                cement_rate = st.number_input("सिमेंट दर प्रति बॅग (₹):", value=400.0, key="bw_cr")
-                sand_rate = st.number_input("वाळूचा दर प्रति m³ (₹):", value=2500.0, key="bw_sr")
+                mortar_choice = st.selectbox(
+                    "मॉर्टर मिक्स गुणोत्तर (Mortar Mix Ratio) निवडा:",
+                    [
+                        "1:3 (सिमेंट : वाळू)",
+                        "1:4 (सिमेंट : वाळू)",
+                        "1:5 (सिमेंट : वाळू)",
+                        "1:6 (सिमेंट : वाळू)",
+                    ],
+                )
 
-                if st.button("📊 GENERATE BRICKWORK REPORT", type="primary", key="bw_btn"):
+                if "1:3" in mortar_choice:
+                    c_part, s_part = 1, 3
+                elif "1:4" in mortar_choice:
+                    c_part, s_part = 1, 4
+                elif "1:5" in mortar_choice:
+                    c_part, s_part = 1, 5
+                else:
+                    c_part, s_part = 1, 6
+
+                st.markdown("#### [A] साहित्याची माहिती आणि दर (थेट टाईप करा)")
+                bm_col1, bm_col2 = st.columns(2)
+                with bm_col1:
+                    volume = st.number_input(
+                        "वीटकामाचे एकूण घनफळ भरा (Volume in m³):",
+                        min_value=0.0,
+                        value=1.0,
+                        key="bw_vol",
+                    )
+                    brick_rate = st.number_input(
+                        "विटांचा दर प्रति हजार नग (₹ per 1000 Bricks):",
+                        min_value=0.0,
+                        value=8000.0,
+                        key="bw_br",
+                    )
+                with bm_col2:
+                    cement_rate = st.number_input(
+                        "सिमेंट दर प्रति बॅग (₹):",
+                        min_value=0.0,
+                        value=float(master_rates.get("cement", 400.0)),
+                        key="bw_cr",
+                    )
+                    sand_rate = st.number_input(
+                        "वाळूचा दर प्रति m³ (₹):",
+                        min_value=0.0,
+                        value=float(master_rates.get("sand", 2500.0)),
+                        key="bw_sr",
+                    )
+
+                st.markdown("#### [B] लेबर खर्च (नसल्यास ० ठेवा)")
+                bl_col1, bl_col2 = st.columns(2)
+                with bl_col1:
+                    mason_qty = st.number_input(
+                        "मेसन संख्या (Brickwork Days):",
+                        min_value=0.0,
+                        value=0.0,
+                        key="bw_mq",
+                    )
+                    mason_rate = st.number_input(
+                        "मेसन प्रतिदिन दर (₹/Day):",
+                        min_value=0.0,
+                        value=650.0,
+                        key="bw_mr",
+                    )
+                with bl_col2:
+                    mazdoor_qty = st.number_input(
+                        "मजदूर संख्या (Brickwork Days):",
+                        min_value=0.0,
+                        value=0.0,
+                        key="bw_mzq",
+                    )
+                    mazdoor_rate = st.number_input(
+                        "मजदूर प्रतिदिन दर (₹/Day):",
+                        min_value=0.0,
+                        value=400.0,
+                        key="bw_mzr",
+                    )
+
+                st.markdown("#### [C] अवांतर खर्च व टक्केवारी")
+                bo_col1, bo_col2 = st.columns(2)
+                with bo_col1:
+                    scaffolding_cost = st.number_input(
+                        "पाळत/स्कॅफोल्डिंग खर्च (₹):",
+                        min_value=0.0,
+                        value=0.0,
+                        key="bw_sc",
+                    )
+                    contingency_cost = st.number_input(
+                        "आकस्मिक खर्च (₹):", min_value=0.0, value=0.0, key="bw_cc"
+                    )
+                with bo_col2:
+                    water_pct = st.number_input(
+                        "वॉटर charge (%):", min_value=0.0, value=1.0, key="bw_wp"
+                    )
+                    profit_pct = st.number_input(
+                        "कंत्राटदार नफा (%):", min_value=0.0, value=10.0, key="bw_pp"
+                    )
+
+                st.markdown("#### 💬 कमेंट पॅनल (Comment Panel)")
+                user_note = st.text_area(
+                    "या एस्टिमेशन संदर्भात काही नोट किंवा कमेंट लिहायची असल्यास"
+                    " इथे लिहा:",
+                    placeholder="उदा. ग्राउंड फ्लोअर वीटकाम...",
+                    key="bw_note",
+                )
+                if st.button("💬 कमेंट सबमिट करा", key="bw_comment_btn"):
+                    if user_note.strip():
+                        st.session_state.current_comment = user_note.strip()
+                        conn = get_db_connection()
+                        cursor = conn.cursor()
+                        cursor.execute(
+                            "UPDATE users SET comment = ? WHERE user_key = ?",
+                            (user_note.strip(), current_user_name),
+                        )
+                        conn.commit()
+                        conn.close()
+                        st.success("✅ कमेंट सेव्ह झाली!")
+
+                if st.button(
+                    "📊 GENERATE RATE ANALYSIS REPORT",
+                    type="primary",
+                    key="bw_report_btn",
+                ):
                     total_bricks = math.ceil(volume * 500)
                     dry_mortar_vol = volume * 0.30
-                    c_bags = math.ceil((c_part / (c_part + s_part)) * dry_mortar_vol * 28.8)
-                    sand_m3 = (s_part / (c_part + s_part)) * dry_mortar_vol
+                    total_mortar_parts = c_part + s_part
 
-                    b_cost = (total_bricks / 1000) * brick_rate
-                    c_cost = c_bags * cement_rate
-                    s_cost = sand_m3 * sand_rate
-                    grand_total = (b_cost + c_cost + s_cost) * 1.15
+                    cement_vol = (
+                        (c_part / total_mortar_parts) * dry_mortar_vol
+                        if total_mortar_parts > 0
+                        else 0.0
+                    )
+                    sand_m3 = (
+                        (s_part / total_mortar_parts) * dry_mortar_vol
+                        if total_mortar_parts > 0
+                        else 0.0
+                    )
+                    cement_bags = math.ceil(cement_vol * 28.8)
+
+                    total_brick_cost = (total_bricks / 1000) * brick_rate
+                    total_cement_cost = cement_bags * cement_rate
+                    total_sand_cost = sand_m3 * sand_rate
+
+                    mat_cost = (
+                        total_brick_cost + total_cement_cost + total_sand_cost
+                    )
+                    lab_cost = (mason_qty * mason_rate) + (
+                        mazdoor_qty * mazdoor_rate
+                    )
+                    base_total = (
+                        mat_cost + lab_cost + scaffolding_cost + contingency_cost
+                    )
+
+                    w_amt = base_total * (water_pct / 100)
+                    p_amt = base_total * (profit_pct / 100)
+                    grand_total = base_total + w_amt + p_amt
+
+                    st.success("🎉 वीटकाम रिपोर्ट यशस्वीरित्या तयार झाला आहे!")
+                    st.markdown("### 📊 RATE ANALYSIS SHEET - BRICKWORK")
+                    st.info(
+                        f"👤 **Prepared For:** {current_user_name} | **गुणोत्तर:**"
+                        f" {mortar_choice.split(' ')[0]} | **एकूण घनफळ:** {volume} m³"
+                    )
 
                     report_table = f"""
 | Description | Quantity | Unit | Rate (₹) | Amount (₹) |
 | :--- | :--- | :--- | :--- | :--- |
-| Bricks | {total_bricks} | Nos | {(brick_rate/1000):.2f} | {b_cost:.2f} |
-| Cement | {c_bags} | Bags | {cement_rate:.2f} | {c_cost:.2f} |
-| Sand | {sand_m3:.2f} | m³ | {sand_rate:.2f} | {s_cost:.2f} |
-| **GRAND TOTAL (Incl. Overhead & Profit)** | | | | **₹ {grand_total:.2f}/-** |
+| **[A] MATERIAL** | | | | |
+| Bricks | {total_bricks} | Nos | {(brick_rate/1000):.2f} / नग | {total_brick_cost:.2f} |
+| Cement | {cement_bags} | Bags | {cement_rate:.2f} | {total_cement_cost:.2f} |
+| Sand | {sand_m3:.2f} | m³ | {sand_rate:.2f} | {total_sand_cost:.2f} |
+| **[B] LABOUR** | | | | |
+| Mason | {mason_qty} | Nos | {mason_rate:.2f} | {mason_qty*mason_rate:.2f} |
+| Mazdoor | {mazdoor_qty} | Nos | {mazdoor_rate:.2f} | {mazdoor_qty*mazdoor_rate:.2f} |
+| **[C] OTHER EXPENSES** | | | | |
+| Scaffolding / Centering | - | L.S. | - | {scaffolding_cost:.2f} |
+| Contingencies | - | L.S. | - | {contingency_cost:.2f} |
+| **TOTAL (A + B + C)** | | | | **{base_total:.2f}** |
+| Water Charge ({water_pct}%) | | | | {w_amt:.2f} |
+| Contractor Profit ({profit_pct}%) | | | | {p_amt:.2f} |
+| **GRAND TOTAL** | | | | **₹ {grand_total:.2f}/-** |
 """
                     st.markdown(report_table)
+
+                    msg_text = "🏗️ *PATIL INFRATECH - BRICKWORK REPORT*\n"
+                    msg_text += f"👤 *Prepared For:* {current_user_name}\n"
+                    msg_text += (
+                        f"🧱 *Ratio:* {mortar_choice.split(' ')[0]} | *Vol:* {volume}"
+                        " m³\n"
+                    )
+                    msg_text += (
+                        f"📅 *Date:* {get_ist_time().strftime('%d-%m-%Y')}\n\n"
+                    )
+                    msg_text += "📋 *DETAILS:*\n"
+                    msg_text += (
+                        f"• Bricks: {total_bricks} Nos = ₹{total_brick_cost:.2f}\n"
+                    )
+                    msg_text += (
+                        f"• Cement: {cement_bags} Bags = ₹{total_cement_cost:.2f}\n"
+                    )
+                    msg_text += (
+                        f"• Sand: {sand_m3:.2f} m³ = ₹{total_sand_cost:.2f}\n"
+                    )
+                    msg_text += f"• Labour: {lab_cost:.2f}\n"
+                    msg_text += "--------------------------------\n"
+                    msg_text += f"💰 *GRAND TOTAL:* ₹{grand_total:.2f}/-\n"
+                    msg_text += "--------------------------------\n"
+                    msg_text += "_Generated by Patil Infratech_"
+
+                    encoded_msg = urllib.parse.quote(msg_text)
+
+                    btn_col1, btn_col2 = st.columns(2)
+                    with btn_col1:
+                        render_whatsapp_feature(encoded_msg, "ra_bw")
+                    with btn_col2:
+                        st.markdown(
+                            """
+                            <button onclick="window.parent.print()" style="width: 100%; background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px; box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4);">
+                                📄 Print / Download A3 Size PDF
+                            </button>
+                            """,
+                            unsafe_allow_html=True,
+                        )
 
                     if current_user_name:
                         conn = get_db_connection()
                         cursor = conn.cursor()
+                        now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
                         cursor.execute(
-                            "INSERT INTO history (user_key, timestamp, user_note, report_data, site_name) VALUES (?, ?, ?, ?, ?)",
-                            (current_user_name, get_ist_time().strftime("%Y-%m-%d %H:%M:%S"), "Brickwork Rate Analysis", report_table, st.session_state.current_site_name)
+                            "INSERT INTO history (user_key, timestamp, user_note,"
+                            " report_data, site_name) VALUES (?, ?, ?, ?, ?)",
+                            (
+                                current_user_name,
+                                now_str,
+                                st.session_state.current_comment,
+                                report_table,
+                                st.session_state.current_site_name,
+                            ),
                         )
                         conn.commit()
                         conn.close()
 
-            else: # Plaster Work
+            else:  # Plaster Work
                 st.subheader("🎨 Plaster Work Estimation")
-                plaster_area = st.number_input("प्लास्टर क्षेत्रफळ (m²):", min_value=1.0, value=10.0, key="pl_a")
-                thickness_mm = st.number_input("जाडी (mm):", min_value=6.0, value=12.0, key="pl_t")
-                cement_rate = st.number_input("सिमेंट दर प्रति बॅग (₹):", value=400.0, key="pl_cr")
-                sand_rate = st.number_input("वाळू दर प्रति m³ (₹):", value=2500.0, key="pl_sr")
 
-                if st.button("📊 GENERATE PLASTER REPORT", type="primary", key="pl_btn"):
-                    wet_vol = plaster_area * (thickness_mm / 1000.0)
-                    dry_vol = wet_vol * 1.33
-                    c_bags = math.ceil((1 / 5) * dry_vol * 28.8)
-                    sand_m3 = (4 / 5) * dry_vol
-                    grand_total = ((c_bags * cement_rate) + (sand_m3 * sand_rate)) * 1.20
+                thickness_mm = st.number_input(
+                    "प्लास्टरची जाडी (Thickness in mm):",
+                    min_value=5.0,
+                    max_value=50.0,
+                    value=12.0,
+                    step=1.0,
+                    key="pl_thick",
+                )
+
+                plaster_mortar = st.selectbox(
+                    "मॉर्टर मिक्स गुणोत्तर (Mortar Mix Ratio):",
+                    [
+                        "1:3 (सिमेंट : वाळू)",
+                        "1:4 (सिमेंट : वाळू)",
+                        "1:5 (सिमेंट : वाळू)",
+                        "1:6 (सिमेंट : वाळू)",
+                    ],
+                )
+
+                if "1:3" in plaster_mortar:
+                    p_c_part, p_s_part = 1, 3
+                elif "1:4" in plaster_mortar:
+                    p_c_part, p_s_part = 1, 4
+                elif "1:5" in plaster_mortar:
+                    p_c_part, p_s_part = 1, 5
+                else:
+                    p_c_part, p_s_part = 1, 6
+
+                st.markdown(
+                    "#### [A] साहित्याची माहिती आणि दर (क्षेत्रफळ, दर व वॉटरप्रूफिंग)"
+                )
+                p_col1, p_col2 = st.columns(2)
+                with p_col1:
+                    plaster_area = st.number_input(
+                        "प्लास्टरचे एकूण क्षेत्रफळ (Area in m²):",
+                        min_value=0.0,
+                        value=10.0,
+                        key="pl_area",
+                    )
+                    cement_rate = st.number_input(
+                        "सिमेंट दर प्रति बॅग (₹):",
+                        min_value=0.0,
+                        value=float(master_rates.get("cement", 400.0)),
+                        key="pl_cem_r",
+                    )
+                    use_waterproofing = st.checkbox(
+                        "💧 वॉटरप्रूफिंग कंपाउंड ॲड करा (Waterproofing Compound)",
+                        value=False,
+                    )
+                with p_col2:
+                    sand_rate = st.number_input(
+                        "वाळूचा दर प्रति m³ (₹):",
+                        min_value=0.0,
+                        value=float(master_rates.get("sand", 2500.0)),
+                        key="pl_snd_r",
+                    )
+                    wp_rate = (
+                        st.number_input(
+                            "वाटरप्रूफिंग दर (प्रति किलोग्रॅम/लिटर ₹):",
+                            min_value=0.0,
+                            value=150.0,
+                            key="pl_wp_r",
+                        )
+                        if use_waterproofing
+                        else 0.0
+                    )
+
+                st.markdown("#### [B] लेबर खर्च (दिवसानुसार किंवा लांप सम)")
+                pl_l1, pl_l2 = st.columns(2)
+                with pl_l1:
+                    pl_mason_qty = st.number_input(
+                        "मेसन संख्या (Days):", min_value=0.0, value=0.0, key="pl_mq"
+                    )
+                    pl_mason_rate = st.number_input(
+                        "मेसन दर (₹/Day):", min_value=0.0, value=650.0, key="pl_mr"
+                    )
+                with pl_l2:
+                    pl_mazdoor_qty = st.number_input(
+                        "मजदूर संख्या (Days):", min_value=0.0, value=0.0, key="pl_mzq"
+                    )
+                    pl_mazdoor_rate = st.number_input(
+                        "मजदूर दर (₹/Day):", min_value=0.0, value=400.0, key="pl_mzr"
+                    )
+
+                st.markdown("#### [C] अवांतर खर्च व टक्केवारी")
+                po_c1, po_c2 = st.columns(2)
+                with po_c1:
+                    scaffolding_cost = st.number_input(
+                        "स्कॅफोल्डिंग/पाळत खर्च (₹):",
+                        min_value=0.0,
+                        value=0.0,
+                        key="pl_sc",
+                    )
+                    contingency_cost = st.number_input(
+                        "आकस्मिक खर्च (₹):", min_value=0.0, value=0.0, key="pl_cc"
+                    )
+                with po_c2:
+                    water_pct = st.number_input(
+                        "वॉटर charge (%):", min_value=0.0, value=1.0, key="pl_wp"
+                    )
+                    profit_pct = st.number_input(
+                        "कंत्राटदार नफा (%):", min_value=0.0, value=10.0, key="pl_pp"
+                    )
+
+                st.markdown("#### 💬 कमेंट पॅनल (Comment Panel)")
+                user_note = st.text_area(
+                    "या प्लास्टर एस्टिमेशन संदर्भात काही नोंद लिहायची असल्यास"
+                    " इथे लिहा:",
+                    placeholder="उदा. फ्रंट वॉल प्लास्टर...",
+                    key="pl_note",
+                )
+                if st.button("💬 कमेंट सबमिट करा", key="pl_comm_btn"):
+                    if user_note.strip():
+                        st.session_state.current_comment = user_note.strip()
+                        conn = get_db_connection()
+                        cursor = conn.cursor()
+                        cursor.execute(
+                            "UPDATE users SET comment = ? WHERE user_key = ?",
+                            (user_note.strip(), current_user_name),
+                        )
+                        conn.commit()
+                        conn.close()
+                        st.success("✅ कमेंट सेव्ह झाली!")
+
+                if st.button(
+                    "📊 GENERATE PLASTER REPORT", type="primary", key="pl_report_btn"
+                ):
+                    wet_volume = plaster_area * (thickness_mm / 1000.0)
+                    dry_volume = wet_volume * 1.33
+                    total_parts = p_c_part + p_s_part
+
+                    cement_vol = (
+                        (p_c_part / total_parts) * dry_volume
+                        if total_parts > 0
+                        else 0.0
+                    )
+                    sand_m3 = (
+                        (p_s_part / total_parts) * dry_volume
+                        if total_parts > 0
+                        else 0.0
+                    )
+                    cement_bags = math.ceil(cement_vol * 28.8)
+
+                    total_cement_cost = cement_bags * cement_rate
+                    total_sand_cost = sand_m3 * sand_rate
+
+                    wp_qty_kg = cement_bags * 1.0 if use_waterproofing else 0.0
+                    total_wp_cost = wp_qty_kg * wp_rate
+
+                    mat_cost = (
+                        total_cement_cost + total_sand_cost + total_wp_cost
+                    )
+                    lab_cost = (pl_mason_qty * pl_mason_rate) + (
+                        pl_mazdoor_qty * pl_mazdoor_rate
+                    )
+                    base_total = (
+                        mat_cost + lab_cost + scaffolding_cost + contingency_cost
+                    )
+
+                    w_amt = base_total * (water_pct / 100)
+                    p_amt = base_total * (profit_pct / 100)
+                    grand_total = base_total + w_amt + p_amt
+
+                    st.success("🎉 प्लास्टर काम रिपोर्ट यशस्वीरित्या तयार झाला आहे!")
+                    st.markdown("### 📊 RATE ANALYSIS SHEET - PLASTER WORK")
+                    st.info(
+                        f"👤 **Prepared For:** {current_user_name} | **जाडी:**"
+                        f" {thickness_mm} mm | **क्षेत्रफळ:** {plaster_area} m² |"
+                        f" **गुणोत्तर:** {plaster_mortar.split(' ')[0]}"
+                    )
+
+                    wp_row_table = (
+                        f"| Waterproofing Compound | {wp_qty_kg:.2f} | Kg/Ltr |"
+                        f" {wp_rate:.2f} | {total_wp_cost:.2f} |\n"
+                        if use_waterproofing
+                        else ""
+                    )
 
                     report_table = f"""
 | Description | Quantity | Unit | Rate (₹) | Amount (₹) |
 | :--- | :--- | :--- | :--- | :--- |
-| Cement | {c_bags} | Bags | {cement_rate:.2f} | {c_bags*cement_rate:.2f} |
-| Sand | {sand_m3:.2f} | m³ | {sand_rate:.2f} | {sand_m3*sand_rate:.2f} |
-| **GRAND TOTAL (With Labor & Charges)** | | | | **₹ {grand_total:.2f}/-** |
+| **[A] MATERIAL** | | | | |
+| Cement | {cement_bags} | Bags | {cement_rate:.2f} | {total_cement_cost:.2f} |
+| Sand | {sand_m3:.2f} | m³ | {sand_rate:.2f} | {total_sand_cost:.2f} |
+{wp_row_table}| **[B] LABOUR** | | | | |
+| Mason | {pl_mason_qty} | Nos | {pl_mason_rate:.2f} | {pl_mason_qty*pl_mason_rate:.2f} |
+| Mazdoor | {pl_mazdoor_qty} | Nos | {pl_mazdoor_rate:.2f} | {pl_mazdoor_qty*pl_mazdoor_rate:.2f} |
+| **[C] OTHER EXPENSES** | | | | |
+| Scaffolding / Centering | - | L.S. | - | {scaffolding_cost:.2f} |
+| Contingencies | - | L.S. | - | {contingency_cost:.2f} |
+| **TOTAL (A + B + C)** | | | | **{base_total:.2f}** |
+| Water Charge ({water_pct}%) | | | | {w_amt:.2f} |
+| Contractor Profit ({profit_pct}%) | | | | {p_amt:.2f} |
+| **GRAND TOTAL** | | | | **₹ {grand_total:.2f}/-** |
 """
                     st.markdown(report_table)
+
+                    msg_text = "🏗️ *PATIL INFRATECH - PLASTER REPORT*\n"
+                    msg_text += f"👤 *Prepared For:* {current_user_name}\n"
+                    msg_text += (
+                        f"🎨 *Thickness:* {thickness_mm}mm | *Area:* {plaster_area} m²\n"
+                    )
+                    msg_text += (
+                        f"📅 *Date:* {get_ist_time().strftime('%d-%m-%Y')}\n\n"
+                    )
+                    msg_text += "📋 *DETAILS:*\n"
+                    msg_text += (
+                        f"• Cement: {cement_bags} Bags = ₹{total_cement_cost:.2f}\n"
+                    )
+                    msg_text += (
+                        f"• Sand: {sand_m3:.2f} m³ = ₹{total_sand_cost:.2f}\n"
+                    )
+                    if use_waterproofing:
+                        msg_text += (
+                            f"• Waterproofing: {wp_qty_kg:.2f} Kg ="
+                            f" ₹{total_wp_cost:.2f}\n"
+                        )
+                    msg_text += f"• Labour: {lab_cost:.2f}\n"
+                    msg_text += "--------------------------------\n"
+                    msg_text += f"💰 *GRAND TOTAL:* ₹{grand_total:.2f}/-\n"
+                    msg_text += "--------------------------------\n"
+                    msg_text += "_Generated by Patil Infratech_"
+
+                    encoded_msg = urllib.parse.quote(msg_text)
+
+                    btn_col1, btn_col2 = st.columns(2)
+                    with btn_col1:
+                        render_whatsapp_feature(encoded_msg, "ra_pl")
+                    with btn_col2:
+                        st.markdown(
+                            """
+                            <button onclick="window.parent.print()" style="width: 100%; background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px; box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4);">
+                                📄 Print / Download A3 Size PDF
+                            </button>
+                            """,
+                            unsafe_allow_html=True,
+                        )
 
                     if current_user_name:
                         conn = get_db_connection()
                         cursor = conn.cursor()
+                        now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
                         cursor.execute(
-                            "INSERT INTO history (user_key, timestamp, user_note, report_data, site_name) VALUES (?, ?, ?, ?, ?)",
-                            (current_user_name, get_ist_time().strftime("%Y-%m-%d %H:%M:%S"), "Plaster Rate Analysis", report_table, st.session_state.current_site_name)
+                            "INSERT INTO history (user_key, timestamp, user_note,"
+                            " report_data, site_name) VALUES (?, ?, ?, ?, ?)",
+                            (
+                                current_user_name,
+                                now_str,
+                                st.session_state.current_comment,
+                                report_table,
+                                st.session_state.current_site_name,
+                            ),
                         )
                         conn.commit()
                         conn.close()
 
-        # ३. BBS Calculator
+        # --------------------------------------------------
+        # ३. Bar Bending Schedule (BBS Calculator)
+        # --------------------------------------------------
         elif est_sub_mod == "BBS":
-            st.subheader("🏗️ Bar Bending Schedule (BBS)")
-            rcc_comp = st.selectbox("घटक निवडा:", ["Footing", "Column", "Beam", "Slab"])
-            length_m = st.number_input("लांबी (m):", value=3.0, key="bbs_l")
-            bar_dia = st.selectbox("स्टील बार व्यास (mm):", [8, 10, 12, 16, 20, 25], index=2)
-            nos = st.number_input("एकूण बार संख्या (Nos):", min_value=1, value=4)
-            steel_rate = st.number_input("स्टील दर (₹/Kg):", value=60.0)
+            st.subheader("🏗️ Bar Bending Schedule (BBS Calculator)")
 
-            if st.button("🧮 CALCULATE BBS REPORT", type="primary", key="bbs_btn"):
-                unit_wt = (bar_dia**2) / 162.0
-                tot_wt = unit_wt * length_m * nos
-                tot_cost = tot_wt * steel_rate
+            default_covers = {"Footing": 50, "Column": 40, "Beam": 25, "Slab": 20}
+
+            def update_cover_from_component():
+                selected_comp = st.session_state.get(
+                    "bbs_rcc_component", "Footing"
+                )
+                st.session_state["bbs_cover"] = default_covers.get(
+                    selected_comp, 25
+                )
+
+            if "bbs_cover" not in st.session_state:
+                st.session_state["bbs_cover"] = 50
+
+            rcc_comp = st.selectbox(
+                "घटक (RCC Component) निवडा:",
+                ["Footing", "Column", "Beam", "Slab"],
+                key="bbs_rcc_component",
+                on_change=update_cover_from_component,
+            )
+
+            st.markdown("#### [१] घटकाचे आकारमान (Dimensions in Meters - m)")
+            dim_col1, dim_col2, dim_col3 = st.columns(3)
+            with dim_col1:
+                length_m = st.number_input(
+                    "लांबी L (m):",
+                    min_value=0.1,
+                    value=3.0,
+                    step=0.1,
+                    key="bbs_l",
+                )
+            with dim_col2:
+                width_m = st.number_input(
+                    "रुंदी B (m):",
+                    min_value=0.1,
+                    value=0.3,
+                    step=0.05,
+                    key="bbs_b",
+                )
+            with dim_col3:
+                height_m = st.number_input(
+                    "उंची/खोली H/Depth (m):",
+                    min_value=0.1,
+                    value=0.45,
+                    step=0.05,
+                    key="bbs_h",
+                )
+
+            st.markdown("#### [२] Clear Cover (मिमी मध्ये)")
+            cover = st.number_input(
+                "Clear Cover (mm):",
+                min_value=10,
+                max_value=100,
+                step=5,
+                key="bbs_cover",
+            )
+            st.caption(
+                f"💡 **टीप:** {rcc_comp} साठी मानांकित Clear Cover"
+                f" **{cover} mm** आपोआप सेट केला आहे."
+            )
+
+            st.markdown(
+                "#### [३] स्टील बारचे प्रकार आणि व्यास (Steel Reinforcement"
+                " Details)"
+            )
+
+            dia_list = [8, 10, 12, 16, 20, 25, 32]
+            num_members = st.number_input(
+                "एकूण घटक संख्या (No. of Identical Members):",
+                min_value=1,
+                value=1,
+                step=1,
+                key="bbs_mem",
+            )
+
+            if rcc_comp == "Footing":
+                c1, c2 = st.columns(2)
+                with c1:
+                    f_main_dia = st.selectbox(
+                        "Main Bar DIA (mm):", dia_list, index=2, key="f_m_dia"
+                    )
+                    f_main_spacing = st.number_input(
+                        "Main Bar Spacing (mm):",
+                        min_value=50,
+                        value=150,
+                        step=10,
+                        key="f_m_sp",
+                    )
+                with c2:
+                    f_dist_dia = st.selectbox(
+                        "Distribution Bar DIA (mm):",
+                        dia_list,
+                        index=1,
+                        key="f_d_dia",
+                    )
+                    f_dist_spacing = st.number_input(
+                        "Distribution Bar Spacing (mm):",
+                        min_value=50,
+                        value=150,
+                        step=10,
+                        key="f_d_sp",
+                    )
+
+            elif rcc_comp == "Column":
+                c1, c2, c3 = st.columns(3)
+                with c1:
+                    col_main_dia = st.selectbox(
+                        "Main Vertical Bar DIA (mm):",
+                        dia_list,
+                        index=3,
+                        key="col_m_dia",
+                    )
+                    col_main_nos = st.number_input(
+                        "Main Bars (नग/Nos):",
+                        min_value=4,
+                        value=4,
+                        step=2,
+                        key="col_m_nos",
+                    )
+                with c2:
+                    col_st_dia = st.selectbox(
+                        "Stirrup/Ring DIA (mm):", dia_list, index=0, key="col_s_dia"
+                    )
+                    col_st_spacing = st.number_input(
+                        "Stirrup Spacing (mm):",
+                        min_value=50,
+                        value=150,
+                        step=10,
+                        key="col_s_sp",
+                    )
+                with c3:
+                    col_hook_angle = st.selectbox(
+                        "Ring Hook Angle:",
+                        ["135° (Hook = 10d)", "90° (Hook = 6d)"],
+                        key="col_h_ang",
+                    )
+
+            elif rcc_comp == "Beam":
+                c1, c2, c3 = st.columns(3)
+                with c1:
+                    bm_top_dia = st.selectbox(
+                        "Top Main Bar DIA (mm):", dia_list, index=2, key="bm_t_dia"
+                    )
+                    bm_top_nos = st.number_input(
+                        "Top Bars (नग/Nos):",
+                        min_value=2,
+                        value=2,
+                        step=1,
+                        key="bm_t_nos",
+                    )
+                with c2:
+                    bm_bot_dia = st.selectbox(
+                        "Bottom Main Bar DIA (mm):",
+                        dia_list,
+                        index=3,
+                        key="bm_b_dia",
+                    )
+                    bm_bot_nos = st.number_input(
+                        "Bottom Bars (नग/Nos):",
+                        min_value=2,
+                        value=2,
+                        step=1,
+                        key="bm_b_nos",
+                    )
+                with c3:
+                    bm_st_dia = st.selectbox(
+                        "Stirrup/Ring DIA (mm):", dia_list, index=0, key="bm_s_dia"
+                    )
+                    bm_st_spacing = st.number_input(
+                        "Stirrup Spacing (mm):",
+                        min_value=50,
+                        value=150,
+                        step=10,
+                        key="bm_s_sp",
+                    )
+
+            else:  # Slab
+                c1, c2 = st.columns(2)
+                with c1:
+                    sl_main_dia = st.selectbox(
+                        "Main Bar DIA (mm):", dia_list, index=1, key="sl_m_dia"
+                    )
+                    sl_main_spacing = st.number_input(
+                        "Main Bar Spacing (mm):",
+                        min_value=50,
+                        value=150,
+                        step=10,
+                        key="sl_m_sp",
+                    )
+                with c2:
+                    sl_dist_dia = st.selectbox(
+                        "Distribution Bar DIA (mm):",
+                        dia_list,
+                        index=0,
+                        key="sl_d_dia",
+                    )
+                    sl_dist_spacing = st.number_input(
+                        "Distribution Bar Spacing (mm):",
+                        min_value=50,
+                        value=150,
+                        step=10,
+                        key="sl_d_spacing",
+                    )
+
+            master_rates = get_market_rates()
+            steel_rate_kg = st.number_input(
+                "आजचा स्टील दर (₹/Kg):",
+                min_value=0.0,
+                value=float(master_rates.get("steel", 60.0)),
+                key="bbs_rate",
+            )
+
+            st.markdown("#### 💬 कमेंट पॅनल (Comment Panel)")
+            user_note = st.text_area(
+                "या BBS बाबत काही नोंद लिहायची असल्यास इथे लिहा:",
+                placeholder="उदा. Column C1 BBS Details...",
+                key="bbs_note",
+            )
+            if st.button("💬 कमेंट सबमिट करा", key="bbs_comment_btn"):
+                if user_note.strip():
+                    st.session_state.current_comment = user_note.strip()
+                    conn = get_db_connection()
+                    cursor = conn.cursor()
+                    cursor.execute(
+                        "UPDATE users SET comment = ? WHERE user_key = ?",
+                        (user_note.strip(), current_user_name),
+                    )
+                    conn.commit()
+                    conn.close()
+                    st.success("✅ कमेंट सेव्ह झाली!")
+
+            if st.button(
+                "🧮 CALCULATE BBS REPORT", type="primary", key="bbs_calc_btn"
+            ):
+                length_mm = length_m * 1000.0
+                width_mm = width_m * 1000.0
+                height_mm = height_m * 1000.0
+
+                l_net = length_mm - (2 * cover)
+                b_net = width_mm - (2 * cover)
+                h_net = height_mm - (2 * cover)
+
+                calc_list = []
+
+                if rcc_comp == "Footing":
+                    m_leg = 200.0
+                    m_cut_m = (l_net + (2 * m_leg) - (4 * f_main_dia)) / 1000.0
+                    m_nos = (
+                        math.ceil(width_mm / f_main_spacing) + 1
+                    ) * num_members
+                    m_tot_len = m_cut_m * m_nos
+                    m_unit_wt = (f_main_dia**2) / 162.0
+                    m_tot_wt = m_tot_len * m_unit_wt
+                    calc_list.append({
+                        "Desc": "Main Bars (Longitudinal)",
+                        "Nos": m_nos,
+                        "Dia": f_main_dia,
+                        "Len": m_cut_m,
+                        "TotLen": m_tot_len,
+                        "Wt": m_unit_wt,
+                        "TotWt": m_tot_wt,
+                    })
+
+                    d_leg = 200.0
+                    d_cut_m = (b_net + (2 * d_leg) - (4 * f_dist_dia)) / 1000.0
+                    d_nos = (
+                        math.ceil(length_mm / f_dist_spacing) + 1
+                    ) * num_members
+                    d_tot_len = d_cut_m * d_nos
+                    d_unit_wt = (f_dist_dia**2) / 162.0
+                    d_tot_wt = d_tot_len * d_unit_wt
+                    calc_list.append({
+                        "Desc": "Distribution Bars (Transverse)",
+                        "Nos": d_nos,
+                        "Dia": f_dist_dia,
+                        "Len": d_cut_m,
+                        "TotLen": d_tot_len,
+                        "Wt": d_unit_wt,
+                        "TotWt": d_tot_wt,
+                    })
+
+                elif rcc_comp == "Column":
+                    m_ld = 300.0
+                    m_cut_m = (height_mm + m_ld) / 1000.0
+                    m_nos = col_main_nos * num_members
+                    m_tot_len = m_cut_m * m_nos
+                    m_unit_wt = (col_main_dia**2) / 162.0
+                    m_tot_wt = m_tot_len * m_unit_wt
+                    calc_list.append({
+                        "Desc": "Main Vertical Bars",
+                        "Nos": m_nos,
+                        "Dia": col_main_dia,
+                        "Len": m_cut_m,
+                        "TotLen": m_tot_len,
+                        "Wt": m_unit_wt,
+                        "TotWt": m_tot_wt,
+                    })
+
+                    hook_len = (
+                        10 * col_st_dia
+                        if "135°" in col_hook_angle
+                        else 6 * col_st_dia
+                    )
+                    st_cut_m = (
+                        (2 * (b_net + h_net))
+                        + (2 * hook_len)
+                        - (3 * 2 * col_st_dia)
+                    ) / 1000.0
+                    st_nos = (
+                        math.ceil(height_mm / col_st_spacing) + 1
+                    ) * num_members
+                    st_tot_len = st_cut_m * st_nos
+                    st_unit_wt = (col_st_dia**2) / 162.0
+                    st_tot_wt = st_tot_len * st_unit_wt
+                    calc_list.append({
+                        "Desc": "Stirrups / Ties (Rings)",
+                        "Nos": st_nos,
+                        "Dia": col_st_dia,
+                        "Len": st_cut_m,
+                        "TotLen": st_tot_len,
+                        "Wt": st_unit_wt,
+                        "TotWt": st_tot_wt,
+                    })
+
+                elif rcc_comp == "Beam":
+                    t_ld = max(300.0, 30 * bm_top_dia)
+                    t_cut_m = (l_net + (2 * t_ld) - (4 * bm_top_dia)) / 1000.0
+                    t_nos = bm_top_nos * num_members
+                    t_tot_len = t_cut_m * t_nos
+                    t_unit_wt = (bm_top_dia**2) / 162.0
+                    t_tot_wt = t_tot_len * t_unit_wt
+                    calc_list.append({
+                        "Desc": "Top Main Bars",
+                        "Nos": t_nos,
+                        "Dia": bm_top_dia,
+                        "Len": t_cut_m,
+                        "TotLen": t_tot_len,
+                        "Wt": t_unit_wt,
+                        "TotWt": t_tot_wt,
+                    })
+
+                    b_ld = max(300.0, 30 * bm_bot_dia)
+                    b_cut_m = (l_net + (2 * b_ld) - (4 * bm_bot_dia)) / 1000.0
+                    b_nos = bm_bot_nos * num_members
+                    b_tot_len = b_cut_m * b_nos
+                    b_unit_wt = (bm_bot_dia**2) / 162.0
+                    b_tot_wt = b_tot_len * b_unit_wt
+                    calc_list.append({
+                        "Desc": "Bottom Main Bars",
+                        "Nos": b_nos,
+                        "Dia": bm_bot_dia,
+                        "Len": b_cut_m,
+                        "TotLen": b_tot_len,
+                        "Wt": b_unit_wt,
+                        "TotWt": b_tot_wt,
+                    })
+
+                    st_cut_m = (
+                        (2 * (b_net + h_net))
+                        + (2 * 10 * bm_st_dia)
+                        - (3 * 2 * bm_st_dia)
+                    ) / 1000.0
+                    st_nos = (
+                        math.ceil(length_mm / bm_st_spacing) + 1
+                    ) * num_members
+                    st_tot_len = st_cut_m * st_nos
+                    st_unit_wt = (bm_st_dia**2) / 162.0
+                    st_tot_wt = st_tot_len * st_unit_wt
+                    calc_list.append({
+                        "Desc": "Stirrups / Rings",
+                        "Nos": st_nos,
+                        "Dia": bm_st_dia,
+                        "Len": st_cut_m,
+                        "TotLen": st_tot_len,
+                        "Wt": st_unit_wt,
+                        "TotWt": st_tot_wt,
+                    })
+
+                else:  # Slab
+                    m_hook = 10 * sl_main_dia
+                    m_cut_m = (l_net + (2 * m_hook)) / 1000.0
+                    m_nos = (
+                        math.ceil(width_mm / sl_main_spacing) + 1
+                    ) * num_members
+                    m_tot_len = m_cut_m * m_nos
+                    m_unit_wt = (sl_main_dia**2) / 162.0
+                    m_tot_wt = m_tot_len * m_unit_wt
+                    calc_list.append({
+                        "Desc": "Main Bars",
+                        "Nos": m_nos,
+                        "Dia": sl_main_dia,
+                        "Len": m_cut_m,
+                        "TotLen": m_tot_len,
+                        "Wt": m_unit_wt,
+                        "TotWt": m_tot_wt,
+                    })
+
+                    d_hook = 10 * sl_dist_dia
+                    d_cut_m = (b_net + (2 * d_hook)) / 1000.0
+                    d_nos = (
+                        math.ceil(length_mm / sl_dist_spacing) + 1
+                    ) * num_members
+                    d_tot_len = d_cut_m * d_nos
+                    d_unit_wt = (sl_dist_dia**2) / 162.0
+                    d_tot_wt = d_tot_len * d_unit_wt
+                    calc_list.append({
+                        "Desc": "Distribution Bars",
+                        "Nos": d_nos,
+                        "Dia": sl_dist_dia,
+                        "Len": d_cut_m,
+                        "TotLen": d_tot_len,
+                        "Wt": d_unit_wt,
+                        "TotWt": d_tot_wt,
+                    })
+
+                total_weight_kg = sum(item["TotWt"] for item in calc_list)
+                total_cost = total_weight_kg * steel_rate_kg
+
+                st.success("🎉 BBS रिपोर्ट यशस्वीरित्या तयार झाला आहे!")
+                st.markdown("### 🏗️ BAR BENDING SCHEDULE (BBS) REPORT")
+                st.info(
+                    f"👤 **Prepared For:** {current_user_name} | **घटक:** {rcc_comp} |"
+                    f" **Clear Cover:** {cover} mm | **एकूण घटक संख्या:** {num_members}"
+                )
+
+                table_rows = ""
+                for item in calc_list:
+                    table_rows += (
+                        f"| {item['Desc']} | {item['Nos']} | {item['Dia']} mm |"
+                        f" {item['Len']:.3f} m | {item['TotLen']:.2f} m |"
+                        f" {item['Wt']:.3f} Kg/m | {item['TotWt']:.2f} Kg |\n"
+                    )
 
                 report_table = f"""
-| Component | Bar Dia | Nos | Cutting Length | Total Weight | Rate | Total Amount |
+<div class="print-container">
+<h2>🏗️ PATIL INFRATECH - BAR BENDING SCHEDULE (BBS)</h2>
+<p><strong>Prepared For:</strong> {current_user_name} | <strong>Component:</strong> {rcc_comp} | <strong>Date:</strong> {get_ist_time().strftime('%d-%m-%Y')}</p>
+
+| DESCRIPTION | NOS | DIA | LENGTH | TOTAL LENGTH | WEIGHT | TOTAL WEIGHT |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| {rcc_comp} | {bar_dia} mm | {nos} | {length_m:.2f} m | **{tot_wt:.2f} Kg** | ₹{steel_rate:.2f} | **₹{tot_cost:.2f}/-** |
+{table_rows}
+
+---
+### 📌 SUMMARY DETAILS
+* **Dimensions (L x B x H):** {length_m:.2f} m x {width_m:.2f} m x {height_m:.2f} m
+* **Total Steel Weight:** **{total_weight_kg:.2f} Kg** ({total_weight_kg/1000:.3f} MT)
+* **Steel Rate:** ₹ {steel_rate_kg:.2f} / Kg
+* **GRAND TOTAL COST:** **₹ {total_cost:.2f}/-**
+</div>
 """
-                st.markdown(report_table)
+                st.markdown(report_table, unsafe_allow_html=True)
+
+                msg_text = (
+                    "🏗️ *PATIL INFRATECH - BAR BENDING SCHEDULE (BBS)*\n"
+                )
+                msg_text += f"👤 *Prepared For:* {current_user_name}\n"
+                msg_text += f"📐 *Component:* {rcc_comp}\n"
+                msg_text += (
+                    f"📅 *Date:* {get_ist_time().strftime('%d-%m-%Y')}\n"
+                )
+                msg_text += (
+                    "📐 *Size:*"
+                    f" {length_m:.2f}m x {width_m:.2f}m x {height_m:.2f}m\n\n"
+                )
+                msg_text += "📊 *DETAILED BAR SCHEDULE:*\n"
+                msg_text += "--------------------------------\n"
+
+                for idx, item in enumerate(calc_list, 1):
+                    msg_text += f"*{idx}. {item['Desc']}*\n"
+                    msg_text += (
+                        f"  • Nos: {item['Nos']} | Dia: {item['Dia']}mm\n"
+                    )
+                    msg_text += f"  • Cutting Len: {item['Len']:.3f} m\n"
+                    msg_text += f"  • Total Len: {item['TotLen']:.2f} m\n"
+                    msg_text += f"  • Total Weight: {item['TotWt']:.2f} Kg\n\n"
+
+                msg_text += "--------------------------------\n"
+                msg_text += (
+                    f"⚖️ *TOTAL STEEL WEIGHT:*"
+                    f" {total_weight_kg:.2f} Kg ({total_weight_kg/1000:.3f} MT)\n"
+                )
+                msg_text += (
+                    f"💵 *Steel Rate:* ₹ {steel_rate_kg:.2f} / Kg\n"
+                )
+                msg_text += (
+                    f"💰 *ESTIMATED COST:* ₹ {total_cost:.2f}/-+\n"
+                )
+                msg_text += "--------------------------------\n"
+                msg_text += "_Generated by Patil Infratech_"
+
+                encoded_msg = urllib.parse.quote(msg_text)
+
+                btn_col1, btn_col2 = st.columns(2)
+                with btn_col1:
+                    render_whatsapp_feature(encoded_msg, "bbs_main")
+                with btn_col2:
+                    st.markdown(
+                        """
+                        <button onclick="window.parent.print()" style="width: 100%; background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px; box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4);">
+                            📄 Print / Save A3 Size PDF
+                        </button>
+                        """,
+                        unsafe_allow_html=True,
+                    )
 
                 if current_user_name:
                     conn = get_db_connection()
                     cursor = conn.cursor()
+                    now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
                     cursor.execute(
-                        "INSERT INTO history (user_key, timestamp, user_note, report_data, site_name) VALUES (?, ?, ?, ?, ?)",
-                        (current_user_name, get_ist_time().strftime("%Y-%m-%d %H:%M:%S"), f"BBS - {rcc_comp}", report_table, st.session_state.current_site_name)
+                        "INSERT INTO history (user_key, timestamp, user_note,"
+                        " report_data, site_name) VALUES (?, ?, ?, ?, ?)",
+                        (
+                            current_user_name,
+                            now_str,
+                            st.session_state.current_comment,
+                            report_table,
+                            st.session_state.current_site_name,
+                        ),
                     )
                     conn.commit()
                     conn.close()
 
-        # ४. Quantity Surveying
+        # --------------------------------------------------
+        # ४. Quantity Surveying & Abstract Sheet Master
+        # --------------------------------------------------
         elif est_sub_mod == "Quantity Surveying":
-            st.subheader("📈 Quantity Surveying & Abstract Sheet")
-            desc = st.text_input("कामाचा तपशील:", value="Earthwork in Excavation")
-            nos_item = st.number_input("संख्या (Nos):", min_value=1, value=1)
-            l_val = st.number_input("लांबी (m):", min_value=0.1, value=5.0)
-            w_val = st.number_input("रुंदी (m):", min_value=0.1, value=4.0)
-            h_val = st.number_input("उंची/खोली (m):", min_value=0.1, value=1.5)
+            st.subheader("📈 Quantity Surveying & Abstract Sheet Master")
+            st.caption(
+                "💡 नोटबुकच्या मोजमाप पद्धतीनुसार खालील टेबलमध्ये"
+                " Description, Nos, Length, Width, Height भरा. हिशोब तयार"
+                " करा!"
+            )
 
-            if st.button("📈 GENERATE QS REPORT", type="primary", key="qs_btn"):
-                tot_qty = nos_item * l_val * w_val * h_val
-                report_table = f"""
-| Description | Nos | Dimensions (L x W x H) | Total Quantity | Unit |
-| :--- | :--- | :--- | :--- | :--- |
-| {desc} | {nos_item} | {l_val:.2f} x {w_val:.2f} x {h_val:.2f} m | **{tot_qty:.3f}** | m³ |
-"""
-                st.markdown(report_table)
+            with st.expander("📷 2D Plan / Blueprint / Camera Reference"):
+                plan_option = st.radio(
+                    "ब्लूप्रिंट इनपुट पद्धत निवडा:",
+                    ["Upload 2D Plan Image", "Capture via Camera (Live)"],
+                    horizontal=True,
+                )
+                if "Upload" in plan_option:
+                    uploaded_plan = st.file_uploader(
+                        "Upload Blueprint (PNG/JPG):",
+                        type=["png", "jpg", "jpeg"],
+                    )
+                    if uploaded_plan:
+                        st.image(
+                            uploaded_plan,
+                            caption="Uploaded 2D Floor Plan",
+                            use_column_width=True,
+                        )
+                else:
+                    cam_pic = st.camera_input(
+                        "📸 Capture 2D Plan from Camera"
+                    )
+                    if cam_pic:
+                        st.image(
+                            cam_pic,
+                            caption="Captured Blueprint Reference",
+                            use_column_width=True,
+                        )
 
-                if current_user_name:
+            st.markdown(
+                "### 🏢 Construction Stages Measurement Sheet (Excavation"
+                " to Finishing)"
+            )
+
+            stages = [
+                "Earthwork in Excavation",
+                "P.C.C. Bedding",
+                "Foundation / Footing RCC Work",
+                "Plinth Beam & Masonry Work",
+                "Superstructure Brickwork",
+                "RCC Columns & Beams",
+                "Slab Casting",
+                "Flooring / Tiling Work",
+                "Plaster Work",
+            ]
+
+            stage_results = []
+
+            for idx, stg_name in enumerate(stages):
+                is_area_unit = (
+                    "Flooring" in stg_name or "Plaster" in stg_name
+                )
+                is_brickwork = "Brickwork" in stg_name
+                is_plaster = "Plaster" in stg_name
+
+                st.markdown(f"#### 🔹 {stg_name}")
+
+                c_desc, c_nos, c_l, c_w, c_h = st.columns(
+                    [2.5, 1, 1, 1, 1]
+                )
+                with c_desc:
+                    desc_val = st.text_input(
+                        f"Description #{idx}",
+                        value=stg_name,
+                        key=f"qs_desc_{idx}",
+                    )
+                with c_nos:
+                    nos_val = st.number_input(
+                        f"Nos #{idx}",
+                        min_value=0,
+                        value=0,
+                        step=1,
+                        key=f"qs_nos_{idx}",
+                    )
+                with c_l:
+                    l_val = st.number_input(
+                        f"Length #{idx}",
+                        min_value=0.0,
+                        value=0.0,
+                        step=0.1,
+                        key=f"qs_l_{idx}",
+                    )
+                with c_w:
+                    w_val = st.number_input(
+                        f"Width #{idx}",
+                        min_value=0.0,
+                        value=0.0,
+                        step=0.1,
+                        key=f"qs_w_{idx}",
+                    )
+                with c_h:
+                    if is_area_unit:
+                        h_val = 1.0
+                        st.caption("📏 (Area m²)")
+                    else:
+                        h_val = st.number_input(
+                            f"Height #{idx}",
+                            min_value=0.0,
+                            value=0.0,
+                            step=0.05,
+                            key=f"qs_h_{idx}",
+                        )
+
+                if nos_val > 0 and l_val > 0 and w_val > 0 and (is_area_unit or h_val > 0):
+                    if is_area_unit:
+                        single_qty = l_val * w_val
+                        total_qty = single_qty * nos_val
+                        unit_label = "m²"
+                    else:
+                        single_qty = l_val * w_val * h_val
+                        total_qty = single_qty * nos_val
+                        unit_label = "m³"
+
+                    st.markdown(
+                        f"**📐 Single Qty: `{single_qty:.3f} {unit_label}` |"
+                        f" Total Qty: `{total_qty:.3f} {unit_label}`**"
+                    )
+
+                    mat_summary = "मटेरियल लागू नाही"
+
+                    if "P.C.C." in stg_name:
+                        dry_vol = total_qty * 1.54
+                        c_bags = math.ceil((1 / 13) * dry_vol * 28.8)
+                        sand_m3 = (4 / 13) * dry_vol
+                        agg_m3 = (8 / 13) * dry_vol
+                        mat_summary = (
+                            f"Cement: {c_bags} Bags, Sand: {sand_m3:.2f} m³,"
+                            f" Aggregate: {agg_m3:.2f} m³"
+                        )
+                        st.info(
+                            f"• **Cement:** {c_bags} Bags | **Sand:**"
+                            f" {sand_m3:.2f} m³ | **Aggregate:**"
+                            f" {agg_m3:.2f} m³"
+                        )
+
+                    elif (
+                        "RCC" in stg_name
+                        or "Column" in stg_name
+                        or "Slab" in stg_name
+                        or "Footing" in stg_name
+                    ):
+                        dry_vol = total_qty * 1.54
+                        c_bags = math.ceil((1 / 5.5) * dry_vol * 28.8)
+                        sand_m3 = (1.5 / 5.5) * dry_vol
+                        agg_m3 = (3 / 5.5) * dry_vol
+                        steel_kg = total_qty * 80.0
+                        mat_summary = (
+                            f"Cement: {c_bags} Bags, Sand: {sand_m3:.2f} m³,"
+                            f" Aggregate: {agg_m3:.2f} m³, Steel:"
+                            f" {steel_kg:.1f} Kg"
+                        )
+                        st.info(
+                            f"• **Cement:** {c_bags} Bags | **Sand:**"
+                            f" {sand_m3:.2f} m³ | **Aggregate:**"
+                            f" {agg_m3:.2f} m³ | **Steel:** {steel_kg:.1f} Kg"
+                        )
+
+                    elif "Brickwork" in stg_name:
+                        bricks = math.ceil(total_qty * 500)
+                        mortar_vol = total_qty * 0.30
+                        c_bags = math.ceil((1 / 5) * mortar_vol * 28.8)
+                        sand_m3 = (4 / 5) * mortar_vol
+                        mat_summary = (
+                            f"Bricks: {bricks} Nos, Cement: {c_bags} Bags,"
+                            f" Sand: {sand_m3:.2f} m³"
+                        )
+                        st.info(
+                            f"• **Bricks:** {bricks} Nos | **Cement:** {c_bags}"
+                            f" Bags | **Sand:** {sand_m3:.2f} m³"
+                        )
+
+                    elif "Plaster" in stg_name:
+                        thickness = 0.012
+                        wet_vol = total_qty * thickness
+                        dry_vol = wet_vol * 1.33
+                        c_bags = math.ceil((1 / 5) * dry_vol * 28.8)
+                        sand_m3 = (4 / 5) * dry_vol
+                        mat_summary = (
+                            f"Cement: {c_bags} Bags, Sand: {sand_m3:.2f} m³"
+                        )
+                        st.info(
+                            f"• **Cement (12mm):** {c_bags} Bags | **Sand:**"
+                            f" {sand_m3:.2f} m³"
+                        )
+
+                    stage_results.append({
+                        "Stage": desc_val,
+                        "Dimensions": (
+                            f"{l_val} x {w_val} x"
+                            f" {h_val if not is_area_unit else 1.0}"
+                        ),
+                        "Nos": nos_val,
+                        "SingleQty": single_qty,
+                        "TotalQty": f"{total_qty:.3f} {unit_label}",
+                        "Material": mat_summary,
+                    })
+
+                if is_brickwork:
+                    st.markdown(
+                        "##### 🚪 Brickwork Deductions (Doors / Windows in"
+                        " m³)"
+                    )
+                    ded_key_bw = f"bw_ded_count_{idx}"
+                    if ded_key_bw not in st.session_state:
+                        st.session_state[ded_key_bw] = 1
+
+                    if st.button(
+                        f"➕ Add Brickwork Deduction Item #{idx}",
+                        key=f"btn_bw_ded_{idx}",
+                    ):
+                        st.session_state[ded_key_bw] += 1
+                        st.rerun()
+
+                    bw_ded_vol = 0.0
+                    for d_i in range(st.session_state[ded_key_bw]):
+                        dc1, dc2, dc3, dc4, dc5 = st.columns(5)
+                        with dc1:
+                            dt = st.selectbox(
+                                "Type",
+                                ["Door", "Window"],
+                                key=f"bw_dt_{idx}_{d_i}",
+                            )
+                        with dc2:
+                            dl = st.number_input(
+                                "L (m)",
+                                min_value=0.0,
+                                value=0.0,
+                                step=0.1,
+                                key=f"bw_dl_{idx}_{d_i}",
+                            )
+                        with dc3:
+                            db = st.number_input(
+                                "Thickness",
+                                min_value=0.0,
+                                value=0.23,
+                                step=0.05,
+                                key=f"bw_db_{idx}_{d_i}",
+                            )
+                        with dc4:
+                            dh = st.number_input(
+                                "H (m)",
+                                min_value=0.0,
+                                value=0.0,
+                                step=0.1,
+                                key=f"bw_dh_{idx}_{d_i}",
+                            )
+                        with dc5:
+                            dn = st.number_input(
+                                "Nos",
+                                min_value=0,
+                                value=0,
+                                step=1,
+                                key=f"bw_dn_{idx}_{d_i}",
+                            )
+
+                        if dl > 0 and db > 0 and dh > 0 and dn > 0:
+                            bw_ded_vol += dl * db * dh * dn
+
+                    if bw_ded_vol > 0:
+                        st.markdown(
+                            "**🔴 Brickwork Deduction Vol:"
+                            f" `{bw_ded_vol:.3f} m³`**"
+                        )
+
+                if is_plaster:
+                    st.markdown(
+                        "##### 🚪 Plaster Deductions (Doors / Windows in"
+                        " m²)"
+                    )
+                    ded_key_pl = f"pl_ded_count_{idx}"
+                    if ded_key_pl not in st.session_state:
+                        st.session_state[ded_key_pl] = 1
+
+                    if st.button(
+                        f"➕ Add Plaster Deduction Item #{idx}",
+                        key=f"btn_pl_ded_{idx}",
+                    ):
+                        st.session_state[ded_key_pl] += 1
+                        st.rerun()
+
+                    pl_ded_area = 0.0
+                    for d_i in range(st.session_state[ded_key_pl]):
+                        dc1, dc2, dc3, dc4 = st.columns(4)
+                        with dc1:
+                            dt = st.selectbox(
+                                "Type",
+                                ["Door", "Window"],
+                                key=f"pl_dt_{idx}_{d_i}",
+                            )
+                        with dc2:
+                            dl = st.number_input(
+                                "Length (m)",
+                                min_value=0.0,
+                                value=0.0,
+                                step=0.1,
+                                key=f"pl_dl_{idx}_{d_i}",
+                            )
+                        with dc3:
+                            dh = st.number_input(
+                                "Height (m)",
+                                min_value=0.0,
+                                value=0.0,
+                                step=0.1,
+                                key=f"pl_dh_{idx}_{d_i}",
+                            )
+                        with dc4:
+                            dn = st.number_input(
+                                "Nos",
+                                min_value=0,
+                                value=0,
+                                step=1,
+                                key=f"pl_dn_{idx}_{d_i}",
+                            )
+
+                        if dl > 0 and dh > 0 and dn > 0:
+                            pl_ded_area += dl * dh * dn * 2
+
+                    if pl_ded_area > 0:
+                        st.markdown(
+                            "**🔴 Plaster Deduction Area:"
+                            f" `{pl_ded_area:.3f} m²`**"
+                        )
+
+                st.write("---")
+
+            st.markdown("#### 💬 कमेंट पॅनल (Comment Panel)")
+            user_note = st.text_area(
+                "Abstract Sheet संदर्भात विशेष नोंद:",
+                placeholder="उदा. Ground floor estimation...",
+                key="qs_note",
+            )
+            if st.button("💬 कमेंट सबमिट करा", key="qs_comm_btn"):
+                if user_note.strip():
+                    st.session_state.current_comment = user_note.strip()
                     conn = get_db_connection()
                     cursor = conn.cursor()
                     cursor.execute(
-                        "INSERT INTO history (user_key, timestamp, user_note, report_data, site_name) VALUES (?, ?, ?, ?, ?)",
-                        (current_user_name, get_ist_time().strftime("%Y-%m-%d %H:%M:%S"), f"QS - {desc}", report_table, st.session_state.current_site_name)
+                        "UPDATE users SET comment = ? WHERE user_key = ?",
+                        (user_note.strip(), current_user_name),
                     )
                     conn.commit()
                     conn.close()
+                    st.success("✅ कमेंट सेव्ह झाली!")
 
+            if st.button(
+                "📈 GENERATE ABSTRACT SHEET & MATERIAL REPORT",
+                type="primary",
+                key="qs_gen_btn",
+            ):
+                if not stage_results:
+                    st.warning(
+                        "⚠️ कृपया कमीत कमी एका स्टेजसाठी Nos, Length, Width"
+                        " आणि Height च्या व्हॅल्यू भरा!"
+                    )
+                else:
+                    st.success(
+                        "🎉 Abstract Sheet & Material Report यशस्वीरित्या तयार"
+                        " झाला आहे!"
+                    )
+                    st.markdown(
+                        "### 📊 ABSTRACT SHEET & MATERIAL REPORT"
+                    )
+                    st.info(f"👤 **Prepared For:** {current_user_name}")
+
+                    table_rows = ""
+                    whatsapp_text_items = ""
+
+                    for r in stage_results:
+                        table_rows += (
+                            f"| {r['Stage']} | {r['Nos']} |"
+                            f" {r['Dimensions']} | {r['TotalQty']} |"
+                            f" {r['Material']} |\n"
+                        )
+                        whatsapp_text_items += (
+                            f"• *{r['Stage']}*\n  - Nos: {r['Nos']} | Size:"
+                            f" {r['Dimensions']}\n  - Single Qty:"
+                            f" {r['SingleQty']:.3f}\n  - Total Qty:"
+                            f" {r['TotalQty']}\n  - Material:"
+                            f" {r['Material']}\n\n"
+                        )
+
+                    final_report_html = f"""
+<div class="print-container">
+<h2>📊 PATIL INFRATECH - ABSTRACT SHEET & QUANTITY SURVEY</h2>
+<p><strong>Prepared For:</strong> {current_user_name} | <strong>Date:</strong> {get_ist_time().strftime('%d-%m-%Y')}</p>
+
+| Description | Nos | Length x Width x Height | Total Quantity | Material |
+| :--- | :--- | :--- | :--- | :--- |
+{table_rows}
+
+---
+### 📌 SUMMARY
+* **Status:** Report Generated Successfully (No Cost/Amount Shown)
+</div>
+"""
+                    st.markdown(
+                        final_report_html, unsafe_allow_html=True
+                    )
+
+                    msg_text = (
+                        "📊 *PATIL INFRATECH - ABSTRACT SHEET*\n"
+                    )
+                    msg_text += f"👤 *Prepared For:* {current_user_name}\n"
+                    msg_text += (
+                        f"📅 *Date:* {get_ist_time().strftime('%d-%m-%Y')}\n\n"
+                    )
+                    msg_text += (
+                        "📋 *MEASUREMENT"
+                        f" DETAILS:*\n{whatsapp_text_items}"
+                    )
+                    msg_text += "_Generated by Patil Infratech_"
+
+                    encoded_msg = urllib.parse.quote(msg_text)
+
+                    btn_col1, btn_col2 = st.columns(2)
+                    with btn_col1:
+                        render_whatsapp_feature(encoded_msg, "qs_main")
+                    with btn_col2:
+                        st.markdown(
+                            """
+                            <button onclick="window.parent.print()" style="width: 100%; background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px; box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4);">
+                                📄 Print / Save A3 Size PDF
+                            </button>
+                            """,
+                            unsafe_allow_html=True,
+                        )
+
+                    if current_user_name:
+                        conn = get_db_connection()
+                        cursor = conn.cursor()
+                        now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
+                        cursor.execute(
+                            "INSERT INTO history (user_key, timestamp,"
+                            " user_note, report_data, site_name) VALUES (?, ?, ?, ?, ?)",
+                            (
+                                current_user_name,
+                                now_str,
+                                st.session_state.current_comment,
+                                report_table,
+                                st.session_state.current_site_name,
+                            ),
+                        )
+                        conn.commit()
+                        conn.close()
 # ==========================================
 # 📌 विभाग १७: SITE MANAGER मॉड्यूल (Attendance, Inventory, Progress, Checklist, Weekly)
 # ==========================================
