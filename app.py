@@ -2331,10 +2331,180 @@ elif st.session_state.selected_module == "Estimator Tools":
     # --------------------------------------------------
     # ०. Master 3-in-1 Combined Estimate PDF
     # --------------------------------------------------
-    if est_sub_mod == "Master PDF":
-      render_combined_master_report(
-          current_user_name, st.session_state.current_site_name
-      )
+    # ==========================================
+# १६.१ मास्टर ३-इन-१ कंबाइन्ड PDF रिपोर्ट फंक्शन (वॉटरमार्कसह फिक्स केलेला कोड)
+# ==========================================
+def render_combined_master_report(user_key, site_name):
+  st.subheader(f"📑 Master Project Estimate: {site_name}")
+  st.caption(
+      "💡 मागील २ दिवसांमधील Rate Analysis, BBS आणि Quantity Survey चा एकत्रित"
+      " IS-Code फॉरमॅट रिपोर्ट."
+  )
+
+  conn = get_db_connection()
+  cursor = conn.cursor()
+
+  # मागील ४८ तासांतील डेटा मिळवणे
+  two_days_ago = (get_ist_time() - datetime.timedelta(days=2)).strftime(
+      "%Y-%m-%d 00:00:00"
+  )
+  cursor.execute(
+      """
+        SELECT timestamp, report_data FROM history 
+        WHERE user_key = ? AND (site_name = ? OR site_name IS NULL) AND timestamp >= ?
+        ORDER BY id ASC
+    """,
+      (user_key, site_name, two_days_ago),
+  )
+
+  records = cursor.fetchall()
+  conn.close()
+
+  if not records:
+    st.warning(
+        f"⚠️ '{site_name}' साठी मागील २ दिवसांत कोणतेही कॅल्क्युलेशन सेव्ह"
+        " केलेले नाही."
+    )
+    return
+
+  # वॉटरमार्क आणि प्रिंट लेआउट CSS
+  watermark_css = """
+    <style>
+    @media print {
+        body {
+            background: #ffffff !important;
+            color: #000000 !important;
+        }
+        .no-print {
+            display: none !important;
+        }
+        .page-break {
+            page-break-before: always;
+        }
+    }
+    .print-report-container {
+        position: relative;
+        background: #ffffff;
+        color: #000000;
+        padding: 40px;
+        border-radius: 12px;
+        font-family: 'Segoe UI', Arial, sans-serif;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        overflow: hidden;
+        margin-bottom: 20px;
+    }
+    /* 🌊 वॉटरमार्क स्टाईल */
+    .watermark-text {
+        position: absolute;
+        top: 45%;
+        left: 50%;
+        transform: translate(-50%, -50%) rotate(-30deg);
+        font-size: 38px;
+        font-weight: 900;
+        color: rgba(0, 0, 0, 0.05);
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        white-space: nowrap;
+        pointer-events: none;
+        user-select: none;
+        z-index: 1;
+        border: 4px dashed rgba(0, 0, 0, 0.05);
+        padding: 20px 40px;
+        border-radius: 20px;
+    }
+    .report-content {
+        position: relative;
+        z-index: 2;
+    }
+    .report-table-box {
+        background: rgba(248, 250, 252, 0.8);
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    </style>
+    """
+
+  # हेडर आणि प्रोजेक्ट डिटेल्स
+  header_html = f"""
+    {watermark_css}
+    <div class="print-report-container">
+        <div class="watermark-text">KANHAIYA • FOUNDER OF PATIL INFRATECH</div>
+        <div class="report-content">
+            <div style="border-bottom: 3px solid #0f172a; padding-bottom: 10px; margin-bottom: 20px; text-align: center;">
+                <h1 style="margin:0; color: #0f172a; font-size: 28px; font-weight: 900; letter-spacing: 1px;">PATIL INFRATECH</h1>
+                <p style="margin:4px 0; font-size: 13px; font-weight: bold; color: #475569; text-transform: uppercase;">Civil Engineers • Consultants • Quantity Surveyors</p>
+                <p style="margin:0; font-size: 11px; color: #64748b;">(Compliant with IS 1200 & IS 2502 Standards)</p>
+            </div>
+            <table style="width: 100%; margin-bottom: 20px; font-size: 13px; border: none; color: #0f172a;">
+                <tr>
+                    <td><b>📍 Project / Site:</b> <span style="color:#d97706; font-weight:bold;">{site_name}</span></td>
+                    <td style="text-align: right;"><b>📅 Report Date:</b> {get_ist_time().strftime('%d-%m-%Y')}</td>
+                </tr>
+                <tr>
+                    <td><b>👤 Site Engineer / User:</b> {user_key}</td>
+                    <td style="text-align: right;"><b>⏱️ Period:</b> Last 48 Hours Calculation</td>
+                </tr>
+            </table>
+            <hr style="border: 0.5px solid #cbd5e1; margin-bottom: 20px;">
+    """
+
+  st.markdown(header_html, unsafe_allow_html=True)
+
+  # रेकॉर्ड्स डिस्प्ले (Markdown Tables सुरक्षितपणे रेंडर करणे)
+  for idx, r in enumerate(records, 1):
+    st.markdown(
+        f"<h4 style='color: #0284c7; margin-top: 15px;'>📋 विभाग #{idx}"
+        f" ({r['timestamp']})</h4>",
+        unsafe_allow_html=True,
+    )
+    st.markdown(r["report_data"])
+    st.write("---")
+
+  # फूटर आणि स्वाक्षरी विभाग
+  footer_html = """
+            <br><br>
+            <table style="width: 100%; margin-top: 40px; font-size: 13px; border: none; color: #0f172a;">
+                <tr>
+                    <td style="width: 50%;">
+                        __________________________<br>
+                        <b>Site Engineer Signature</b>
+                    </td>
+                    <td style="width: 50%; text-align: right;">
+                        __________________________<br>
+                        <b>Authorized Consultant / Checker</b>
+                    </td>
+                </tr>
+            </table>
+            <div style="text-align: center; margin-top: 30px; font-size: 11px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 8px;">
+                Verified & Certified by: <b>Kanhaiya (Founder of Patil Infratech)</b>
+            </div>
+        </div>
+    </div>
+    """
+  st.markdown(footer_html, unsafe_allow_html=True)
+
+  # प्रिंट व शेअर बटन्स
+  st.write("---")
+  c1, c2 = st.columns(2)
+  with c1:
+    st.markdown(
+        """
+            <button onclick="window.print()" style="width: 100%; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: black; border: none; padding: 14px; border-radius: 12px; font-weight: 800; cursor: pointer; font-size: 15px; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.35);">
+                📄 Print / Download Master PDF (With Watermark)
+            </button>
+        """,
+        unsafe_allow_html=True,
+    )
+  with c2:
+    wa_text = (
+        f"🏗️ *PATIL INFRATECH - MASTER ESTIMATE REPORT*\n📍 *Site:*"
+        f" {site_name}\n👤 *Engineer:* {user_key}\n📅 *Date:*"
+        f" {get_ist_time().strftime('%d-%m-%Y')}\n\n✅ 3-in-1 Complete"
+        " Estimation Generated.\n_Certified by: Kanhaiya (Founder)_"
+    )
+    render_whatsapp_feature(urllib.parse.quote(wa_text), "master_pdf_wa")
 
     # --------------------------------------------------
     # १. Civil Calculator & Smart Unit Converter
