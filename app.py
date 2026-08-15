@@ -2400,8 +2400,8 @@ elif st.session_state.selected_module == "Estimator Tools":
         )
 
   # --- मेनू पर्याय (Icon Grid Selection) ---
-    if st.session_state.selected_estimator_sub_module is None:
-    st.markdown("##### 🔽 खालीलपैकी एक Estimator टूल निवडा:")
+if st.session_state.selected_estimator_sub_module is None:
+ st.markdown("##### 🔽 खालीलपैकी एक Estimator टूल निवडा:")
 
     e_col1, e_col2 = st.columns(2)
     with e_col1:
