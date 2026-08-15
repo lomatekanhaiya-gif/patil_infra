@@ -2106,7 +2106,7 @@ elif st.session_state.selected_module == "Estimator Tools":
     bbs_lock = locks_cfg.get("BBS", "Free")
     qs_lock = locks_cfg.get("Quantity Surveying", "Free")
 
-    # १६.१ मास्टर ३-इन-१ कंबाइन्ड PDF रिपोर्ट फंक्शन
+  # १६.१ मास्टर ३-इन-१ कंबाइन्ड PDF रिपोर्ट फंक्शन
     def render_combined_master_report(user_key, site_name):
         st.subheader(f"📑 Master Project Estimate: {site_name}")
         st.caption(
@@ -2135,12 +2135,11 @@ elif st.session_state.selected_module == "Estimator Tools":
 
         if not records:
             st.warning(
-                f"⚠️ '{site_name}' साठी मागील २ दिवसांत कोणतेही कॅल्क्युलेशन सेव्ह"
-                " केलेले नाही."
+                f"⚠️ '{site_name}' साठी मागील २ दिवसांत कोणतेही कॅल्क्युलेशन सेव्ह केलेले नाही."
             )
             return
 
-        # पूर्ण दिसणारा वॉटरमार्क व प्रिंट स्टाईल
+        # वॉटरमार्क व A4 प्रिंट स्टाईल
         watermark_css = """
         <style>
         @media print {
@@ -2191,7 +2190,7 @@ elif st.session_state.selected_module == "Estimator Tools":
         </style>
         """
 
-        combined_html = f"""
+        header_html = f"""
         {watermark_css}
         <div class="print-container">
             <div class="watermark">KANHAIYA<br>FOUNDER OF PATIL INFRATECH</div>
@@ -2201,7 +2200,7 @@ elif st.session_state.selected_module == "Estimator Tools":
                     <p style="margin:2px 0; font-size:12px; font-weight:bold;">CIVIL ENGINEERS & QUANTITY SURVEYORS</p>
                     <p style="margin:0; font-size:11px; color:#555;">IS 1200 & IS 2502 Compliant Report</p>
                 </div>
-                <table style="width: 100%; margin-bottom: 15px; font-size: 12px;">
+                <table style="width: 100%; margin-bottom: 15px; font-size: 12px; color: #000;">
                     <tr>
                         <td><b>Project / Site:</b> {site_name}</td>
                         <td style="text-align: right;"><b>Date:</b> {get_ist_time().strftime('%d-%m-%Y')}</td>
@@ -2211,25 +2210,31 @@ elif st.session_state.selected_module == "Estimator Tools":
                         <td style="text-align: right;"><b>Period:</b> Last 48 Hours Estimation</td>
                     </tr>
                 </table>
-                <hr style="border: 0.5px solid #ccc;">
+                <hr style="border: 0.5px solid #ccc; margin-bottom: 15px;">
         """
 
+        records_html = ""
         for idx, r in enumerate(records, 1):
-            combined_html += f"""
-                <div style="margin-bottom: 20px;">
-                    <h4 style="color: #0284c7; margin-bottom: 5px;">विभाग #{idx} ({r['timestamp']})</h4>
-                    <div style="font-size: 12px; background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0;">
+            records_html += f"""
+                <div style="margin-bottom: 15px;">
+                    <h4 style="color: #0284c7; margin: 0 0 5px 0;">विभाग #{idx} ({r['timestamp']})</h4>
+                    <div style="font-size: 12px; background: #f8fafc; color: #000; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0;">
                         <pre style="white-space: pre-wrap; font-family: inherit; margin: 0;">{r['report_data']}</pre>
                     </div>
                 </div>
             """
 
-        combined_html += """
-                <br>
-                <table style="width: 100%; margin-top: 30px; font-size: 12px;">
+        footer_html = """
+                <table style="width: 100%; margin-top: 30px; font-size: 12px; color: #000;">
                     <tr>
-                        <td>___________________<br><b>Site Engineer</b></td>
-                        <td style="text-align: right;">___________________<br><b>Consultant / Checker</b></td>
+                        <td style="width: 50%;">
+                            ___________________<br>
+                            <b>Site Engineer</b>
+                        </td>
+                        <td style="width: 50%; text-align: right;">
+                            ___________________<br>
+                            <b>Consultant / Checker</b>
+                        </td>
                     </tr>
                 </table>
                 <div style="text-align: center; margin-top: 20px; font-size: 11px; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 6px;">
@@ -2239,14 +2244,15 @@ elif st.session_state.selected_module == "Estimator Tools":
         </div>
         """
 
-        st.markdown(combined_html, unsafe_allow_html=True)
+        full_report_html = header_html + records_html + footer_html
+        st.markdown(full_report_html, unsafe_allow_html=True)
         st.write("---")
 
         c1, c2 = st.columns(2)
         with c1:
             st.download_button(
                 label="📥 Download Master Report",
-                data=combined_html,
+                data=full_report_html,
                 file_name=f"Patil_Infratech_{site_name.replace(' ', '_')}_Report.html",
                 mime="text/html",
                 type="primary",
