@@ -2090,19 +2090,26 @@ if st.session_state.selected_module is None:
 # 📌 विभाग १६: ESTIMATOR TOOLS मॉड्यूल (Sub-modules)
 # ==========================================
 elif st.session_state.selected_module == "Estimator Tools":
-  if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_estimator"):
-    st.session_state.selected_module = None
-    st.session_state.selected_estimator_sub_module = None
-    st.rerun()
+    if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_estimator"):
+        st.session_state.selected_module = None
+        st.session_state.selected_estimator_sub_module = None
+        st.rerun()
 
-  st.write("---")
-  st.subheader("📐 Estimator Tools Dashboard")
+    st.write("---")
+    st.subheader("📐 Estimator Tools Dashboard")
 
-  calc_lock = locks_cfg.get("Civil Calculator", "Free")
-  ra_lock = locks_cfg.get("Rate Analysis", "Free")
-  bbs_lock = locks_cfg.get("BBS", "Free")
-  qs_lock = locks_cfg.get("Quantity Surveying", "Free")
+    calc_lock = locks_cfg.get("Civil Calculator", "Free")
+    ra_lock = locks_cfg.get("Rate Analysis", "Free")
+    bbs_lock = locks_cfg.get("BBS", "Free")
+    qs_lock = locks_cfg.get("Quantity Surveying", "Free")
 
+    # ✅ बरोबर ४ Spaces (Correct Indentation)
+    def render_combined_master_report(user_key, site_name):
+        st.subheader(f"📑 Master Project Estimate: {site_name}")
+        st.caption("💡 मागील २ दिवसांमधील Rate Analysis, BBS आणि Quantity Survey चा एकत्रित IS-Code फॉरमॅट ३-पेज रिपोर्ट.")
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
  # ==========================================
     # १६.१ मास्टर ३-इन-१ कंबाइन्ड PDF व Excel रिपोर्ट फंक्शन (Fixed & Complete)
     # ==========================================
