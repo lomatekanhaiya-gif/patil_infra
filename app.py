@@ -266,7 +266,7 @@ def init_db():
         )
     """)
 
-  # सुरक्षित डेटाबेस अपग्रेड (Column Addition Safe Check)
+  # सुरक्षित डेटाबेस अपग्रेड
   new_labour_cols = [
       ("supervisor", "INTEGER DEFAULT 0"),
       ("supervisor_rate", "REAL DEFAULT 0.0"),
@@ -287,7 +287,7 @@ def init_db():
     except sqlite3.OperationalError:
       pass
 
-  # ८. साहित्य इन्व्हेंटरी टेबल (Material Inventory Table)
+  # ८. साहित्य इन्व्हेंटरी टेबल
   cursor.execute("""
         CREATE TABLE IF NOT EXISTS site_inventory (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -301,7 +301,7 @@ def init_db():
         )
     """)
 
-  # ९. प्रोग्रेस रिपोर्ट टेबल (Daily Progress Report Table)
+  # ९. प्रोग्रेस रिपोर्ट टेबल
   cursor.execute("""
         CREATE TABLE IF NOT EXISTS site_progress (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -314,7 +314,7 @@ def init_db():
         )
     """)
 
-  # १०. प्री-काँक्रीटिंग चेकलिस्ट टेबल (Pre-Concreting Checklist Table)
+  # १०. प्री-काँक्रीटिंग चेकलिस्ट टेबल
   cursor.execute("""
         CREATE TABLE IF NOT EXISTS pre_concreting_checklist (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -326,7 +326,7 @@ def init_db():
         )
     """)
 
-  # मास्टर ॲडमीन डि default एंट्री
+  # मास्टर ॲडमीन डि default नोंद
   cursor.execute("SELECT * FROM users WHERE user_key = ?", ("9999999999",))
   if not cursor.fetchone():
     cursor.execute(
@@ -361,7 +361,6 @@ def init_db():
         ),
     )
 
-  # डीफॉल्ट फिचर लॉक्स
   default_locks = {
       "Civil Calculator": "Free",
       "Rate Analysis": "Free",
@@ -378,7 +377,6 @@ def init_db():
         (f_name, f_lvl),
     )
 
-  # डीफॉल्ट मार्केट दर
   default_rates = {
       "cement": 400.0,
       "sand": 2500.0,
@@ -392,7 +390,7 @@ def init_db():
         (mat, rat),
     )
 
-  # सर्व मुख्य टेबल्समध्ये site_name कॉलम सुरक्षितपणे जोडणे
+  # सर्व मुख्य टेबल्समध्ये site_name सुरक्षितपणे तपासणे
   tables_to_update = [
       "history",
       "site_attendance",
@@ -413,7 +411,6 @@ def init_db():
 
 
 init_db()
-
 
 # ==========================================
 # 📌 विभाग ६: डेटाबेस क्वेरी हेल्पर फंक्शन्स
@@ -2106,7 +2103,7 @@ elif st.session_state.selected_module == "Estimator Tools":
   bbs_lock = locks_cfg.get("BBS", "Free")
   qs_lock = locks_cfg.get("Quantity Surveying", "Free")
 
-  # १६.१ मास्टर ३-इन-१ कंबाइन्ड PDF रिपोर्ट फंक्शन
+  # --- १६.१ मास्टर ३-इन-१ कंबाइन्ड PDF रिपोर्ट फंक्शन (येथे वर डिफाईन केले आहे) ---
   def render_combined_master_report(user_key, site_name):
     st.subheader(f"📑 Master Project Estimate: {site_name}")
     st.caption(
@@ -2116,8 +2113,6 @@ elif st.session_state.selected_module == "Estimator Tools":
 
     conn = get_db_connection()
     cursor = conn.cursor()
-
-    # मागील ४८ तासांतील डेटा मिळवणे
     two_days_ago = (get_ist_time() - datetime.timedelta(days=2)).strftime(
         "%Y-%m-%d 00:00:00"
     )
@@ -2129,7 +2124,6 @@ elif st.session_state.selected_module == "Estimator Tools":
         """,
         (user_key, site_name, two_days_ago),
     )
-
     records = cursor.fetchall()
     conn.close()
 
@@ -2140,48 +2134,90 @@ elif st.session_state.selected_module == "Estimator Tools":
       )
       return
 
-    combined_html = f"""
-        <div style="background: #ffffff; color: #000000; padding: 25px; border-radius: 8px; font-family: Arial, sans-serif;">
-            <div style="border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 15px; text-align: center;">
-                <h2 style="margin:0; color:#000;">PATIL INFRATECH</h2>
-                <p style="margin:2px 0; font-size:12px; font-weight:bold;">CIVIL ENGINEERS & QUANTITY SURVEYORS</p>
-                <p style="margin:0; font-size:11px; color:#555;">IS 1200 & IS 2502 Compliant Report</p>
-            </div>
-            <table style="width: 100%; margin-bottom: 15px; font-size: 12px;">
-                <tr>
-                    <td><b>Project / Site:</b> {site_name}</td>
-                    <td style="text-align: right;"><b>Date:</b> {get_ist_time().strftime('%d-%m-%Y')}</td>
-                </tr>
-                <tr>
-                    <td><b>Prepared By:</b> {user_key}</td>
-                    <td style="text-align: right;"><b>Period:</b> Last 48 Hours Estimation</td>
-                </tr>
-            </table>
-            <hr style="border: 0.5px solid #ccc;">
+    watermark_css = """
+        <style>
+        @media print {
+            body { background: #ffffff !important; color: #000000 !important; }
+            .no-print { display: none !important; }
+        }
+        .print-report-container {
+            position: relative;
+            background: #ffffff;
+            color: #000000;
+            padding: 30px;
+            border-radius: 12px;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        .watermark-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-30deg);
+            font-size: 32px;
+            font-weight: 900;
+            color: rgba(0, 0, 0, 0.05);
+            text-transform: uppercase;
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .report-content { position: relative; z-index: 2; }
+        </style>
         """
+
+    header_html = f"""
+        {watermark_css}
+        <div class="print-report-container">
+            <div class="watermark-text">KANHAIYA • FOUNDER OF PATIL INFRATECH</div>
+            <div class="report-content">
+                <div style="border-bottom: 3px solid #0f172a; padding-bottom: 10px; margin-bottom: 20px; text-align: center;">
+                    <h1 style="margin:0; color: #0f172a; font-size: 26px; font-weight: 900;">PATIL INFRATECH</h1>
+                    <p style="margin:4px 0; font-size: 13px; font-weight: bold; color: #475569;">Civil Engineers • Consultants • Quantity Surveyors</p>
+                    <p style="margin:0; font-size: 11px; color: #64748b;">(Compliant with IS 1200 & IS 2502 Standards)</p>
+                </div>
+                <table style="width: 100%; margin-bottom: 20px; font-size: 13px; border: none; color: #0f172a;">
+                    <tr>
+                        <td><b>📍 Project / Site:</b> {site_name}</td>
+                        <td style="text-align: right;"><b>📅 Report Date:</b> {get_ist_time().strftime('%d-%m-%Y')}</td>
+                    </tr>
+                    <tr>
+                        <td><b>👤 Engineer:</b> {user_key}</td>
+                        <td style="text-align: right;"><b>⏱️ Period:</b> Last 48 Hours</td>
+                    </tr>
+                </table>
+                <hr style="border: 0.5px solid #cbd5e1; margin-bottom: 20px;">
+        """
+
+    st.markdown(header_html, unsafe_allow_html=True)
 
     for idx, r in enumerate(records, 1):
-      combined_html += f"""
-            <div style="margin-bottom: 20px;">
-                <h4 style="color: #0284c7; margin-bottom: 5px;">विभाग #{idx} ({r['timestamp']})</h4>
-                <div style="font-size: 11px;">{r['report_data']}</div>
-            </div>
-            """
+      st.markdown(
+          f"<h4 style='color: #0284c7; margin-top: 15px;'>📋 विभाग #{idx}"
+          f" ({r['timestamp']})</h4>",
+          unsafe_allow_html=True,
+      )
+      st.markdown(r["report_data"])
+      st.write("---")
 
-    combined_html += """
-            <br>
-            <table style="width: 100%; margin-top: 30px; font-size: 12px;">
-                <tr>
-                    <td>___________________<br><b>Site Engineer</b></td>
-                    <td style="text-align: right;">___________________<br><b>Consultant / Checker</b></td>
-                </tr>
-            </table>
+    footer_html = """
+                <br><br>
+                <table style="width: 100%; margin-top: 30px; font-size: 13px; border: none; color: #0f172a;">
+                    <tr>
+                        <td style="width: 50%;">__________________________<br><b>Site Engineer Signature</b></td>
+                        <td style="width: 50%; text-align: right;">__________________________<br><b>Authorized Checker</b></td>
+                    </tr>
+                </table>
+                <div style="text-align: center; margin-top: 25px; font-size: 11px; color: #94a3b8;">
+                    Verified & Certified by: <b>Kanhaiya (Founder of Patil Infratech)</b>
+                </div>
+            </div>
         </div>
         """
+    st.markdown(footer_html, unsafe_allow_html=True)
 
-    st.markdown(combined_html, unsafe_allow_html=True)
     st.write("---")
-
     c1, c2 = st.columns(2)
     with c1:
       st.markdown(
@@ -2196,11 +2232,12 @@ elif st.session_state.selected_module == "Estimator Tools":
       wa_text = (
           f"🏗️ *PATIL INFRATECH - MASTER ESTIMATE REPORT*\n📍 *Site:*"
           f" {site_name}\n👤 *Engineer:* {user_key}\n📅 *Date:*"
-          f" {get_ist_time().strftime('%d-%m-%Y')}\n\n✅ 3-in-1 Estimation"
-          " Report Generated."
+          f" {get_ist_time().strftime('%d-%m-%Y')}\n\n✅ 3-in-1 Report"
+          " Generated."
       )
       render_whatsapp_feature(urllib.parse.quote(wa_text), "master_pdf_wa")
 
+  # --- मेनू पर्याय (Grid Selection) ---
   if st.session_state.selected_estimator_sub_module is None:
     st.markdown("##### 🔽 खालीलपैकी एक Estimator टूल निवडा:")
 
@@ -2298,7 +2335,6 @@ elif st.session_state.selected_module == "Estimator Tools":
           st.rerun()
 
     st.write(" ")
-    # ५ वे मास्टर कंबाइन्ड PDF रिपोर्ट कार्ड
     st.markdown(
         """
             <div style="text-align: center; background: #111827; padding: 18px 10px; border-radius: 20px; border: 1px solid #f59e0b;">
@@ -2320,6 +2356,7 @@ elif st.session_state.selected_module == "Estimator Tools":
       trigger_push_state()
       st.rerun()
 
+  # --- टूल्स उघडल्यानंतरची रचना (सरळ रेषेत if/elif) ---
   else:
     if st.button("⬅️ Back to Estimator Menu", key="btn_back_estimator_menu"):
       st.session_state.selected_estimator_sub_module = None
@@ -2328,187 +2365,11 @@ elif st.session_state.selected_module == "Estimator Tools":
     st.write("---")
     est_sub_mod = st.session_state.selected_estimator_sub_module
 
-    # --------------------------------------------------
-    # ०. Master 3-in-1 Combined Estimate PDF
-    # --------------------------------------------------
-    # ==========================================
-# १६.१ मास्टर ३-इन-१ कंबाइन्ड PDF रिपोर्ट फंक्शन (वॉटरमार्कसह फिक्स केलेला कोड)
-# ==========================================
-def render_combined_master_report(user_key, site_name):
-  st.subheader(f"📑 Master Project Estimate: {site_name}")
-  st.caption(
-      "💡 मागील २ दिवसांमधील Rate Analysis, BBS आणि Quantity Survey चा एकत्रित"
-      " IS-Code फॉरमॅट रिपोर्ट."
-  )
+    if est_sub_mod == "Master PDF":
+      render_combined_master_report(
+          current_user_name, st.session_state.current_site_name
+      )
 
-  conn = get_db_connection()
-  cursor = conn.cursor()
-
-  # मागील ४८ तासांतील डेटा मिळवणे
-  two_days_ago = (get_ist_time() - datetime.timedelta(days=2)).strftime(
-      "%Y-%m-%d 00:00:00"
-  )
-  cursor.execute(
-      """
-        SELECT timestamp, report_data FROM history 
-        WHERE user_key = ? AND (site_name = ? OR site_name IS NULL) AND timestamp >= ?
-        ORDER BY id ASC
-    """,
-      (user_key, site_name, two_days_ago),
-  )
-
-  records = cursor.fetchall()
-  conn.close()
-
-  if not records:
-    st.warning(
-        f"⚠️ '{site_name}' साठी मागील २ दिवसांत कोणतेही कॅल्क्युलेशन सेव्ह"
-        " केलेले नाही."
-    )
-    return
-
-  # वॉटरमार्क आणि प्रिंट लेआउट CSS
-  watermark_css = """
-    <style>
-    @media print {
-        body {
-            background: #ffffff !important;
-            color: #000000 !important;
-        }
-        .no-print {
-            display: none !important;
-        }
-        .page-break {
-            page-break-before: always;
-        }
-    }
-    .print-report-container {
-        position: relative;
-        background: #ffffff;
-        color: #000000;
-        padding: 40px;
-        border-radius: 12px;
-        font-family: 'Segoe UI', Arial, sans-serif;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-        overflow: hidden;
-        margin-bottom: 20px;
-    }
-    /* 🌊 वॉटरमार्क स्टाईल */
-    .watermark-text {
-        position: absolute;
-        top: 45%;
-        left: 50%;
-        transform: translate(-50%, -50%) rotate(-30deg);
-        font-size: 38px;
-        font-weight: 900;
-        color: rgba(0, 0, 0, 0.05);
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        white-space: nowrap;
-        pointer-events: none;
-        user-select: none;
-        z-index: 1;
-        border: 4px dashed rgba(0, 0, 0, 0.05);
-        padding: 20px 40px;
-        border-radius: 20px;
-    }
-    .report-content {
-        position: relative;
-        z-index: 2;
-    }
-    .report-table-box {
-        background: rgba(248, 250, 252, 0.8);
-        border: 1px solid #cbd5e1;
-        border-radius: 8px;
-        padding: 15px;
-        margin-bottom: 20px;
-    }
-    </style>
-    """
-
-  # हेडर आणि प्रोजेक्ट डिटेल्स
-  header_html = f"""
-    {watermark_css}
-    <div class="print-report-container">
-        <div class="watermark-text">KANHAIYA • FOUNDER OF PATIL INFRATECH</div>
-        <div class="report-content">
-            <div style="border-bottom: 3px solid #0f172a; padding-bottom: 10px; margin-bottom: 20px; text-align: center;">
-                <h1 style="margin:0; color: #0f172a; font-size: 28px; font-weight: 900; letter-spacing: 1px;">PATIL INFRATECH</h1>
-                <p style="margin:4px 0; font-size: 13px; font-weight: bold; color: #475569; text-transform: uppercase;">Civil Engineers • Consultants • Quantity Surveyors</p>
-                <p style="margin:0; font-size: 11px; color: #64748b;">(Compliant with IS 1200 & IS 2502 Standards)</p>
-            </div>
-            <table style="width: 100%; margin-bottom: 20px; font-size: 13px; border: none; color: #0f172a;">
-                <tr>
-                    <td><b>📍 Project / Site:</b> <span style="color:#d97706; font-weight:bold;">{site_name}</span></td>
-                    <td style="text-align: right;"><b>📅 Report Date:</b> {get_ist_time().strftime('%d-%m-%Y')}</td>
-                </tr>
-                <tr>
-                    <td><b>👤 Site Engineer / User:</b> {user_key}</td>
-                    <td style="text-align: right;"><b>⏱️ Period:</b> Last 48 Hours Calculation</td>
-                </tr>
-            </table>
-            <hr style="border: 0.5px solid #cbd5e1; margin-bottom: 20px;">
-    """
-
-  st.markdown(header_html, unsafe_allow_html=True)
-
-  # रेकॉर्ड्स डिस्प्ले (Markdown Tables सुरक्षितपणे रेंडर करणे)
-  for idx, r in enumerate(records, 1):
-    st.markdown(
-        f"<h4 style='color: #0284c7; margin-top: 15px;'>📋 विभाग #{idx}"
-        f" ({r['timestamp']})</h4>",
-        unsafe_allow_html=True,
-    )
-    st.markdown(r["report_data"])
-    st.write("---")
-
-  # फूटर आणि स्वाक्षरी विभाग
-  footer_html = """
-            <br><br>
-            <table style="width: 100%; margin-top: 40px; font-size: 13px; border: none; color: #0f172a;">
-                <tr>
-                    <td style="width: 50%;">
-                        __________________________<br>
-                        <b>Site Engineer Signature</b>
-                    </td>
-                    <td style="width: 50%; text-align: right;">
-                        __________________________<br>
-                        <b>Authorized Consultant / Checker</b>
-                    </td>
-                </tr>
-            </table>
-            <div style="text-align: center; margin-top: 30px; font-size: 11px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 8px;">
-                Verified & Certified by: <b>Kanhaiya (Founder of Patil Infratech)</b>
-            </div>
-        </div>
-    </div>
-    """
-  st.markdown(footer_html, unsafe_allow_html=True)
-
-  # प्रिंट व शेअर बटन्स
-  st.write("---")
-  c1, c2 = st.columns(2)
-  with c1:
-    st.markdown(
-        """
-            <button onclick="window.print()" style="width: 100%; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: black; border: none; padding: 14px; border-radius: 12px; font-weight: 800; cursor: pointer; font-size: 15px; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.35);">
-                📄 Print / Download Master PDF (With Watermark)
-            </button>
-        """,
-        unsafe_allow_html=True,
-    )
-  with c2:
-    wa_text = (
-        f"🏗️ *PATIL INFRATECH - MASTER ESTIMATE REPORT*\n📍 *Site:*"
-        f" {site_name}\n👤 *Engineer:* {user_key}\n📅 *Date:*"
-        f" {get_ist_time().strftime('%d-%m-%Y')}\n\n✅ 3-in-1 Complete"
-        " Estimation Generated.\n_Certified by: Kanhaiya (Founder)_"
-    )
-    render_whatsapp_feature(urllib.parse.quote(wa_text), "master_pdf_wa")
-
-    # --------------------------------------------------
-    # १. Civil Calculator & Smart Unit Converter
-    # --------------------------------------------------
     elif est_sub_mod == "Calculator":
       st.subheader("🧮 Civil Smart Unit Converter")
       st.caption(
@@ -2626,9 +2487,7 @@ def render_combined_master_report(user_key, site_name):
             "Acre",
         ])
 
-        if st.button(
-            "⚡ Convert Now", type="primary", key="btn_conv_area"
-        ):
+        if st.button("⚡ Convert Now", type="primary", key="btn_conv_area"):
           if "Sq. Feet" in unit_from:
             sqft = val
           elif "Sq. Meters" in unit_from:
@@ -2655,9 +2514,6 @@ def render_combined_master_report(user_key, site_name):
               unsafe_allow_html=True,
           )
 
-    # --------------------------------------------------
-    # २. Rate Analysis Module (Concrete, Brickwork, Plaster)
-    # --------------------------------------------------
     elif est_sub_mod == "Rate Analysis":
       master_rates = get_market_rates()
       st.markdown(
@@ -3496,21 +3352,14 @@ def render_combined_master_report(user_key, site_name):
             conn.commit()
             conn.close()
 
-    # --------------------------------------------------
-    # ३. Bar Bending Schedule (BBS Calculator)
-    # --------------------------------------------------
     elif est_sub_mod == "BBS":
       st.subheader("🏗️ Bar Bending Schedule (BBS Calculator)")
 
       default_covers = {"Footing": 50, "Column": 40, "Beam": 25, "Slab": 20}
 
       def update_cover_from_component():
-        selected_comp = st.session_state.get(
-            "bbs_rcc_component", "Footing"
-        )
-        st.session_state["bbs_cover"] = default_covers.get(
-            selected_comp, 25
-        )
+        selected_comp = st.session_state.get("bbs_rcc_component", "Footing")
+        st.session_state["bbs_cover"] = default_covers.get(selected_comp, 25)
 
       if "bbs_cover" not in st.session_state:
         st.session_state["bbs_cover"] = 50
@@ -3526,19 +3375,11 @@ def render_combined_master_report(user_key, site_name):
       dim_col1, dim_col2, dim_col3 = st.columns(3)
       with dim_col1:
         length_m = st.number_input(
-            "लांबी L (m):",
-            min_value=0.1,
-            value=3.0,
-            step=0.1,
-            key="bbs_l",
+            "लांबी L (m):", min_value=0.1, value=3.0, step=0.1, key="bbs_l"
         )
       with dim_col2:
         width_m = st.number_input(
-            "रुंदी B (m):",
-            min_value=0.1,
-            value=0.3,
-            step=0.05,
-            key="bbs_b",
+            "रुंदी B (m):", min_value=0.1, value=0.3, step=0.05, key="bbs_b"
         )
       with dim_col3:
         height_m = st.number_input(
@@ -3591,10 +3432,7 @@ def render_combined_master_report(user_key, site_name):
           )
         with c2:
           f_dist_dia = st.selectbox(
-              "Distribution Bar DIA (mm):",
-              dia_list,
-              index=1,
-              key="f_d_dia",
+              "Distribution Bar DIA (mm):", dia_list, index=1, key="f_d_dia"
           )
           f_dist_spacing = st.number_input(
               "Distribution Bar Spacing (mm):",
@@ -3608,10 +3446,7 @@ def render_combined_master_report(user_key, site_name):
         c1, c2, c3 = st.columns(3)
         with c1:
           col_main_dia = st.selectbox(
-              "Main Vertical Bar DIA (mm):",
-              dia_list,
-              index=3,
-              key="col_m_dia",
+              "Main Vertical Bar DIA (mm):", dia_list, index=3, key="col_m_dia"
           )
           col_main_nos = st.number_input(
               "Main Bars (नग/Nos):",
@@ -3653,10 +3488,7 @@ def render_combined_master_report(user_key, site_name):
           )
         with c2:
           bm_bot_dia = st.selectbox(
-              "Bottom Main Bar DIA (mm):",
-              dia_list,
-              index=3,
-              key="bm_b_dia",
+              "Bottom Main Bar DIA (mm):", dia_list, index=3, key="bm_b_dia"
           )
           bm_bot_nos = st.number_input(
               "Bottom Bars (नग/Nos):",
@@ -3692,10 +3524,7 @@ def render_combined_master_report(user_key, site_name):
           )
         with c2:
           sl_dist_dia = st.selectbox(
-              "Distribution Bar DIA (mm):",
-              dia_list,
-              index=0,
-              key="sl_d_dia",
+              "Distribution Bar DIA (mm):", dia_list, index=0, key="sl_d_dia"
           )
           sl_dist_spacing = st.number_input(
               "Distribution Bar Spacing (mm):",
@@ -3748,9 +3577,7 @@ def render_combined_master_report(user_key, site_name):
         if rcc_comp == "Footing":
           m_leg = 200.0
           m_cut_m = (l_net + (2 * m_leg) - (4 * f_main_dia)) / 1000.0
-          m_nos = (
-              math.ceil(width_mm / f_main_spacing) + 1
-          ) * num_members
+          m_nos = (math.ceil(width_mm / f_main_spacing) + 1) * num_members
           m_tot_len = m_cut_m * m_nos
           m_unit_wt = (f_main_dia**2) / 162.0
           m_tot_wt = m_tot_len * m_unit_wt
@@ -3766,9 +3593,7 @@ def render_combined_master_report(user_key, site_name):
 
           d_leg = 200.0
           d_cut_m = (b_net + (2 * d_leg) - (4 * f_dist_dia)) / 1000.0
-          d_nos = (
-              math.ceil(length_mm / f_dist_spacing) + 1
-          ) * num_members
+          d_nos = (math.ceil(length_mm / f_dist_spacing) + 1) * num_members
           d_tot_len = d_cut_m * d_nos
           d_unit_wt = (f_dist_dia**2) / 162.0
           d_tot_wt = d_tot_len * d_unit_wt
@@ -3800,18 +3625,12 @@ def render_combined_master_report(user_key, site_name):
           })
 
           hook_len = (
-              10 * col_st_dia
-              if "135°" in col_hook_angle
-              else 6 * col_st_dia
+              10 * col_st_dia if "135°" in col_hook_angle else 6 * col_st_dia
           )
           st_cut_m = (
-              (2 * (b_net + h_net))
-              + (2 * hook_len)
-              - (3 * 2 * col_st_dia)
+              (2 * (b_net + h_net)) + (2 * hook_len) - (3 * 2 * col_st_dia)
           ) / 1000.0
-          st_nos = (
-              math.ceil(height_mm / col_st_spacing) + 1
-          ) * num_members
+          st_nos = (math.ceil(height_mm / col_st_spacing) + 1) * num_members
           st_tot_len = st_cut_m * st_nos
           st_unit_wt = (col_st_dia**2) / 162.0
           st_tot_wt = st_tot_len * st_unit_wt
@@ -3859,13 +3678,9 @@ def render_combined_master_report(user_key, site_name):
           })
 
           st_cut_m = (
-              (2 * (b_net + h_net))
-              + (2 * 10 * bm_st_dia)
-              - (3 * 2 * bm_st_dia)
+              (2 * (b_net + h_net)) + (2 * 10 * bm_st_dia) - (3 * 2 * bm_st_dia)
           ) / 1000.0
-          st_nos = (
-              math.ceil(length_mm / bm_st_spacing) + 1
-          ) * num_members
+          st_nos = (math.ceil(length_mm / bm_st_spacing) + 1) * num_members
           st_tot_len = st_cut_m * st_nos
           st_unit_wt = (bm_st_dia**2) / 162.0
           st_tot_wt = st_tot_len * st_unit_wt
@@ -3882,9 +3697,7 @@ def render_combined_master_report(user_key, site_name):
         else:  # Slab
           m_hook = 10 * sl_main_dia
           m_cut_m = (l_net + (2 * m_hook)) / 1000.0
-          m_nos = (
-              math.ceil(width_mm / sl_main_spacing) + 1
-          ) * num_members
+          m_nos = (math.ceil(width_mm / sl_main_spacing) + 1) * num_members
           m_tot_len = m_cut_m * m_nos
           m_unit_wt = (sl_main_dia**2) / 162.0
           m_tot_wt = m_tot_len * m_unit_wt
@@ -3900,9 +3713,7 @@ def render_combined_master_report(user_key, site_name):
 
           d_hook = 10 * sl_dist_dia
           d_cut_m = (b_net + (2 * d_hook)) / 1000.0
-          d_nos = (
-              math.ceil(length_mm / sl_dist_spacing) + 1
-          ) * num_members
+          d_nos = (math.ceil(length_mm / sl_dist_spacing) + 1) * num_members
           d_tot_len = d_cut_m * d_nos
           d_unit_wt = (sl_dist_dia**2) / 162.0
           d_tot_wt = d_tot_len * d_unit_wt
@@ -3953,41 +3764,30 @@ def render_combined_master_report(user_key, site_name):
 """
         st.markdown(report_table, unsafe_allow_html=True)
 
-        msg_text = (
-            "🏗️ *PATIL INFRATECH - BAR BENDING SCHEDULE (BBS)*\n"
-        )
+        msg_text = "🏗️ *PATIL INFRATECH - BAR BENDING SCHEDULE (BBS)*\n"
         msg_text += f"👤 *Prepared For:* {current_user_name}\n"
         msg_text += f"📐 *Component:* {rcc_comp}\n"
+        msg_text += f"📅 *Date:* {get_ist_time().strftime('%d-%m-%Y')}\n"
         msg_text += (
-            f"📅 *Date:* {get_ist_time().strftime('%d-%m-%Y')}\n"
-        )
-        msg_text += (
-            "📐 *Size:*"
-            f" {length_m:.2f}m x {width_m:.2f}m x {height_m:.2f}m\n\n"
+            f"📐 *Size:* {length_m:.2f}m x {width_m:.2f}m x {height_m:.2f}m\n\n"
         )
         msg_text += "📊 *DETAILED BAR SCHEDULE:*\n"
         msg_text += "--------------------------------\n"
 
         for idx, item in enumerate(calc_list, 1):
           msg_text += f"*{idx}. {item['Desc']}*\n"
-          msg_text += (
-              f"  • Nos: {item['Nos']} | Dia: {item['Dia']}mm\n"
-          )
+          msg_text += f"  • Nos: {item['Nos']} | Dia: {item['Dia']}mm\n"
           msg_text += f"  • Cutting Len: {item['Len']:.3f} m\n"
           msg_text += f"  • Total Len: {item['TotLen']:.2f} m\n"
           msg_text += f"  • Total Weight: {item['TotWt']:.2f} Kg\n\n"
 
         msg_text += "--------------------------------\n"
         msg_text += (
-            "⚖️ *TOTAL STEEL WEIGHT:*"
-            f" {total_weight_kg:.2f} Kg ({total_weight_kg/1000:.3f} MT)\n"
+            f"⚖️ *TOTAL STEEL WEIGHT:* {total_weight_kg:.2f} Kg"
+            f" ({total_weight_kg/1000:.3f} MT)\n"
         )
-        msg_text += (
-            f"💵 *Steel Rate:* ₹ {steel_rate_kg:.2f} / Kg\n"
-        )
-        msg_text += (
-            f"💰 *ESTIMATED COST:* ₹ {total_cost:.2f}/-+\n"
-        )
+        msg_text += f"💵 *Steel Rate:* ₹ {steel_rate_kg:.2f} / Kg\n"
+        msg_text += f"💰 *ESTIMATED COST:* ₹ {total_cost:.2f}/-+\n"
         msg_text += "--------------------------------\n"
         msg_text += "_Generated by Patil Infratech_"
 
@@ -4024,15 +3824,11 @@ def render_combined_master_report(user_key, site_name):
           conn.commit()
           conn.close()
 
-    # --------------------------------------------------
-    # ४. Quantity Surveying & Abstract Sheet Master
-    # --------------------------------------------------
     elif est_sub_mod == "Quantity Surveying":
       st.subheader("📈 Quantity Surveying & Abstract Sheet Master")
       st.caption(
-          "💡 नोटबुकच्या मोजमाप पद्धतीनुसार खालील टेबलमध्ये"
-          " Description, Nos, Length, Width, Height भरा. हिशोब तयार"
-          " करा!"
+          "💡 नोटबुकच्या मोजमाप पद्धतीनुसार खालील टेबलमध्ये Description, Nos,"
+          " Length, Width, Height भरा. हिशोब तयार करा!"
       )
 
       with st.expander("📷 2D Plan / Blueprint / Camera Reference"):
@@ -4043,8 +3839,7 @@ def render_combined_master_report(user_key, site_name):
         )
         if "Upload" in plan_option:
           uploaded_plan = st.file_uploader(
-              "Upload Blueprint (PNG/JPG):",
-              type=["png", "jpg", "jpeg"],
+              "Upload Blueprint (PNG/JPG):", type=["png", "jpg", "jpeg"]
           )
           if uploaded_plan:
             st.image(
@@ -4053,9 +3848,7 @@ def render_combined_master_report(user_key, site_name):
                 use_column_width=True,
             )
         else:
-          cam_pic = st.camera_input(
-              "📸 Capture 2D Plan from Camera"
-          )
+          cam_pic = st.camera_input("📸 Capture 2D Plan from Camera")
           if cam_pic:
             st.image(
                 cam_pic,
@@ -4064,8 +3857,8 @@ def render_combined_master_report(user_key, site_name):
             )
 
       st.markdown(
-          "### 🏢 Construction Stages Measurement Sheet (Excavation"
-          " to Finishing)"
+          "### 🏢 Construction Stages Measurement Sheet (Excavation to"
+          " Finishing)"
       )
 
       stages = [
@@ -4083,30 +3876,20 @@ def render_combined_master_report(user_key, site_name):
       stage_results = []
 
       for idx, stg_name in enumerate(stages):
-        is_area_unit = (
-            "Flooring" in stg_name or "Plaster" in stg_name
-        )
+        is_area_unit = "Flooring" in stg_name or "Plaster" in stg_name
         is_brickwork = "Brickwork" in stg_name
         is_plaster = "Plaster" in stg_name
 
         st.markdown(f"#### 🔹 {stg_name}")
 
-        c_desc, c_nos, c_l, c_w, c_h = st.columns(
-            [2.5, 1, 1, 1, 1]
-        )
+        c_desc, c_nos, c_l, c_w, c_h = st.columns([2.5, 1, 1, 1, 1])
         with c_desc:
           desc_val = st.text_input(
-              f"Description #{idx}",
-              value=stg_name,
-              key=f"qs_desc_{idx}",
+              f"Description #{idx}", value=stg_name, key=f"qs_desc_{idx}"
           )
         with c_nos:
           nos_val = st.number_input(
-              f"Nos #{idx}",
-              min_value=0,
-              value=0,
-              step=1,
-              key=f"qs_nos_{idx}",
+              f"Nos #{idx}", min_value=0, value=0, step=1, key=f"qs_nos_{idx}"
           )
         with c_l:
           l_val = st.number_input(
@@ -4148,8 +3931,8 @@ def render_combined_master_report(user_key, site_name):
             unit_label = "m³"
 
           st.markdown(
-              f"**📐 Single Qty: `{single_qty:.3f} {unit_label}` |"
-              f" Total Qty: `{total_qty:.3f} {unit_label}`**"
+              f"**📐 Single Qty: `{single_qty:.3f} {unit_label}` | Total Qty:"
+              f" `{total_qty:.3f} {unit_label}`**"
           )
 
           mat_summary = "मटेरियल लागू नाही"
@@ -4160,13 +3943,12 @@ def render_combined_master_report(user_key, site_name):
             sand_m3 = (4 / 13) * dry_vol
             agg_m3 = (8 / 13) * dry_vol
             mat_summary = (
-                f"Cement: {c_bags} Bags, Sand: {sand_m3:.2f} m³,"
-                f" Aggregate: {agg_m3:.2f} m³"
+                f"Cement: {c_bags} Bags, Sand: {sand_m3:.2f} m³, Aggregate:"
+                f" {agg_m3:.2f} m³"
             )
             st.info(
-                f"• **Cement:** {c_bags} Bags | **Sand:**"
-                f" {sand_m3:.2f} m³ | **Aggregate:**"
-                f" {agg_m3:.2f} m³"
+                f"• **Cement:** {c_bags} Bags | **Sand:** {sand_m3:.2f} m³ |"
+                f" **Aggregate:** {agg_m3:.2f} m³"
             )
 
           elif (
@@ -4181,14 +3963,13 @@ def render_combined_master_report(user_key, site_name):
             agg_m3 = (3 / 5.5) * dry_vol
             steel_kg = total_qty * 80.0
             mat_summary = (
-                f"Cement: {c_bags} Bags, Sand: {sand_m3:.2f} m³,"
-                f" Aggregate: {agg_m3:.2f} m³, Steel:"
-                f" {steel_kg:.1f} Kg"
+                f"Cement: {c_bags} Bags, Sand: {sand_m3:.2f} m³, Aggregate:"
+                f" {agg_m3:.2f} m³, Steel: {steel_kg:.1f} Kg"
             )
             st.info(
-                f"• **Cement:** {c_bags} Bags | **Sand:**"
-                f" {sand_m3:.2f} m³ | **Aggregate:**"
-                f" {agg_m3:.2f} m³ | **Steel:** {steel_kg:.1f} Kg"
+                f"• **Cement:** {c_bags} Bags | **Sand:** {sand_m3:.2f} m³ |"
+                f" **Aggregate:** {agg_m3:.2f} m³ | **Steel:** {steel_kg:.1f}"
+                " Kg"
             )
 
           elif "Brickwork" in stg_name:
@@ -4197,12 +3978,12 @@ def render_combined_master_report(user_key, site_name):
             c_bags = math.ceil((1 / 5) * mortar_vol * 28.8)
             sand_m3 = (4 / 5) * mortar_vol
             mat_summary = (
-                f"Bricks: {bricks} Nos, Cement: {c_bags} Bags,"
-                f" Sand: {sand_m3:.2f} m³"
+                f"Bricks: {bricks} Nos, Cement: {c_bags} Bags, Sand:"
+                f" {sand_m3:.2f} m³"
             )
             st.info(
-                f"• **Bricks:** {bricks} Nos | **Cement:** {c_bags}"
-                f" Bags | **Sand:** {sand_m3:.2f} m³"
+                f"• **Bricks:** {bricks} Nos | **Cement:** {c_bags} Bags |"
+                f" **Sand:** {sand_m3:.2f} m³"
             )
 
           elif "Plaster" in stg_name:
@@ -4211,9 +3992,7 @@ def render_combined_master_report(user_key, site_name):
             dry_vol = wet_vol * 1.33
             c_bags = math.ceil((1 / 5) * dry_vol * 28.8)
             sand_m3 = (4 / 5) * dry_vol
-            mat_summary = (
-                f"Cement: {c_bags} Bags, Sand: {sand_m3:.2f} m³"
-            )
+            mat_summary = f"Cement: {c_bags} Bags, Sand: {sand_m3:.2f} m³"
             st.info(
                 f"• **Cement (12mm):** {c_bags} Bags | **Sand:**"
                 f" {sand_m3:.2f} m³"
@@ -4233,8 +4012,7 @@ def render_combined_master_report(user_key, site_name):
 
         if is_brickwork:
           st.markdown(
-              "##### 🚪 Brickwork Deductions (Doors / Windows in"
-              " m³)"
+              "##### 🚪 Brickwork Deductions (Doors / Windows in m³)"
           )
           ded_key_bw = f"bw_ded_count_{idx}"
           if ded_key_bw not in st.session_state:
@@ -4252,9 +4030,7 @@ def render_combined_master_report(user_key, site_name):
             dc1, dc2, dc3, dc4, dc5 = st.columns(5)
             with dc1:
               dt = st.selectbox(
-                  "Type",
-                  ["Door", "Window"],
-                  key=f"bw_dt_{idx}_{d_i}",
+                  "Type", ["Door", "Window"], key=f"bw_dt_{idx}_{d_i}"
               )
             with dc2:
               dl = st.number_input(
@@ -4294,22 +4070,17 @@ def render_combined_master_report(user_key, site_name):
 
           if bw_ded_vol > 0:
             st.markdown(
-                "**🔴 Brickwork Deduction Vol:"
-                f" `{bw_ded_vol:.3f} m³`**"
+                f"**🔴 Brickwork Deduction Vol: `{bw_ded_vol:.3f} m³`**"
             )
 
         if is_plaster:
-          st.markdown(
-              "##### 🚪 Plaster Deductions (Doors / Windows in"
-              " m²)"
-          )
+          st.markdown("##### 🚪 Plaster Deductions (Doors / Windows in m²)")
           ded_key_pl = f"pl_ded_count_{idx}"
           if ded_key_pl not in st.session_state:
             st.session_state[ded_key_pl] = 1
 
           if st.button(
-              f"➕ Add Plaster Deduction Item #{idx}",
-              key=f"btn_pl_ded_{idx}",
+              f"➕ Add Plaster Deduction Item #{idx}", key=f"btn_pl_ded_{idx}"
           ):
             st.session_state[ded_key_pl] += 1
             st.rerun()
@@ -4319,9 +4090,7 @@ def render_combined_master_report(user_key, site_name):
             dc1, dc2, dc3, dc4 = st.columns(4)
             with dc1:
               dt = st.selectbox(
-                  "Type",
-                  ["Door", "Window"],
-                  key=f"pl_dt_{idx}_{d_i}",
+                  "Type", ["Door", "Window"], key=f"pl_dt_{idx}_{d_i}"
               )
             with dc2:
               dl = st.number_input(
@@ -4353,8 +4122,7 @@ def render_combined_master_report(user_key, site_name):
 
           if pl_ded_area > 0:
             st.markdown(
-                "**🔴 Plaster Deduction Area:"
-                f" `{pl_ded_area:.3f} m²`**"
+                f"**🔴 Plaster Deduction Area: `{pl_ded_area:.3f} m²`**"
             )
 
         st.write("---")
@@ -4385,17 +4153,14 @@ def render_combined_master_report(user_key, site_name):
       ):
         if not stage_results:
           st.warning(
-              "⚠️ कृपया कमीत कमी एका स्टेजसाठी Nos, Length, Width"
-              " आणि Height च्या व्हॅल्यू भरा!"
+              "⚠️ कृपया कमीत कमी एका स्टेजसाठी Nos, Length, Width आणि Height च्या"
+              " व्हॅल्यू भरा!"
           )
         else:
           st.success(
-              "🎉 Abstract Sheet & Material Report यशस्वीरित्या तयार"
-              " झाला आहे!"
+              "🎉 Abstract Sheet & Material Report यशस्वीरित्या तयार झाला आहे!"
           )
-          st.markdown(
-              "### 📊 ABSTRACT SHEET & MATERIAL REPORT"
-          )
+          st.markdown("### 📊 ABSTRACT SHEET & MATERIAL REPORT")
           st.info(f"👤 **Prepared For:** {current_user_name}")
 
           table_rows = ""
@@ -4403,15 +4168,13 @@ def render_combined_master_report(user_key, site_name):
 
           for r in stage_results:
             table_rows += (
-                f"| {r['Stage']} | {r['Nos']} |"
-                f" {r['Dimensions']} | {r['TotalQty']} |"
-                f" {r['Material']} |\n"
+                f"| {r['Stage']} | {r['Nos']} | {r['Dimensions']} |"
+                f" {r['TotalQty']} | {r['Material']} |\n"
             )
             whatsapp_text_items += (
                 f"• *{r['Stage']}*\n  - Nos: {r['Nos']} | Size:"
-                f" {r['Dimensions']}\n  - Single Qty:"
-                f" {r['SingleQty']:.3f}\n  - Total Qty:"
-                f" {r['TotalQty']}\n  - Material:"
+                f" {r['Dimensions']}\n  - Single Qty: {r['SingleQty']:.3f}\n "
+                f" - Total Qty: {r['TotalQty']}\n  - Material:"
                 f" {r['Material']}\n\n"
             )
 
@@ -4429,21 +4192,12 @@ def render_combined_master_report(user_key, site_name):
 * **Status:** Report Generated Successfully (No Cost/Amount Shown)
 </div>
 """
-          st.markdown(
-              final_report_html, unsafe_allow_html=True
-          )
+          st.markdown(final_report_html, unsafe_allow_html=True)
 
-          msg_text = (
-              "📊 *PATIL INFRATECH - ABSTRACT SHEET*\n"
-          )
+          msg_text = "📊 *PATIL INFRATECH - ABSTRACT SHEET*\n"
           msg_text += f"👤 *Prepared For:* {current_user_name}\n"
-          msg_text += (
-              f"📅 *Date:* {get_ist_time().strftime('%d-%m-%Y')}\n\n"
-          )
-          msg_text += (
-              "📋 *MEASUREMENT"
-              f" DETAILS:*\n{whatsapp_text_items}"
-          )
+          msg_text += f"📅 *Date:* {get_ist_time().strftime('%d-%m-%Y')}\n\n"
+          msg_text += f"📋 *MEASUREMENT DETAILS:*\n{whatsapp_text_items}"
           msg_text += "_Generated by Patil Infratech_"
 
           encoded_msg = urllib.parse.quote(msg_text)
@@ -4466,8 +4220,8 @@ def render_combined_master_report(user_key, site_name):
             cursor = conn.cursor()
             now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
             cursor.execute(
-                "INSERT INTO history (user_key, timestamp,"
-                " user_note, report_data, site_name) VALUES (?, ?, ?, ?, ?)",
+                "INSERT INTO history (user_key, timestamp, user_note,"
+                " report_data, site_name) VALUES (?, ?, ?, ?, ?)",
                 (
                     current_user_name,
                     now_str,
