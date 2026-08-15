@@ -387,6 +387,21 @@ def init_db():
         (mat, rat),
     )
 
+  # ५.१ सर्व मुख्य टेबल्समध्ये site_name कॉलम सुरक्षितपणे जोडणे
+tables_to_update = [
+    "history",
+    "site_attendance",
+    "site_inventory",
+    "site_progress",
+    "pre_concreting_checklist",
+]
+for tbl in tables_to_update:
+  try:
+    cursor.execute(
+        f"ALTER TABLE {tbl} ADD COLUMN site_name TEXT DEFAULT 'Default Site'"
+    )
+  except sqlite3.OperationalError:
+    pass
   conn.commit()
   conn.close()
 
@@ -658,6 +673,12 @@ st.markdown(
         box-shadow: 0 8px 25px rgba(245, 158, 11, 0.2);
     }
 
+    # ७.१ Active Site Name डिफॉल्ट सेट करणे
+if (
+    "current_site_name" not in st.session_state
+    or not st.session_state.current_site_name
+):
+  st.session_state.current_site_name = "साई रेसिडेन्सी - साईट १"
     /* ८. व्हीआयपी आणि फ्री बॅज */
     .gold-vip-badge {
         background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);
@@ -1758,6 +1779,29 @@ else:
       unsafe_allow_html=True,
   )
 
+# १३.१ ॲक्टिव्ह साईट सिलेक्टर बार (Active Site Switcher)
+with st.container():
+  st.markdown(
+      """
+        <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-left: 5px solid #f59e0b; padding: 12px 18px; border-radius: 12px; margin-bottom: 15px; border: 1px solid rgba(245,158,11,0.3);">
+            <span style="color:#94a3b8; font-size:11px; font-weight:bold;">📍 चालू प्रोजेक्ट / साईट:</span><br>
+            <b style="color:#f59e0b; font-size:17px;">🏗️ """
+      + str(st.session_state.current_site_name)
+      + """</b>
+        </div>
+    """,
+      unsafe_allow_html=True,
+  )
+
+  with st.popover("✏️ साईटचे नाव बदला"):
+    new_site_input = st.text_input(
+        "नवीन साईटचे नाव टाका:", value=st.session_state.current_site_name
+    )
+    if st.button("💾 सेव्ह करा", key="btn_save_site_name", type="primary"):
+      if new_site_input.strip():
+        st.session_state.current_site_name = new_site_input.strip()
+        st.success("✅ साईट अपडेट झाली!")
+        st.rerun()
 if col_lo.button("🔄 Logout"):
   st.session_state.app_user_name = None
   st.session_state.otp_verified = False
@@ -4153,6 +4197,100 @@ elif st.session_state.selected_module == "Estimator Tools":
             conn.commit()
             conn.close()
 
+# १६.१ मास्टर ३-इन-१ कंबाइन्ड PDF रिपोर्ट फंक्शन
+def render_combined_master_report(user_key, site_name):
+  st.subheader(f"📑 Master Project Estimate: {site_name}")
+  st.caption(
+      "💡 मागील २ दिवसांमधील Rate Analysis, BBS आणि Quantity Survey चा एकत्रित"
+      " IS-Code फॉरमॅट रिपोर्ट."
+  )
+
+  conn = get_db_connection()
+  cursor = conn.cursor()
+
+  # मागील ४८ तासांतील डेटा मिळवणे
+  two_days_ago = (get_ist_time() - datetime.timedelta(days=2)).strftime(
+      "%Y-%m-%d 00:00:00"
+  )
+  cursor.execute(
+      """
+        SELECT timestamp, report_data FROM history 
+        WHERE user_key = ? AND (site_name = ? OR site_name IS NULL) AND timestamp >= ?
+        ORDER BY id ASC
+    """,
+      (user_key, site_name, two_days_ago),
+  )
+
+  records = cursor.fetchall()
+  conn.close()
+
+  if not records:
+    st.warning(
+        f"⚠️ '{site_name}' साठी मागील २ दिवसांत कोणतेही कॅल्क्युलेशन सेव्ह"
+        " केलेले नाही."
+    )
+    return
+
+  combined_html = f"""
+    <div style="background: #ffffff; color: #000000; padding: 25px; border-radius: 8px; font-family: Arial, sans-serif;">
+        <div style="border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 15px; text-align: center;">
+            <h2 style="margin:0; color:#000;">PATIL INFRATECH</h2>
+            <p style="margin:2px 0; font-size:12px; font-weight:bold;">CIVIL ENGINEERS & QUANTITY SURVEYORS</p>
+            <p style="margin:0; font-size:11px; color:#555;">IS 1200 & IS 2502 Compliant Report</p>
+        </div>
+        <table style="width: 100%; margin-bottom: 15px; font-size: 12px;">
+            <tr>
+                <td><b>Project / Site:</b> {site_name}</td>
+                <td style="text-align: right;"><b>Date:</b> {get_ist_time().strftime('%d-%m-%Y')}</td>
+            </tr>
+            <tr>
+                <td><b>Prepared By:</b> {user_key}</td>
+                <td style="text-align: right;"><b>Period:</b> Last 48 Hours Estimation</td>
+            </tr>
+        </table>
+        <hr style="border: 0.5px solid #ccc;">
+    """
+
+  for idx, r in enumerate(records, 1):
+    combined_html += f"""
+        <div style="margin-bottom: 20px;">
+            <h4 style="color: #0284c7; margin-bottom: 5px;">विभाग #{idx} ({r['timestamp']})</h4>
+            <div style="font-size: 11px;">{r['report_data']}</div>
+        </div>
+        """
+
+  combined_html += """
+        <br>
+        <table style="width: 100%; margin-top: 30px; font-size: 12px;">
+            <tr>
+                <td>___________________<br><b>Site Engineer</b></td>
+                <td style="text-align: right;">___________________<br><b>Consultant / Checker</b></td>
+            </tr>
+        </table>
+    </div>
+    """
+
+  st.markdown(combined_html, unsafe_allow_html=True)
+  st.write("---")
+
+  c1, c2 = st.columns(2)
+  with c1:
+    st.markdown(
+        """
+            <button onclick="window.print()" style="width: 100%; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: black; border: none; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer;">
+                📄 Print / Download Master 3-in-1 PDF
+            </button>
+        """,
+        unsafe_allow_html=True,
+    )
+  with c2:
+    wa_text = (
+        f"🏗️ *PATIL INFRATECH - MASTER ESTIMATE REPORT*\n📍 *Site:*"
+        f" {site_name}\n👤 *Engineer:* {user_key}\n📅 *Date:*"
+        f" {get_ist_time().strftime('%d-%m-%Y')}\n\n✅ 3-in-1 Estimation Report"
+        " Generated."
+    )
+    render_whatsapp_feature(urllib.parse.quote(wa_text), "master_pdf_wa")
 # ==========================================
 # 📌 विभाग १७: SITE MANAGER मॉड्यूल (Attendance, Inventory, Progress, Checklist, Weekly)
 # ==========================================
