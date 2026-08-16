@@ -2214,7 +2214,7 @@ full_html_doc = f"""
         <head>
             <meta charset="utf-8">
             <title>PATIL INFRATECH - {site_name} Report</title>
-            <style>
+          <style>
                 @page {{
                     size: A4 portrait;
                     margin: 10mm;
@@ -2242,24 +2242,6 @@ full_html_doc = f"""
                     border: 1px solid #cbd5e1;
                     box-sizing: border-box;
                     min-height: 1050px;
-                }}
-                .watermark {{
-                    position: absolute;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%) rotate(-30deg);
-                    font-size: 24px;
-                    font-weight: 900;
-                    color: rgba(15, 23, 42, 0.06);
-                    text-transform: uppercase;
-                    letter-spacing: 2.5px;
-                    text-align: center;
-                    width: 80%;
-                    border: 3px dashed rgba(15, 23, 42, 0.08);
-                    padding: 20px;
-                    border-radius: 12px;
-                    pointer-events: none;
-                    z-index: 999;
                 }}
                 .header-title {{
                     text-align: center;
