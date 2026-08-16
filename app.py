@@ -543,147 +543,141 @@ def check_user_premium_status(username):
 is_curr_premium, _ = check_user_premium_status(current_user_name)
 
 # ==========================================
-# 📌 विभाग ८: BRANDED CONSTRUCTION THEME CSS
+# 📌 विभाग ८: ULTRA-PREMIUM ENTERPRISE THEME CSS
 # ==========================================
 st.markdown(
     """
     <style>
-    #MainMenu { visibility: hidden; }
-    header[data-testid="stHeader"] { visibility: hidden; height: 0%; display: none !important; }
-    footer { visibility: hidden; display: none !important; }
-    .stAppHeader { display: none !important; }
-    [data-testid="stToolbar"] { visibility: hidden !important; display: none !important; }
-    [data-testid="stDecoration"] { display: none !important; }
-    [data-testid="stStatusWidget"] { visibility: hidden !important; }
-    button[title="Increment"], button[title="Decrement"] { display: none !important; }
-    div[data-testid="stNumberInputStepUp"], div[data-testid="stNumberInputStepDown"] { display: none !important; }
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
+
+    /* १. रिसेट व क्लीन लेआउट */
+    #MainMenu, header[data-testid="stHeader"], footer, .stAppHeader, [data-testid="stToolbar"], [data-testid="stDecoration"] {
+        display: none !important;
+        visibility: hidden !important;
+    }
 
     html, body, .stApp, [data-testid="stAppViewContainer"] {
-        background: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 50%, #020617 100%) !important;
-        color: #f8fafc !important;
-        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+        background-color: #0b0f19 !important;
+        background-image: 
+            radial-gradient(at 0% 0%, rgba(245, 158, 11, 0.05) 0px, transparent 50%),
+            radial-gradient(at 100% 100%, rgba(14, 165, 233, 0.04) 0px, transparent 50%) !important;
+        color: #f1f5f9 !important;
+        font-family: 'Plus Jakarta Sans', -apple-system, sans-serif !important;
+        letter-spacing: -0.01em;
     }
 
+    /* २. ब्रँड हेडर (Minimal Sleek Card) */
     .brand-header {
-        background: linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #334155 100%);
-        border: 1px solid rgba(245, 158, 11, 0.4);
-        border-top: 4px solid #f59e0b;
-        padding: 24px 20px;
-        border-radius: 16px;
-        text-align: center;
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6), 0 0 20px rgba(245, 158, 11, 0.15);
-        margin-bottom: 24px;
-    }
-
-    div[data-baseweb="input"],
-    div[data-baseweb="base-input"],
-    div[data-testid="stNumberInputContainer"],
-    div[data-testid="stTextInput"] {
-        background-color: #0f172a !important;
-        color: #ffffff !important;
-    }
-
-    input, select, textarea {
-        background-color: #0f172a !important;
-        color: #ffffff !important;
-        border: 1px solid #334155 !important;
-        border-radius: 10px !important;
-        font-weight: 500 !important;
-    }
-    input:focus, textarea:focus {
-        border-color: #f59e0b !important;
-        box-shadow: 0 0 10px rgba(245, 158, 11, 0.3) !important;
-    }
-
-    div.stButton > button[kind="primary"] {
-        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
-        color: #000000 !important;
-        font-weight: 800 !important;
-        border-radius: 10px !important;
-        border: none !important;
-        padding: 12px 24px !important;
-        box-shadow: 0 4px 15px rgba(245, 158, 11, 0.35) !important;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        transition: all 0.2s ease-in-out;
-    }
-    div.stButton > button[kind="primary"]:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(245, 158, 11, 0.5) !important;
-        background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%) !important;
-    }
-
-    div.stButton > button {
-        background: #1e293b !important;
-        color: #f8fafc !important;
-        border: 1px solid #334155 !important;
-        border-radius: 10px !important;
-        font-weight: 600 !important;
-        transition: all 0.2s ease;
-    }
-    div.stButton > button:hover {
-        border-color: #f59e0b !important;
-        color: #f59e0b !important;
-    }
-
-    .module-card {
-        background: rgba(30, 41, 59, 0.7);
+        background: linear-gradient(180deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.8) 100%);
         border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 16px;
-        padding: 22px 16px;
+        border-bottom: 2px solid #f59e0b;
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        padding: 28px 24px;
+        border-radius: 20px;
         text-align: center;
-        backdrop-filter: blur(8px);
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+        box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        margin-bottom: 28px;
+    }
+
+    /* ३. प्रिमियम मॉड्युल कार्ड्स (Glassmorphic Cards) */
+    .module-card {
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.6) 100%) !important;
+        border: 1px solid rgba(255, 255, 255, 0.07) !important;
+        border-radius: 18px !important;
+        padding: 24px 20px !important;
+        text-align: center !important;
+        backdrop-filter: blur(12px) !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5) !important;
     }
     .module-card:hover {
-        border-color: #f59e0b;
-        transform: translateY(-3px);
-        box-shadow: 0 8px 25px rgba(245, 158, 11, 0.2);
+        border-color: rgba(245, 158, 11, 0.4) !important;
+        transform: translateY(-4px) !important;
+        box-shadow: 0 20px 35px -10px rgba(245, 158, 11, 0.15) !important;
     }
 
+    /* ४. इनपुट बॉक्सेस व सिलेक्टर्स */
+    div[data-baseweb="input"], div[data-baseweb="base-input"], div[data-baseweb="select"] > div {
+        background-color: #0f172a !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 12px !important;
+        color: #ffffff !important;
+        transition: all 0.2s ease !important;
+    }
+    div[data-baseweb="input"]:focus-within, div[data-baseweb="select"] > div:focus-within {
+        border-color: #f59e0b !important;
+        box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15) !important;
+    }
+
+    /* ५. बटन्स डिझाईन */
+    div.stButton > button[kind="primary"] {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+        color: #0f172a !important;
+        font-weight: 700 !important;
+        font-size: 14px !important;
+        border-radius: 12px !important;
+        border: none !important;
+        padding: 12px 24px !important;
+        box-shadow: 0 4px 20px rgba(245, 158, 11, 0.3) !important;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+    div.stButton > button[kind="primary"]:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 8px 25px rgba(245, 158, 11, 0.45) !important;
+    }
+    div.stButton > button:not([kind="primary"]) {
+        background: rgba(30, 41, 59, 0.6) !important;
+        color: #e2e8f0 !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 12px !important;
+        font-weight: 600 !important;
+        backdrop-filter: blur(8px) !important;
+        transition: all 0.2s ease !important;
+    }
+    div.stButton > button:not([kind="primary"]):hover {
+        background: rgba(51, 65, 85, 0.8) !important;
+        border-color: rgba(255, 255, 255, 0.2) !important;
+        color: #ffffff !important;
+    }
+
+    /* ६. स्टायलिश बॅजेस */
     .gold-vip-badge {
-        background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);
-        color: #000000 !important;
-        padding: 6px 16px;
-        border-radius: 20px;
+        background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
+        color: #090d16 !important;
+        padding: 5px 14px;
+        border-radius: 9999px;
         font-weight: 800;
-        font-size: 13px;
-        display: inline-block;
-        box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+        font-size: 12px;
+        letter-spacing: 0.5px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        box-shadow: 0 4px 15px rgba(217, 119, 6, 0.35);
     }
     .free-user-badge {
-        background: #1e293b;
-        color: #38bdf8 !important;
-        padding: 6px 16px;
-        border-radius: 20px;
-        font-weight: 700;
-        font-size: 13px;
-        border: 1px solid #0284c7;
+        background: rgba(15, 23, 42, 0.8);
+        color: #94a3b8 !important;
+        padding: 5px 14px;
+        border-radius: 9999px;
+        font-weight: 600;
+        font-size: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
         display: inline-block;
     }
 
-    .galaxy-loader {
-        margin: 20px auto;
-        width: 80px;
-        height: 80px;
-        border-radius: 50%;
-        border: 4px solid transparent;
-        border-top-color: #f59e0b;
-        border-bottom-color: #00f2fe;
-        animation: spin-galaxy 1.5s linear infinite;
-        box-shadow: 0 0 30px rgba(245, 158, 11, 0.5);
-    }
-    @keyframes spin-galaxy {
-        0% { transform: rotate(0deg) scale(1); }
-        50% { transform: rotate(180deg) scale(1.1); }
-        100% { transform: rotate(360deg) scale(1); }
+    /* ७. कोड व आकडेवारी फॉन्ट */
+    code {
+        font-family: 'JetBrains Mono', monospace !important;
+        background: rgba(15, 23, 42, 0.8) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-radius: 6px !important;
+        padding: 2px 6px !important;
     }
     </style>
-""",
+    """,
     unsafe_allow_html=True,
 )
-
 
 # ==========================================
 # 📌 विभाग ९: WHATSAPP रिपोर्ट शेअरिंग कंपोनंट
