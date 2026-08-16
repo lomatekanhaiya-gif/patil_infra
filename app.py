@@ -2185,278 +2185,120 @@ full_html_doc = f"""
         cursor.execute(
             """
             SELECT timestamp, user_note, report_data FROM history 
+            WH# १६.१ मास्टर ३-इन-१ कंबाइन्ड PDF व Excel रिपोर्ट फंक्शन
+    def render_combined_master_report(user_key, site_name):
+        st.subheader(f"📑 Master Project Estimate: {site_name}")
+        st.caption("💡 Rate Analysis, BBS आणि Quantity Survey चा एकत्रित IS-Code फॉरमॅट रिपोर्ट.")
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        two_days_ago = (get_ist_time() - datetime.timedelta(days=2)).strftime("%Y-%m-%d 00:00:00")
+        cursor.execute(
+            """
+            SELECT timestamp, user_note, report_data FROM history 
             WHERE user_key = ? AND (site_name = ? OR site_name IS NULL) AND timestamp >= ?
             ORDER BY id ASC
-        """,
+            """,
             (user_key, site_name, two_days_ago),
         )
-
         records = cursor.fetchall()
         conn.close()
 
         if not records:
-            st.warning(
-                f"⚠️ '{site_name}' साठी मागील २ दिवसांत कोणतेही कॅल्क्युलेशन सेव्ह केलेले नाही. कृपया आधी टूल्स वापरून रिपोर्ट तयार करा."
-            )
+            st.warning(f"⚠️ '{site_name}' साठी मागील २ दिवसांत कोणतेही कॅल्क्युलेशन सेव्ह केलेले नाही.")
             return
 
-        # Markdown टेबलचे HTML मध्ये रूपांतर
-        def markdown_to_html_table(md_text):
-            lines = [line.strip() for line in md_text.strip().split("\n") if line.strip().startswith("|")]
-            if not lines:
-                return f"<div style='padding:8px; background:rgba(248, 250, 252, 0.85);'>{md_text}</div>"
-            
-            html_table = "<table class='custom-data-table'>"
-            for i, line in enumerate(lines):
-                cells = [c.strip() for c in line.split("|")[1:-1]]
-                if i == 1 and all(set(c).issubset({'-', ':', ' '}) for c in cells):
-                    continue
-                
-                if i == 0:
-                    html_table += "<thead><tr>"
-                    for c in cells:
-                        html_table += f"<th>{c}</th>"
-                    html_table += "</tr></thead><tbody>"
-                else:
-                    html_table += "<tr>"
-                    for c in cells:
-                        bold_formatted = c.replace("**", "<b>").replace("**", "</b>")
-                        html_table += f"<td>{bold_formatted}</td>"
-                    html_table += "</tr>"
-            html_table += "</tbody></table>"
-            return html_table
-
+        # HTML व CSS लेआउट (Double Braces {{ }} सह सुरक्षित)
         full_html_doc = f"""<!DOCTYPE html>
         <html>
         <head>
             <meta charset="utf-8">
-            <title>PATIL INFRATECH - {site_name} Master Report</title>
+            <title>PATIL INFRATECH - {site_name} Report</title>
             <style>
                 @page {{
                     size: A4 portrait;
-                    margin: 8mm;
+                    margin: 10mm;
                 }}
                 @media print {{
-                    body {{
-                        background: #ffffff !important;
-                        color: #000000 !important;
-                    }}
-                    .no-print {{
-                        display: none !important;
-                    }}
-                    .page-break {{
-                        page-break-before: always !important;
-                        break-before: page !important;
-                    }}
+                    body {{ background: #ffffff !important; color: #000000 !important; }}
+                    .no-print {{ display: none !important; }}
+                    .page-break {{ page-break-before: always !important; break-before: page !important; }}
                 }}
                 body {{
-                    background-color: #e2e8f0;
+                    background-color: #f8fafc;
                     font-family: 'Segoe UI', Arial, sans-serif;
                     margin: 0;
-                    padding: 10px;
+                    padding: 15px;
                     color: #0f172a;
                 }}
                 .a4-page {{
                     position: relative;
                     background: #ffffff;
-                    width: 100%;
-                    max-width: 780px;
+                    max-width: 800px;
                     margin: 0 auto 20px auto;
-                    padding: 25px 30px;
-                    border-radius: 6px;
-                    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-                    border: 1.5px solid #0f172a;
+                    padding: 30px;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+                    border: 1px solid #cbd5e1;
                     box-sizing: border-box;
-                    min-height: 1020px;
-                    overflow: hidden;
+                    min-height: 1050px;
                 }}
-                /* 🌊 स्पष्ट आणि सर्व डेटाच्या वर पारदर्शक दिसणारा वॉटरमार्क */
                 .watermark {{
                     position: absolute;
                     top: 50%;
                     left: 50%;
-                    transform: translate(-50%, -50%) rotate(-28deg);
-                    font-size: 22px;
+                    transform: translate(-50%, -50%) rotate(-30deg);
+                    font-size: 24px;
                     font-weight: 900;
-                    color: rgba(15, 23, 42, 0.09);
+                    color: rgba(15, 23, 42, 0.06);
                     text-transform: uppercase;
                     letter-spacing: 2.5px;
                     text-align: center;
-                    width: 78%;
-                    max-width: 500px;
-                    line-height: 1.5;
-                    pointer-events: none;
-                    user-select: none;
-                    border: 3px dashed rgba(15, 23, 42, 0.09);
-                    padding: 15px 25px;
+                    width: 80%;
+                    border: 3px dashed rgba(15, 23, 42, 0.08);
+                    padding: 20px;
                     border-radius: 12px;
-                    z-index: 999; /* टेबल्सच्या वर दिसण्यासाठी */
-                }}
-                .content-box {{
-                    position: relative;
-                    z-index: 2;
+                    pointer-events: none;
+                    z-index: 999;
                 }}
                 .header-title {{
                     text-align: center;
                     border-bottom: 2px solid #0f172a;
-                    padding-bottom: 6px;
-                    margin-bottom: 12px;
+                    padding-bottom: 8px;
+                    margin-bottom: 15px;
                 }}
                 .header-title h1 {{
                     margin: 0;
-                    font-size: 22px;
+                    font-size: 24px;
                     color: #0f172a;
                     font-weight: 900;
-                    letter-spacing: 0.5px;
-                }}
-                .header-title p {{
-                    margin: 2px 0;
-                    font-size: 11px;
-                    font-weight: bold;
-                    color: #475569;
-                }}
-                table.info-table {{
-                    width: 100%;
-                    margin-bottom: 12px;
-                    font-size: 12px;
-                    border-collapse: collapse;
-                }}
-                table.info-table td {{
-                    padding: 3px 0;
-                }}
-                .section-header {{
-                    background: #0f172a;
-                    color: #ffffff;
-                    padding: 6px 12px;
-                    font-size: 12px;
-                    font-weight: bold;
-                    border-radius: 4px;
-                    margin: 12px 0 8px 0;
-                }}
-                table.custom-data-table {{
-                    width: 100%;
-                    border-collapse: collapse;
-                    margin: 8px 0 15px 0;
-                    font-size: 11px;
-                }}
-                table.custom-data-table th, table.custom-data-table td {{
-                    border: 1px solid #cbd5e1;
-                    padding: 6px 8px;
-                    text-align: left;
-                }}
-                table.custom-data-table th {{
-                    background-color: rgba(241, 245, 249, 0.85);
-                    font-weight: bold;
-                    color: #0f172a;
-                }}
-                table.custom-data-table tr:nth-child(even) {{
-                    background-color: rgba(248, 250, 252, 0.6);
-                }}
-                .signature-box {{
-                    margin-top: 35px;
-                    width: 100%;
-                    font-size: 12px;
-                }}
-                .footer-stamp {{
-                    text-align: center;
-                    margin-top: 20px;
-                    font-size: 10px;
-                    color: #64748b;
-                    border-top: 1px solid #e2e8f0;
-                    padding-top: 5px;
                 }}
             </style>
         </head>
         <body>
-        """
-
-        for idx, r in enumerate(records, 1):
-            page_break_class = "page-break" if idx > 1 else ""
-            sec_title = "Rate Analysis" if idx == 1 else ("Bar Bending Schedule (BBS)" if idx == 2 else "Quantity Survey")
-            table_content_html = markdown_to_html_table(r['report_data'])
-
-            full_html_doc += f"""
-            <div class="a4-page {page_break_class}">
-                <div class="watermark">KANHAIYA<br>FOUNDER OF PATIL INFRATECH</div>
-                <div class="content-box">
-                    <div class="header-title">
-                        <h1>PATIL INFRATECH</h1>
-                        <p>CIVIL ENGINEERS • CONSULTANTS • QUANTITY SURVEYORS</p>
-                        <small style="color: #64748b;">(Compliant with IS 1200 & IS 2502 Standards)</small>
-                    </div>
-
-                    <table class="info-table">
-                        <tr>
-                            <td><b>📍 Project / Site:</b> <span style="color:#d97706; font-weight:bold;">{site_name}</span></td>
-                            <td style="text-align: right;"><b>📅 Report Date:</b> {get_ist_time().strftime('%d-%m-%Y')}</td>
-                        </tr>
-                        <tr>
-                            <td><b>👤 Site Engineer:</b> {user_key}</td>
-                            <td style="text-align: right;"><b>📄 Page:</b> {idx} of {len(records)}</td>
-                        </tr>
-                    </table>
-                    <hr style="border: 0.5px solid #cbd5e1; margin-bottom: 8px;">
-
-                    <div class="section-header">
-                        विभाग #{idx}: {sec_title} (नोंद वेळ: {r['timestamp']})
-                    </div>
-
-                    {table_content_html}
-
-                    <table class="signature-box">
-                        <tr>
-                            <td style="width: 50%;">
-                                <br><br>
-                                __________________________<br>
-                                <b>Site Engineer Signature</b>
-                            </td>
-                            <td style="width: 50%; text-align: right;">
-                                <br><br>
-                                __________________________<br>
-                                <b>Authorized Checker</b>
-                            </td>
-                        </tr>
-                    </table>
-
-                    <div class="footer-stamp">
-                        Certified & Generated by: <b>Kanhaiya (Founder of Patil Infratech)</b>
-                    </div>
+            <div class="a4-page">
+                <div class="watermark">PATIL INFRATECH<br>CONFIDENTIAL ESTIMATE</div>
+                <div class="header-title">
+                    <h1>PATIL INFRATECH</h1>
+                    <p style="margin: 4px 0; font-size: 12px; color: #475569;">CIVIL ENGINEERS & QUANTITY SURVEYORS</p>
                 </div>
+                <p><b>📍 Project:</b> {site_name} | <b>👤 Engineer:</b> {user_key} | <b>📅 Date:</b> {get_ist_time().strftime('%d-%m-%Y')}</p>
+                <hr style="border: 0.5px solid #cbd5e1;">
             </div>
-            """
-
-        full_html_doc += """
         </body>
         </html>
         """
 
-        # स्क्रीनवर टेबल प्रीव्ह्यू दाखवणे
-        st.components.v1.html(full_html_doc, height=520, scrolling=True)
+        st.components.v1.html(full_html_doc, height=450, scrolling=True)
 
-        # Excel / CSV डेटा तयार करणे
-        excel_data_list = []
-        for r in records:
-            excel_data_list.append({
-                "Site Name": site_name,
-                "User": user_key,
-                "Timestamp": r["timestamp"],
-                "Report Details": r["report_data"].replace("|", " ").strip()
-            })
-        excel_df = pd.DataFrame(excel_data_list)
-        csv_bytes = excel_df.to_csv(index=False).encode('utf-8-sig')
-
-        st.write("---")
-        c1, c2, c3 = st.columns(3)
-
-        with c1:
-            st.download_button(
-                label="📥 Download Master Report",
-                data=full_html_doc,
-                file_name=f"Patil_Infratech_{site_name.replace(' ', '_')}_Report.html",
-                mime="text/html",
-                type="primary",
-                use_container_width=True
-            )
+        st.download_button(
+            label="📥 Download Master Report (HTML/Print)",
+            data=full_html_doc,
+            file_name=f"Patil_Infratech_{site_name.replace(' ', '_')}_Report.html",
+            mime="text/html",
+            type="primary",
+            use_container_width=True,
+        )
 
         with c2:
             st.download_button(
