@@ -2151,22 +2151,25 @@ elif st.session_state.selected_module == "Estimator Tools":
     .no-print { display: none !important; }
     .a4-page { border: none !important; box-shadow: none !important; padding: 0 !important; }
 }
-.watermark {
+full_html_doc = f"""
+<style>
+.watermark {{
     position: absolute;
     top: 50%; left: 50%;
     transform: translate(-50%, -50%) rotate(-30deg);
-    font-size: 26px;
+    font-size: 24px;
     font-weight: 900;
-    color: rgba(15, 23, 42, 0.07);
+    color: rgba(15, 23, 42, 0.08);
     text-transform: uppercase;
-    letter-spacing: 3px;
-    border: 3px dashed rgba(15, 23, 42, 0.08);
-    padding: 20px 40px;
-    border-radius: 16px;
+    letter-spacing: 2.5px;
+    border: 3px dashed rgba(15, 23, 42, 0.09);
+    padding: 15px 30px;
+    border-radius: 12px;
     pointer-events: none;
     z-index: 999;
-}
+}}
 </style>
+"""
         st.subheader(f"📑 Master Project Estimate: {site_name}")
         st.caption(
             "💡 मागील २ दिवसांमधील Rate Analysis, BBS आणि Quantity Survey चा"
