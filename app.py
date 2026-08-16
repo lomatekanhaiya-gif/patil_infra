@@ -665,7 +665,59 @@ st.markdown(
         border: 1px solid rgba(255, 255, 255, 0.1);
         display: inline-block;
     }
+/* Shimmer Light Reflection Effect */
+.shimmer-btn {
+    position: relative;
+    overflow: hidden;
+}
+.shimmer-btn::after {
+    content: '';
+    position: absolute;
+    top: -50%; left: -60%;
+    width: 20%; height: 200%;
+    background: rgba(255, 255, 255, 0.2);
+    transform: rotate(30deg);
+    animation: shimmerGlow 4s infinite;
+}
+@keyframes shimmerGlow {
+    0% { left: -60%; }
+    20% { left: 140%; }
+    100% { left: 140%; }
+}
 
+/* Animated Glowing Border for Cards */
+.glow-card {
+    position: relative;
+    background: #0f172a;
+    border-radius: 18px;
+    z-index: 1;
+}
+.glow-card::before {
+    content: '';
+    position: absolute;
+    top: -2px; left: -2px; right: -2px; bottom: -2px;
+    background: linear-gradient(45deg, #f59e0b, #00f2fe, #f59e0b);
+    border-radius: 20px;
+    z-index: -1;
+    background-size: 300%;
+    animation: borderGlow 6s linear infinite;
+    filter: blur(8px);
+    opacity: 0.6;
+}
+@keyframes borderGlow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* Floating Metrics (Fade-In & Slide-Up) */
+.metric-box-anim {
+    animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes slideUpFade {
+    from { opacity: 0; transform: translateY(18px); }
+    to { opacity: 1; transform: translateY(0); }
+}
     /* ७. कोड व आकडेवारी फॉन्ट */
     code {
         font-family: 'JetBrains Mono', monospace !important;
@@ -1754,18 +1806,15 @@ else:
 
 # १३.१ ॲक्टिव्ह साईट सिलेक्टर बार (Active Site Switcher)
 with st.container():
-  st.markdown(
-      """
-        <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-left: 5px solid #f59e0b; padding: 12px 18px; border-radius: 12px; margin-bottom: 15px; border: 1px solid rgba(245,158,11,0.3);">
-            <span style="color:#94a3b8; font-size:11px; font-weight:bold;">📍 चालू प्रोजेक्ट / साईट:</span><br>
-            <b style="color:#f59e0b; font-size:17px;">🏗️ """
-      + str(st.session_state.current_site_name)
-      + """</b>
-        </div>
+st.markdown(
+    f"""
+    <div class="glow-card" style="padding: 14px 20px; margin: 16px 0; border: 1px solid rgba(245,158,11,0.3);">
+        <span style="color:#94a3b8; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px;">📍 चालू प्रकल्प (Active Project):</span>
+        <h3 style="color:#f59e0b; margin:4px 0 0 0; font-size:18px; font-weight:800;">🏗️ {st.session_state.current_site_name}</h3>
+    </div>
     """,
-      unsafe_allow_html=True,
-  )
-
+    unsafe_allow_html=True,
+)
   with st.popover("✏️ साईटचे नाव बदला"):
     new_site_input = st.text_input(
         "नवीन साईटचे नाव टाका:", value=st.session_state.current_site_name
@@ -2051,6 +2100,18 @@ if st.session_state.selected_module is None:
 
   main_col1, main_col2 = st.columns(2)
 
+# विभाग १५ मध्ये m_col1 आणि m_col2 च्या आत:
+with m_col1:
+    st.markdown(
+        """
+        <div class="module-card shimmer-btn">
+            <div style="font-size: 40px; margin-bottom: 8px;">👷‍♂️</div>
+            <h3 style="margin:0; color:#ffffff; font-size:19px; font-weight:800;">Site Manager</h3>
+            <p style="color:#94a3b8; font-size:12px; margin:6px 0 12px 0;">हजेरी, मजुरी, साहित्य ट्रॅकर व दैनिक प्रोग्रेस रिपोर्ट</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
   # १. साईट मॅनेजर कार्ड
   with main_col1:
     site_badge = "🆓 Free Access" if site_lock == "Free" else "👑 VIP Premium"
@@ -2124,6 +2185,28 @@ elif st.session_state.selected_module == "Estimator Tools":
 
  # १६.१ मास्टर ३-इन-१ कंबाइन्ड PDF व Excel रिपोर्ट फंक्शन (Visible Overlay Watermark)
     def render_combined_master_report(user_key, site_name):
+    <style>
+@media print {
+    body { background: #ffffff !important; color: #000000 !important; }
+    .no-print { display: none !important; }
+    .a4-page { border: none !important; box-shadow: none !important; padding: 0 !important; }
+}
+.watermark {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%) rotate(-30deg);
+    font-size: 26px;
+    font-weight: 900;
+    color: rgba(15, 23, 42, 0.07);
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    border: 3px dashed rgba(15, 23, 42, 0.08);
+    padding: 20px 40px;
+    border-radius: 16px;
+    pointer-events: none;
+    z-index: 999;
+}
+</style>
         st.subheader(f"📑 Master Project Estimate: {site_name}")
         st.caption(
             "💡 मागील २ दिवसांमधील Rate Analysis, BBS आणि Quantity Survey चा"
