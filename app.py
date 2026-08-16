@@ -2087,85 +2087,44 @@ if ai_lock_setting == "Free" or is_user_premium:
 else:
     st.info("🔒 Civil AI Assistant हे प्रिमियम फिचर आहे.")
 # ==========================================
-# 📌 विभाग १५: मुख्य मॉड्यूल निवडीचे डॅशबोर्ड कार्ड्स (Side-by-Side)
+# 📌 विभाग १५: मुख्य मॉड्यूल निवडीचे डॅशबोर्ड कार्ड्स
 # ==========================================
 if st.session_state.selected_module is None:
-  st.markdown(
-      "<h3 style='text-align:center; margin-bottom:20px;'>🚀 कृपया मॉड्यूल"
-      " निवडा</h3>",
-      unsafe_allow_html=True,
-  )
+    st.markdown("<h4 style='text-align:center; margin: 20px 0;'>🚀 कृपया कार्यक्षेत्र निवडा</h4>", unsafe_allow_html=True)
+    
+    main_col1, main_col2 = st.columns(2)
 
-  calc_lock = locks_cfg.get("Civil Calculator", "Free")
-  site_lock = locks_cfg.get("Site Manager", "Free")
-
-  main_col1, main_col2 = st.columns(2)
-
-# विभाग १५ मध्ये m_col1 आणि m_col2 च्या आत:
-with m_col1:
-    st.markdown(
-        """
-        <div class="module-card shimmer-btn">
-            <div style="font-size: 40px; margin-bottom: 8px;">👷‍♂️</div>
-            <h3 style="margin:0; color:#ffffff; font-size:19px; font-weight:800;">Site Manager</h3>
-            <p style="color:#94a3b8; font-size:12px; margin:6px 0 12px 0;">हजेरी, मजुरी, साहित्य ट्रॅकर व दैनिक प्रोग्रेस रिपोर्ट</p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-  # १. साईट मॅनेजर कार्ड
-  with main_col1:
-    site_badge = "🆓 Free Access" if site_lock == "Free" else "👑 VIP Premium"
-    st.markdown(
-        f"""
+    with main_col1:
+        st.markdown(
+            """
             <div class="module-card">
-                <div style="font-size: 42px; margin-bottom: 8px;">👷‍♂️</div>
-                <h3 style="margin: 0; color: #ffffff; font-weight: 800;">Site Manager</h3>
-                <p style="color: #94a3b8; font-size: 13px; margin: 6px 0 12px 0;">हजेरी, मजुरी, साहित्य ट्रॅकर व दैनिक प्रोग्रेस रिपोर्ट</p>
-                <span style="font-size: 11px; font-weight: bold; color: {'#38bdf8' if site_lock == 'Free' else '#f59e0b'}; background: rgba(0,0,0,0.3); padding: 4px 12px; border-radius: 12px;">[{site_badge}]</span>
+                <div style="font-size: 38px; margin-bottom: 6px;">👷‍♂️</div>
+                <h3 style="margin: 0; color: #ffffff; font-size: 18px; font-weight: 700;">Site Manager</h3>
+                <p style="color: #94a3b8; font-size: 12px; margin: 6px 0 14px 0;">हजेरी, मजुरी, साहित्य ट्रॅकर व दैनिक प्रोग्रेस रिपोर्ट</p>
             </div>
-        """,
-        unsafe_allow_html=True,
-    )
-    st.write(" ")
-    if st.button(
-        "👷‍♂️ Open Site Manager",
-        key="btn_open_site",
-        use_container_width=True,
-        type="primary",
-    ):
-      if site_lock == "Premium" and not is_user_premium:
-        st.error("🔒 हे फीचर प्रिमियम युझर्ससाठी आहे!")
-      else:
-        st.session_state.selected_module = "Site Manager"
-        st.session_state.selected_site_sub_module = None
-        trigger_push_state()
-        st.rerun()
+            """,
+            unsafe_allow_html=True,
+        )
+        if st.button("👷‍♂️ Open Site Manager", use_container_width=True, type="primary", key="btn_open_site_main"):
+            st.session_state.selected_module = "Site Manager"
+            trigger_push_state()
+            st.rerun()
 
-  # २. एस्टिमेटर टूल्स कार्ड
-  with main_col2:
-    st.markdown(
-        """
+    with main_col2:
+        st.markdown(
+            """
             <div class="module-card">
-                <div style="font-size: 42px; margin-bottom: 8px;">📐</div>
-                <h3 style="margin: 0; color: #ffffff; font-weight: 800;">Estimator Tools</h3>
-                <p style="color: #94a3b8; font-size: 13px; margin: 6px 0 12px 0;">Rate Analysis, BBS Schedule, QS & Unit Converter</p>
-                <span style="font-size: 11px; font-weight: bold; color: #f59e0b; background: rgba(0,0,0,0.3); padding: 4px 12px; border-radius: 12px;">[5 Advanced Tools]</span>
+                <div style="font-size: 38px; margin-bottom: 6px;">📐</div>
+                <h3 style="margin: 0; color: #ffffff; font-size: 18px; font-weight: 700;">Estimator Tools</h3>
+                <p style="color: #94a3b8; font-size: 12px; margin: 6px 0 14px 0;">Rate Analysis, BBS Schedule, QS & Master Reports</p>
             </div>
-        """,
-        unsafe_allow_html=True,
-    )
-    st.write(" ")
-    if st.button(
-        "📐 Open Estimator Tools",
-        key="btn_open_estimator",
-        use_container_width=True,
-        type="primary",
-    ):
-      st.session_state.selected_module = "Estimator Tools"
-      st.session_state.selected_estimator_sub_module = None
-      trigger_push_state()
-      st.rerun()
+            """,
+            unsafe_allow_html=True,
+        )
+        if st.button("📐 Open Estimator Tools", use_container_width=True, type="primary", key="btn_open_est_main"):
+            st.session_state.selected_module = "Estimator Tools"
+            trigger_push_state()
+            st.rerun()
 
 # ==========================================
 # 📌 विभाग १६: ESTIMATOR TOOLS मॉड्यूल (Sub-modules)
