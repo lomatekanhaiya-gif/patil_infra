@@ -543,193 +543,147 @@ def check_user_premium_status(username):
 is_curr_premium, _ = check_user_premium_status(current_user_name)
 
 # ==========================================
-# 📌 विभाग ८: ULTRA-PREMIUM ENTERPRISE THEME CSS
+# 📌 विभाग ८: BRANDED CONSTRUCTION THEME CSS
 # ==========================================
 st.markdown(
     """
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
-
-    /* १. रिसेट व क्लीन लेआउट */
-    #MainMenu, header[data-testid="stHeader"], footer, .stAppHeader, [data-testid="stToolbar"], [data-testid="stDecoration"] {
-        display: none !important;
-        visibility: hidden !important;
-    }
+    #MainMenu { visibility: hidden; }
+    header[data-testid="stHeader"] { visibility: hidden; height: 0%; display: none !important; }
+    footer { visibility: hidden; display: none !important; }
+    .stAppHeader { display: none !important; }
+    [data-testid="stToolbar"] { visibility: hidden !important; display: none !important; }
+    [data-testid="stDecoration"] { display: none !important; }
+    [data-testid="stStatusWidget"] { visibility: hidden !important; }
+    button[title="Increment"], button[title="Decrement"] { display: none !important; }
+    div[data-testid="stNumberInputStepUp"], div[data-testid="stNumberInputStepDown"] { display: none !important; }
 
     html, body, .stApp, [data-testid="stAppViewContainer"] {
-        background-color: #0b0f19 !important;
-        background-image: 
-            radial-gradient(at 0% 0%, rgba(245, 158, 11, 0.05) 0px, transparent 50%),
-            radial-gradient(at 100% 100%, rgba(14, 165, 233, 0.04) 0px, transparent 50%) !important;
-        color: #f1f5f9 !important;
-        font-family: 'Plus Jakarta Sans', -apple-system, sans-serif !important;
-        letter-spacing: -0.01em;
+        background: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 50%, #020617 100%) !important;
+        color: #f8fafc !important;
+        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
     }
 
-    /* २. ब्रँड हेडर (Minimal Sleek Card) */
     .brand-header {
-        background: linear-gradient(180deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.8) 100%);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-bottom: 2px solid #f59e0b;
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        padding: 28px 24px;
-        border-radius: 20px;
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #334155 100%);
+        border: 1px solid rgba(245, 158, 11, 0.4);
+        border-top: 4px solid #f59e0b;
+        padding: 24px 20px;
+        border-radius: 16px;
         text-align: center;
-        box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-        margin-bottom: 28px;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6), 0 0 20px rgba(245, 158, 11, 0.15);
+        margin-bottom: 24px;
     }
 
-    /* ३. प्रिमियम मॉड्युल कार्ड्स (Glassmorphic Cards) */
-    .module-card {
-        background: linear-gradient(135deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.6) 100%) !important;
-        border: 1px solid rgba(255, 255, 255, 0.07) !important;
-        border-radius: 18px !important;
-        padding: 24px 20px !important;
-        text-align: center !important;
-        backdrop-filter: blur(12px) !important;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5) !important;
-    }
-    .module-card:hover {
-        border-color: rgba(245, 158, 11, 0.4) !important;
-        transform: translateY(-4px) !important;
-        box-shadow: 0 20px 35px -10px rgba(245, 158, 11, 0.15) !important;
-    }
-
-    /* ४. इनपुट बॉक्सेस व सिलेक्टर्स */
-    div[data-baseweb="input"], div[data-baseweb="base-input"], div[data-baseweb="select"] > div {
+    div[data-baseweb="input"],
+    div[data-baseweb="base-input"],
+    div[data-testid="stNumberInputContainer"],
+    div[data-testid="stTextInput"] {
         background-color: #0f172a !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        border-radius: 12px !important;
         color: #ffffff !important;
-        transition: all 0.2s ease !important;
-    }
-    div[data-baseweb="input"]:focus-within, div[data-baseweb="select"] > div:focus-within {
-        border-color: #f59e0b !important;
-        box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15) !important;
     }
 
-    /* ५. बटन्स डिझाईन */
+    input, select, textarea {
+        background-color: #0f172a !important;
+        color: #ffffff !important;
+        border: 1px solid #334155 !important;
+        border-radius: 10px !important;
+        font-weight: 500 !important;
+    }
+    input:focus, textarea:focus {
+        border-color: #f59e0b !important;
+        box-shadow: 0 0 10px rgba(245, 158, 11, 0.3) !important;
+    }
+
     div.stButton > button[kind="primary"] {
         background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
-        color: #0f172a !important;
-        font-weight: 700 !important;
-        font-size: 14px !important;
-        border-radius: 12px !important;
+        color: #000000 !important;
+        font-weight: 800 !important;
+        border-radius: 10px !important;
         border: none !important;
         padding: 12px 24px !important;
-        box-shadow: 0 4px 20px rgba(245, 158, 11, 0.3) !important;
-        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        box-shadow: 0 4px 15px rgba(245, 158, 11, 0.35) !important;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        transition: all 0.2s ease-in-out;
     }
     div.stButton > button[kind="primary"]:hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 8px 25px rgba(245, 158, 11, 0.45) !important;
-    }
-    div.stButton > button:not([kind="primary"]) {
-        background: rgba(30, 41, 59, 0.6) !important;
-        color: #e2e8f0 !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        border-radius: 12px !important;
-        font-weight: 600 !important;
-        backdrop-filter: blur(8px) !important;
-        transition: all 0.2s ease !important;
-    }
-    div.stButton > button:not([kind="primary"]):hover {
-        background: rgba(51, 65, 85, 0.8) !important;
-        border-color: rgba(255, 255, 255, 0.2) !important;
-        color: #ffffff !important;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(245, 158, 11, 0.5) !important;
+        background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%) !important;
     }
 
-    /* ६. स्टायलिश बॅजेस */
+    div.stButton > button {
+        background: #1e293b !important;
+        color: #f8fafc !important;
+        border: 1px solid #334155 !important;
+        border-radius: 10px !important;
+        font-weight: 600 !important;
+        transition: all 0.2s ease;
+    }
+    div.stButton > button:hover {
+        border-color: #f59e0b !important;
+        color: #f59e0b !important;
+    }
+
+    .module-card {
+        background: rgba(30, 41, 59, 0.7);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        padding: 22px 16px;
+        text-align: center;
+        backdrop-filter: blur(8px);
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    }
+    .module-card:hover {
+        border-color: #f59e0b;
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(245, 158, 11, 0.2);
+    }
+
     .gold-vip-badge {
-        background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
-        color: #090d16 !important;
-        padding: 5px 14px;
-        border-radius: 9999px;
+        background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);
+        color: #000000 !important;
+        padding: 6px 16px;
+        border-radius: 20px;
         font-weight: 800;
-        font-size: 12px;
-        letter-spacing: 0.5px;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        box-shadow: 0 4px 15px rgba(217, 119, 6, 0.35);
+        font-size: 13px;
+        display: inline-block;
+        box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
     }
     .free-user-badge {
-        background: rgba(15, 23, 42, 0.8);
-        color: #94a3b8 !important;
-        padding: 5px 14px;
-        border-radius: 9999px;
-        font-weight: 600;
-        font-size: 12px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: #1e293b;
+        color: #38bdf8 !important;
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-weight: 700;
+        font-size: 13px;
+        border: 1px solid #0284c7;
         display: inline-block;
     }
-/* Shimmer Light Reflection Effect */
-.shimmer-btn {
-    position: relative;
-    overflow: hidden;
-}
-.shimmer-btn::after {
-    content: '';
-    position: absolute;
-    top: -50%; left: -60%;
-    width: 20%; height: 200%;
-    background: rgba(255, 255, 255, 0.2);
-    transform: rotate(30deg);
-    animation: shimmerGlow 4s infinite;
-}
-@keyframes shimmerGlow {
-    0% { left: -60%; }
-    20% { left: 140%; }
-    100% { left: 140%; }
-}
 
-/* Animated Glowing Border for Cards */
-.glow-card {
-    position: relative;
-    background: #0f172a;
-    border-radius: 18px;
-    z-index: 1;
-}
-.glow-card::before {
-    content: '';
-    position: absolute;
-    top: -2px; left: -2px; right: -2px; bottom: -2px;
-    background: linear-gradient(45deg, #f59e0b, #00f2fe, #f59e0b);
-    border-radius: 20px;
-    z-index: -1;
-    background-size: 300%;
-    animation: borderGlow 6s linear infinite;
-    filter: blur(8px);
-    opacity: 0.6;
-}
-@keyframes borderGlow {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-}
-
-/* Floating Metrics (Fade-In & Slide-Up) */
-.metric-box-anim {
-    animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-@keyframes slideUpFade {
-    from { opacity: 0; transform: translateY(18px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-    /* ७. कोड व आकडेवारी फॉन्ट */
-    code {
-        font-family: 'JetBrains Mono', monospace !important;
-        background: rgba(15, 23, 42, 0.8) !important;
-        border: 1px solid rgba(255, 255, 255, 0.08) !important;
-        border-radius: 6px !important;
-        padding: 2px 6px !important;
+    .galaxy-loader {
+        margin: 20px auto;
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        border: 4px solid transparent;
+        border-top-color: #f59e0b;
+        border-bottom-color: #00f2fe;
+        animation: spin-galaxy 1.5s linear infinite;
+        box-shadow: 0 0 30px rgba(245, 158, 11, 0.5);
+    }
+    @keyframes spin-galaxy {
+        0% { transform: rotate(0deg) scale(1); }
+        50% { transform: rotate(180deg) scale(1.1); }
+        100% { transform: rotate(360deg) scale(1); }
     }
     </style>
-    """,
+""",
     unsafe_allow_html=True,
 )
+
 
 # ==========================================
 # 📌 विभाग ९: WHATSAPP रिपोर्ट शेअरिंग कंपोनंट
@@ -1806,25 +1760,27 @@ else:
 
 # १३.१ ॲक्टिव्ह साईट सिलेक्टर बार (Active Site Switcher)
 with st.container():
-    st.markdown(
-        f"""
-        <div style="background: rgba(30, 41, 59, 0.45); border-left: 4px solid #f59e0b; padding: 12px 18px; border-radius: 14px; margin: 14px 0; border: 1px solid rgba(255,255,255,0.06);">
-            <span style="color:#94a3b8; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing: 0.5px;">📍 चालू प्रकल्प (Active Project):</span><br>
-            <b style="color:#f59e0b; font-size:16px;">🏗️ {st.session_state.current_site_name}</b>
+  st.markdown(
+      """
+        <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-left: 5px solid #f59e0b; padding: 12px 18px; border-radius: 12px; margin-bottom: 15px; border: 1px solid rgba(245,158,11,0.3);">
+            <span style="color:#94a3b8; font-size:11px; font-weight:bold;">📍 चालू प्रोजेक्ट / साईट:</span><br>
+            <b style="color:#f59e0b; font-size:17px;">🏗️ """
+      + str(st.session_state.current_site_name)
+      + """</b>
         </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    """,
+      unsafe_allow_html=True,
+  )
 
-    with st.popover("✏️ साईटचे नाव बदला"):
-        new_site_input = st.text_input(
-            "नवीन साईटचे नाव टाका:", value=st.session_state.current_site_name
-        )
-        if st.button("💾 सेव्ह करा", key="btn_save_site_name", type="primary"):
-            if new_site_input.strip():
-                st.session_state.current_site_name = new_site_input.strip()
-                st.success("✅ साईट अपडेट झाली!")
-                st.rerun()
+  with st.popover("✏️ साईटचे नाव बदला"):
+    new_site_input = st.text_input(
+        "नवीन साईटचे नाव टाका:", value=st.session_state.current_site_name
+    )
+    if st.button("💾 सेव्ह करा", key="btn_save_site_name", type="primary"):
+      if new_site_input.strip():
+        st.session_state.current_site_name = new_site_input.strip()
+        st.success("✅ साईट अपडेट झाली!")
+        st.rerun()
 
 if col_lo.button("🔄 Logout"):
   st.session_state.app_user_name = None
@@ -2087,44 +2043,73 @@ if ai_lock_setting == "Free" or is_user_premium:
 else:
     st.info("🔒 Civil AI Assistant हे प्रिमियम फिचर आहे.")
 # ==========================================
-# 📌 विभाग १५: मुख्य मॉड्यूल निवडीचे डॅशबोर्ड कार्ड्स
+# 📌 विभाग १५: मुख्य मॉड्यूल निवडीचे डॅशबोर्ड कार्ड्स (Side-by-Side)
 # ==========================================
 if st.session_state.selected_module is None:
-    st.markdown("<h4 style='text-align:center; margin: 20px 0;'>🚀 कृपया कार्यक्षेत्र निवडा</h4>", unsafe_allow_html=True)
-    
-    main_col1, main_col2 = st.columns(2)
+  st.markdown(
+      "<h3 style='text-align:center; margin-bottom:20px;'>🚀 कृपया मॉड्यूल"
+      " निवडा</h3>",
+      unsafe_allow_html=True,
+  )
 
-    with main_col1:
-        st.markdown(
-            """
-            <div class="module-card">
-                <div style="font-size: 38px; margin-bottom: 6px;">👷‍♂️</div>
-                <h3 style="margin: 0; color: #ffffff; font-size: 18px; font-weight: 700;">Site Manager</h3>
-                <p style="color: #94a3b8; font-size: 12px; margin: 6px 0 14px 0;">हजेरी, मजुरी, साहित्य ट्रॅकर व दैनिक प्रोग्रेस रिपोर्ट</p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-        if st.button("👷‍♂️ Open Site Manager", use_container_width=True, type="primary", key="btn_open_site_main"):
-            st.session_state.selected_module = "Site Manager"
-            trigger_push_state()
-            st.rerun()
+  calc_lock = locks_cfg.get("Civil Calculator", "Free")
+  site_lock = locks_cfg.get("Site Manager", "Free")
 
-    with main_col2:
-        st.markdown(
-            """
+  main_col1, main_col2 = st.columns(2)
+
+  # १. साईट मॅनेजर कार्ड
+  with main_col1:
+    site_badge = "🆓 Free Access" if site_lock == "Free" else "👑 VIP Premium"
+    st.markdown(
+        f"""
             <div class="module-card">
-                <div style="font-size: 38px; margin-bottom: 6px;">📐</div>
-                <h3 style="margin: 0; color: #ffffff; font-size: 18px; font-weight: 700;">Estimator Tools</h3>
-                <p style="color: #94a3b8; font-size: 12px; margin: 6px 0 14px 0;">Rate Analysis, BBS Schedule, QS & Master Reports</p>
+                <div style="font-size: 42px; margin-bottom: 8px;">👷‍♂️</div>
+                <h3 style="margin: 0; color: #ffffff; font-weight: 800;">Site Manager</h3>
+                <p style="color: #94a3b8; font-size: 13px; margin: 6px 0 12px 0;">हजेरी, मजुरी, साहित्य ट्रॅकर व दैनिक प्रोग्रेस रिपोर्ट</p>
+                <span style="font-size: 11px; font-weight: bold; color: {'#38bdf8' if site_lock == 'Free' else '#f59e0b'}; background: rgba(0,0,0,0.3); padding: 4px 12px; border-radius: 12px;">[{site_badge}]</span>
             </div>
-            """,
-            unsafe_allow_html=True,
-        )
-        if st.button("📐 Open Estimator Tools", use_container_width=True, type="primary", key="btn_open_est_main"):
-            st.session_state.selected_module = "Estimator Tools"
-            trigger_push_state()
-            st.rerun()
+        """,
+        unsafe_allow_html=True,
+    )
+    st.write(" ")
+    if st.button(
+        "👷‍♂️ Open Site Manager",
+        key="btn_open_site",
+        use_container_width=True,
+        type="primary",
+    ):
+      if site_lock == "Premium" and not is_user_premium:
+        st.error("🔒 हे फीचर प्रिमियम युझर्ससाठी आहे!")
+      else:
+        st.session_state.selected_module = "Site Manager"
+        st.session_state.selected_site_sub_module = None
+        trigger_push_state()
+        st.rerun()
+
+  # २. एस्टिमेटर टूल्स कार्ड
+  with main_col2:
+    st.markdown(
+        """
+            <div class="module-card">
+                <div style="font-size: 42px; margin-bottom: 8px;">📐</div>
+                <h3 style="margin: 0; color: #ffffff; font-weight: 800;">Estimator Tools</h3>
+                <p style="color: #94a3b8; font-size: 13px; margin: 6px 0 12px 0;">Rate Analysis, BBS Schedule, QS & Unit Converter</p>
+                <span style="font-size: 11px; font-weight: bold; color: #f59e0b; background: rgba(0,0,0,0.3); padding: 4px 12px; border-radius: 12px;">[5 Advanced Tools]</span>
+            </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.write(" ")
+    if st.button(
+        "📐 Open Estimator Tools",
+        key="btn_open_estimator",
+        use_container_width=True,
+        type="primary",
+    ):
+      st.session_state.selected_module = "Estimator Tools"
+      st.session_state.selected_estimator_sub_module = None
+      trigger_push_state()
+      st.rerun()
 
 # ==========================================
 # 📌 विभाग १६: ESTIMATOR TOOLS मॉड्यूल (Sub-modules)
@@ -2145,31 +2130,6 @@ elif st.session_state.selected_module == "Estimator Tools":
 
  # १६.१ मास्टर ३-इन-१ कंबाइन्ड PDF व Excel रिपोर्ट फंक्शन (Visible Overlay Watermark)
     def render_combined_master_report(user_key, site_name):
-    <style>
-@media print {
-    body { background: #ffffff !important; color: #000000 !important; }
-    .no-print { display: none !important; }
-    .a4-page { border: none !important; box-shadow: none !important; padding: 0 !important; }
-}
-full_html_doc = f"""
-<style>
-.watermark {{
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%) rotate(-30deg);
-    font-size: 24px;
-    font-weight: 900;
-    color: rgba(15, 23, 42, 0.08);
-    text-transform: uppercase;
-    letter-spacing: 2.5px;
-    border: 3px dashed rgba(15, 23, 42, 0.09);
-    padding: 15px 30px;
-    border-radius: 12px;
-    pointer-events: none;
-    z-index: 999;
-}}
-</style>
-"""
         st.subheader(f"📑 Master Project Estimate: {site_name}")
         st.caption(
             "💡 मागील २ दिवसांमधील Rate Analysis, BBS आणि Quantity Survey चा"
@@ -2185,102 +2145,278 @@ full_html_doc = f"""
         cursor.execute(
             """
             SELECT timestamp, user_note, report_data FROM history 
-            WH# १६.१ मास्टर ३-इन-१ कंबाइन्ड PDF व Excel रिपोर्ट फंक्शन
-    def render_combined_master_report(user_key, site_name):
-        st.subheader(f"📑 Master Project Estimate: {site_name}")
-        st.caption("💡 Rate Analysis, BBS आणि Quantity Survey चा एकत्रित IS-Code फॉरमॅट रिपोर्ट.")
-
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        two_days_ago = (get_ist_time() - datetime.timedelta(days=2)).strftime("%Y-%m-%d 00:00:00")
-        cursor.execute(
-            """
-            SELECT timestamp, user_note, report_data FROM history 
             WHERE user_key = ? AND (site_name = ? OR site_name IS NULL) AND timestamp >= ?
             ORDER BY id ASC
-            """,
+        """,
             (user_key, site_name, two_days_ago),
         )
+
         records = cursor.fetchall()
         conn.close()
 
         if not records:
-            st.warning(f"⚠️ '{site_name}' साठी मागील २ दिवसांत कोणतेही कॅल्क्युलेशन सेव्ह केलेले नाही.")
+            st.warning(
+                f"⚠️ '{site_name}' साठी मागील २ दिवसांत कोणतेही कॅल्क्युलेशन सेव्ह केलेले नाही. कृपया आधी टूल्स वापरून रिपोर्ट तयार करा."
+            )
             return
 
-        # HTML व CSS लेआउट (Double Braces {{ }} सह सुरक्षित)
+        # Markdown टेबलचे HTML मध्ये रूपांतर
+        def markdown_to_html_table(md_text):
+            lines = [line.strip() for line in md_text.strip().split("\n") if line.strip().startswith("|")]
+            if not lines:
+                return f"<div style='padding:8px; background:rgba(248, 250, 252, 0.85);'>{md_text}</div>"
+            
+            html_table = "<table class='custom-data-table'>"
+            for i, line in enumerate(lines):
+                cells = [c.strip() for c in line.split("|")[1:-1]]
+                if i == 1 and all(set(c).issubset({'-', ':', ' '}) for c in cells):
+                    continue
+                
+                if i == 0:
+                    html_table += "<thead><tr>"
+                    for c in cells:
+                        html_table += f"<th>{c}</th>"
+                    html_table += "</tr></thead><tbody>"
+                else:
+                    html_table += "<tr>"
+                    for c in cells:
+                        bold_formatted = c.replace("**", "<b>").replace("**", "</b>")
+                        html_table += f"<td>{bold_formatted}</td>"
+                    html_table += "</tr>"
+            html_table += "</tbody></table>"
+            return html_table
+
         full_html_doc = f"""<!DOCTYPE html>
         <html>
         <head>
             <meta charset="utf-8">
-            <title>PATIL INFRATECH - {site_name} Report</title>
-          <style>
+            <title>PATIL INFRATECH - {site_name} Master Report</title>
+            <style>
                 @page {{
                     size: A4 portrait;
-                    margin: 10mm;
+                    margin: 8mm;
                 }}
                 @media print {{
-                    body {{ background: #ffffff !important; color: #000000 !important; }}
-                    .no-print {{ display: none !important; }}
-                    .page-break {{ page-break-before: always !important; break-before: page !important; }}
+                    body {{
+                        background: #ffffff !important;
+                        color: #000000 !important;
+                    }}
+                    .no-print {{
+                        display: none !important;
+                    }}
+                    .page-break {{
+                        page-break-before: always !important;
+                        break-before: page !important;
+                    }}
                 }}
                 body {{
-                    background-color: #f8fafc;
+                    background-color: #e2e8f0;
                     font-family: 'Segoe UI', Arial, sans-serif;
                     margin: 0;
-                    padding: 15px;
+                    padding: 10px;
                     color: #0f172a;
                 }}
                 .a4-page {{
                     position: relative;
                     background: #ffffff;
-                    max-width: 800px;
+                    width: 100%;
+                    max-width: 780px;
                     margin: 0 auto 20px auto;
-                    padding: 30px;
-                    border-radius: 8px;
-                    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-                    border: 1px solid #cbd5e1;
+                    padding: 25px 30px;
+                    border-radius: 6px;
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+                    border: 1.5px solid #0f172a;
                     box-sizing: border-box;
-                    min-height: 1050px;
+                    min-height: 1020px;
+                    overflow: hidden;
+                }}
+                /* 🌊 स्पष्ट आणि सर्व डेटाच्या वर पारदर्शक दिसणारा वॉटरमार्क */
+                .watermark {{
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%) rotate(-28deg);
+                    font-size: 22px;
+                    font-weight: 900;
+                    color: rgba(15, 23, 42, 0.09);
+                    text-transform: uppercase;
+                    letter-spacing: 2.5px;
+                    text-align: center;
+                    width: 78%;
+                    max-width: 500px;
+                    line-height: 1.5;
+                    pointer-events: none;
+                    user-select: none;
+                    border: 3px dashed rgba(15, 23, 42, 0.09);
+                    padding: 15px 25px;
+                    border-radius: 12px;
+                    z-index: 999; /* टेबल्सच्या वर दिसण्यासाठी */
+                }}
+                .content-box {{
+                    position: relative;
+                    z-index: 2;
                 }}
                 .header-title {{
                     text-align: center;
                     border-bottom: 2px solid #0f172a;
-                    padding-bottom: 8px;
-                    margin-bottom: 15px;
+                    padding-bottom: 6px;
+                    margin-bottom: 12px;
                 }}
                 .header-title h1 {{
                     margin: 0;
-                    font-size: 24px;
+                    font-size: 22px;
                     color: #0f172a;
                     font-weight: 900;
+                    letter-spacing: 0.5px;
+                }}
+                .header-title p {{
+                    margin: 2px 0;
+                    font-size: 11px;
+                    font-weight: bold;
+                    color: #475569;
+                }}
+                table.info-table {{
+                    width: 100%;
+                    margin-bottom: 12px;
+                    font-size: 12px;
+                    border-collapse: collapse;
+                }}
+                table.info-table td {{
+                    padding: 3px 0;
+                }}
+                .section-header {{
+                    background: #0f172a;
+                    color: #ffffff;
+                    padding: 6px 12px;
+                    font-size: 12px;
+                    font-weight: bold;
+                    border-radius: 4px;
+                    margin: 12px 0 8px 0;
+                }}
+                table.custom-data-table {{
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin: 8px 0 15px 0;
+                    font-size: 11px;
+                }}
+                table.custom-data-table th, table.custom-data-table td {{
+                    border: 1px solid #cbd5e1;
+                    padding: 6px 8px;
+                    text-align: left;
+                }}
+                table.custom-data-table th {{
+                    background-color: rgba(241, 245, 249, 0.85);
+                    font-weight: bold;
+                    color: #0f172a;
+                }}
+                table.custom-data-table tr:nth-child(even) {{
+                    background-color: rgba(248, 250, 252, 0.6);
+                }}
+                .signature-box {{
+                    margin-top: 35px;
+                    width: 100%;
+                    font-size: 12px;
+                }}
+                .footer-stamp {{
+                    text-align: center;
+                    margin-top: 20px;
+                    font-size: 10px;
+                    color: #64748b;
+                    border-top: 1px solid #e2e8f0;
+                    padding-top: 5px;
                 }}
             </style>
         </head>
         <body>
-            <div class="a4-page">
-                <div class="watermark">PATIL INFRATECH<br>CONFIDENTIAL ESTIMATE</div>
-                <div class="header-title">
-                    <h1>PATIL INFRATECH</h1>
-                    <p style="margin: 4px 0; font-size: 12px; color: #475569;">CIVIL ENGINEERS & QUANTITY SURVEYORS</p>
+        """
+
+        for idx, r in enumerate(records, 1):
+            page_break_class = "page-break" if idx > 1 else ""
+            sec_title = "Rate Analysis" if idx == 1 else ("Bar Bending Schedule (BBS)" if idx == 2 else "Quantity Survey")
+            table_content_html = markdown_to_html_table(r['report_data'])
+
+            full_html_doc += f"""
+            <div class="a4-page {page_break_class}">
+                <div class="watermark">KANHAIYA<br>FOUNDER OF PATIL INFRATECH</div>
+                <div class="content-box">
+                    <div class="header-title">
+                        <h1>PATIL INFRATECH</h1>
+                        <p>CIVIL ENGINEERS • CONSULTANTS • QUANTITY SURVEYORS</p>
+                        <small style="color: #64748b;">(Compliant with IS 1200 & IS 2502 Standards)</small>
+                    </div>
+
+                    <table class="info-table">
+                        <tr>
+                            <td><b>📍 Project / Site:</b> <span style="color:#d97706; font-weight:bold;">{site_name}</span></td>
+                            <td style="text-align: right;"><b>📅 Report Date:</b> {get_ist_time().strftime('%d-%m-%Y')}</td>
+                        </tr>
+                        <tr>
+                            <td><b>👤 Site Engineer:</b> {user_key}</td>
+                            <td style="text-align: right;"><b>📄 Page:</b> {idx} of {len(records)}</td>
+                        </tr>
+                    </table>
+                    <hr style="border: 0.5px solid #cbd5e1; margin-bottom: 8px;">
+
+                    <div class="section-header">
+                        विभाग #{idx}: {sec_title} (नोंद वेळ: {r['timestamp']})
+                    </div>
+
+                    {table_content_html}
+
+                    <table class="signature-box">
+                        <tr>
+                            <td style="width: 50%;">
+                                <br><br>
+                                __________________________<br>
+                                <b>Site Engineer Signature</b>
+                            </td>
+                            <td style="width: 50%; text-align: right;">
+                                <br><br>
+                                __________________________<br>
+                                <b>Authorized Checker</b>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <div class="footer-stamp">
+                        Certified & Generated by: <b>Kanhaiya (Founder of Patil Infratech)</b>
+                    </div>
                 </div>
-                <p><b>📍 Project:</b> {site_name} | <b>👤 Engineer:</b> {user_key} | <b>📅 Date:</b> {get_ist_time().strftime('%d-%m-%Y')}</p>
-                <hr style="border: 0.5px solid #cbd5e1;">
             </div>
+            """
+
+        full_html_doc += """
         </body>
         </html>
         """
 
-        st.components.v1.html(full_html_doc, height=450, scrolling=True)
+        # स्क्रीनवर टेबल प्रीव्ह्यू दाखवणे
+        st.components.v1.html(full_html_doc, height=520, scrolling=True)
 
-        st.download_button(
-            label="📥 Download Master Report (HTML/Print)",
-            data=full_html_doc,
-            file_name=f"Patil_Infratech_{site_name.replace(' ', '_')}_Report.html",
-            mime="text/html",
-            type="primary",
-            use_container_width=True,
-        )
+        # Excel / CSV डेटा तयार करणे
+        excel_data_list = []
+        for r in records:
+            excel_data_list.append({
+                "Site Name": site_name,
+                "User": user_key,
+                "Timestamp": r["timestamp"],
+                "Report Details": r["report_data"].replace("|", " ").strip()
+            })
+        excel_df = pd.DataFrame(excel_data_list)
+        csv_bytes = excel_df.to_csv(index=False).encode('utf-8-sig')
+
+        st.write("---")
+        c1, c2, c3 = st.columns(3)
+
+        with c1:
+            st.download_button(
+                label="📥 Download Master Report",
+                data=full_html_doc,
+                file_name=f"Patil_Infratech_{site_name.replace(' ', '_')}_Report.html",
+                mime="text/html",
+                type="primary",
+                use_container_width=True
+            )
 
         with c2:
             st.download_button(
