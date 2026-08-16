@@ -1805,22 +1805,26 @@ else:
   )
 
 # १३.१ ॲक्टिव्ह साईट सिलेक्टर बार (Active Site Switcher)
-with st.container(): # किंवा with col1: / with st.expander():
-    st.markdown(     # ✅ 'with' च्या आत ४ स्पेस पुढे इंडेंट केले
-        """
-        <div>...</div>
+with st.container():
+    st.markdown(
+        f"""
+        <div style="background: rgba(30, 41, 59, 0.45); border-left: 4px solid #f59e0b; padding: 12px 18px; border-radius: 14px; margin: 14px 0; border: 1px solid rgba(255,255,255,0.06);">
+            <span style="color:#94a3b8; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing: 0.5px;">📍 चालू प्रकल्प (Active Project):</span><br>
+            <b style="color:#f59e0b; font-size:16px;">🏗️ {st.session_state.current_site_name}</b>
+        </div>
         """,
         unsafe_allow_html=True,
     )
-  with st.popover("✏️ साईटचे नाव बदला"):
-    new_site_input = st.text_input(
-        "नवीन साईटचे नाव टाका:", value=st.session_state.current_site_name
-    )
-    if st.button("💾 सेव्ह करा", key="btn_save_site_name", type="primary"):
-      if new_site_input.strip():
-        st.session_state.current_site_name = new_site_input.strip()
-        st.success("✅ साईट अपडेट झाली!")
-        st.rerun()
+
+    with st.popover("✏️ साईटचे नाव बदला"):
+        new_site_input = st.text_input(
+            "नवीन साईटचे नाव टाका:", value=st.session_state.current_site_name
+        )
+        if st.button("💾 सेव्ह करा", key="btn_save_site_name", type="primary"):
+            if new_site_input.strip():
+                st.session_state.current_site_name = new_site_input.strip()
+                st.success("✅ साईट अपडेट झाली!")
+                st.rerun()
 
 if col_lo.button("🔄 Logout"):
   st.session_state.app_user_name = None
