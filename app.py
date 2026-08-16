@@ -1805,16 +1805,13 @@ else:
   )
 
 # १३.१ ॲक्टिव्ह साईट सिलेक्टर बार (Active Site Switcher)
-with st.container():
-st.markdown(
-    f"""
-    <div class="glow-card" style="padding: 14px 20px; margin: 16px 0; border: 1px solid rgba(245,158,11,0.3);">
-        <span style="color:#94a3b8; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px;">📍 चालू प्रकल्प (Active Project):</span>
-        <h3 style="color:#f59e0b; margin:4px 0 0 0; font-size:18px; font-weight:800;">🏗️ {st.session_state.current_site_name}</h3>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+with st.container(): # किंवा with col1: / with st.expander():
+    st.markdown(     # ✅ 'with' च्या आत ४ स्पेस पुढे इंडेंट केले
+        """
+        <div>...</div>
+        """,
+        unsafe_allow_html=True,
+    )
   with st.popover("✏️ साईटचे नाव बदला"):
     new_site_input = st.text_input(
         "नवीन साईटचे नाव टाका:", value=st.session_state.current_site_name
