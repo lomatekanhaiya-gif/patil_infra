@@ -327,7 +327,7 @@ def init_db():
     """)
 
   # ११. प्रोजेक्ट टाईमलाईन आणि टास्क मॅनेजमेंट टेबल (Project Timeline & Tasks Table)
-    cursor.execute("""
+  cursor.execute("""
         CREATE TABLE IF NOT EXISTS project_tasks (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_key TEXT,
@@ -408,14 +408,14 @@ def init_db():
     )
 
   # सर्व मुख्य टेबल्समध्ये site_name कॉलम सुरक्षितपणे जोडणे
- tables_to_update = [
-        "history",
-        "site_attendance",
-        "site_inventory",
-        "site_progress",
-        "pre_concreting_checklist",
-        "project_tasks",
-    ]
+  tables_to_update = [
+      "history",
+      "site_attendance",
+      "site_inventory",
+      "site_progress",
+      "pre_concreting_checklist",
+      "project_tasks",
+  ]
   for tbl in tables_to_update:
     try:
       cursor.execute(
@@ -429,7 +429,6 @@ def init_db():
 
 
 init_db()
-
 
 # ==========================================
 # 📌 विभाग ६: डेटाबेस क्वेरी हेल्पर फंक्शन्स
@@ -4675,7 +4674,7 @@ elif st.session_state.selected_module == "Site Manager":
         st.rerun()
 
     st.write(" ")
-    # Row 2: 3 Icons (Pre-Concreting Checklist, Weekly Dashboard, Timeline Tracker)
+    # Row 2: 3 Icons
     s_col4, s_col5, s_col6 = st.columns(3)
     with s_col4:
       st.markdown(
@@ -4869,9 +4868,7 @@ elif st.session_state.selected_module == "Site Manager":
         )
         conn.commit()
         conn.close()
-        st.success(
-            "✅ आजची हजेरी आणि मजुरी बिल डेटाबेसमध्ये सेव्ह झाले!"
-        )
+        st.success("✅ आजची हजेरी आणि मजुरी बिल डेटाबेसमध्ये सेव्ह झाले!")
 
     # --------------------------------------------------
     # २. Material Stock & Inventory Tracker
@@ -4953,9 +4950,7 @@ elif st.session_state.selected_module == "Site Manager":
           key="inv_qty_val",
       )
 
-      if st.button(
-          "📥 Save Stock Entry", type="primary", key="save_inv_btn"
-      ):
+      if st.button("📥 Save Stock Entry", type="primary", key="save_inv_btn"):
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute(
@@ -5052,9 +5047,7 @@ elif st.session_state.selected_module == "Site Manager":
             " Progress Report Generated_"
         )
 
-        st.success(
-            "🎉 Daily Progress Report यशस्वीरित्या जनरेट झाला आहे!"
-        )
+        st.success("🎉 Daily Progress Report यशस्वीरित्या जनरेट झाला आहे!")
         st.code(report_summary)
 
         encoded_prog_msg = urllib.parse.quote(report_summary)
@@ -5133,9 +5126,7 @@ elif st.session_state.selected_module == "Site Manager":
       conn.close()
 
       total_items = len(db_items)
-      checked_items = sum(
-          1 for item in db_items if item["is_checked"] == 1
-      )
+      checked_items = sum(1 for item in db_items if item["is_checked"] == 1)
       progress_percentage = (
           int((checked_items / total_items) * 100) if total_items > 0 else 0
       )
@@ -5435,7 +5426,7 @@ elif st.session_state.selected_module == "Site Manager":
               " नोंदवला नाही."
           )
 
-# --------------------------------------------------
+    # --------------------------------------------------
     # ६. Project Timeline, Delay Analysis & Finish Date Tracker
     # --------------------------------------------------
     elif sub_mod == "Timeline":
@@ -5451,8 +5442,8 @@ elif st.session_state.selected_module == "Site Manager":
           current_user_name, st.session_state.current_site_name
       )
 
-      # प्रोजेक्ट सुरू होण्याची तारीख
-      col_p1, col_p2 = st.columns(2)
+      # १. प्रोजेक्ट सुरू होण्याची तारीख
+      col_p1, _ = st.columns([2, 2])
       with col_p1:
         proj_start_date = st.date_input(
             "प्रोजेक्ट सुरू झालेली तारीख (Start Date):",
@@ -5474,7 +5465,7 @@ elif st.session_state.selected_module == "Site Manager":
       tasks = [dict(r) for r in cursor.fetchall()]
       conn.close()
 
-      # टोटल दिवस आणि क्रिटिकल डिले कॅल्क्युलेशन
+      # २. दिवस आणि क्रिटिकल डिले कॅल्क्युलेशन
       total_planned_days = sum(t["planned_duration"] for t in tasks)
       total_critical_delay = sum(
           t["delay_days"] for t in tasks if t["is_critical"] == 1
@@ -5488,7 +5479,7 @@ elif st.session_state.selected_module == "Site Manager":
           days=total_projected_days
       )
 
-      # डॅशबोर्ड समरी कार्ड्स
+      # ३. डॅशबोर्ड समरी कार्ड्स
       m1, m2, m3, m4 = st.columns(4)
       with m1:
         st.markdown(
@@ -5542,7 +5533,7 @@ elif st.session_state.selected_module == "Site Manager":
           " Delays):"
       )
 
-      # टेबल हेडर
+      # ४. एडिटेबल टेबल
       header_c = st.columns([0.6, 2.8, 1.2, 1.2, 1.4, 1.0])
       header_c[0].markdown("**क्र.**")
       header_c[1].markdown("**कामाचा टप्पा (Task)**")
@@ -5620,7 +5611,7 @@ elif st.session_state.selected_module == "Site Manager":
         st.success("✅ प्रोजेक्ट टाईमलाईन अपडेट झाली!")
         st.rerun()
 
-      # व्हॉट्सॲप शेअरिंग
+      # ५. व्हॉट्सॲप शेअरिंग
       st.write("---")
       wa_timeline_text = (
           "🏗️ *PATIL INFRATECH - PROJECT TIMELINE REPORT*\n"
@@ -5631,6 +5622,10 @@ elif st.session_state.selected_module == "Site Manager":
           f"🎯 *Projected Handover Date:*"
           f" {new_projected_finish_date.strftime('%d-%m-%Y')}\n"
           "--------------------------------\n_Generated by Patil Infratech_"
+      )
+
+      render_whatsapp_feature(
+          urllib.parse.quote(wa_timeline_text), "timeline_wa"
       )
 
       render_whatsapp_feature(
