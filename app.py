@@ -72,6 +72,102 @@ try:
 except ImportError:
     HAS_GENAI = False
 
+# =====================================================================
+# 👉 १.१ हा नवीन सेक्शन वर टाका (Site Manager & Index Controller)
+# =====================================================================
+if "all_sites_data" not in st.session_state:
+    st.session_state.all_sites_data = {
+        "Default Site": {"milestones": [], "created_at": "26-08-2026"}
+    }
+
+if "current_site_name" not in st.session_state:
+    st.session_state.current_site_name = "Default Site"
+
+# --- SIDEBAR: Site Index, Add & Delete Controls ---
+with st.sidebar:
+    st.header("🏗️ Project & Site Manager")
+
+    site_list = list(st.session_state.all_sites_data.keys())
+    curr_idx = (
+        site_list.index(st.session_state.current_site_name)
+        if st.session_state.current_site_name in site_list
+        else 0
+    )
+
+    # १. साईट इंडेक्स (Dropdown)
+    selected_site = st.selectbox(
+        "📂 चालू साईट निवडा (Site Index):", site_list, index=curr_idx
+    )
+    if selected_site != st.session_state.current_site_name:
+        st.session_state.current_site_name = selected_site
+        st.rerun()
+
+    st.write("---")
+
+    # २. नवीन साईट जोडणे (Fresh Page)
+    with st.expander("➕ नवीन साईट जोडा", expanded=False):
+        new_name = st.text_input("साईटचे नाव:", key="new_site_key")
+        if st.button("तयार करा", use_container_width=True):
+            clean = new_name.strip()
+            if clean and clean not in st.session_state.all_sites_data:
+                st.session_state.all_sites_data[clean] = {
+                    "milestones": [],
+                    "created_at": "26-08-2026",
+                }
+                st.session_state.current_site_name = clean
+                st.success("नवीन साईट सुरू झाली!")
+                st.rerun()
+
+    # ३. साईट डिलीट करणे
+    with st.expander("🗑️ साईट डिलीट करा", expanded=False):
+        conf = st.checkbox("मी ही साईट डिलीट करू इच्छितो")
+        if st.button("डिलीट करा", disabled=not conf, use_container_width=True):
+            if len(st.session_state.all_sites_data) > 1:
+                del st.session_state.all_sites_data[
+                    st.session_state.current_site_name
+                ]
+                st.session_state.current_site_name = list(
+                    st.session_state.all_sites_data.keys()
+                )[0]
+                st.rerun()
+            else:
+                st.error("किमान १ साईट असणे आवश्यक आहे!")
+
+# चालू साईटचा डेटा लोड करणे
+current_site_data = st.session_state.all_sites_data.get(
+    st.session_state.current_site_name, {"milestones": []}
+)
+milestones = current_site_data.get("milestones", [])
+total_budget = sum(m.get("planned_amount", 0.0) for m in milestones)
+total_received = sum(m.get("amount_deposited", 0.0) for m in milestones)
+total_pending = max(0.0, total_budget - total_received)
+locked_stages = sum(1 for m in milestones if m.get("is_locked") == 1)
+
+
+# =====================================================================
+# 👉 २. या खाली तुमचा मूळ इनव्हॉइस कोड तसाच सुरू होईल (नो चेंज)
+# =====================================================================
+st.write("---")
+st.markdown("### 📑 NeevPay Master Invoice & Bill Generator (A4 PDF)")
+st.caption(
+    "💡 अधिकृत पेमेंट पावती, वॉटरमार्क आणि दोन्ही पक्षांच्या स्वाक्षरीसह A4 फॉरमॅट इनव्हॉइस."
+)
+
+invoice_rows_html = ""
+for idx, m in enumerate(milestones, 1):
+    st_lock_text = (
+        "पूर्ण व लॉक (Locked)" if m.get("is_locked") == 1 else m.get("status")
+    )
+    invoice_rows_html += f"""
+    <tr>
+        <td>{idx}</td>
+        <td><b>{m['stage_name']}</b></td>
+        <td>₹ {m['planned_amount']:,.2f}</td>
+        <td style="color:#047857; font-weight:bold;">₹ {m['amount_deposited']:,.2f}</td>
+        <td>₹ {max(0.0, m['planned_amount'] - m['amount_deposited']):,.2f}</td>
+        <td>{st_lock_text}</td>
+    </tr>
+    """
 
 # ==========================================
 # 📌 विभाग २: STREAMLIT पेज कॉन्फिगरेशन
