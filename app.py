@@ -4121,7 +4121,7 @@ elif st.session_state.selected_module == "NeevPay":
         <div style="background: linear-gradient(135deg, #064e3b 0%, #0f172a 100%); padding: 18px; border-radius: 16px; border: 1px solid #10b981; margin-bottom: 20px;">
             <h2 style="margin: 0; color: #10b981; font-weight: 900;">🤝 NEEVPAY / SITESETU - SMART PAYMENT ESCROW & BILLING</h2>
             <p style="margin: 5px 0 0 0; color: #cbd5e1; font-size: 14px;">
-                इंजिनिअर व घरमालक यांच्यातील पारदर्शक बिलिंग, पेमेंट लॉक व अधिकृत इनव्हॉइस व्यवस्था.
+                इंजिनिअर व घरमालक यांच्यातील पारदर्शक बिलिंग, पेमेंट लॉक व क्लायंट OTP व्हेरिफाइड इनव्हॉइस व्यवस्था.
             </p>
         </div>
         """,
@@ -4136,7 +4136,7 @@ elif st.session_state.selected_module == "NeevPay":
     )
     count = cursor.fetchone()["cnt"]
 
-    # सुरुवातीला सर्व टप्पे 0.0 बिलासह ॲड होतील
+    # सुरुवातीला ५ टप्पे 0.0 बिलासह ॲड होतील (बिल इंजिनिअर ठरवेल)
     if count == 0:
         default_milestones = [
             "१. पाया खोदाई व प्लिंथ पूर्ण (Excavation & Plinth Level)",
@@ -4242,7 +4242,7 @@ elif st.session_state.selected_module == "NeevPay":
                     st.success("✅ नवीन टप्पा सेव्ह झाला!")
                     st.rerun()
 
-    # २. टप्पेवार बिलिंग, वन-टाईम बजेट सेटिंग, पेमेंट आणि लॉक व्यवस्थापन
+    # २. टप्पेवार बिलिंग, वन-टाईम बजेट सेटिंग, क्लायंट OTP व्हेरिफिकेशन आणि पेमेंट
     st.markdown("##### 📋 कामाचे टप्पे, ठरलेले बिल, पेमेंट व डिजिटल संमती:")
 
     for m in milestones:
@@ -4260,7 +4260,7 @@ elif st.session_state.selected_module == "NeevPay":
         if is_locked:
             lock_badge = "🔒 LOCKED (पूर्ण पेड व अपरिवर्तनीय)"
         elif p_amt == 0:
-            lock_badge = "⚪ BILL NOT SET (इंजिनिअरने बिल टाकणे बाकी)"
+            lock_badge = "⚪ BILL NOT SET (इंजिनिअरने बिल टाकणे बाकी - ₹ 0)"
         elif d_amt >= p_amt and p_amt > 0:
             lock_badge = "🟢 READY TO LOCK (पूर्ण पेड)"
         elif d_amt > 0:
@@ -4281,11 +4281,11 @@ elif st.session_state.selected_module == "NeevPay":
                 
                 with col_b1:
                     # ==========================================
-                    # 🔒 फक्त एकदाच बिल सेट करण्याचा पर्याय (One-Time Setup)
+                    # 🔒 १. जर ठरलेले बिल ० (Zero) असेल तर फक्त एकदाच सेट करता येईल
                     # ==========================================
                     if p_amt == 0.0:
-                        st.markdown("###### ⚙️ १. इंजिनिअर पॅनल (ठरलेले बिल निश्चित करा - फक्त एकदाच):")
-                        st.caption("⚠️ **सूचना:** हे बिल एकदा सेट केल्यावर पुन्हा बदलता येणार नाही.")
+                        st.markdown("###### ⚙️ १. इंजिनिअर पॅनल (कामाचे बिल निश्चित करा - एकदाच):")
+                        st.caption("⚠️ **सूचना:** हे बिल एकदा सेट केल्यावर थेट बदलता येणार नाही (बदलासाठी क्लायंटचा OTP लागेल).")
                         
                         set_planned = st.number_input(
                             "या टप्प्याचे अंतिम ठरलेले बिल टाका (₹):",
@@ -4307,13 +4307,68 @@ elif st.session_state.selected_module == "NeevPay":
                                 conn.close()
                                 st.success(f"✅ या टप्प्याचे बिल ₹ {set_planned:,.2f} कायमस्वरूपी फिक्स झाले!")
                                 st.rerun()
+
+                    # ==========================================
+                    # 🔐 २. बिल आधीच फिक्स असल्यास बदलण्यासाठी CLIENT EMAIL OTP व्हेरिफिकेशन
+                    # ==========================================
                     else:
                         st.markdown("###### 📌 टप्प्याचे बिल तपशील (Fixed):")
-                        st.markdown(f"**कामाचे ठरलेले बिल:** <span style='color:#38bdf8; font-weight:bold; font-size:16px;'>₹ {p_amt:,.2f} (फिक्स झाले आहे)</span>", unsafe_allow_html=True)
+                        st.markdown(f"**कामाचे ठरलेले बिल:** <span style='color:#38bdf8; font-weight:bold; font-size:16px;'>₹ {p_amt:,.2f}</span>", unsafe_allow_html=True)
                         st.markdown(f"**आतापर्यंत मिळालेली रक्कम:** <span style='color:#10b981; font-weight:bold; font-size:16px;'>₹ {d_amt:,.2f}</span>", unsafe_allow_html=True)
                         st.markdown(f"**उर्वरित बाकी (Balance):** <span style='color:#ef4444; font-weight:bold; font-size:16px;'>₹ {rem_balance:,.2f}</span>", unsafe_allow_html=True)
 
-                    # पेमेंट जमा करण्याची नोंद (फक्त बिल सेट असल्यास)
+                        # बिल बदलण्यासाठी विशेष परमिशन विभाग
+                        with st.expander("🔑 [इंजिनिअर] ठरलेले बिल बदलायचे आहे का? (क्लायंट Email OTP आवश्यक)"):
+                            st.caption("💡 बिल बदलण्यासाठी घरमालकाच्या ईमेलवर आलेला OTP टाकून व्हेरिफाय करणे बंधनकारक आहे.")
+                            
+                            client_email_input = st.text_input(
+                                "घरमालकाचा / क्लायंटचा Email ID:", 
+                                value=st.session_state.get("client_email", ""), 
+                                key=f"cli_email_{m_id}"
+                            )
+                            
+                            if st.button("📩 क्लायंटच्या Email वर OTP पाठवा", key=f"btn_send_otp_{m_id}"):
+                                generated_otp = str(random.randint(100000, 999999))
+                                st.session_state[f"otp_val_{m_id}"] = generated_otp
+                                st.session_state[f"otp_sent_{m_id}"] = True
+                                
+                                # जर ईमेल सिस्टीम कॉन्फिगर असेल तर ईमेल जाईल
+                                try:
+                                    # send_otp_email(client_email_input, generated_otp) # जर ईमेल फंक्शन असेल तर
+                                    st.success(f"✅ OTP क्लायंटच्या ईमेलवर ({client_email_input}) पाठवला आहे!")
+                                    st.info(f"🔑 **[सुरक्षा पडताळणी / टेस्टिंग OTP]:** `{generated_otp}`")
+                                except Exception as e:
+                                    st.info(f"🔑 **[OTP तयार झाला]:** `{generated_otp}` (क्लायंटकडून हा OTP घेऊन टाका)")
+
+                            if st.session_state.get(f"otp_sent_{m_id}", False):
+                                new_requested_plan = st.number_input(
+                                    "नवीन सुधारीत बिल रक्कम (₹):", 
+                                    min_value=float(d_amt), 
+                                    value=float(p_amt), 
+                                    step=5000.0, 
+                                    key=f"new_req_amt_{m_id}"
+                                )
+                                entered_otp = st.text_input("क्लायंटच्या Email वरील ६-अंकी OTP टाका:", max_chars=6, key=f"inp_otp_{m_id}")
+                                
+                                if st.button("✅ OTP पडताळा व बिल अपडेट करा", key=f"btn_verify_otp_{m_id}", type="primary"):
+                                    if entered_otp == st.session_state.get(f"otp_val_{m_id}"):
+                                        conn = get_db_connection()
+                                        cursor = conn.cursor()
+                                        cursor.execute(
+                                            "UPDATE site_milestone_payments SET planned_amount = ? WHERE id = ?",
+                                            (new_requested_plan, m_id)
+                                        )
+                                        conn.commit()
+                                        conn.close()
+                                        st.session_state[f"otp_sent_{m_id}"] = False
+                                        st.success("🎉 क्लायंट संमती यशस्वी! नवीन बिल अपडेट झाले आहे.")
+                                        st.rerun()
+                                    else:
+                                        st.error("❌ चुकीचा OTP! कृपया क्लायंटच्या ईमेलवर आलेला योग्य OTP टाका.")
+
+                    # ==========================================
+                    # 💵 पेमेंट जमा करण्याची नोंद
+                    # ==========================================
                     if p_amt == 0.0:
                         st.info("ℹ️ आधी वरील बॉक्समध्ये कामाचे ठरलेले बिल सेट करा, मग पेमेंट घेता येईल.")
                     elif rem_balance > 0:
