@@ -3272,62 +3272,8 @@ elif st.session_state.selected_module == "Estimator Tools":
                     else:
                         h_val = st.number_input(f"Height #{idx}", min_value=0.0, value=0.0, step=0.05, key=f"qs_h_{idx}")
 
-                if nos_val > 0 and l_val > 0 and w_val > 0 and (is_area_unit or h_val > 0):
-                    if is_area_unit:
-                        single_qty = l_val * w_val
-                        total_qty = single_qty * nos_val
-                        unit_label = "m²"
-                    else:
-                        single_qty = l_val * w_val * h_val
-                        total_qty = single_qty * nos_val
-                        unit_label = "m³"
-
-                    st.markdown(f"**📐 Single Qty: `{single_qty:.3f} {unit_label}` | Total Qty: `{total_qty:.3f} {unit_label}`**")
-
-                    mat_summary = "मटेरियल लागू नाही"
-                    if "P.C.C." in stg_name:
-                        dry_vol = total_qty * 1.54
-                        c_bags = math.ceil((1 / 13) * dry_vol * 28.8)
-                        sand_m3 = (4 / 13) * dry_vol
-                        agg_m3 = (8 / 13) * dry_vol
-                        mat_summary = f"Cement: {c_bags} Bags, Sand: {sand_m3:.2f} m³, Aggregate: {agg_m3:.2f} m³"
-                        st.info(f"• **Cement:** {c_bags} Bags | **Sand:** {sand_m3:.2f} m³ | **Aggregate:** {agg_m3:.2f} m³")
-
-                    elif "RCC" in stg_name or "Column" in stg_name or "Slab" in stg_name or "Footing" in stg_name:
-                        dry_vol = total_qty * 1.54
-                        c_bags = math.ceil((1 / 5.5) * dry_vol * 28.8)
-                        sand_m3 = (1.5 / 5.5) * dry_vol
-                        agg_m3 = (3 / 5.5) * dry_vol
-                        steel_kg = total_qty * 80.0
-                        mat_summary = f"Cement: {c_bags} Bags, Sand: {sand_m3:.2f} m³, Aggregate: {agg_m3:.2f} m³, Steel: {steel_kg:.1f} Kg"
-                        st.info(f"• **Cement:** {c_bags} Bags | **Sand:** {sand_m3:.2f} m³ | **Aggregate:** {agg_m3:.2f} m³ | **Steel:** {steel_kg:.1f} Kg")
-
-                    elif "Brickwork" in stg_name:
-                        bricks = math.ceil(total_qty * 500)
-                        mortar_vol = total_qty * 0.30
-                        c_bags = math.ceil((1 / 5) * mortar_vol * 28.8)
-                        sand_m3 = (4 / 5) * mortar_vol
-                        mat_summary = f"Bricks: {bricks} Nos, Cement: {c_bags} Bags, Sand: {sand_m3:.2f} m³"
-                        st.info(f"• **Bricks:** {bricks} Nos | **Cement:** {c_bags} Bags | **Sand:** {sand_m3:.2f} m³")
-
-                    elif "Plaster" in stg_name:
-                        thickness = 0.012
-                        wet_vol = total_qty * thickness
-                        dry_vol = wet_vol * 1.33
-                        c_bags = math.ceil((1 / 5) * dry_vol * 28.8)
-                        sand_m3 = (4 / 5) * dry_vol
-                        mat_summary = f"Cement: {c_bags} Bags, Sand: {sand_m3:.2f} m³"
-                        st.info(f"• **Cement (12mm):** {c_bags} Bags | **Sand:** {sand_m3:.2f} m³")
-
-                    stage_results.append({
-                        "Stage": desc_val,
-                        "Dimensions": f"{l_val} x {w_val} x {h_val if not is_area_unit else 1.0}",
-                        "Nos": nos_val,
-                        "SingleQty": single_qty,
-                        "TotalQty": f"{total_qty:.3f} {unit_label}",
-                        "Material": mat_summary,
-                    })
-
+                # Deductions Input Blocks
+                bw_ded_vol = 0.0
                 if is_brickwork:
                     st.markdown("##### 🚪 Brickwork Deductions (Doors / Windows in m³)")
                     ded_key_bw = f"bw_ded_count_{idx}"
@@ -3338,7 +3284,6 @@ elif st.session_state.selected_module == "Estimator Tools":
                         st.session_state[ded_key_bw] += 1
                         st.rerun()
 
-                    bw_ded_vol = 0.0
                     for d_i in range(st.session_state[ded_key_bw]):
                         dc1, dc2, dc3, dc4, dc5 = st.columns(5)
                         with dc1:
@@ -3356,8 +3301,9 @@ elif st.session_state.selected_module == "Estimator Tools":
                             bw_ded_vol += dl * db * dh * dn
 
                     if bw_ded_vol > 0:
-                        st.markdown(f"**🔴 Brickwork Deduction Vol: `{bw_ded_vol:.3f} m³`**")
+                        st.markdown(f"**🔴 Total Brickwork Deduction: `{bw_ded_vol:.3f} m³`**")
 
+                pl_ded_area = 0.0
                 if is_plaster:
                     st.markdown("##### 🚪 Plaster Deductions (Doors / Windows in m²)")
                     ded_key_pl = f"pl_ded_count_{idx}"
@@ -3368,7 +3314,6 @@ elif st.session_state.selected_module == "Estimator Tools":
                         st.session_state[ded_key_pl] += 1
                         st.rerun()
 
-                    pl_ded_area = 0.0
                     for d_i in range(st.session_state[ded_key_pl]):
                         dc1, dc2, dc3, dc4 = st.columns(4)
                         with dc1:
@@ -3384,7 +3329,72 @@ elif st.session_state.selected_module == "Estimator Tools":
                             pl_ded_area += dl * dh * dn * 2
 
                     if pl_ded_area > 0:
-                        st.markdown(f"**🔴 Plaster Deduction Area: `{pl_ded_area:.3f} m²`**")
+                        st.markdown(f"**🔴 Total Plaster Deduction: `{pl_ded_area:.3f} m²`**")
+
+                # Main Calculation & Net Deduction Logic
+                if nos_val > 0 and l_val > 0 and w_val > 0 and (is_area_unit or h_val > 0):
+                    if is_area_unit:
+                        single_qty = l_val * w_val
+                        total_qty = single_qty * nos_val
+                        unit_label = "m²"
+                    else:
+                        single_qty = l_val * w_val * h_val
+                        total_qty = single_qty * nos_val
+                        unit_label = "m³"
+
+                    # वजावट वजा करून नेट व्हॅल्यू काढणे
+                    if is_brickwork:
+                        net_total_qty = max(0.0, total_qty - bw_ded_vol)
+                    elif is_plaster:
+                        net_total_qty = max(0.0, total_qty - pl_ded_area)
+                    else:
+                        net_total_qty = total_qty
+
+                    st.markdown(f"**📐 Gross Qty: `{total_qty:.3f} {unit_label}` | Net Qty (वजावट करून): <span style='color:#10b981;'>`{net_total_qty:.3f} {unit_label}`</span>**", unsafe_allow_html=True)
+
+                    mat_summary = "मटेरियल लागू नाही"
+                    if "P.C.C." in stg_name:
+                        dry_vol = net_total_qty * 1.54
+                        c_bags = math.ceil((1 / 13) * dry_vol * 28.8)
+                        sand_m3 = (4 / 13) * dry_vol
+                        agg_m3 = (8 / 13) * dry_vol
+                        mat_summary = f"Cement: {c_bags} Bags, Sand: {sand_m3:.2f} m³, Aggregate: {agg_m3:.2f} m³"
+                        st.info(f"• **Cement:** {c_bags} Bags | **Sand:** {sand_m3:.2f} m³ | **Aggregate:** {agg_m3:.2f} m³")
+
+                    elif "RCC" in stg_name or "Column" in stg_name or "Slab" in stg_name or "Footing" in stg_name:
+                        dry_vol = net_total_qty * 1.54
+                        c_bags = math.ceil((1 / 5.5) * dry_vol * 28.8)
+                        sand_m3 = (1.5 / 5.5) * dry_vol
+                        agg_m3 = (3 / 5.5) * dry_vol
+                        steel_kg = net_total_qty * 80.0
+                        mat_summary = f"Cement: {c_bags} Bags, Sand: {sand_m3:.2f} m³, Aggregate: {agg_m3:.2f} m³, Steel: {steel_kg:.1f} Kg"
+                        st.info(f"• **Cement:** {c_bags} Bags | **Sand:** {sand_m3:.2f} m³ | **Aggregate:** {agg_m3:.2f} m³ | **Steel:** {steel_kg:.1f} Kg")
+
+                    elif "Brickwork" in stg_name:
+                        bricks = math.ceil(net_total_qty * 500)
+                        mortar_vol = net_total_qty * 0.30
+                        c_bags = math.ceil((1 / 5) * mortar_vol * 28.8)
+                        sand_m3 = (4 / 5) * mortar_vol
+                        mat_summary = f"Bricks: {bricks} Nos, Cement: {c_bags} Bags, Sand: {sand_m3:.2f} m³"
+                        st.info(f"• **Bricks:** {bricks} Nos | **Cement:** {c_bags} Bags | **Sand:** {sand_m3:.2f} m³")
+
+                    elif "Plaster" in stg_name:
+                        thickness = 0.012
+                        wet_vol = net_total_qty * thickness
+                        dry_vol = wet_vol * 1.33
+                        c_bags = math.ceil((1 / 5) * dry_vol * 28.8)
+                        sand_m3 = (4 / 5) * dry_vol
+                        mat_summary = f"Cement: {c_bags} Bags, Sand: {sand_m3:.2f} m³"
+                        st.info(f"• **Cement (12mm):** {c_bags} Bags | **Sand:** {sand_m3:.2f} m³")
+
+                    stage_results.append({
+                        "Stage": desc_val,
+                        "Dimensions": f"{l_val} x {w_val} x {h_val if not is_area_unit else 1.0}",
+                        "Nos": nos_val,
+                        "SingleQty": single_qty,
+                        "TotalQty": f"{net_total_qty:.3f} {unit_label}",
+                        "Material": mat_summary,
+                    })
 
                 st.write("---")
 
@@ -3413,25 +3423,25 @@ elif st.session_state.selected_module == "Estimator Tools":
 
                     for r in stage_results:
                         table_rows += f"| {r['Stage']} | {r['Nos']} | {r['Dimensions']} | {r['TotalQty']} | {r['Material']} |\n"
-                        whatsapp_text_items += f"• *{r['Stage']}*\n  - Nos: {r['Nos']} | Size: {r['Dimensions']}\n  - Single Qty: {r['SingleQty']:.3f}\n  - Total Qty: {r['TotalQty']}\n  - Material: {r['Material']}\n\n"
+                        whatsapp_text_items += f"• *{r['Stage']}*\n  - Nos: {r['Nos']} | Size: {r['Dimensions']}\n  - Total Net Qty: {r['TotalQty']}\n  - Material: {r['Material']}\n\n"
 
                     final_report_html = f"""
 <div class="print-container">
 <h2>📊 PATIL INFRATECH - ABSTRACT SHEET & QUANTITY SURVEY</h2>
 <p><strong>Prepared For:</strong> {current_user_name} | <strong>Date:</strong> {get_ist_time().strftime('%d-%m-%Y')}</p>
 
-| Description | Nos | Length x Width x Height | Total Quantity | Material |
+| Description | Nos | Length x Width x Height | Net Quantity | Material Required |
 | :--- | :--- | :--- | :--- | :--- |
 {table_rows}
 
 ---
 ### 📌 SUMMARY
-* **Status:** Report Generated Successfully (No Cost/Amount Shown)
+* **Status:** Report Generated Successfully (Deductions Applied)
 </div>
 """
                     st.markdown(final_report_html, unsafe_allow_html=True)
 
-                    msg_text = f"📊 *PATIL INFRATECH - ABSTRACT SHEET*\n👤 *Prepared For:* {current_user_name}\n📅 *Date:* {get_ist_time().strftime('%d-%m-%Y')}\n\n📋 *MEASUREMENT DETAILS:*\n{whatsapp_text_items}_Generated by Patil Infratech_"
+                    msg_text = f"📊 *PATIL INFRATECH - ABSTRACT SHEET*\n👤 *Prepared For:* {current_user_name}\n📅 *Date:* {get_ist_time().strftime('%d-%m-%Y')}\n\n📋 *MEASUREMENT DETAILS (NET QUANTITIES):*\n{whatsapp_text_items}_Generated by Patil Infratech_"
                     encoded_msg = urllib.parse.quote(msg_text)
 
                     btn_col1, btn_col2 = st.columns(2)
@@ -3453,11 +3463,10 @@ elif st.session_state.selected_module == "Estimator Tools":
                         now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
                         cursor.execute(
                             "INSERT INTO history (user_key, timestamp, user_note, report_data, site_name) VALUES (?, ?, ?, ?, ?)",
-                            (current_user_name, now_str, st.session_state.current_comment, report_table, st.session_state.current_site_name),
+                            (current_user_name, now_str, st.session_state.current_comment, final_report_html, st.session_state.current_site_name),
                         )
                         conn.commit()
                         conn.close()
-
 
 # ==========================================
 # 📌 विभाग १७: SITE MANAGER मॉड्यूल (Attendance, Inventory, Progress, Checklist, Weekly, Timeline)
