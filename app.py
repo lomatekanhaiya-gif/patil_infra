@@ -4162,17 +4162,15 @@ elif st.session_state.selected_module == "NeevPay":
         st.rerun()
 
     st.write("---")
-    st.markdown(
-        """
-        <div style="background: linear-gradient(135deg, #064e3b 0%, #0f172a 100%); padding: 18px; border-radius: 16px; border: 1px solid #10b981; margin-bottom: 20px;">
-            <h2 style="margin: 0; color: #10b981; font-weight: 900;">NEEVPAY / SITESETU - SMART PAYMENT ESCROW & BILLING</h2>
-            <p style="margin: 5px 0 0 0; color: #cbd5e1; font-size: 14px;">
-                इंजिनिअर व घरमालक यांच्यातील कामावर आधारित पारदर्शक बिलिंग, डिजिटल पडताळणी व अधिकृत Master Invoice व्यवस्था.
-            </p>
-        </div>
-        """,
-        unsafe_allow_html=True,
+    neevpay_banner = (
+        "<div style='background: linear-gradient(135deg, #064e3b 0%, #0f172a 100%); "
+        "padding: 18px; border-radius: 16px; border: 1px solid #10b981; margin-bottom: 20px;'>"
+        "<h2 style='margin: 0; color: #10b981; font-weight: 900;'>NEEVPAY / SITESETU - SMART PAYMENT ESCROW & BILLING</h2>"
+        "<p style='margin: 5px 0 0 0; color: #cbd5e1; font-size: 14px;'>"
+        "इंजिनिअर व घरमालक यांच्यातील कामावर आधारित पारदर्शक बिलिंग, संमती-आधारित पेमेंट लॉक व अधिकृत Master Invoice व्यवस्था."
+        "</p></div>"
     )
+    st.markdown(neevpay_banner, unsafe_allow_html=True)
 
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -4198,11 +4196,11 @@ elif st.session_state.selected_module == "NeevPay":
     conn.close()
 
     # ==========================================================
-    # १. क्लायंट ईमेल पडताळणी
+    # १. क्लायंट ईमेल नोंदणी व व्यवस्थापन
     # ==========================================================
     with st.container():
         if not client_email:
-            st.warning("NeevPay सुरक्षिततेसाठी घरमालकाचा (Client) Email ID रजिस्टर व OTP व्हेरिफाय करा.")
+            st.warning("NeevPay इनव्हॉइस व सुरक्षिततेसाठी घरमालकाचा (Client) Email ID सेव्ह करा.")
 
             c_mail_in = st.text_input(
                 "घरमालकाचा ईमेल पत्ता (Client Email ID):",
@@ -4210,55 +4208,43 @@ elif st.session_state.selected_module == "NeevPay":
                 key="reg_client_mail",
             )
 
-            col_o1, col_o2 = st.columns([2, 2])
-            with col_o1:
-                if st.button("ईमेलवर व्हेरिफिकेशन OTP पाठवा", key="btn_send_init_otp", type="primary"):
-                    if c_mail_in.strip() and "@" in c_mail_in:
-                        new_reg_otp = str(random.randint(100000, 999999))
-                        st.session_state["reg_client_otp_val"] = new_reg_otp
-                        st.session_state["temp_client_email"] = c_mail_in.strip().lower()
-
-                        success, err = send_live_otp_email(
+            if st.button("ईमेल सेव्ह करा", key="btn_save_init_email", type="primary"):
+                if c_mail_in.strip() and "@" in c_mail_in:
+                    conn = get_db_connection()
+                    cursor = conn.cursor()
+                    cursor.execute(
+                        "INSERT OR REPLACE INTO site_client_profiles (user_key, site_name, client_email) VALUES (?, ?, ?)",
+                        (
+                            current_user_name,
+                            st.session_state.current_site_name,
                             c_mail_in.strip().lower(),
-                            new_reg_otp,
-                            "Client Email Registration",
-                        )
-                        if success:
-                            st.session_state["reg_otp_sent"] = True
-                            st.success(f"OTP यशस्वीरित्या '{c_mail_in}' या ईमेलवर पाठवला आहे! कृपया इनबॉक्स तपासा.")
-                        else:
-                            st.error(f"ईमेल पाठवण्यात त्रुटी: {err}")
-                    else:
-                        st.error("कृपया योग्य ईमेल टाका.")
-
-            if st.session_state.get("reg_otp_sent", False):
-                with col_o2:
-                    entered_reg_otp = st.text_input(
-                        "ईमेलवर आलेला ६-अंकी OTP टाका:",
-                        max_chars=6,
-                        key="reg_otp_input",
+                        ),
                     )
-                    if st.button("OTP पडताळा व ईमेल सेव्ह करा", key="btn_verify_init_email", type="primary"):
-                        if entered_reg_otp == st.session_state.get("reg_client_otp_val"):
+                    conn.commit()
+                    conn.close()
+                    st.success("घरमालकाचा ईमेल यशस्वीरित्या सेव्ह झाला!")
+                    st.rerun()
+                else:
+                    st.error("कृपया योग्य ईमेल पत्ता टाका.")
+        else:
+            c_info_col1, c_info_col2 = st.columns([3, 1])
+            with c_info_col1:
+                st.info(f"रजिस्टर असलेला अधिकृत Email: `{client_email}` (या ईमेलवर इनव्हॉइस पाठवले जाईल)")
+            with c_info_col2:
+                with st.popover("ईमेल बदला"):
+                    new_mail_edit = st.text_input("नवीन ईमेल टाका:", value=client_email, key="edit_c_mail")
+                    if st.button("अपडेट करा", key="btn_update_c_mail", type="primary"):
+                        if new_mail_edit.strip() and "@" in new_mail_edit:
                             conn = get_db_connection()
                             cursor = conn.cursor()
                             cursor.execute(
-                                "INSERT OR REPLACE INTO site_client_profiles (user_key, site_name, client_email) VALUES (?, ?, ?)",
-                                (
-                                    current_user_name,
-                                    st.session_state.current_site_name,
-                                    st.session_state["temp_client_email"],
-                                ),
+                                "UPDATE site_client_profiles SET client_email = ? WHERE user_key = ? AND site_name = ?",
+                                (new_mail_edit.strip().lower(), current_user_name, st.session_state.current_site_name),
                             )
                             conn.commit()
                             conn.close()
-                            st.session_state["reg_otp_sent"] = False
-                            st.success("घरमालकाचा ईमेल यशस्वीरित्या पडताळणी करून सेव्ह झाला!")
+                            st.success("ईमेल अपडेट झाला!")
                             st.rerun()
-                        else:
-                            st.error("चुकीचा OTP! कृपया ईमेलवरील अचूक कोड टाका.")
-        else:
-            st.info(f"रजिस्टर असलेला अधिकृत Email: `{client_email}` (सर्व अधिकृत पावत्या व सुरक्षितता OTP यावर पाठवले जातात)")
 
     st.write("---")
 
@@ -4373,11 +4359,11 @@ elif st.session_state.selected_module == "NeevPay":
                 st.warning("कृपया कामाचे नाव टाका!")
 
     # ==========================================================
-    # ३. NEEVPAY MASTER BILL / ESCROW STATEMENT PDF & REPORT GEN
+    # ३. NEEVPAY MASTER BILL / ESCROW STATEMENT PDF & DIRECT EMAIL
     # ==========================================================
     if milestones:
-        with st.expander("NeevPay Master Escrow Statement & Invoicing (PDF / Print)", expanded=False):
-            st.caption("क्लायंट व इंजिनिअरसाठी अधिकृत डिजिटल A4 Master Statement आणि PDF इनव्हॉइस.")
+        with st.expander("NeevPay Master Escrow Statement & Invoicing (PDF / Print / Email)", expanded=False):
+            st.caption("क्लायंट व इंजिनिअरसाठी अधिकृत डिजिटल A4 Master Statement, PDF इनव्हॉइस आणि थेट ईमेल सुविधा.")
 
             table_rows_html = ""
             for idx, m_item in enumerate(milestones, 1):
@@ -4446,7 +4432,7 @@ elif st.session_state.selected_module == "NeevPay":
                         <div class="header-title">
                             <h1>PATIL INFRATECH - NEEVPAY ESCROW</h1>
                             <p>SMART MILESTONE PAYMENT PROTECTION & MASTER INVOICE</p>
-                            <small style="color: #64748b;">(Digital Milestone Escrow & Dual Approval Protocol)</small>
+                            <small style="color: #64748b;">(Digital Milestone Escrow & Verification Protocol)</small>
                         </div>
 
                         <table class="info-table">
@@ -4505,7 +4491,7 @@ elif st.session_state.selected_module == "NeevPay":
                                     <br><br>
                                     __________________________<br>
                                     <b>Client (Owner) Signature</b><br>
-                                    <small style="color:#64748b;">Email OTP Verified Approver</small>
+                                    <small style="color:#64748b;">Verified Approver</small>
                                 </td>
                             </tr>
                         </table>
@@ -4522,11 +4508,11 @@ elif st.session_state.selected_module == "NeevPay":
             st.components.v1.html(neevpay_html_doc, height=520, scrolling=True)
 
             st.write("---")
-            np_c1, np_c2, np_c3 = st.columns(3)
+            np_c1, np_c2, np_c3, np_c4 = st.columns(4)
 
             with np_c1:
                 st.download_button(
-                    label="Download Master PDF / Statement",
+                    label="Download Master HTML",
                     data=neevpay_html_doc,
                     file_name=f"NeevPay_Master_Invoice_{st.session_state.current_site_name.replace(' ', '_')}.html",
                     mime="text/html",
@@ -4552,7 +4538,7 @@ elif st.session_state.selected_module == "NeevPay":
                 neev_csv = pd.DataFrame(neev_export_data).to_csv(index=False).encode('utf-8-sig')
 
                 st.download_button(
-                    label="Export Statement (.csv)",
+                    label="Export CSV Data",
                     data=neev_csv,
                     file_name=f"NeevPay_Escrow_{st.session_state.current_site_name.replace(' ', '_')}.csv",
                     mime="text/csv",
@@ -4568,6 +4554,35 @@ elif st.session_state.selected_module == "NeevPay":
                     """,
                     unsafe_allow_html=True,
                 )
+
+            with np_c4:
+                # इंजिनिअर स्वतः क्लिक करून क्लायंटला अधिकृत ईमेल पाठवेल
+                if st.button("Email Invoice to Client", key="btn_send_client_invoice_mail", use_container_width=True):
+                    if client_email:
+                        mail_subj = f"Official Escrow Statement: {st.session_state.current_site_name}"
+                        mail_body = f"""
+नमस्कार,
+
+तुमच्या '{st.session_state.current_site_name}' या साईटचे अद्ययावत NeevPay Escrow पेमेंट स्टेटमेंट खालीलप्रमाणे आहे:
+
+एकूण ठरलेले बजेट: Rs. {total_budget:,.2f}
+आतापर्यंत प्राप्त रक्कम: Rs. {total_received:,.2f}
+शिल्लक उर्वरित बाकी: Rs. {total_pending:,.2f}
+एकूण साईट प्रगती: {overall_site_pct:.1f}% ({locked_stages}/{len(milestones)} टप्पे पूर्ण)
+साईट इंजिनिअर: {current_user_name}
+दिनांक: {get_ist_time().strftime('%d-%m-%Y')}
+
+अधिक माहितीसाठी साईट इंजिनिअरशी संपर्क साधावा.
+
+- Patil Infratech Team
+                        """
+                        ok_mail = send_email_message(client_email, mail_subj, mail_body)
+                        if ok_mail:
+                            st.success(f"अधिकृत इनव्हॉइस '{client_email}' वर पाठवले!")
+                        else:
+                            st.error("ईमेल पाठवण्यात त्रुटी आली. कृपया क्रेडेन्शियल्स तपासा.")
+                    else:
+                        st.warning("कृपया आधी क्लायंटचा ईमेल आयडी सेव्ह करा.")
 
             np_wa_text = (
                 f"*PATIL INFRATECH - NEEVPAY MASTER ESCROW STATEMENT*\n"
@@ -4624,10 +4639,10 @@ elif st.session_state.selected_module == "NeevPay":
             ):
                 if is_locked:
                     st.success(
-                        f"हा टप्पा १००% पूर्ण पेड असून दोन्ही पक्षांच्या डिजिटल पडताळणीसह लॉक केला आहे.\n\n"
+                        f"हा टप्पा १००% पूर्ण भरला असून सुरक्षितपणे लॉक केला आहे.\n\n"
                         f"• पूर्ण झाल्याची तारीख: `{m.get('completion_date', 'N/A')}`\n"
                         f"• एकूण भरलेली रक्कम: Rs. {d_amt:,.2f} (100% Complete)\n"
-                        f"• अधिकृत पावती: क्लायंटच्या `{client_email}` वर यशस्वीरित्या पाठवण्यात आली आहे."
+                        f"• शेरा: यात आता कोणतेही बदल करता येणार नाहीत."
                     )
                 else:
                     col_b1, col_b2 = st.columns([2.5, 2.5])
@@ -4647,60 +4662,30 @@ elif st.session_state.selected_module == "NeevPay":
                             unsafe_allow_html=True,
                         )
 
-                        # बिल बदलण्यासाठी OTP पर्याय
-                        with st.expander("ठरलेले बिल बदलायचे आहे का? (क्लायंट Email OTP आवश्यक)"):
-                            if not client_email:
-                                st.error("कृपया आधी वर क्लायंटचा ईमेल सेव्ह व व्हेरिफाय करा.")
-                            else:
-                                st.caption(f"बिल बदलण्यासाठी क्लायंटच्या `{client_email}` या ईमेलवर OTP पाठवला जाईल.")
+                        # बिल बदलण्यासाठी थेट संमती पर्याय
+                        with st.expander("ठरलेले बिल बदलायचे आहे का?"):
+                            new_change_amt = st.number_input(
+                                "नवीन सुधारीत बिल रक्कम (Rs.):",
+                                min_value=max(1.0, float(d_amt)),
+                                value=float(p_amt),
+                                step=1000.0,
+                                key=f"new_change_amt_{m_id}",
+                            )
 
-                                if st.button("क्लायंटच्या Email वर OTP पाठवा", key=f"btn_send_otp_{m_id}"):
-                                    gen_otp = str(random.randint(100000, 999999))
-                                    st.session_state[f"otp_val_{m_id}"] = gen_otp
-
-                                    ok, err = send_live_otp_email(
-                                        client_email,
-                                        gen_otp,
-                                        f"Bill Revision for {st_name}",
-                                    )
-                                    if ok:
-                                        st.session_state[f"otp_sent_{m_id}"] = True
-                                        st.success(f"OTP क्लायंटच्या ईमेलवर ({client_email}) पाठवला आहे!")
-                                    else:
-                                        st.error(f"ईमेल पाठवण्यात त्रुटी: {err}")
-
-                                if st.session_state.get(f"otp_sent_{m_id}", False):
-                                    new_change_amt = st.number_input(
-                                        "नवीन सुधारीत बिल रक्कम (Rs.):",
-                                        min_value=max(1.0, float(d_amt)),
-                                        value=float(p_amt),
-                                        step=1000.0,
-                                        key=f"new_change_amt_{m_id}",
-                                    )
-                                    user_otp = st.text_input(
-                                        "क्लायंटच्या ईमेलवरील ६-अंकी OTP टाका:",
-                                        max_chars=6,
-                                        key=f"inp_otp_{m_id}",
-                                    )
-
-                                    if st.button("OTP पडताळा व बिल अपडेट करा", key=f"btn_verify_otp_{m_id}", type="primary"):
-                                        if user_otp == st.session_state.get(f"otp_val_{m_id}"):
-                                            conn = get_db_connection()
-                                            cursor = conn.cursor()
-                                            cursor.execute(
-                                                "UPDATE site_milestone_payments SET planned_amount = ? WHERE id = ?",
-                                                (new_change_amt, m_id),
-                                            )
-                                            conn.commit()
-                                            conn.close()
-                                            st.session_state[f"otp_sent_{m_id}"] = False
-                                            st.success("क्लायंट पडताळणीने नवीन बिल अपडेट झाले!")
-                                            st.rerun()
-                                        else:
-                                            st.error("चुकीचा OTP!")
+                            if st.button("नवीन बिल अपडेट करा", key=f"btn_update_bill_{m_id}", type="primary"):
+                                conn = get_db_connection()
+                                cursor = conn.cursor()
+                                cursor.execute(
+                                    "UPDATE site_milestone_payments SET planned_amount = ? WHERE id = ?",
+                                    (new_change_amt, m_id),
+                                )
+                                conn.commit()
+                                conn.close()
+                                st.success("नवीन बिल अपडेट झाले!")
+                                st.rerun()
 
                         # ==========================================================
-                        # पेमेंट जमा करण्याची नोंद (दोन्ही पडताळणी झाल्यावरच)
+                        # पेमेंट जमा करण्याची नोंद
                         # ==========================================================
                         if p_amt > 0.0 and rem_balance > 0:
                             st.write("---")
@@ -4764,13 +4749,13 @@ elif st.session_state.selected_module == "NeevPay":
                                 st.success("पडताळणी अपडेट झाली!")
                                 st.rerun()
 
-                        # फायनल लॉक व स्वयंचलित Email पाठवणे
+                        # फायनल लॉक करणे (ईमेल पाठवण्याशिवाय - साधे व जलद)
                         if p_amt > 0 and d_amt >= p_amt:
                             if eng_check and cli_check:
                                 st.write("---")
                                 st.info("१००% पेमेंट पूर्ण झाले असून दोन्ही पडताळणी पूर्ण आहेत.")
                                 if st.button(
-                                    "हा टप्पा अंतिम लॉक करा (Lock & Email Invoice)",
+                                    "हा टप्पा अंतिम लॉक करा (Lock Milestone)",
                                     key=f"btn_lock_{m_id}",
                                     type="primary",
                                 ):
@@ -4787,29 +4772,7 @@ elif st.session_state.selected_module == "NeevPay":
                                     )
                                     conn.commit()
                                     conn.close()
-
-                                    # क्लायंटच्या ईमेलवर रिपोर्ट पाठवणे
-                                    if client_email:
-                                        mail_subj = f"Payment Receipt & Milestone Completed: {st_name}"
-                                        mail_body = f"""
-नमस्कार,
-
-तुमच्या '{st.session_state.current_site_name}' या साईटवरील खालील टप्पा १००% पूर्ण भरला असून यशस्वीरित्या लॉक झाला आहे:
-
-कामाचा टप्पा: {st_name}
-भरलेली रक्कम: Rs. {d_amt:,.2f}
-दिनांक व वेळ: {today_str}
-एकूण साईट प्रगती: {overall_site_pct:.1f}% ({locked_stages + 1}/{len(milestones)} टप्पे पूर्ण)
-साईट इंजिनिअर: {current_user_name}
-
-हे बिल Patil Infratech NeevPay द्वारे डिजिटल पद्धतीने सुरक्षित व पडताळणी केलेले आहे.
-
-- Patil Infratech Team
-                                        """
-                                        send_email_message(client_email, mail_subj, mail_body)
-                                        st.success(f"'{st_name}' लॉक झाला आणि अधिकृत इनव्हॉइस '{client_email}' वर पाठवले!")
-                                    else:
-                                        st.success(f"'{st_name}' यशस्वीरित्या लॉक झाला!")
+                                    st.success(f"'{st_name}' यशस्वीरित्या लॉक झाला!")
                                     st.rerun()
                             else:
                                 st.warning("टप्पा लॉक करण्यासाठी वरील दोन्ही पडताळणी चेकबॉक्स टिक असणे गरजेचे आहे.")
