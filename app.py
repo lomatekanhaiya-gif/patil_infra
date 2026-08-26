@@ -8,7 +8,7 @@
 # 📑 अनुक्रमणिका व विभाग नकाशा (TABLE OF CONTENTS / INDEX):
 # ------------------------------------------------------------------------------
 # 📌 विभाग १  : आवश्यक लायब्ररी आणि पॅकेजेस इम्पोर्ट
-# 📌 विभाग २  : STREAMLIT पेज कॉन्फिगरेशन
+# 📌 विभाग २  : STREAMLIT पेज कॉन्फिगरेशन (Must be first Streamlit command)
 # 📌 विभाग ३  : ब्राउझर लोकल स्टोरेज आणि मोबाईल बॅक बटन हँडलर
 # 📌 विभाग ४  : युटिलिटी आणि सपोर्ट फंक्शन्स (वेळ, ईमेल OTP, पासवर्ड सुरक्षा)
 # 📌 विभाग ५  : SQLITE डेटाबेस मॅनेजमेंट आणि मॉडेल्स (Tables Creation & Init DB)
@@ -18,34 +18,14 @@
 # 📌 विभाग ९  : WHATSAPP रिपोर्ट शेअरिंग कंपोनंट (Safe Dynamic Key Protection)
 # 📌 विभाग १० : वेलकम स्क्रीन ॲनिमेशन (3D Cosmic Loader & Sponsor Ads)
 # 📌 विभाग ११ : ॲडमीन पॅनल (Admin Command Center)
-#      ├── ११.१ Master Rates Update
-#      ├── ११.२ Feature Locks
-#      ├── ११.३ User Management & Activation
-#      ├── ११.४ Ad & Sponsor Manager
-#      └── ११.५ Broadcast Notification
 # 📌 विभाग १२ : युझर ऑथेंटिकेशन (Login, Register & Email OTP)
-#      ├── १२.१ Registered User Login
-#      ├── १२.२ Email OTP Verification & Account Creation
-#      └── १२.३ Hidden Admin Login Modal
 # 📌 विभाग १३ : मुख्य युझर डॅशबोर्ड (Top Header, Ads, Notifications & Site Switcher)
 # 📌 विभाग १४ : CIVIL AI ASSISTANT (Gemini SDK & Expert Knowledge Fallback)
 # 📌 विभाग १५ : मुख्य मॉड्यूल निवड कार्ड्स (Site Manager vs Estimator Tools vs NeevPay)
 # 📌 विभाग १६ : ESTIMATOR TOOLS मुख्य मॉड्यूल (Sub-modules)
-#      ├── १६.० Master 3-in-1 Combined Estimate PDF
-#      ├── १६.१ Civil Calculator & Smart Unit Converter
-#      ├── १६.२ Rate Analysis (Concrete, Brickwork, Plaster)
-#      ├── १६.३ Bar Bending Schedule (BBS Calculator)
-#      └── १६.४ Quantity Surveying & Abstract Sheet Master
 # 📌 विभाग १७ : SITE MANAGER मुख्य मॉड्यूल (Sub-modules)
-#      ├── १७.१ Daily Attendance & Wages Tracker
-#      ├── १७.२ Material Stock & Inventory Tracker
-#      ├── १७.३ Daily Progress Report & Photos
-#      ├── १७.४ Pre-Concreting Digital Checklist
-#      ├── १७.५ Weekly Site Dashboard & Logs
-#      └── १७.६ Project Timeline & Delay Tracker (Finish Date Calculator)
 # 📌 विभाग १८ : NEEVPAY / SITESETU मुख्य मॉड्यूल (Milestone Escrow & Payment Protection)
 # ==============================================================================
-
 
 # ==========================================
 # 📌 विभाग १: आवश्यक लायब्ररी आणि पॅकेजेस इम्पोर्ट
@@ -72,103 +52,6 @@ try:
 except ImportError:
     HAS_GENAI = False
 
-# =====================================================================
-# 👉 १.१ हा नवीन सेक्शन वर टाका (Site Manager & Index Controller)
-# =====================================================================
-if "all_sites_data" not in st.session_state:
-    st.session_state.all_sites_data = {
-        "Default Site": {"milestones": [], "created_at": "26-08-2026"}
-    }
-
-if "current_site_name" not in st.session_state:
-    st.session_state.current_site_name = "Default Site"
-
-# --- SIDEBAR: Site Index, Add & Delete Controls ---
-with st.sidebar:
-    st.header("🏗️ Project & Site Manager")
-
-    site_list = list(st.session_state.all_sites_data.keys())
-    curr_idx = (
-        site_list.index(st.session_state.current_site_name)
-        if st.session_state.current_site_name in site_list
-        else 0
-    )
-
-    # १. साईट इंडेक्स (Dropdown)
-    selected_site = st.selectbox(
-        "📂 चालू साईट निवडा (Site Index):", site_list, index=curr_idx
-    )
-    if selected_site != st.session_state.current_site_name:
-        st.session_state.current_site_name = selected_site
-        st.rerun()
-
-    st.write("---")
-
-    # २. नवीन साईट जोडणे (Fresh Page)
-    with st.expander("➕ नवीन साईट जोडा", expanded=False):
-        new_name = st.text_input("साईटचे नाव:", key="new_site_key")
-        if st.button("तयार करा", use_container_width=True):
-            clean = new_name.strip()
-            if clean and clean not in st.session_state.all_sites_data:
-                st.session_state.all_sites_data[clean] = {
-                    "milestones": [],
-                    "created_at": "26-08-2026",
-                }
-                st.session_state.current_site_name = clean
-                st.success("नवीन साईट सुरू झाली!")
-                st.rerun()
-
-    # ३. साईट डिलीट करणे
-    with st.expander("🗑️ साईट डिलीट करा", expanded=False):
-        conf = st.checkbox("मी ही साईट डिलीट करू इच्छितो")
-        if st.button("डिलीट करा", disabled=not conf, use_container_width=True):
-            if len(st.session_state.all_sites_data) > 1:
-                del st.session_state.all_sites_data[
-                    st.session_state.current_site_name
-                ]
-                st.session_state.current_site_name = list(
-                    st.session_state.all_sites_data.keys()
-                )[0]
-                st.rerun()
-            else:
-                st.error("किमान १ साईट असणे आवश्यक आहे!")
-
-# चालू साईटचा डेटा लोड करणे
-current_site_data = st.session_state.all_sites_data.get(
-    st.session_state.current_site_name, {"milestones": []}
-)
-milestones = current_site_data.get("milestones", [])
-total_budget = sum(m.get("planned_amount", 0.0) for m in milestones)
-total_received = sum(m.get("amount_deposited", 0.0) for m in milestones)
-total_pending = max(0.0, total_budget - total_received)
-locked_stages = sum(1 for m in milestones if m.get("is_locked") == 1)
-
-
-# =====================================================================
-# 👉 २. या खाली तुमचा मूळ इनव्हॉइस कोड तसाच सुरू होईल (नो चेंज)
-# =====================================================================
-st.write("---")
-st.markdown("### 📑 NeevPay Master Invoice & Bill Generator (A4 PDF)")
-st.caption(
-    "💡 अधिकृत पेमेंट पावती, वॉटरमार्क आणि दोन्ही पक्षांच्या स्वाक्षरीसह A4 फॉरमॅट इनव्हॉइस."
-)
-
-invoice_rows_html = ""
-for idx, m in enumerate(milestones, 1):
-    st_lock_text = (
-        "पूर्ण व लॉक (Locked)" if m.get("is_locked") == 1 else m.get("status")
-    )
-    invoice_rows_html += f"""
-    <tr>
-        <td>{idx}</td>
-        <td><b>{m['stage_name']}</b></td>
-        <td>₹ {m['planned_amount']:,.2f}</td>
-        <td style="color:#047857; font-weight:bold;">₹ {m['amount_deposited']:,.2f}</td>
-        <td>₹ {max(0.0, m['planned_amount'] - m['amount_deposited']):,.2f}</td>
-        <td>{st_lock_text}</td>
-    </tr>
-    """
-
 # ==========================================
 # 📌 विभाग २: STREAMLIT पेज कॉन्फिगरेशन
 # ==========================================
@@ -178,7 +61,6 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed",
 )
-
 
 # ==========================================
 # 📌 विभाग ३: ब्राउझर लोकल स्टोरेज आणि मोबाईल बॅक बटन हँडलर
@@ -220,7 +102,6 @@ def trigger_push_state():
         "<script>window.history.pushState({inSubModule: true}, '');</script>",
         unsafe_allow_html=True,
     )
-
 
 # ==========================================
 # 📌 विभाग ४: युटिलिटी आणि सपोर्ट फंक्शन्स (वेळ, ईमेल, पासवर्ड)
@@ -298,7 +179,7 @@ def init_db():
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # १. युझर्स टेबल (Users Table)
+    # १. युझर्स टेबल
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
             user_key TEXT PRIMARY KEY,
@@ -321,7 +202,7 @@ def init_db():
         )
     """)
 
-    # २. हिस्ट्री टेबल (History Table)
+    # २. हिस्ट्री टेबल
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS history (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -334,7 +215,7 @@ def init_db():
         )
     """)
 
-    # ३. प्रिमियम कोड्स टेबल (Premium Codes Table)
+    # ३. प्रिमियम कोड्स टेबल
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS premium_codes (
             code TEXT PRIMARY KEY,
@@ -346,7 +227,7 @@ def init_db():
         )
     """)
 
-    # ४. फिचर लॉक्स टेबल (Feature Locks Table)
+    # ४. फिचर लॉक्स टेबल
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS feature_locks (
             feature_name TEXT PRIMARY KEY,
@@ -354,7 +235,7 @@ def init_db():
         )
     """)
 
-    # ५. मास्टर मार्केट दर टेबल (Master Market Rates Table)
+    # ५. मास्टर मार्केट दर टेबल
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS market_rates (
             material TEXT PRIMARY KEY,
@@ -362,7 +243,7 @@ def init_db():
         )
     """)
 
-    # ६. जाहिरात व स्पॉन्सर टेबल (Ads Table)
+    # ६. जाहिरात व स्पॉन्सर टेबल
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS ads (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -377,20 +258,20 @@ def init_db():
         )
     """)
 
-    # ७. साईट हजेरी व मजुरी टेबल (Daily Attendance Table)
+    # ७. साईट हजेरी व मजुरी टेबल
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS site_attendance (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_key TEXT,
             date TEXT,
+            supervisor INTEGER DEFAULT 0,
+            supervisor_rate REAL DEFAULT 0.0,
             masons INTEGER DEFAULT 0,
             mason_rate REAL DEFAULT 0.0,
             labors INTEGER DEFAULT 0,
             labor_rate REAL DEFAULT 0.0,
             fitters INTEGER DEFAULT 0,
             fitter_rate REAL DEFAULT 0.0,
-            supervisor INTEGER DEFAULT 0,
-            supervisor_rate REAL DEFAULT 0.0,
             carpenter INTEGER DEFAULT 0,
             carpenter_rate REAL DEFAULT 0.0,
             plumber INTEGER DEFAULT 0,
@@ -404,28 +285,7 @@ def init_db():
         )
     """)
 
-    # सुरक्षित डेटाबेस अपग्रेड (Column Addition Safe Check)
-    new_labour_cols = [
-        ("supervisor", "INTEGER DEFAULT 0"),
-        ("supervisor_rate", "REAL DEFAULT 0.0"),
-        ("carpenter", "INTEGER DEFAULT 0"),
-        ("carpenter_rate", "REAL DEFAULT 0.0"),
-        ("plumber", "INTEGER DEFAULT 0"),
-        ("plumber_rate", "REAL DEFAULT 0.0"),
-        ("electrician", "INTEGER DEFAULT 0"),
-        ("electrician_rate", "REAL DEFAULT 0.0"),
-        ("painter", "INTEGER DEFAULT 0"),
-        ("painter_rate", "REAL DEFAULT 0.0"),
-    ]
-    for col_name, col_type in new_labour_cols:
-        try:
-            cursor.execute(
-                f"ALTER TABLE site_attendance ADD COLUMN {col_name} {col_type}"
-            )
-        except sqlite3.OperationalError:
-            pass
-
-    # ८. साहित्य इन्व्हेंटरी टेबल (Material Inventory Table)
+    # ८. साहित्य इन्व्हेंटरी टेबल
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS site_inventory (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -439,7 +299,7 @@ def init_db():
         )
     """)
 
-    # ९. प्रोग्रेस रिपोर्ट टेबल (Daily Progress Report Table)
+    # ९. प्रोग्रेस रिपोर्ट टेबल
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS site_progress (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -452,7 +312,7 @@ def init_db():
         )
     """)
 
-    # १०. प्री-काँक्रीटिंग चेकलिस्ट टेबल (Pre-Concreting Checklist Table)
+    # १०. प्री-काँक्रीटिंग चेकलिस्ट टेबल
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS pre_concreting_checklist (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -464,7 +324,7 @@ def init_db():
         )
     """)
 
-    # ११. प्रोजेक्ट टाईमलाईन आणि टास्क मॅनेजमेंट टेबल (Project Timeline & Tasks Table)
+    # ११. प्रोजेक्ट टाईमलाईन आणि टास्क मॅनेजमेंट टेबल
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS project_tasks (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -479,7 +339,7 @@ def init_db():
         )
     """)
 
-    # १२. पेमेंट प्रोटेक्शन आणि टप्पे टेबल (Milestone Escrow & Payment Protection Table)
+    # १२. पेमेंट प्रोटेक्शन आणि टप्पे टेबल
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS site_milestone_payments (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -496,21 +356,6 @@ def init_db():
             remark TEXT
         )
     """)
-
-    # आधीच तयार असलेल्या जुन्या टेबलसाठी सुरक्षित कॉलम ॲड:
-    try:
-        cursor.execute(
-            "ALTER TABLE site_milestone_payments ADD COLUMN is_locked INTEGER DEFAULT 0"
-        )
-    except sqlite3.OperationalError:
-        pass
-
-    try:
-        cursor.execute(
-            "ALTER TABLE site_milestone_payments ADD COLUMN site_name TEXT DEFAULT 'Default Site'"
-        )
-    except sqlite3.OperationalError:
-        pass
 
     # मास्टर ॲडमीन डिफॉल्ट एंट्री
     cursor.execute("SELECT * FROM users WHERE user_key = ?", ("9999999999",))
@@ -532,10 +377,7 @@ def init_db():
                 "admin@patilinfratech.com",
                 "patiladmin123",
                 "मास्टर ॲडमीन अकाउंट",
-                (
-                    "स्वागत आहे मास्टर कन्हैया! आपले पाटील इन्फ्राटेक मध्ये सर्व"
-                    " अधिकार अनलॉक्ड आहेत ⚡"
-                ),
+                "स्वागत आहे मास्टर कन्हैया! आपले पाटील इन्फ्राटेक मध्ये सर्व अधिकार अनलॉक्ड आहेत ⚡",
                 0,
                 1,
                 "2099-12-31 23:59:59",
@@ -577,24 +419,6 @@ def init_db():
             "INSERT OR IGNORE INTO market_rates (material, rate) VALUES (?, ?)",
             (mat, rat),
         )
-
-    # सर्व मुख्य टेबल्समध्ये site_name कॉलम सुरक्षितपणे जोडणे
-    tables_to_update = [
-        "history",
-        "site_attendance",
-        "site_inventory",
-        "site_progress",
-        "pre_concreting_checklist",
-        "project_tasks",
-        "site_milestone_payments",
-    ]
-    for tbl in tables_to_update:
-        try:
-            cursor.execute(
-                f"ALTER TABLE {tbl} ADD COLUMN site_name TEXT DEFAULT 'Default Site'"
-            )
-        except sqlite3.OperationalError:
-            pass
 
     conn.commit()
     conn.close()
@@ -668,7 +492,6 @@ def load_default_tasks_if_empty(user_key, site_name):
         conn.commit()
     conn.close()
 
-
 # ==========================================
 # 📌 विभाग ७: सेशन स्टेट्स आणि प्रिमियम ऑथेंटिकेशन
 # ==========================================
@@ -701,6 +524,7 @@ for key, default in [
     ("admin_view", "main"),
     ("admin_selected_user", None),
     ("current_site_name", "पाटील रेसिडेन्सी - साईट १"),
+    ("all_sites_data", {"Default Site": {"milestones": [], "created_at": "26-08-2026"}}),
 ]:
     if key not in st.session_state:
         st.session_state[key] = default
@@ -762,7 +586,6 @@ def check_user_premium_status(username):
 
 
 is_curr_premium, _ = check_user_premium_status(current_user_name)
-
 
 # ==========================================
 # 📌 विभाग ८: BRANDED CONSTRUCTION THEME CSS
@@ -906,7 +729,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-
 # ==========================================
 # 📌 विभाग ९: WHATSAPP रिपोर्ट शेअरिंग कंपोनंट
 # ==========================================
@@ -927,7 +749,6 @@ def render_whatsapp_feature(encoded_msg, key_prefix):
             unsafe_allow_html=True,
         )
     else:
-        # युनिक सुरक्षित की हँडलर जेणेकरून StreamlitDuplicateElementKey एरर कधीच येणार नाही
         safe_uid = f"{key_prefix}_{abs(hash(encoded_msg)) % 100000}"
 
         with st.expander("🔒 WhatsApp Report Sharing - Unlock Premium"):
@@ -999,9 +820,8 @@ def render_whatsapp_feature(encoded_msg, key_prefix):
                     conn.close()
                     st.success("✅ ॲडमीनला कोडसाठी रिक्वेस्ट पाठवली आहे!")
 
-
 # ==========================================
-# 📌 विभाग १०: वेलकम स्क्रीन ॲनिमेशन (3D Cosmic Loader)
+# 📌 विभाग १०: वेलकम स्क्रीन ॲनिमेशन (3D Cosmic Loader & Sponsor Ads)
 # ==========================================
 welcome_placeholder = st.empty()
 
@@ -1067,7 +887,7 @@ if not st.session_state.welcome_completed:
                 unsafe_allow_html=True,
             )
             progress_bar.progress((i + 1) * 20)
-            time.sleep(0.4)
+            time.sleep(0.3)
 
     welcome_placeholder.empty()
     st.session_state.welcome_completed = True
@@ -1088,7 +908,6 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
-
 
 # ==========================================
 # 📌 विभाग ११: ॲडमीन पॅनल (Admin Command Center)
@@ -1521,9 +1340,8 @@ if st.session_state.is_admin_logged:
 
     st.stop()
 
-
 # ==========================================
-# 📌 विभाग १२: युझर ऑथेंटिकेशन (Email / Password / OTP Login)
+# 📌 विभाग १२: युझर ऑथेंटिकेशन (Login, Register & Email OTP)
 # ==========================================
 if st.session_state.app_user_name is None:
     st.markdown("### 🏗️ PATIL INFRATECH - SECURE LOGIN")
@@ -1610,7 +1428,6 @@ if st.session_state.app_user_name is None:
                     else:
                         st.error("❌ चुकीचा OTP! कृपया पुन्हा प्रयत्न करा.")
 
-        # जर OTP पडताळणी पूर्ण झाली असेल तर
         if st.session_state.otp_verified and st.session_state.pending_email:
             conn = get_db_connection()
             cursor = conn.cursor()
@@ -1758,9 +1575,8 @@ if st.session_state.app_user_name is None:
 
     st.stop()
 
-
 # ==========================================
-# 📌 विभाग १३: मुख्य युझर डॅशबोर्ड (Top Header, Ads, Notifications)
+# 📌 विभाग १३: मुख्य युझर डॅशबोर्ड (Top Header, Ads, Notifications & Site Switcher)
 # ==========================================
 current_user_name = st.session_state.app_user_name
 is_user_premium, status_text_str = check_user_premium_status(current_user_name)
@@ -1996,9 +1812,8 @@ if not is_user_premium:
                 conn.close()
                 st.success("✅ ॲडमीनला रिक्वेस्ट पाठवली!")
 
-
 # ==========================================
-# 📌 विभाग १४: CIVIL AI ASSISTANT (Safe & Optimized)
+# 📌 विभाग १४: CIVIL AI ASSISTANT (Gemini SDK & Fallback)
 # ==========================================
 locks_cfg = get_feature_locks()
 ai_lock_setting = locks_cfg.get("Civil AI Assistant", "Premium")
@@ -2034,7 +1849,7 @@ if ai_lock_setting == "Free" or is_user_premium:
                         )
                         if response and response.text:
                             ai_response_text = response.text
-                    except Exception as e:
+                    except Exception:
                         ai_response_text = ""
                 
                 # जर एआय किंवा एपीआय की उपलब्ध नसेल, तर स्मार्ट इंजिनिअरिंग उत्तर देणे
@@ -2073,9 +1888,8 @@ if ai_lock_setting == "Free" or is_user_premium:
 else:
     st.info("🔒 Civil AI Assistant हे प्रिमियम फिचर आहे.")
 
-
 # ==========================================
-# 📌 विभाग १५: मुख्य मॉड्यूल निवडीचे डॅशबोर्ड कार्ड्स (३ स्वतंत्र मॉड्यूल्स)
+# 📌 विभाग १५: मुख्य मॉड्यूल निवड कार्ड्स (Site Manager vs Estimator Tools vs NeevPay)
 # ==========================================
 if st.session_state.selected_module is None:
     st.markdown("<h3 style='text-align:center; margin-bottom:20px;'>🚀 कृपया मॉड्यूल निवडा</h3>", unsafe_allow_html=True)
@@ -2130,7 +1944,7 @@ if st.session_state.selected_module is None:
             trigger_push_state()
             st.rerun()
 
-    # ३. NeevPay पेमेंट प्रोटेक्शन कार्ड (स्वतंत्र मुख्य मॉड्यूल)
+    # ३. NeevPay पेमेंट प्रोटेक्शन कार्ड
     with main_col3:
         neev_badge = "🆓 Free Access" if neev_lock == "Free" else "👑 VIP Premium"
         st.markdown(
@@ -2153,9 +1967,8 @@ if st.session_state.selected_module is None:
                 trigger_push_state()
                 st.rerun()
 
-
 # ==========================================
-# 📌 विभाग १६: ESTIMATOR TOOLS मॉड्यूल (Sub-modules)
+# 📌 विभाग १६: ESTIMATOR TOOLS मुख्य मॉड्यूल (Sub-modules)
 # ==========================================
 elif st.session_state.selected_module == "Estimator Tools":
     if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_estimator"):
@@ -2171,7 +1984,7 @@ elif st.session_state.selected_module == "Estimator Tools":
     bbs_lock = locks_cfg.get("BBS", "Free")
     qs_lock = locks_cfg.get("Quantity Surveying", "Free")
 
-    # १६.० मास्टर ३-इन-१ कंबाइन्ड PDF व Excel रिपोर्ट फंक्शन (Visible Overlay Watermark)
+    # १६.० मास्टर ३-इन-१ कंबाइन्ड PDF व Excel रिपोर्ट फंक्शन
     def render_combined_master_report(user_key, site_name):
         st.subheader(f"📑 Master Project Estimate: {site_name}")
         st.caption("💡 मागील २ दिवसांमधील Rate Analysis, BBS आणि Quantity Survey चा एकत्रित IS-Code फॉरमॅट ३-पेज रिपोर्ट.")
@@ -2227,138 +2040,28 @@ elif st.session_state.selected_module == "Estimator Tools":
             <meta charset="utf-8">
             <title>PATIL INFRATECH - {site_name} Master Report</title>
             <style>
-                @page {{
-                    size: A4 portrait;
-                    margin: 8mm;
-                }}
+                @page {{ size: A4 portrait; margin: 8mm; }}
                 @media print {{
-                    body {{
-                        background: #ffffff !important;
-                        color: #000000 !important;
-                    }}
-                    .no-print {{
-                        display: none !important;
-                    }}
-                    .page-break {{
-                        page-break-before: always !important;
-                        break-before: page !important;
-                    }}
+                    body {{ background: #ffffff !important; color: #000000 !important; }}
+                    .no-print {{ display: none !important; }}
+                    .page-break {{ page-break-before: always !important; break-before: page !important; }}
                 }}
-                body {{
-                    background-color: #e2e8f0;
-                    font-family: 'Segoe UI', Arial, sans-serif;
-                    margin: 0;
-                    padding: 10px;
-                    color: #0f172a;
-                }}
-                .a4-page {{
-                    position: relative;
-                    background: #ffffff;
-                    width: 100%;
-                    max-width: 780px;
-                    margin: 0 auto 20px auto;
-                    padding: 25px 30px;
-                    border-radius: 6px;
-                    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-                    border: 1.5px solid #0f172a;
-                    box-sizing: border-box;
-                    min-height: 1020px;
-                    overflow: hidden;
-                }}
-                .watermark {{
-                    position: absolute;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%) rotate(-28deg);
-                    font-size: 22px;
-                    font-weight: 900;
-                    color: rgba(15, 23, 42, 0.09);
-                    text-transform: uppercase;
-                    letter-spacing: 2.5px;
-                    text-align: center;
-                    width: 78%;
-                    max-width: 500px;
-                    line-height: 1.5;
-                    pointer-events: none;
-                    user-select: none;
-                    border: 3px dashed rgba(15, 23, 42, 0.09);
-                    padding: 15px 25px;
-                    border-radius: 12px;
-                    z-index: 999;
-                }}
-                .content-box {{
-                    position: relative;
-                    z-index: 2;
-                }}
-                .header-title {{
-                    text-align: center;
-                    border-bottom: 2px solid #0f172a;
-                    padding-bottom: 6px;
-                    margin-bottom: 12px;
-                }}
-                .header-title h1 {{
-                    margin: 0;
-                    font-size: 22px;
-                    color: #0f172a;
-                    font-weight: 900;
-                    letter-spacing: 0.5px;
-                }}
-                .header-title p {{
-                    margin: 2px 0;
-                    font-size: 11px;
-                    font-weight: bold;
-                    color: #475569;
-                }}
-                table.info-table {{
-                    width: 100%;
-                    margin-bottom: 12px;
-                    font-size: 12px;
-                    border-collapse: collapse;
-                }}
-                table.info-table td {{
-                    padding: 3px 0;
-                }}
-                .section-header {{
-                    background: #0f172a;
-                    color: #ffffff;
-                    padding: 6px 12px;
-                    font-size: 12px;
-                    font-weight: bold;
-                    border-radius: 4px;
-                    margin: 12px 0 8px 0;
-                }}
-                table.custom-data-table {{
-                    width: 100%;
-                    border-collapse: collapse;
-                    margin: 8px 0 15px 0;
-                    font-size: 11px;
-                }}
-                table.custom-data-table th, table.custom-data-table td {{
-                    border: 1px solid #cbd5e1;
-                    padding: 6px 8px;
-                    text-align: left;
-                }}
-                table.custom-data-table th {{
-                    background-color: rgba(241, 245, 249, 0.85);
-                    font-weight: bold;
-                    color: #0f172a;
-                }}
-                table.custom-data-table tr:nth-child(even) {{
-                    background-color: rgba(248, 250, 252, 0.6);
-                }}
-                .signature-box {{
-                    margin-top: 35px;
-                    width: 100%;
-                    font-size: 12px;
-                }}
-                .footer-stamp {{
-                    text-align: center;
-                    margin-top: 20px;
-                    font-size: 10px;
-                    color: #64748b;
-                    border-top: 1px solid #e2e8f0;
-                    padding-top: 5px;
-                }}
+                body {{ background-color: #e2e8f0; font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 10px; color: #0f172a; }}
+                .a4-page {{ position: relative; background: #ffffff; width: 100%; max-width: 780px; margin: 0 auto 20px auto; padding: 25px 30px; border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); border: 1.5px solid #0f172a; box-sizing: border-box; min-height: 1020px; overflow: hidden; }}
+                .watermark {{ position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-28deg); font-size: 22px; font-weight: 900; color: rgba(15, 23, 42, 0.09); text-transform: uppercase; letter-spacing: 2.5px; text-align: center; width: 78%; max-width: 500px; line-height: 1.5; pointer-events: none; user-select: none; border: 3px dashed rgba(15, 23, 42, 0.09); padding: 15px 25px; border-radius: 12px; z-index: 999; }}
+                .content-box {{ position: relative; z-index: 2; }}
+                .header-title {{ text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 6px; margin-bottom: 12px; }}
+                .header-title h1 {{ margin: 0; font-size: 22px; color: #0f172a; font-weight: 900; letter-spacing: 0.5px; }}
+                .header-title p {{ margin: 2px 0; font-size: 11px; font-weight: bold; color: #475569; }}
+                table.info-table {{ width: 100%; margin-bottom: 12px; font-size: 12px; border-collapse: collapse; }}
+                table.info-table td {{ padding: 3px 0; }}
+                .section-header {{ background: #0f172a; color: #ffffff; padding: 6px 12px; font-size: 12px; font-weight: bold; border-radius: 4px; margin: 12px 0 8px 0; }}
+                table.custom-data-table {{ width: 100%; border-collapse: collapse; margin: 8px 0 15px 0; font-size: 11px; }}
+                table.custom-data-table th, table.custom-data-table td {{ border: 1px solid #cbd5e1; padding: 6px 8px; text-align: left; }}
+                table.custom-data-table th {{ background-color: rgba(241, 245, 249, 0.85); font-weight: bold; color: #0f172a; }}
+                table.custom-data-table tr:nth-child(even) {{ background-color: rgba(248, 250, 252, 0.6); }}
+                .signature-box {{ margin-top: 35px; width: 100%; font-size: 12px; }}
+                .footer-stamp {{ text-align: center; margin-top: 20px; font-size: 10px; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 5px; }}
             </style>
         </head>
         <body>
@@ -2743,7 +2446,7 @@ elif st.session_state.selected_module == "Estimator Tools":
                 else:
                     steel_percentage = 0.0
 
-                st.markdown("#### [A] साहित्याची माहिती आणि दर (थेट टाईप करा)")
+                st.markdown("#### [A] साहित्याची माहिती आणि दर")
                 v_col1, v_col2 = st.columns(2)
                 with v_col1:
                     volume = st.number_input("एकूण काँक्रीट घनफळ भरा (Volume in m³):", min_value=0.0, value=1.0, key="cc_vol")
@@ -2876,7 +2579,7 @@ elif st.session_state.selected_module == "Estimator Tools":
                 else:
                     c_part, s_part = 1, 6
 
-                st.markdown("#### [A] साहित्याची माहिती आणि दर (थेट टाईप करा)")
+                st.markdown("#### [A] साहित्याची माहिती आणि दर")
                 bm_col1, bm_col2 = st.columns(2)
                 with bm_col1:
                     volume = st.number_input("वीटकामाचे एकूण घनफळ भरा (Volume in m³):", min_value=0.0, value=1.0, key="bw_vol")
@@ -3000,7 +2703,7 @@ elif st.session_state.selected_module == "Estimator Tools":
                 else:
                     p_c_part, p_s_part = 1, 6
 
-                st.markdown("#### [A] साहित्याची माहिती आणि दर (क्षेत्रफळ, दर व वॉटरप्रूफिंग)")
+                st.markdown("#### [A] साहित्याची माहिती आणि दर")
                 p_col1, p_col2 = st.columns(2)
                 with p_col1:
                     plaster_area = st.number_input("प्लास्टरचे एकूण क्षेत्रफळ (Area in m²):", min_value=0.0, value=10.0, key="pl_area")
@@ -3010,7 +2713,7 @@ elif st.session_state.selected_module == "Estimator Tools":
                     sand_rate = st.number_input("वाळूचा दर प्रति m³ (₹):", min_value=0.0, value=float(master_rates.get("sand", 2500.0)), key="pl_snd_r")
                     wp_rate = st.number_input("वाटरप्रूफिंग दर (प्रति किलोग्रॅम/लिटर ₹):", min_value=0.0, value=150.0, key="pl_wp_r") if use_waterproofing else 0.0
 
-                st.markdown("#### [B] लेबर खर्च (दिवसानुसार किंवा लांप सम)")
+                st.markdown("#### [B] लेबर खर्च")
                 pl_l1, pl_l2 = st.columns(2)
                 with pl_l1:
                     pl_mason_qty = st.number_input("मेसन संख्या (Days):", min_value=0.0, value=0.0, key="pl_mq")
@@ -3262,7 +2965,7 @@ elif st.session_state.selected_module == "Estimator Tools":
                     st_tot_wt = st_tot_len * st_unit_wt
                     calc_list.append({
                         "Desc": "Stirrups / Ties (Rings)", "Nos": st_nos, "Dia": col_st_dia,
-                        "Len": st_cut_m, "TotLen": m_tot_len, "Wt": st_unit_wt, "TotWt": st_tot_wt,
+                        "Len": st_cut_m, "TotLen": st_tot_len, "Wt": st_unit_wt, "TotWt": st_tot_wt,
                     })
 
                 elif rcc_comp == "Beam":
@@ -3639,7 +3342,7 @@ elif st.session_state.selected_module == "Site Manager":
     if st.session_state.selected_site_sub_module is None:
         st.markdown("##### 🔽 खालीलपैकी एक साईट मॅनेजर टूल निवडा:")
 
-        # Row 1: 3 Icons
+        # Row 1
         s_col1, s_col2, s_col3 = st.columns(3)
         with s_col1:
             st.markdown(
@@ -3690,7 +3393,7 @@ elif st.session_state.selected_module == "Site Manager":
                 st.rerun()
 
         st.write(" ")
-        # Row 2: 3 Icons
+        # Row 2
         s_col4, s_col5, s_col6 = st.columns(3)
         with s_col4:
             st.markdown(
@@ -4048,8 +3751,8 @@ elif st.session_state.selected_module == "Site Manager":
                     <div style="background: #166534; color: #dcfce7; padding: 10px; border-radius: 10px; text-align: center; font-weight: bold; font-size: 15px; margin-top: 10px;">
                         ✅ काँक्रीटिंग सुरू करण्यास पूर्ण परवानगी आहे! (All Checks Passed)
                     </div>
-                </div>
-                """,
+                    </div>
+                    """,
                     unsafe_allow_html=True,
                 )
             else:
@@ -4058,8 +3761,8 @@ elif st.session_state.selected_module == "Site Manager":
                     <div style="background: #991b1b; color: #fee2e2; padding: 10px; border-radius: 10px; text-align: center; font-weight: bold; font-size: 15px; margin-top: 10px;">
                         🛑 काँक्रीटिंग सुरू करू नका (अजून काही पॉईंट्स बाकी आहेत)
                     </div>
-                </div>
-                """,
+                    </div>
+                    """,
                     unsafe_allow_html=True,
                 )
 
@@ -4388,7 +4091,7 @@ elif st.session_state.selected_module == "Site Manager":
                 st.success("✅ प्रोजेक्ट टाईमलाईन अपडेट झाली!")
                 st.rerun()
 
-            # ५. व्हॉट्सॲप शेअरिंग (Timeline ब्लॉकच्या आत)
+            # ५. व्हॉट्सॲप शेअरिंग
             st.write("---")
             wa_timeline_text = (
                 "🏗️ *PATIL INFRATECH - PROJECT TIMELINE REPORT*\n"
@@ -4405,7 +4108,7 @@ elif st.session_state.selected_module == "Site Manager":
             )
 
 # ==========================================
-# 📌 विभाग १८: NEEVPAY / SITESETU मुख्य मॉड्यूल (Locked Billing & Invoice Generator)
+# 📌 विभाग १८: NEEVPAY / SITESETU मुख्य मॉड्यूल (Milestone Escrow & Payment Protection)
 # ==========================================
 elif st.session_state.selected_module == "NeevPay":
     if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_neevpay"):
@@ -4426,32 +4129,31 @@ elif st.session_state.selected_module == "NeevPay":
     )
 
     conn = get_db_connection()
-cursor = conn.cursor()
-cursor.execute(
-    "SELECT COUNT(*) as cnt FROM site_milestone_payments WHERE user_key = ? AND"
-    " site_name = ?",
-    (current_user_name, st.session_state.current_site_name),
-)
-count = cursor.fetchone()["cnt"]
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT COUNT(*) as cnt FROM site_milestone_payments WHERE user_key = ? AND site_name = ?",
+        (current_user_name, st.session_state.current_site_name),
+    )
+    count = cursor.fetchone()["cnt"]
 
-if count == 0:
-    default_milestones = [
-        ("१. पाया खोदाई व प्लिंथ पूर्ण (Plinth Level)", 150000.0),
-        ("२. पहिला मजला स्लॅब कास्टिंग (Slab Level)", 250000.0),
-        ("३. वीटकाम व कन्सिल्ड वायरिंग/प्लंबिंग (Brickwork)", 180000.0),
-        ("४. आतील व बाहेरील प्लास्टर (Plastering)", 120000.0),
-        ("५. टाईल्स, रंगकाम व अंतिम ताबा (Finishing)", 100000.0),
-    ]
-    for stg, amt in default_milestones:
-        cursor.execute(
-            """
-            INSERT INTO site_milestone_payments 
-            (user_key, site_name, stage_name, planned_amount, amount_deposited, status, engineer_approved, client_approved, is_locked, remark)
-            VALUES (?, ?, ?, ?, 0.0, 'Pending Payment', 0, 0, 0, 'काही नाही')
-            """,
-            (current_user_name, st.session_state.current_site_name, stg, float(amt)),
-        )
-    conn.commit()
+    if count == 0:
+        default_milestones = [
+            ("१. पाया खोदाई व प्लिंथ पूर्ण (Plinth Level)", 150000.0),
+            ("२. पहिला मजला स्लॅब कास्टिंग (Slab Level)", 250000.0),
+            ("३. वीटकाम व कन्सिल्ड वायरिंग/प्लंबिंग (Brickwork)", 180000.0),
+            ("४. आतील व बाहेरील प्लास्टर (Plastering)", 120000.0),
+            ("५. टाईल्स, रंगकाम व अंतिम ताबा (Finishing)", 100000.0),
+        ]
+        for stg, amt in default_milestones:
+            cursor.execute(
+                """
+                INSERT INTO site_milestone_payments 
+                (user_key, site_name, stage_name, planned_amount, amount_deposited, status, engineer_approved, client_approved, is_locked, remark)
+                VALUES (?, ?, ?, ?, 0.0, 'Pending Payment', 0, 0, 0, 'काही नाही')
+                """,
+                (current_user_name, st.session_state.current_site_name, stg, float(amt)),
+            )
+        conn.commit()
 
     cursor.execute(
         """
@@ -4515,7 +4217,7 @@ if count == 0:
 
     st.write("---")
 
-    # १. नवीन टप्पा जोडणे (केवळ इंजिनिअरसाठी)
+    # १. नवीन टप्पा जोडणे
     with st.expander("➕ [इंजिनिअर पॅनल] नवीन कामाचा टप्पा व बिल रक्कम ॲड करा"):
         with st.form("add_neev_milestone_form"):
             new_stg_name = st.text_input("कामाचा टप्पा (Work Stage Name):", placeholder="उदा. ६. कंपाऊंड वॉल व मेन गेट...")
@@ -4782,23 +4484,4 @@ if count == 0:
     with neev_c3:
         st.markdown(
             """
-            <button onclick="window.parent.print()" style="width: 100%; background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); color: white; border: none; padding: 10px 14px; border-radius: 8px; font-weight: bold; cursor: pointer; height: 38px; box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4);">
-                🖨️ Instant Print Invoice
-            </button>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    st.write("---")
-    wa_pay_text = (
-        f"🤝 *PATIL INFRATECH - NEEVPAY INVOICE STATEMENT*\n"
-        f"📍 *Site:* {st.session_state.current_site_name}\n"
-        f"👤 *Engineer:* {current_user_name}\n"
-        f"💰 *Total Bill:* ₹ {total_budget:,.2f}\n"
-        f"✅ *Received:* ₹ {total_received:,.2f}\n"
-        f"🔴 *Pending Balance:* ₹ {total_pending:,.2f}\n"
-        f"🔒 *Locked Milestones:* {locked_stages}/{len(milestones)}\n"
-        f"📅 *Date:* {get_ist_time().strftime('%d-%m-%Y')}\n"
-        f"--------------------------------\n_NeevPay Transparent Protection_"
-    )
-    render_whatsapp_feature(urllib.parse.quote(wa_pay_text), "neevpay_main_wa")
+            <button onclick="window.parent.print()" style="width: 100%; background: linear-gradient(135deg, #0284c7 0%, #2563ebSorry, something went wrong. Please try your request again.
