@@ -4136,7 +4136,7 @@ elif st.session_state.selected_module == "NeevPay":
     )
     count = cursor.fetchone()["cnt"]
 
-    # जर सुरुवातीला टप्पे नसतील तर ठरलेली रक्कम 0.0 ठेवून टप्पे ॲड होतील
+    # सुरुवातीला सर्व टप्पे 0.0 बिलासह ॲड होतील
     if count == 0:
         default_milestones = [
             "१. पाया खोदाई व प्लिंथ पूर्ण (Excavation & Plinth Level)",
@@ -4222,7 +4222,7 @@ elif st.session_state.selected_module == "NeevPay":
     with st.expander("➕ [इंजिनिअर पॅनल] कामाचा अतिरिक्त टप्पा ॲड करा"):
         with st.form("add_neev_milestone_form"):
             new_stg_name = st.text_input("कामाचा नवीन टप्पा (Work Stage Name):", placeholder="उदा. ६. कंपाऊंड वॉल व मेन गेट...")
-            new_stg_amt = st.number_input("या टप्प्याचे ठरलेले बिल (₹) [0 ठेवल्यास नंतर सेट करता येईल]:", min_value=0.0, value=0.0, step=5000.0)
+            new_stg_amt = st.number_input("या टप्प्याचे ठरलेले बिल (₹) [0 ठेवल्यास नंतर एकदाच सेट करता येईल]:", min_value=0.0, value=0.0, step=5000.0)
             submit_new_stg = st.form_submit_button("➕ टप्पा सेव्ह करा", type="primary")
 
             if submit_new_stg:
@@ -4242,7 +4242,7 @@ elif st.session_state.selected_module == "NeevPay":
                     st.success("✅ नवीन टप्पा सेव्ह झाला!")
                     st.rerun()
 
-    # २. टप्पेवार बिलिंग, इंजिनिअर बजेट सेटिंग, पेमेंट आणि लॉक व्यवस्थापन
+    # २. टप्पेवार बिलिंग, वन-टाईम बजेट सेटिंग, पेमेंट आणि लॉक व्यवस्थापन
     st.markdown("##### 📋 कामाचे टप्पे, ठरलेले बिल, पेमेंट व डिजिटल संमती:")
 
     for m in milestones:
@@ -4280,36 +4280,44 @@ elif st.session_state.selected_module == "NeevPay":
                 col_b1, col_b2 = st.columns([2.5, 2.5])
                 
                 with col_b1:
-                    st.markdown("###### ⚙️ १. इंजिनिअर पॅनल (ठरलेले बिल निश्चित करा):")
-                    edit_planned = st.number_input(
-                        f"या टप्प्याचे ठरलेले बिल निश्चित करा (₹):",
-                        min_value=float(d_amt),  # जमा रकमेपेक्षा कमी करता येणार नाही
-                        value=float(p_amt),
-                        step=5000.0,
-                        key=f"plan_amt_{m_id}"
-                    )
-                    
-                    if st.button("💾 ठरलेले बिल सेव्ह करा", key=f"btn_save_plan_{m_id}"):
-                        conn = get_db_connection()
-                        cursor = conn.cursor()
-                        cursor.execute(
-                            "UPDATE site_milestone_payments SET planned_amount = ? WHERE id = ?",
-                            (edit_planned, m_id)
+                    # ==========================================
+                    # 🔒 फक्त एकदाच बिल सेट करण्याचा पर्याय (One-Time Setup)
+                    # ==========================================
+                    if p_amt == 0.0:
+                        st.markdown("###### ⚙️ १. इंजिनिअर पॅनल (ठरलेले बिल निश्चित करा - फक्त एकदाच):")
+                        st.caption("⚠️ **सूचना:** हे बिल एकदा सेट केल्यावर पुन्हा बदलता येणार नाही.")
+                        
+                        set_planned = st.number_input(
+                            "या टप्प्याचे अंतिम ठरलेले बिल टाका (₹):",
+                            min_value=1000.0,
+                            value=50000.0,
+                            step=5000.0,
+                            key=f"plan_amt_{m_id}"
                         )
-                        conn.commit()
-                        conn.close()
-                        st.success(f"✅ या टप्प्याचे ठरलेले बिल ₹ {edit_planned:,.2f} म्हणून सेव्ह झाले!")
-                        st.rerun()
+                        
+                        if st.button("🔒 ठरलेले बिल फिक्स सेव्ह करा", key=f"btn_save_plan_{m_id}", type="primary"):
+                            if set_planned > 0:
+                                conn = get_db_connection()
+                                cursor = conn.cursor()
+                                cursor.execute(
+                                    "UPDATE site_milestone_payments SET planned_amount = ?, status = 'Bill Fixed (Unpaid)' WHERE id = ?",
+                                    (set_planned, m_id)
+                                )
+                                conn.commit()
+                                conn.close()
+                                st.success(f"✅ या टप्प्याचे बिल ₹ {set_planned:,.2f} कायमस्वरूपी फिक्स झाले!")
+                                st.rerun()
+                    else:
+                        st.markdown("###### 📌 टप्प्याचे बिल तपशील (Fixed):")
+                        st.markdown(f"**कामाचे ठरलेले बिल:** <span style='color:#38bdf8; font-weight:bold; font-size:16px;'>₹ {p_amt:,.2f} (फिक्स झाले आहे)</span>", unsafe_allow_html=True)
+                        st.markdown(f"**आतापर्यंत मिळालेली रक्कम:** <span style='color:#10b981; font-weight:bold; font-size:16px;'>₹ {d_amt:,.2f}</span>", unsafe_allow_html=True)
+                        st.markdown(f"**उर्वरित बाकी (Balance):** <span style='color:#ef4444; font-weight:bold; font-size:16px;'>₹ {rem_balance:,.2f}</span>", unsafe_allow_html=True)
 
-                    st.markdown("---")
-                    st.markdown(f"**कामाचे ठरलेले बिल:** <span style='color:#38bdf8; font-weight:bold; font-size:16px;'>₹ {p_amt:,.2f}</span>", unsafe_allow_html=True)
-                    st.markdown(f"**आतापर्यंत मिळालेली रक्कम:** <span style='color:#10b981; font-weight:bold; font-size:16px;'>₹ {d_amt:,.2f}</span>", unsafe_allow_html=True)
-                    st.markdown(f"**उर्वरित बाकी (Balance):** <span style='color:#ef4444; font-weight:bold; font-size:16px;'>₹ {rem_balance:,.2f}</span>", unsafe_allow_html=True)
-
-                    if p_amt == 0:
+                    # पेमेंट जमा करण्याची नोंद (फक्त बिल सेट असल्यास)
+                    if p_amt == 0.0:
                         st.info("ℹ️ आधी वरील बॉक्समध्ये कामाचे ठरलेले बिल सेट करा, मग पेमेंट घेता येईल.")
                     elif rem_balance > 0:
-                        st.write(" ")
+                        st.write("---")
                         st.caption("💵 क्लायंटने दिलेले पैसे इथे भरा:")
                         add_pay = st.number_input(
                             f"पैसे ॲड करा (जास्तीत जास्त ₹ {rem_balance:,.2f}):",
