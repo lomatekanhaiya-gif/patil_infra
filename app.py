@@ -4447,7 +4447,7 @@ elif st.session_state.selected_module == "NeevPay":
                     table.custom-data-table {{ width: 100%; border-collapse: collapse; margin: 8px 0 15px 0; font-size: 11px; }}
                     table.custom-data-table th, table.custom-data-table td {{ border: 1px solid #cbd5e1; padding: 6px 8px; text-align: left; }}
                     table.custom-data-table th {{ background-color: rgba(241, 245, 249, 0.95); font-weight: bold; color: #0f172a; }}
-  # ==========================================
+# ==========================================
 # 📌 विभाग १८: NEEVPAY / SITESETU मुख्य मॉड्यूल (Milestone Escrow & Payment Protection)
 # ==========================================
 elif st.session_state.selected_module == "NeevPay":
@@ -4461,7 +4461,7 @@ elif st.session_state.selected_module == "NeevPay":
         <div style="background: linear-gradient(135deg, #064e3b 0%, #0f172a 100%); padding: 18px; border-radius: 16px; border: 1px solid #10b981; margin-bottom: 20px;">
             <h2 style="margin: 0; color: #10b981; font-weight: 900;">🤝 NEEVPAY / SITESETU - SMART PAYMENT ESCROW & BILLING</h2>
             <p style="margin: 5px 0 0 0; color: #cbd5e1; font-size: 14px;">
-                इंजिनिअर व घरमालक यांच्यातील कामावर आधारित पारदर्शक बिलिंग, डिजिटल पडताळणी व अधिकृत Master Invoice व्यवस्था.
+                इंजिनिअर व घरमालक यांच्यातील कामावर आधारित पारदर्शक बिलिंग, संमती-आधारित पेमेंट लॉक व अधिकृत Master Invoice व्यवस्था.
             </p>
         </div>
         """,
@@ -4567,7 +4567,7 @@ elif st.session_state.selected_module == "NeevPay":
                             st.error("❌ चुकीचा OTP! कृपया ईमेलवरील अचूक कोड टाका.")
         else:
             st.info(
-                f"📧 **रजिस्टर असलेला अधिकृत Email:** `{client_email}` (सर्व अधिकृत पावत्या व सुरक्षितता OTP यावर पाठवले जातात)"
+                f"📧 **रजिस्टर असलेला अधिकृत Email:** `{client_email}` (सर्व सुरक्षा OTP यावर पाठवले जातात)"
             )
 
     st.write("---")
@@ -4629,7 +4629,7 @@ elif st.session_state.selected_module == "NeevPay":
     # ==========================================================
     with st.expander("➕ [इंजिनिअर पॅनल] कामाचे नवीन बिल / टप्पा तयार करा", expanded=(len(milestones) == 0)):
         st.caption("💡 इंजिनिअर कामाचा प्रकार निवडून किंवा स्वतः लिहून त्याचे ठरलेले बिल निश्चित करू शकतो.")
-        
+
         work_presets = [
             "पाया खोदाई व प्लिंथ काम (Excavation & Plinth Level)",
             "आरसीसी कॉलम्स कास्टिंग (RCC Columns Casting)",
@@ -4641,9 +4641,9 @@ elif st.session_state.selected_module == "NeevPay":
             "कंपाउंड वॉल व मेन गेट (Compound Wall & Gate)",
             "इतर सानुकूल काम (Custom Work Name...)"
         ]
-        
+
         selected_work_type = st.selectbox("कामाचा प्रकार निवडा (Select Work Stage):", work_presets, key="sel_work_preset")
-        
+
         if selected_work_type == "इतर सानुकूल काम (Custom Work Name...)":
             custom_stage_name = st.text_input("कामाचे नाव टाका (Custom Work Name):", placeholder="उदा. वॉटरप्रूफिंग व टेरेस काम...", key="custom_stg_input")
             final_stage_name = custom_stage_name.strip()
@@ -4657,7 +4657,7 @@ elif st.session_state.selected_module == "NeevPay":
             step=1000.0,
             key="new_stage_init_amt"
         )
-        
+
         if st.button("➕ कामाचे बिल निश्चित करा व सेव्ह करा", key="btn_create_custom_milestone", type="primary"):
             if final_stage_name:
                 conn = get_db_connection()
@@ -4695,7 +4695,7 @@ elif st.session_state.selected_module == "NeevPay":
                 d_val = float(m_item["amount_deposited"])
                 bal_val = max(0.0, p_val - d_val)
                 stage_pct = (d_val / p_val * 100) if p_val > 0 else 0.0
-                
+
                 if m_item.get("is_locked") == 1:
                     st_badge = "<span style='color: #10b981; font-weight:bold;'>🔒 FULLY PAID (100%)</span>"
                 elif d_val >= p_val and p_val > 0:
@@ -4860,7 +4860,7 @@ elif st.session_state.selected_module == "NeevPay":
                         "Completion Date": m_item.get("completion_date") or "-"
                     })
                 neev_csv = pd.DataFrame(neev_export_data).to_csv(index=False).encode('utf-8-sig')
-                
+
                 st.download_button(
                     label="📊 Export Statement (.csv)",
                     data=neev_csv,
