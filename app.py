@@ -4136,22 +4136,23 @@ elif st.session_state.selected_module == "NeevPay":
     )
     count = cursor.fetchone()["cnt"]
 
+    # जर सुरुवातीला टप्पे नसतील तर ठरलेली रक्कम 0.0 ठेवून टप्पे ॲड होतील
     if count == 0:
         default_milestones = [
-            ("१. पाया खोदाई व प्लिंथ पूर्ण (Plinth Level)", 150000.0),
-            ("२. पहिला मजला स्लॅब कास्टिंग (Slab Level)", 250000.0),
-            ("३. वीटकाम व कन्सिल्ड वायरिंग/प्लंबिंग (Brickwork)", 180000.0),
-            ("४. आतील व बाहेरील प्लास्टर (Plastering)", 120000.0),
-            ("५. टाईल्स, रंगकाम व अंतिम ताबा (Finishing)", 100000.0),
+            "१. पाया खोदाई व प्लिंथ पूर्ण (Excavation & Plinth Level)",
+            "२. पहिला मजला स्लॅब कास्टिंग (Slab Level)",
+            "३. वीटकाम व कन्सिल्ड वायरिंग/प्लंबिंग (Brickwork & Conduit)",
+            "४. आतील व बाहेरील प्लास्टर (Plastering)",
+            "५. टाईल्स, रंगकाम व अंतिम ताबा (Finishing & Handover)",
         ]
-        for stg, amt in default_milestones:
+        for stg in default_milestones:
             cursor.execute(
                 """
                 INSERT INTO site_milestone_payments 
                 (user_key, site_name, stage_name, planned_amount, amount_deposited, status, engineer_approved, client_approved, is_locked, remark)
-                VALUES (?, ?, ?, ?, 0.0, 'Pending Payment', 0, 0, 0, 'काही नाही')
+                VALUES (?, ?, ?, 0.0, 0.0, 'Pending Bill Setup', 0, 0, 0, 'काही नाही')
                 """,
-                (current_user_name, st.session_state.current_site_name, stg, float(amt)),
+                (current_user_name, st.session_state.current_site_name, stg),
             )
         conn.commit()
 
@@ -4217,12 +4218,12 @@ elif st.session_state.selected_module == "NeevPay":
 
     st.write("---")
 
-    # १. नवीन टप्पा जोडणे
-    with st.expander("➕ [इंजिनिअर पॅनल] नवीन कामाचा टप्पा व बिल रक्कम ॲड करा"):
+    # १. नवीन कामाचा टप्पा जोडणे (Extra Stage Option)
+    with st.expander("➕ [इंजिनिअर पॅनल] कामाचा अतिरिक्त टप्पा ॲड करा"):
         with st.form("add_neev_milestone_form"):
-            new_stg_name = st.text_input("कामाचा टप्पा (Work Stage Name):", placeholder="उदा. ६. कंपाऊंड वॉल व मेन गेट...")
-            new_stg_amt = st.number_input("या टप्प्याचे ठरलेले बिल (₹):", min_value=1000.0, value=50000.0, step=5000.0)
-            submit_new_stg = st.form_submit_button("➕ बिल टप्पा सेव्ह करा", type="primary")
+            new_stg_name = st.text_input("कामाचा नवीन टप्पा (Work Stage Name):", placeholder="उदा. ६. कंपाऊंड वॉल व मेन गेट...")
+            new_stg_amt = st.number_input("या टप्प्याचे ठरलेले बिल (₹) [0 ठेवल्यास नंतर सेट करता येईल]:", min_value=0.0, value=0.0, step=5000.0)
+            submit_new_stg = st.form_submit_button("➕ टप्पा सेव्ह करा", type="primary")
 
             if submit_new_stg:
                 if new_stg_name.strip():
@@ -4234,30 +4235,40 @@ elif st.session_state.selected_module == "NeevPay":
                         (user_key, site_name, stage_name, planned_amount, amount_deposited, status, engineer_approved, client_approved, is_locked, remark)
                         VALUES (?, ?, ?, ?, 0.0, 'Pending Payment', 0, 0, 0, 'काही नाही')
                         """,
-                        (current_user_name, st.session_state.current_site_name, new_stg_name.strip(), new_stg_amt),
+                        (current_user_name, st.session_state.current_site_name, new_stg_name.strip(), float(new_stg_amt)),
                     )
                     conn.commit()
                     conn.close()
-                    st.success("✅ नवीन टप्पा व बिल रक्कम सेव्ह झाली!")
+                    st.success("✅ नवीन टप्पा सेव्ह झाला!")
                     st.rerun()
 
-    # २. टप्पेवार बिलिंग, पेमेंट आणि लॉक व्यवस्थापन
-    st.markdown("##### 📋 कामाचे टप्पे, पेमेंट व डिजिटल संमती (Milestones & Lock Status):")
+    # २. टप्पेवार बिलिंग, इंजिनिअर बजेट सेटिंग, पेमेंट आणि लॉक व्यवस्थापन
+    st.markdown("##### 📋 कामाचे टप्पे, ठरलेले बिल, पेमेंट व डिजिटल संमती:")
 
     for m in milestones:
         m_id = m["id"]
         st_name = m["stage_name"]
-        p_amt = m["planned_amount"]
-        d_amt = m["amount_deposited"]
+        p_amt = float(m["planned_amount"])
+        d_amt = float(m["amount_deposited"])
         status = m["status"]
         eng_app = bool(m["engineer_approved"])
         cli_app = bool(m["client_approved"])
         is_locked = bool(m.get("is_locked", 0))
         rem_balance = max(0.0, p_amt - d_amt)
 
-        lock_badge = "🔒 LOCKED (पूर्ण पेड व अपरिवर्तनीय)" if is_locked else ("🟡 PARTIAL PAID" if d_amt > 0 else "🔴 UNPAID")
+        # स्टेटस बॅज
+        if is_locked:
+            lock_badge = "🔒 LOCKED (पूर्ण पेड व अपरिवर्तनीय)"
+        elif p_amt == 0:
+            lock_badge = "⚪ BILL NOT SET (इंजिनिअरने बिल टाकणे बाकी)"
+        elif d_amt >= p_amt and p_amt > 0:
+            lock_badge = "🟢 READY TO LOCK (पूर्ण पेड)"
+        elif d_amt > 0:
+            lock_badge = "🟡 PARTIAL PAID"
+        else:
+            lock_badge = "🔴 UNPAID"
 
-        with st.expander(f"📍 {st_name} | {lock_badge} | बिल: ₹ {p_amt:,.2f} (जमा: ₹ {d_amt:,.2f})", expanded=not is_locked):
+        with st.expander(f"📍 {st_name} | {lock_badge} | ठरलेले बिल: ₹ {p_amt:,.2f} (जमा: ₹ {d_amt:,.2f})", expanded=not is_locked):
             if is_locked:
                 st.success(
                     f"🔒 **हे बिल दोघांच्या संमतीने पूर्ण भरले असून लॉक केले आहे.**\n\n"
@@ -4269,13 +4280,37 @@ elif st.session_state.selected_module == "NeevPay":
                 col_b1, col_b2 = st.columns([2.5, 2.5])
                 
                 with col_b1:
+                    st.markdown("###### ⚙️ १. इंजिनिअर पॅनल (ठरलेले बिल निश्चित करा):")
+                    edit_planned = st.number_input(
+                        f"या टप्प्याचे ठरलेले बिल निश्चित करा (₹):",
+                        min_value=float(d_amt),  # जमा रकमेपेक्षा कमी करता येणार नाही
+                        value=float(p_amt),
+                        step=5000.0,
+                        key=f"plan_amt_{m_id}"
+                    )
+                    
+                    if st.button("💾 ठरलेले बिल सेव्ह करा", key=f"btn_save_plan_{m_id}"):
+                        conn = get_db_connection()
+                        cursor = conn.cursor()
+                        cursor.execute(
+                            "UPDATE site_milestone_payments SET planned_amount = ? WHERE id = ?",
+                            (edit_planned, m_id)
+                        )
+                        conn.commit()
+                        conn.close()
+                        st.success(f"✅ या टप्प्याचे ठरलेले बिल ₹ {edit_planned:,.2f} म्हणून सेव्ह झाले!")
+                        st.rerun()
+
+                    st.markdown("---")
                     st.markdown(f"**कामाचे ठरलेले बिल:** <span style='color:#38bdf8; font-weight:bold; font-size:16px;'>₹ {p_amt:,.2f}</span>", unsafe_allow_html=True)
                     st.markdown(f"**आतापर्यंत मिळालेली रक्कम:** <span style='color:#10b981; font-weight:bold; font-size:16px;'>₹ {d_amt:,.2f}</span>", unsafe_allow_html=True)
                     st.markdown(f"**उर्वरित बाकी (Balance):** <span style='color:#ef4444; font-weight:bold; font-size:16px;'>₹ {rem_balance:,.2f}</span>", unsafe_allow_html=True)
 
-                    if rem_balance > 0:
+                    if p_amt == 0:
+                        st.info("ℹ️ आधी वरील बॉक्समध्ये कामाचे ठरलेले बिल सेट करा, मग पेमेंट घेता येईल.")
+                    elif rem_balance > 0:
                         st.write(" ")
-                        st.caption("💵 क्लायंटने दिलेले नवीन पैसे इथे भरा (बिल वाढवता येणार नाही, फक्त पैसे ॲड होतील):")
+                        st.caption("💵 क्लायंटने दिलेले पैसे इथे भरा:")
                         add_pay = st.number_input(
                             f"पैसे ॲड करा (जास्तीत जास्त ₹ {rem_balance:,.2f}):",
                             min_value=0.0,
@@ -4300,7 +4335,7 @@ elif st.session_state.selected_module == "NeevPay":
                                 st.rerun()
 
                 with col_b2:
-                    st.markdown("##### ✍️ डिजिटल कन्फर्मेशन (Verification)")
+                    st.markdown("###### ✍️ २. डिजिटल संमती व व्हेरिफिकेशन")
                     eng_check = st.checkbox("👷‍♂️ इंजिनिअर: काम समाधानकारक पूर्ण झाले आहे", value=eng_app, key=f"eng_chk_{m_id}")
                     cli_check = st.checkbox("👤 क्लायंट: काम तपासले, पेमेंट अचूक दिले आहे", value=cli_app, key=f"cli_chk_{m_id}")
 
@@ -4315,7 +4350,7 @@ elif st.session_state.selected_module == "NeevPay":
                         conn.close()
                         st.rerun()
 
-                    if d_amt >= p_amt and eng_check and cli_check:
+                    if p_amt > 0 and d_amt >= p_amt and eng_check and cli_check:
                         st.markdown("<br>", unsafe_allow_html=True)
                         if st.button("🔒 बिल कायमस्वरूपी लॉक करा (Lock Final Bill)", key=f"btn_lock_{m_id}", type="primary"):
                             now_stamp = get_ist_time().strftime("%d-%m-%Y %H:%M:%S")
@@ -4333,8 +4368,10 @@ elif st.session_state.selected_module == "NeevPay":
                             conn.close()
                             st.success("🎉 बिल यशस्वीरित्या लॉक झाले आहे! आता यात कोणीही बदल करू शकत नाही.")
                             st.rerun()
+                    elif p_amt == 0:
+                        st.warning("⚠️ बिल सेट केलेले नाही.")
                     elif d_amt < p_amt:
-                        st.warning("⚠️ पूर्ण पेमेंट होईपर्यंत बिल लॉक करता येणार नाही (फक्त बाकी पैसे भरता येतील).")
+                        st.warning("⚠️ पूर्ण पेमेंट होईपर्यंत बिल लॉक करता येणार नाही.")
                     else:
                         st.info("💡 लॉक करण्यासाठी इंजिनिअर आणि क्लायंट दोघांची संमती टिक-मार्क असणे आवश्यक आहे.")
 
@@ -4413,7 +4450,7 @@ elif st.session_state.selected_module == "NeevPay":
                         <tr>
                             <th>#</th>
                             <th>कामाचा टप्पा (Milestone Description)</th>
-                            <th>एकूण बिल (₹)</th>
+                            <th>एकूण ठरलेले बिल (₹)</th>
                             <th>प्राप्त रक्कम (₹)</th>
                             <th>उर्वरित बाकी (₹)</th>
                             <th>स्थिती (Status)</th>
