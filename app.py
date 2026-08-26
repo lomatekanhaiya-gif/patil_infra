@@ -326,6 +326,21 @@ def init_db():
         )
     """)
 
+  # ११. प्रोजेक्ट टाईमलाईन आणि टास्क मॅनेजमेंट टेबल (Project Timeline & Tasks Table)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS project_tasks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_key TEXT,
+            site_name TEXT DEFAULT 'Default Site',
+            stage_order INTEGER,
+            task_name TEXT,
+            planned_duration INTEGER,
+            delay_days INTEGER DEFAULT 0,
+            status TEXT DEFAULT 'Pending',
+            is_critical INTEGER DEFAULT 1
+        )
+    """)
+
   # मास्टर ॲडमीन डि default एंट्री
   cursor.execute("SELECT * FROM users WHERE user_key = ?", ("9999999999",))
   if not cursor.fetchone():
@@ -393,13 +408,14 @@ def init_db():
     )
 
   # सर्व मुख्य टेबल्समध्ये site_name कॉलम सुरक्षितपणे जोडणे
-  tables_to_update = [
-      "history",
-      "site_attendance",
-      "site_inventory",
-      "site_progress",
-      "pre_concreting_checklist",
-  ]
+ tables_to_update = [
+        "history",
+        "site_attendance",
+        "site_inventory",
+        "site_progress",
+        "pre_concreting_checklist",
+        "project_tasks",
+    ]
   for tbl in tables_to_update:
     try:
       cursor.execute(
@@ -446,6 +462,40 @@ def get_feature_locks():
   conn.close()
   return {row["feature_name"]: row["access_level"] for row in rows}
 
+DEFAULT_CONSTRUCTION_STAGES = [
+    (1, "पाया खोदाई (Site Clearing & Excavation)", 10, 1),
+    (2, "पीसीसी व पाया काँक्रीट (PCC & Footing Casting)", 12, 1),
+    (3, "प्लिंथ बीम व भराव (Plinth Beam & Backfilling)", 15, 1),
+    (4, "आरसीसी कॉलम्स (Ground Floor Columns)", 10, 1),
+    (5, "पहिला मजला स्लॅब कास्टिंग (Slab Casting)", 14, 1),
+    (6, "विटांचे बांधकाम (Brickwork)", 20, 1),
+    (7, "प्लंबिंग व इलेक्ट्रिकल कन्सिल्ड (Conduit/Piping)", 12, 0),
+    (8, "आतील व बाहेरील प्लास्टर (Internal & External Plaster)", 18, 1),
+    (9, "फ्लोरिंग व टाईल्स (Flooring & Tiling)", 15, 0),
+    (10, "रंगकाम व फिनिशिंग (Painting & Final Handover)", 10, 1),
+]
+
+
+def load_default_tasks_if_empty(user_key, site_name):
+  conn = get_db_connection()
+  cursor = conn.cursor()
+  cursor.execute(
+      "SELECT COUNT(*) as cnt FROM project_tasks WHERE user_key = ? AND"
+      " site_name = ?",
+      (user_key, site_name),
+  )
+  count = cursor.fetchone()["cnt"]
+  if count == 0:
+    for order, name, dur, crit in DEFAULT_CONSTRUCTION_STAGES:
+      cursor.execute(
+          """
+                INSERT INTO project_tasks (user_key, site_name, stage_order, task_name, planned_duration, delay_days, status, is_critical)
+                VALUES (?, ?, ?, ?, ?, 0, 'Pending', ?)
+            """,
+          (user_key, site_name, order, name, dur, crit),
+      )
+    conn.commit()
+  conn.close()
 
 # ==========================================
 # 📌 विभाग ७: सेशन स्टेट्स आणि प्रिमियम ऑथेंटिकेशन
@@ -4554,7 +4604,7 @@ elif st.session_state.selected_module == "Estimator Tools":
                         conn.commit()
                         conn.close()
 # ==========================================
-# 📌 विभाग १७: SITE MANAGER मॉड्यूल (Attendance, Inventory, Progress, Checklist, Weekly)
+# 📌 विभाग १७: SITE MANAGER मॉड्यूल (Attendance, Inventory, Progress, Checklist, Weekly, Timeline)
 # ==========================================
 elif st.session_state.selected_module == "Site Manager":
   if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_site"):
@@ -4625,8 +4675,8 @@ elif st.session_state.selected_module == "Site Manager":
         st.rerun()
 
     st.write(" ")
-    # Row 2: 2 Icons
-    s_col4, s_col5 = st.columns(2)
+    # Row 2: 3 Icons (Pre-Concreting Checklist, Weekly Dashboard, Timeline Tracker)
+    s_col4, s_col5, s_col6 = st.columns(3)
     with s_col4:
       st.markdown(
           """
@@ -4662,6 +4712,24 @@ elif st.session_state.selected_module == "Site Manager":
           "📊 Weekly Dashboard", key="btn_site_week", use_container_width=True
       ):
         st.session_state.selected_site_sub_module = "Weekly"
+        trigger_push_state()
+        st.rerun()
+
+    with s_col6:
+      st.markdown(
+          """
+                <div style="text-align: center; background: #111827; padding: 18px 10px; border-radius: 20px; border: 1px solid rgba(245, 158, 11, 0.4);">
+                    <h1 style="font-size: 32px; margin:0;">⏳</h1>
+                    <h5 style="margin: 8px 0 2px 0; color: #f59e0b; font-weight:700; font-size:13px;">Project Timeline & Delay</h5>
+                    <p style="font-size: 9px; color: #94a3b8; margin:0;">[फिनिशिंग दिवस व डिले ट्रॅकर]</p>
+                </div>
+            """,
+          unsafe_allow_html=True,
+      )
+      if st.button(
+          "⏳ Timeline Tracker", key="btn_site_delay", use_container_width=True
+      ):
+        st.session_state.selected_site_sub_module = "Timeline"
         trigger_push_state()
         st.rerun()
 
@@ -5366,3 +5434,205 @@ elif st.session_state.selected_module == "Site Manager":
               "ℹ️ मागील ७ दिवसात कामाचा कोणताही प्रोग्रेस रिपोर्ट"
               " नोंदवला नाही."
           )
+
+# --------------------------------------------------
+    # ६. Project Timeline, Delay Analysis & Finish Date Tracker
+    # --------------------------------------------------
+    elif sub_mod == "Timeline":
+      st.markdown(
+          "#### ⏳ प्रोजेक्ट टाईमलाईन व डिले ट्रॅकर (Finish Date Calculator)"
+      )
+      st.caption(
+          f"📍 सध्याची साईट: **{st.session_state.current_site_name}** | एखाद्या"
+          " टप्प्याला उशीर झाल्यास प्रोजेक्ट कधी पूर्ण होईल याचा थेट हिशोब."
+      )
+
+      load_default_tasks_if_empty(
+          current_user_name, st.session_state.current_site_name
+      )
+
+      # प्रोजेक्ट सुरू होण्याची तारीख
+      col_p1, col_p2 = st.columns(2)
+      with col_p1:
+        proj_start_date = st.date_input(
+            "प्रोजेक्ट सुरू झालेली तारीख (Start Date):",
+            datetime.date.today(),
+            key="proj_start_dt",
+        )
+
+      conn = get_db_connection()
+      cursor = conn.cursor()
+      cursor.execute(
+          """
+            SELECT id, stage_order, task_name, planned_duration, delay_days, status, is_critical 
+            FROM project_tasks 
+            WHERE user_key = ? AND site_name = ?
+            ORDER BY stage_order ASC
+        """,
+          (current_user_name, st.session_state.current_site_name),
+      )
+      tasks = [dict(r) for r in cursor.fetchall()]
+      conn.close()
+
+      # टोटल दिवस आणि क्रिटिकल डिले कॅल्क्युलेशन
+      total_planned_days = sum(t["planned_duration"] for t in tasks)
+      total_critical_delay = sum(
+          t["delay_days"] for t in tasks if t["is_critical"] == 1
+      )
+      total_projected_days = total_planned_days + total_critical_delay
+
+      original_finish_date = proj_start_date + datetime.timedelta(
+          days=total_planned_days
+      )
+      new_projected_finish_date = proj_start_date + datetime.timedelta(
+          days=total_projected_days
+      )
+
+      # डॅशबोर्ड समरी कार्ड्स
+      m1, m2, m3, m4 = st.columns(4)
+      with m1:
+        st.markdown(
+            f"""
+                <div style="background: #111827; border: 1px solid #334155; padding: 14px; border-radius: 12px; text-align: center;">
+                    <span style="color:#94a3b8; font-size:12px;">मूळ अंदाजित दिवस</span>
+                    <h3 style="margin: 4px 0; color:#38bdf8;">{total_planned_days} दिवस</h3>
+                    <small style="color:#64748b;">({original_finish_date.strftime('%d-%m-%Y')})</small>
+                </div>
+            """,
+            unsafe_allow_html=True,
+        )
+      with m2:
+        delay_color = "#ef4444" if total_critical_delay > 0 else "#10b981"
+        st.markdown(
+            f"""
+                <div style="background: #111827; border: 1px solid {delay_color}; padding: 14px; border-radius: 12px; text-align: center;">
+                    <span style="color:#94a3b8; font-size:12px;">झालेला एकूण उशीर (Delay)</span>
+                    <h3 style="margin: 4px 0; color:{delay_color};">+{total_critical_delay} दिवस</h3>
+                    <small style="color:#64748b;">(Critical Path)</small>
+                </div>
+            """,
+            unsafe_allow_html=True,
+        )
+      with m3:
+        st.markdown(
+            f"""
+                <div style="background: #111827; border: 1px solid #f59e0b; padding: 14px; border-radius: 12px; text-align: center;">
+                    <span style="color:#94a3b8; font-size:12px;">नवीन अंदाजित दिवस</span>
+                    <h3 style="margin: 4px 0; color:#f59e0b;">{total_projected_days} दिवस</h3>
+                    <small style="color:#64748b;">(एकूण कालावधी)</small>
+                </div>
+            """,
+            unsafe_allow_html=True,
+        )
+      with m4:
+        st.markdown(
+            f"""
+                <div style="background: #111827; border: 1px solid #10b981; padding: 14px; border-radius: 12px; text-align: center;">
+                    <span style="color:#94a3b8; font-size:12px;">ताबा / फायनल समाप्ती तारीख</span>
+                    <h3 style="margin: 4px 0; color:#10b981; font-size: 18px;">{new_projected_finish_date.strftime('%d %b %Y')}</h3>
+                    <small style="color:#64748b;">(Projected Handover)</small>
+                </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+      st.write("---")
+      st.markdown(
+          "##### 📋 कामांचे टप्पे आणि उशीर व्यवस्थापन (Update Progress &"
+          " Delays):"
+      )
+
+      # टेबल हेडर
+      header_c = st.columns([0.6, 2.8, 1.2, 1.2, 1.4, 1.0])
+      header_c[0].markdown("**क्र.**")
+      header_c[1].markdown("**कामाचा टप्पा (Task)**")
+      header_c[2].markdown("**नियोजित दिवस**")
+      header_c[3].markdown("**उशीर (Delay)**")
+      header_c[4].markdown("**स्टेटस**")
+      header_c[5].markdown("**Critical?**")
+
+      updated_tasks = []
+      for t in tasks:
+        tc = st.columns([0.6, 2.8, 1.2, 1.2, 1.4, 1.0])
+        t_id = t["id"]
+        tc[0].markdown(
+            f"<p style='margin-top:8px;'>{t['stage_order']}</p>",
+            unsafe_allow_html=True,
+        )
+        tc[1].markdown(
+            f"<p style='margin-top:8px; font-weight:600;'>{t['task_name']}</p>",
+            unsafe_allow_html=True,
+        )
+
+        new_plan = tc[2].number_input(
+            f"Plan_{t_id}",
+            min_value=1,
+            value=t["planned_duration"],
+            step=1,
+            key=f"plan_dur_{t_id}",
+            label_visibility="collapsed",
+        )
+        new_delay = tc[3].number_input(
+            f"Delay_{t_id}",
+            min_value=0,
+            value=t["delay_days"],
+            step=1,
+            key=f"delay_dur_{t_id}",
+            label_visibility="collapsed",
+        )
+        new_status = tc[4].selectbox(
+            f"Status_{t_id}",
+            ["Pending", "In Progress", "Completed"],
+            index=["Pending", "In Progress", "Completed"].index(t["status"]),
+            key=f"status_{t_id}",
+            label_visibility="collapsed",
+        )
+        is_crit = tc[5].checkbox(
+            "",
+            value=bool(t["is_critical"]),
+            key=f"crit_{t_id}",
+            help="हे काम उशिरा झाल्यास थेट पूर्ण प्रोजेक्ट पुढे ढकलला जाईल का?",
+        )
+
+        updated_tasks.append(
+            (new_plan, new_delay, new_status, 1 if is_crit else 0, t_id)
+        )
+
+      st.write(" ")
+      if st.button(
+          "💾 बदल सेव्ह करा आणि नवीन तारीख कॅल्क्युलेट करा",
+          type="primary",
+          use_container_width=True,
+      ):
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        for p, d, s, c, tid in updated_tasks:
+          cursor.execute(
+              """
+                    UPDATE project_tasks 
+                    SET planned_duration = ?, delay_days = ?, status = ?, is_critical = ?
+                    WHERE id = ?
+                """,
+              (p, d, s, c, tid),
+          )
+        conn.commit()
+        conn.close()
+        st.success("✅ प्रोजेक्ट टाईमलाईन अपडेट झाली!")
+        st.rerun()
+
+      # व्हॉट्सॲप शेअरिंग
+      st.write("---")
+      wa_timeline_text = (
+          "🏗️ *PATIL INFRATECH - PROJECT TIMELINE REPORT*\n"
+          f"📍 *Site:* {st.session_state.current_site_name}\n"
+          f"📅 *Start Date:* {proj_start_date.strftime('%d-%m-%Y')}\n"
+          f"⏱️ *Planned Duration:* {total_planned_days} Days\n"
+          f"🚨 *Total Delay:* +{total_critical_delay} Days\n"
+          f"🎯 *Projected Handover Date:*"
+          f" {new_projected_finish_date.strftime('%d-%m-%Y')}\n"
+          "--------------------------------\n_Generated by Patil Infratech_"
+      )
+
+      render_whatsapp_feature(
+          urllib.parse.quote(wa_timeline_text), "timeline_wa"
+      )
