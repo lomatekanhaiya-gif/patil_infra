@@ -4448,7 +4448,7 @@ elif st.session_state.selected_module == "NeevPay":
                     table.custom-data-table th, table.custom-data-table td {{ border: 1px solid #cbd5e1; padding: 6px 8px; text-align: left; }}
                     table.custom-data-table th {{ background-color: rgba(241, 245, 249, 0.95); font-weight: bold; color: #0f172a; }}
 # ==========================================
-# 📌 विभाग १८: NEEVPAY / SITESETU मुख्य मॉड्यूल (Milestone Escrow & Payment Protection)
+# विभाग १८: NEEVPAY / SITESETU मुख्य मॉड्यूल (Milestone Escrow & Payment Protection)
 # ==========================================
 elif st.session_state.selected_module == "NeevPay":
     if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_neevpay"):
@@ -4456,17 +4456,15 @@ elif st.session_state.selected_module == "NeevPay":
         st.rerun()
 
     st.write("---")
-    st.markdown(
-        """
-        <div style="background: linear-gradient(135deg, #064e3b 0%, #0f172a 100%); padding: 18px; border-radius: 16px; border: 1px solid #10b981; margin-bottom: 20px;">
-            <h2 style="margin: 0; color: #10b981; font-weight: 900;">🤝 NEEVPAY / SITESETU - SMART PAYMENT ESCROW & BILLING</h2>
-            <p style="margin: 5px 0 0 0; color: #cbd5e1; font-size: 14px;">
-                इंजिनिअर व घरमालक यांच्यातील कामावर आधारित पारदर्शक बिलिंग, संमती-आधारित पेमेंट लॉक व अधिकृत Master Invoice व्यवस्था.
-            </p>
-        </div>
-        """,
-        unsafe_allow_html=True,
+    neevpay_banner = (
+        "<div style='background: linear-gradient(135deg, #064e3b 0%, #0f172a 100%); "
+        "padding: 18px; border-radius: 16px; border: 1px solid #10b981; margin-bottom: 20px;'>"
+        "<h2 style='margin: 0; color: #10b981; font-weight: 900;'>🤝 NEEVPAY / SITESETU - SMART PAYMENT ESCROW & BILLING</h2>"
+        "<p style='margin: 5px 0 0 0; color: #cbd5e1; font-size: 14px;'>"
+        "इंजिनिअर व घरमालक यांच्यातील कामावर आधारित पारदर्शक बिलिंग, संमती-आधारित पेमेंट लॉक व अधिकृत Master Invoice व्यवस्था."
+        "</p></div>"
     )
+    st.markdown(neevpay_banner, unsafe_allow_html=True)
 
     conn = get_db_connection()
     cursor = conn.cursor()
