@@ -42,7 +42,8 @@
 #      ├── १७.३ Daily Progress Report & Photos
 #      ├── १७.४ Pre-Concreting Digital Checklist
 #      ├── १७.५ Weekly Site Dashboard & Logs
-#      └── १७.६ Project Timeline & Delay Tracker (Finish Date Calculator)
+#      ├── १७.६ Project Timeline & Delay Tracker (Finish Date Calculator)
+#      └── १७.७ NeevPay / SiteSetu (Milestone Escrow & Payment Protection)
 # ==============================================================================
 
 
@@ -383,6 +384,23 @@ def init_db():
         )
     """)
 
+    # १२. पेमेंट प्रोटेक्शन आणि टप्पे टेबल (Milestone Escrow & Payment Protection Table)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS site_milestone_payments (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_key TEXT,
+            site_name TEXT DEFAULT 'Default Site',
+            stage_name TEXT,
+            planned_amount REAL DEFAULT 0.0,
+            amount_deposited REAL DEFAULT 0.0,
+            status TEXT DEFAULT 'Pending Deposit',
+            engineer_approved INTEGER DEFAULT 0,
+            client_approved INTEGER DEFAULT 0,
+            completion_date TEXT,
+            remark TEXT
+        )
+    """)
+
     # मास्टर ॲडमीन डिफॉल्ट एंट्री
     cursor.execute("SELECT * FROM users WHERE user_key = ?", ("9999999999",))
     if not cursor.fetchone():
@@ -456,6 +474,7 @@ def init_db():
         "site_progress",
         "pre_concreting_checklist",
         "project_tasks",
+        "site_milestone_payments",
     ]
     for tbl in tables_to_update:
         try:
@@ -1961,7 +1980,7 @@ if st.session_state.selected_module is None:
             <div class="module-card">
                 <div style="font-size: 42px; margin-bottom: 8px;">👷‍♂️</div>
                 <h3 style="margin: 0; color: #ffffff; font-weight: 800;">Site Manager</h3>
-                <p style="color: #94a3b8; font-size: 13px; margin: 6px 0 12px 0;">हजेरी, मजुरी, साहित्य ट्रॅकर व दैनिक प्रोग्रेस रिपोर्ट</p>
+                <p style="color: #94a3b8; font-size: 13px; margin: 6px 0 12px 0;">हजेरी, मजुरी, साहित्य ट्रॅकर, प्रोग्रेस व पेमेंट प्रोटेक्शन</p>
                 <span style="font-size: 11px; font-weight: bold; color: {'#38bdf8' if site_lock == 'Free' else '#f59e0b'}; background: rgba(0,0,0,0.3); padding: 4px 12px; border-radius: 12px;">[{site_badge}]</span>
             </div>
             """,
@@ -3469,7 +3488,7 @@ elif st.session_state.selected_module == "Estimator Tools":
                         conn.close()
 
 # ==========================================
-# 📌 विभाग १७: SITE MANAGER मॉड्यूल (Attendance, Inventory, Progress, Checklist, Weekly, Timeline)
+# 📌 विभाग १७: SITE MANAGER मॉड्यूल (Attendance, Inventory, Progress, Checklist, Weekly, Timeline, NeevPay)
 # ==========================================
 elif st.session_state.selected_module == "Site Manager":
     if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_site"):
@@ -3583,6 +3602,24 @@ elif st.session_state.selected_module == "Site Manager":
                 st.session_state.selected_site_sub_module = "Timeline"
                 trigger_push_state()
                 st.rerun()
+
+        st.write(" ")
+        # Row 3: 1 Featured Highlighted Card for NeevPay
+        st.markdown(
+            """
+            <div style="text-align: center; background: #111827; padding: 18px 10px; border-radius: 20px; border: 1px solid #10b981; box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);">
+                <h1 style="font-size: 32px; margin:0;">🤝</h1>
+                <h5 style="margin: 8px 0 2px 0; color: #10b981; font-weight:800; font-size:14px;">NeevPay / SiteSetu (Payment Protection)</h5>
+                <p style="font-size: 10px; color: #cbd5e1; margin:0;">[टप्प्याटप्प्याने पेमेंट, एस्क्रो व डिजिटल संमती]</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.write(" ")
+        if st.button("🤝 Open Payment Protection (NeevPay)", key="btn_site_neevpay", use_container_width=True, type="primary"):
+            st.session_state.selected_site_sub_module = "NeevPay"
+            trigger_push_state()
+            st.rerun()
 
     else:
         if st.button("⬅️ Back to Site Manager Menu", key="btn_back_site_menu"):
@@ -4247,3 +4284,173 @@ elif st.session_state.selected_module == "Site Manager":
             render_whatsapp_feature(
                 urllib.parse.quote(wa_timeline_text), "site_timeline_wa"
             )
+
+        # १७.७ NeevPay / SiteSetu - Milestone Escrow & Payment Protection
+        elif sub_mod == "NeevPay":
+            st.markdown("#### 🤝 NeevPay / SiteSetu (Milestone Payment Protection)")
+            st.caption(f"📍 साईट: **{st.session_state.current_site_name}** | क्लायंट आणि कंत्राटदार यांच्यातील पेमेंटचे वाद थांबवणारी सुरक्षित प्रणाली.")
+
+            # डिफॉल्ट टप्पे लोड करणे जर रिकामे असेल तर
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT COUNT(*) as cnt FROM site_milestone_payments WHERE user_key = ? AND site_name = ?",
+                (current_user_name, st.session_state.current_site_name),
+            )
+            count = cursor.fetchone()["cnt"]
+            if count == 0:
+                default_milestones = [
+                    ("१. पाया खोदाई व प्लिंथ पूर्ण (Plinth Level)", 150000.0),
+                    ("२. पहिला मजला स्लॅब कास्टिंग (Slab Level)", 250000.0),
+                    ("३. वीटकाम व कन्सिल्ड वायरिंग/प्लंबिंग (Brickwork)", 180000.0),
+                    ("४. आतील व बाहेरील प्लास्टर (Plastering)", 120000.0),
+                    ("५. टाईल्स, रंगकाम व अंतिम ताबा (Finishing)", 100000.0),
+                ]
+                for stg, amt in default_milestones:
+                    cursor.execute(
+                        """
+                        INSERT INTO site_milestone_payments 
+                        (user_key, site_name, stage_name, planned_amount, amount_deposited, status, engineer_approved, client_approved, remark)
+                        VALUES (?, ?, ?, ?, 0.0, 'Pending Deposit', 0, 0, 'काही नाही')
+                        """,
+                        (current_user_name, st.session_state.current_site_name, stg, amt),
+                    )
+                conn.commit()
+            
+            cursor.execute(
+                """
+                SELECT * FROM site_milestone_payments 
+                WHERE user_key = ? AND site_name = ? 
+                ORDER BY id ASC
+                """,
+                (current_user_name, st.session_state.current_site_name),
+            )
+            milestones = [dict(r) for r in cursor.fetchall()]
+            conn.close()
+
+            # बजेट व एस्क्रो समरी कार्ड्स
+            total_budget = sum(m["planned_amount"] for m in milestones)
+            total_deposited = sum(m["amount_deposited"] for m in milestones)
+            total_released = sum(m["amount_deposited"] for m in milestones if m["status"] == "Payment Released")
+            in_escrow = total_deposited - total_released
+
+            e1, e2, e3, e4 = st.columns(4)
+            with e1:
+                st.markdown(
+                    f"""
+                    <div style="background: #111827; border: 1px solid #334155; padding: 12px; border-radius: 12px; text-align: center;">
+                        <span style="color:#94a3b8; font-size:12px;">एकूण प्रोजेक्ट बजेट</span>
+                        <h4 style="margin: 4px 0; color:#38bdf8;">₹ {total_budget:,.2f}</h4>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+            with e2:
+                st.markdown(
+                    f"""
+                    <div style="background: #111827; border: 1px solid #f59e0b; padding: 12px; border-radius: 12px; text-align: center;">
+                        <span style="color:#94a3b8; font-size:12px;">वॉलेटमध्ये जमा रक्कम</span>
+                        <h4 style="margin: 4px 0; color:#f59e0b;">₹ {total_deposited:,.2f}</h4>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+            with e3:
+                st.markdown(
+                    f"""
+                    <div style="background: #111827; border: 1px solid #00f2fe; padding: 12px; border-radius: 12px; text-align: center;">
+                        <span style="color:#94a3b8; font-size:12px;">सुरक्षित एस्क्रो लॉक</span>
+                        <h4 style="margin: 4px 0; color:#00f2fe;">₹ {in_escrow:,.2f}</h4>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+            with e4:
+                st.markdown(
+                    f"""
+                    <div style="background: #111827; border: 1px solid #10b981; padding: 12px; border-radius: 12px; text-align: center;">
+                        <span style="color:#94a3b8; font-size:12px;">कंत्राटदारास दिलेली रक्कम</span>
+                        <h4 style="margin: 4px 0; color:#10b981;">₹ {total_released:,.2f}</h4>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+            st.write("---")
+            st.markdown("##### 📋 कामाचे टप्पे व पेमेंट स्थिती (Milestones & Escrow Management):")
+
+            for m in milestones:
+                m_id = m["id"]
+                st_name = m["stage_name"]
+                p_amt = m["planned_amount"]
+                d_amt = m["amount_deposited"]
+                status = m["status"]
+                eng_app = bool(m["engineer_approved"])
+                cli_app = bool(m["client_approved"])
+
+                with st.expander(f"📍 {st_name} | स्टेटस: {status} (₹ {p_amt:,.2f})", expanded=(status != "Payment Released")):
+                    c_m1, c_m2, c_m3 = st.columns([2, 1.5, 1.5])
+                    with c_m1:
+                        st.markdown(f"**नियोजित रक्कम:** ₹ {p_amt:,.2f}")
+                        st.markdown(f"**वॉलेट जमा:** <span style='color:#10b981; font-weight:bold;'>₹ {d_amt:,.2f}</span>", unsafe_allow_html=True)
+                    
+                    with c_m2:
+                        eng_check = st.checkbox("👷‍♂️ इंजिनिअर संमती (Work Done)", value=eng_app, key=f"eng_app_{m_id}")
+                        cli_check = st.checkbox("👤 क्लायंट संमती (Quality OK)", value=cli_app, key=f"cli_app_{m_id}")
+
+                    with c_m3:
+                        if d_amt < p_amt:
+                            if st.button("💳 पैसे वॉलेटमध्ये लॉक करा", key=f"btn_dep_{m_id}", type="primary"):
+                                conn = get_db_connection()
+                                cursor = conn.cursor()
+                                cursor.execute(
+                                    "UPDATE site_milestone_payments SET amount_deposited = ?, status = 'Locked in Escrow' WHERE id = ?",
+                                    (p_amt, m_id),
+                                )
+                                conn.commit()
+                                conn.close()
+                                st.success("✅ रक्कम सुरक्षितपणे वॉलेटमध्ये लॉक झाली!")
+                                st.rerun()
+
+                        if eng_check and cli_check and status != "Payment Released":
+                            if st.button("💸 कंत्राटदाराला रिलीज करा", key=f"btn_rel_{m_id}"):
+                                conn = get_db_connection()
+                                cursor = conn.cursor()
+                                cursor.execute(
+                                    """
+                                    UPDATE site_milestone_payments 
+                                    SET status = 'Payment Released', engineer_approved = 1, client_approved = 1, completion_date = ? 
+                                    WHERE id = ?
+                                    """,
+                                    (get_ist_time().strftime("%Y-%m-%d %H:%M:%S"), m_id),
+                                )
+                                conn.commit()
+                                conn.close()
+                                st.success("🎉 दोन्ही पक्षांच्या संमतीने पेमेंट यशस्वीरित्या ट्रान्सफर झाले!")
+                                st.rerun()
+                        elif status == "Payment Released":
+                            st.success("✅ पेमेंट पूर्ण झाले आहे!")
+
+                    if (eng_check != eng_app) or (cli_check != cli_app):
+                        conn = get_db_connection()
+                        cursor = conn.cursor()
+                        cursor.execute(
+                            "UPDATE site_milestone_payments SET engineer_approved = ?, client_approved = ? WHERE id = ?",
+                            (1 if eng_check else 0, 1 if cli_check else 0, m_id),
+                        )
+                        conn.commit()
+                        conn.close()
+                        st.rerun()
+
+            st.write("---")
+            wa_pay_text = (
+                f"🤝 *PATIL INFRATECH - NEEVPAY PAYMENT STATEMENT*\n"
+                f"📍 *Site:* {st.session_state.current_site_name}\n"
+                f"👤 *Engineer/User:* {current_user_name}\n"
+                f"💰 *Total Budget:* ₹ {total_budget:,.2f}\n"
+                f"🔒 *Locked in Escrow:* ₹ {in_escrow:,.2f}\n"
+                f"✅ *Released to Contractor:* ₹ {total_released:,.2f}\n"
+                f"📅 *Date:* {get_ist_time().strftime('%d-%m-%Y')}\n"
+                f"--------------------------------\n_NeevPay Transparent Protection_"
+            )
+            render_whatsapp_feature(urllib.parse.quote(wa_pay_text), "neevpay_wa")
