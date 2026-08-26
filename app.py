@@ -4484,4 +4484,23 @@ elif st.session_state.selected_module == "NeevPay":
     with neev_c3:
         st.markdown(
             """
-            <button onclick="window.parent.print()" style="width: 100%; background: linear-gradient(135deg, #0284c7 0%, #2563ebSorry, something went wrong. Please try your request again.
+            <button onclick="window.parent.print()" style="width: 100%; background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); color: white; border: none; padding: 10px 14px; border-radius: 8px; font-weight: bold; cursor: pointer; height: 38px; box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4);">
+                🖨️ Instant Print Invoice
+            </button>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    st.write("---")
+    wa_pay_text = (
+        f"🤝 *PATIL INFRATECH - NEEVPAY INVOICE STATEMENT*\n"
+        f"📍 *Site:* {st.session_state.current_site_name}\n"
+        f"👤 *Engineer:* {current_user_name}\n"
+        f"💰 *Total Bill:* ₹ {total_budget:,.2f}\n"
+        f"✅ *Received:* ₹ {total_received:,.2f}\n"
+        f"🔴 *Pending Balance:* ₹ {total_pending:,.2f}\n"
+        f"🔒 *Locked Milestones:* {locked_stages}/{len(milestones)}\n"
+        f"📅 *Date:* {get_ist_time().strftime('%d-%m-%Y')}\n"
+        f"--------------------------------\n_NeevPay Transparent Protection_"
+    )
+    render_whatsapp_feature(urllib.parse.quote(wa_pay_text), "neevpay_main_wa")
