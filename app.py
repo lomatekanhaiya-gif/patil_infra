@@ -4295,7 +4295,7 @@ elif st.session_state.selected_module == "Site Manager":
             )
 
 # ==========================================
-# 📌 विभाग १८: NEEVPAY / SITESETU मुख्य मॉड्यूल (Milestone Escrow & Payment Protection)
+# 📌 विभाग १८: NEEVPAY / SITESETU मुख्य मॉड्यूल (Locked Billing & Invoice Generator)
 # ==========================================
 elif st.session_state.selected_module == "NeevPay":
     if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_neevpay"):
@@ -4303,10 +4303,18 @@ elif st.session_state.selected_module == "NeevPay":
         st.rerun()
 
     st.write("---")
-    st.subheader("🤝 NeevPay / SiteSetu (Milestone Payment Protection & Escrow)")
-    st.caption(f"📍 चालू प्रोजेक्ट / साईट: **{st.session_state.current_site_name}** | कंत्राटदार आणि घरमालक यांच्यातील पैशांचे वाद संपवणारी सुरक्षित डिजिटल एस्क्रो सिस्टीम.")
+    st.markdown(
+        """
+        <div style="background: linear-gradient(135deg, #064e3b 0%, #0f172a 100%); padding: 18px; border-radius: 16px; border: 1px solid #10b981; margin-bottom: 20px;">
+            <h2 style="margin: 0; color: #10b981; font-weight: 900;">🤝 NEEVPAY / SITESETU - SMART PAYMENT ESCROW & BILLING</h2>
+            <p style="margin: 5px 0 0 0; color: #cbd5e1; font-size: 14px;">
+                इंजिनिअर व घरमालक यांच्यातील पारदर्शक बिलिंग, पेमेंट लॉक व अधिकृत इनव्हॉइस व्यवस्था.
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
-    # डिफॉल्ट टप्पे लोड करणे जर रिकामे असेल तर
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute(
@@ -4326,8 +4334,8 @@ elif st.session_state.selected_module == "NeevPay":
             cursor.execute(
                 """
                 INSERT INTO site_milestone_payments 
-                (user_key, site_name, stage_name, planned_amount, amount_deposited, status, engineer_approved, client_approved, remark)
-                VALUES (?, ?, ?, ?, 0.0, 'Pending Deposit', 0, 0, 'काही नाही')
+                (user_key, site_name, stage_name, planned_amount, amount_deposited, status, engineer_approved, client_approved, is_locked, remark)
+                VALUES (?, ?, ?, ?, 0.0, 'Pending Payment', 0, 0, 0, 'काही नाही')
                 """,
                 (current_user_name, st.session_state.current_site_name, stg, amt),
             )
@@ -4344,18 +4352,18 @@ elif st.session_state.selected_module == "NeevPay":
     milestones = [dict(r) for r in cursor.fetchall()]
     conn.close()
 
-    # बजेट व एस्क्रो समरी कार्ड्स
+    # बजेट आणि समरी हिशोब
     total_budget = sum(m["planned_amount"] for m in milestones)
-    total_deposited = sum(m["amount_deposited"] for m in milestones)
-    total_released = sum(m["amount_deposited"] for m in milestones if m["status"] == "Payment Released")
-    in_escrow = total_deposited - total_released
+    total_received = sum(m["amount_deposited"] for m in milestones)
+    total_pending = max(0.0, total_budget - total_received)
+    locked_stages = sum(1 for m in milestones if m.get("is_locked") == 1)
 
     e1, e2, e3, e4 = st.columns(4)
     with e1:
         st.markdown(
             f"""
             <div style="background: #111827; border: 1px solid #334155; padding: 14px; border-radius: 12px; text-align: center;">
-                <span style="color:#94a3b8; font-size:12px;">एकूण प्रोजेक्ट बजेट</span>
+                <span style="color:#94a3b8; font-size:12px;">एकूण ठरलेले बजेट / बिल</span>
                 <h4 style="margin: 4px 0; color:#38bdf8;">₹ {total_budget:,.2f}</h4>
             </div>
             """,
@@ -4364,19 +4372,20 @@ elif st.session_state.selected_module == "NeevPay":
     with e2:
         st.markdown(
             f"""
-            <div style="background: #111827; border: 1px solid #f59e0b; padding: 14px; border-radius: 12px; text-align: center;">
-                <span style="color:#94a3b8; font-size:12px;">वॉलेटमध्ये जमा रक्कम</span>
-                <h4 style="margin: 4px 0; color:#f59e0b;">₹ {total_deposited:,.2f}</h4>
+            <div style="background: #111827; border: 1px solid #10b981; padding: 14px; border-radius: 12px; text-align: center;">
+                <span style="color:#94a3b8; font-size:12px;">क्लायंटने दिलेली रक्कम</span>
+                <h4 style="margin: 4px 0; color:#10b981;">₹ {total_received:,.2f}</h4>
             </div>
             """,
             unsafe_allow_html=True,
         )
     with e3:
+        p_color = "#ef4444" if total_pending > 0 else "#10b981"
         st.markdown(
             f"""
-            <div style="background: #111827; border: 1px solid #00f2fe; padding: 14px; border-radius: 12px; text-align: center;">
-                <span style="color:#94a3b8; font-size:12px;">सुरक्षित एस्क्रो लॉक</span>
-                <h4 style="margin: 4px 0; color:#00f2fe;">₹ {in_escrow:,.2f}</h4>
+            <div style="background: #111827; border: 1px solid {p_color}; padding: 14px; border-radius: 12px; text-align: center;">
+                <span style="color:#94a3b8; font-size:12px;">उर्वरित बाकी रक्कम (Balance)</span>
+                <h4 style="margin: 4px 0; color:{p_color};">₹ {total_pending:,.2f}</h4>
             </div>
             """,
             unsafe_allow_html=True,
@@ -4384,9 +4393,9 @@ elif st.session_state.selected_module == "NeevPay":
     with e4:
         st.markdown(
             f"""
-            <div style="background: #111827; border: 1px solid #10b981; padding: 14px; border-radius: 12px; text-align: center;">
-                <span style="color:#94a3b8; font-size:12px;">कंत्राटदारास दिलेली रक्कम</span>
-                <h4 style="margin: 4px 0; color:#10b981;">₹ {total_released:,.2f}</h4>
+            <div style="background: #111827; border: 1px solid #00f2fe; padding: 14px; border-radius: 12px; text-align: center;">
+                <span style="color:#94a3b8; font-size:12px;">पूर्ण व लॉक झालेले टप्पे</span>
+                <h4 style="margin: 4px 0; color:#00f2fe;">{locked_stages} / {len(milestones)} टप्पे</h4>
             </div>
             """,
             unsafe_allow_html=True,
@@ -4394,11 +4403,12 @@ elif st.session_state.selected_module == "NeevPay":
 
     st.write("---")
 
-    with st.expander("➕ नवीन टप्पा (Milestone) जोडा"):
-        with st.form("add_milestone_form"):
-            new_stg_name = st.text_input("कामाच्या टप्प्याचे नाव:", placeholder="उदा. ६. कंपाऊंड वॉल व गेट...")
-            new_stg_amt = st.number_input("या टप्प्यासाठी निश्चित रक्कम (₹):", min_value=1000.0, value=50000.0, step=5000.0)
-            submit_new_stg = st.form_submit_button("➕ टप्पा सेव्ह करा", type="primary")
+    # १. नवीन टप्पा जोडणे (केवळ इंजिनिअरसाठी)
+    with st.expander("➕ [इंजिनिअर पॅनल] नवीन कामाचा टप्पा व बिल रक्कम ॲड करा"):
+        with st.form("add_neev_milestone_form"):
+            new_stg_name = st.text_input("कामाचा टप्पा (Work Stage Name):", placeholder="उदा. ६. कंपाऊंड वॉल व मेन गेट...")
+            new_stg_amt = st.number_input("या टप्प्याचे ठरलेले बिल (₹):", min_value=1000.0, value=50000.0, step=5000.0)
+            submit_new_stg = st.form_submit_button("➕ बिल टप्पा सेव्ह करा", type="primary")
 
             if submit_new_stg:
                 if new_stg_name.strip():
@@ -4407,17 +4417,18 @@ elif st.session_state.selected_module == "NeevPay":
                     cursor.execute(
                         """
                         INSERT INTO site_milestone_payments 
-                        (user_key, site_name, stage_name, planned_amount, amount_deposited, status, engineer_approved, client_approved, remark)
-                        VALUES (?, ?, ?, ?, 0.0, 'Pending Deposit', 0, 0, 'काही नाही')
+                        (user_key, site_name, stage_name, planned_amount, amount_deposited, status, engineer_approved, client_approved, is_locked, remark)
+                        VALUES (?, ?, ?, ?, 0.0, 'Pending Payment', 0, 0, 0, 'काही नाही')
                         """,
                         (current_user_name, st.session_state.current_site_name, new_stg_name.strip(), new_stg_amt),
                     )
                     conn.commit()
                     conn.close()
-                    st.success("✅ नवीन टप्पा जोडला गेला!")
+                    st.success("✅ नवीन टप्पा व बिल रक्कम सेव्ह झाली!")
                     st.rerun()
 
-    st.markdown("##### 📋 कामाचे टप्पे व पेमेंट स्थिती (Milestones & Escrow Management):")
+    # २. टप्पेवार बिलिंग, पेमेंट आणि लॉक व्यवस्थापन
+    st.markdown("##### 📋 कामाचे टप्पे, पेमेंट व डिजिटल संमती (Milestones & Lock Status):")
 
     for m in milestones:
         m_id = m["id"]
@@ -4427,69 +4438,254 @@ elif st.session_state.selected_module == "NeevPay":
         status = m["status"]
         eng_app = bool(m["engineer_approved"])
         cli_app = bool(m["client_approved"])
+        is_locked = bool(m.get("is_locked", 0))
+        rem_balance = max(0.0, p_amt - d_amt)
 
-        with st.expander(f"📍 {st_name} | स्टेटस: {status} (₹ {p_amt:,.2f})", expanded=(status != "Payment Released")):
-            c_m1, c_m2, c_m3 = st.columns([2, 1.5, 1.5])
-            with c_m1:
-                st.markdown(f"**नियोजित रक्कम:** ₹ {p_amt:,.2f}")
-                st.markdown(f"**वॉलेट जमा:** <span style='color:#10b981; font-weight:bold;'>₹ {d_amt:,.2f}</span>", unsafe_allow_html=True)
+        lock_badge = "🔒 LOCKED (पूर्ण पेड व अपरिवर्तनीय)" if is_locked else ("🟡 PARTIAL PAID" if d_amt > 0 else "🔴 UNPAID")
 
-            with c_m2:
-                eng_check = st.checkbox("👷‍♂️ इंजिनिअर संमती (Work Done)", value=eng_app, key=f"eng_app_{m_id}")
-                cli_check = st.checkbox("👤 क्लायंट संमती (Quality OK)", value=cli_app, key=f"cli_app_{m_id}")
-
-            with c_m3:
-                if d_amt < p_amt:
-                    if st.button("💳 पैसे वॉलेटमध्ये लॉक करा", key=f"btn_dep_{m_id}", type="primary"):
-                        conn = get_db_connection()
-                        cursor = conn.cursor()
-                        cursor.execute(
-                            "UPDATE site_milestone_payments SET amount_deposited = ?, status = 'Locked in Escrow' WHERE id = ?",
-                            (p_amt, m_id),
-                        )
-                        conn.commit()
-                        conn.close()
-                        st.success("✅ रक्कम सुरक्षितपणे वॉलेटमध्ये लॉक झाली!")
-                        st.rerun()
-
-                if eng_check and cli_check and status != "Payment Released":
-                    if st.button("💸 कंत्राटदाराला रिलीज करा", key=f"btn_rel_{m_id}"):
-                        conn = get_db_connection()
-                        cursor = conn.cursor()
-                        cursor.execute(
-                            """
-                            UPDATE site_milestone_payments 
-                            SET status = 'Payment Released', engineer_approved = 1, client_approved = 1, completion_date = ? 
-                            WHERE id = ?
-                            """,
-                            (get_ist_time().strftime("%Y-%m-%d %H:%M:%S"), m_id),
-                        )
-                        conn.commit()
-                        conn.close()
-                        st.success("🎉 दोन्ही पक्षांच्या संमतीने पेमेंट यशस्वीरित्या ट्रान्सफर झाले!")
-                        st.rerun()
-                elif status == "Payment Released":
-                    st.success("✅ पेमेंट पूर्ण झाले आहे!")
-
-            if (eng_check != eng_app) or (cli_check != cli_app):
-                conn = get_db_connection()
-                cursor = conn.cursor()
-                cursor.execute(
-                    "UPDATE site_milestone_payments SET engineer_approved = ?, client_approved = ? WHERE id = ?",
-                    (1 if eng_check else 0, 1 if cli_check else 0, m_id),
+        with st.expander(f"📍 {st_name} | {lock_badge} | बिल: ₹ {p_amt:,.2f} (जमा: ₹ {d_amt:,.2f})", expanded=not is_locked):
+            if is_locked:
+                st.success(
+                    f"🔒 **हे बिल दोघांच्या संमतीने पूर्ण भरले असून लॉक केले आहे.**\n\n"
+                    f"• **पूर्ण झाल्याची तारीख:** `{m.get('completion_date', 'N/A')}`\n"
+                    f"• **एकूण भरलेली रक्कम:** ₹ {d_amt:,.2f}\n"
+                    f"• **शेरा:** यात आता कोणतेही बदल (Edit) करता येणार नाहीत."
                 )
-                conn.commit()
-                conn.close()
-                st.rerun()
+            else:
+                col_b1, col_b2 = st.columns([2.5, 2.5])
+                
+                with col_b1:
+                    st.markdown(f"**कामाचे ठरलेले बिल:** <span style='color:#38bdf8; font-weight:bold; font-size:16px;'>₹ {p_amt:,.2f}</span>", unsafe_allow_html=True)
+                    st.markdown(f"**आतापर्यंत मिळालेली रक्कम:** <span style='color:#10b981; font-weight:bold; font-size:16px;'>₹ {d_amt:,.2f}</span>", unsafe_allow_html=True)
+                    st.markdown(f"**उर्वरित बाकी (Balance):** <span style='color:#ef4444; font-weight:bold; font-size:16px;'>₹ {rem_balance:,.2f}</span>", unsafe_allow_html=True)
+
+                    if rem_balance > 0:
+                        st.write(" ")
+                        st.caption("💵 क्लायंटने दिलेले नवीन पैसे इथे भरा (बिल वाढवता येणार नाही, फक्त पैसे ॲड होतील):")
+                        add_pay = st.number_input(
+                            f"पैसे ॲड करा (जास्तीत जास्त ₹ {rem_balance:,.2f}):",
+                            min_value=0.0,
+                            max_value=float(rem_balance),
+                            value=float(rem_balance),
+                            step=1000.0,
+                            key=f"pay_in_{m_id}",
+                        )
+                        if st.button("➕ पैसे जमा नोंदवा", key=f"btn_pay_{m_id}", type="primary"):
+                            if add_pay > 0:
+                                new_total_dep = d_amt + add_pay
+                                new_st = "Payment Completed" if new_total_dep >= p_amt else "Partially Paid"
+                                conn = get_db_connection()
+                                cursor = conn.cursor()
+                                cursor.execute(
+                                    "UPDATE site_milestone_payments SET amount_deposited = ?, status = ? WHERE id = ?",
+                                    (new_total_dep, new_st, m_id),
+                                )
+                                conn.commit()
+                                conn.close()
+                                st.success(f"✅ ₹ {add_pay:,.2f} ची पेमेंट नोंद यशस्वी झाली!")
+                                st.rerun()
+
+                with col_b2:
+                    st.markdown("##### ✍️ डिजिटल कन्फर्मेशन (Verification)")
+                    eng_check = st.checkbox("👷‍♂️ इंजिनिअर: काम समाधानकारक पूर्ण झाले आहे", value=eng_app, key=f"eng_chk_{m_id}")
+                    cli_check = st.checkbox("👤 क्लायंट: काम तपासले, पेमेंट अचूक दिले आहे", value=cli_app, key=f"cli_chk_{m_id}")
+
+                    if (eng_check != eng_app) or (cli_check != cli_app):
+                        conn = get_db_connection()
+                        cursor = conn.cursor()
+                        cursor.execute(
+                            "UPDATE site_milestone_payments SET engineer_approved = ?, client_approved = ? WHERE id = ?",
+                            (1 if eng_check else 0, 1 if cli_check else 0, m_id),
+                        )
+                        conn.commit()
+                        conn.close()
+                        st.rerun()
+
+                    if d_amt >= p_amt and eng_check and cli_check:
+                        st.markdown("<br>", unsafe_allow_html=True)
+                        if st.button("🔒 बिल कायमस्वरूपी लॉक करा (Lock Final Bill)", key=f"btn_lock_{m_id}", type="primary"):
+                            now_stamp = get_ist_time().strftime("%d-%m-%Y %H:%M:%S")
+                            conn = get_db_connection()
+                            cursor = conn.cursor()
+                            cursor.execute(
+                                """
+                                UPDATE site_milestone_payments 
+                                SET is_locked = 1, status = 'Locked & Cleared', completion_date = ? 
+                                WHERE id = ?
+                                """,
+                                (now_stamp, m_id),
+                            )
+                            conn.commit()
+                            conn.close()
+                            st.success("🎉 बिल यशस्वीरित्या लॉक झाले आहे! आता यात कोणीही बदल करू शकत नाही.")
+                            st.rerun()
+                    elif d_amt < p_amt:
+                        st.warning("⚠️ पूर्ण पेमेंट होईपर्यंत बिल लॉक करता येणार नाही (फक्त बाकी पैसे भरता येतील).")
+                    else:
+                        st.info("💡 लॉक करण्यासाठी इंजिनिअर आणि क्लायंट दोघांची संमती टिक-मार्क असणे आवश्यक आहे.")
+
+    # ३. मास्टर PDF/HTML इनव्हॉइस जनरेटर
+    st.write("---")
+    st.markdown("### 📑 NeevPay Master Invoice & Bill Generator (A4 PDF)")
+    st.caption("💡 अधिकृत पेमेंट पावती, वॉटरमार्क आणि दोन्ही पक्षांच्या स्वाक्षरीसह A4 फॉरमॅट इनव्हॉइस.")
+
+    invoice_rows_html = ""
+    for idx, m in enumerate(milestones, 1):
+        st_lock_text = "पूर्ण व लॉक (Locked)" if m.get("is_locked") == 1 else m.get("status")
+        invoice_rows_html += f"""
+        <tr>
+            <td>{idx}</td>
+            <td><b>{m['stage_name']}</b></td>
+            <td>₹ {m['planned_amount']:,.2f}</td>
+            <td style="color:#047857; font-weight:bold;">₹ {m['amount_deposited']:,.2f}</td>
+            <td>₹ {max(0.0, m['planned_amount'] - m['amount_deposited']):,.2f}</td>
+            <td>{st_lock_text}</td>
+        </tr>
+        """
+
+    full_invoice_html = f"""<!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <title>NEEVPAY INVOICE - {st.session_state.current_site_name}</title>
+        <style>
+            @page {{ size: A4 portrait; margin: 8mm; }}
+            @media print {{
+                body {{ background: #ffffff !important; color: #000000 !important; }}
+                .no-print {{ display: none !important; }}
+            }}
+            body {{ background-color: #e2e8f0; font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 10px; color: #0f172a; }}
+            .a4-page {{ position: relative; background: #ffffff; width: 100%; max-width: 780px; margin: 0 auto 20px auto; padding: 30px; border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); border: 2px solid #0f172a; box-sizing: border-box; min-height: 1020px; overflow: hidden; }}
+            .watermark {{ position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-28deg); font-size: 26px; font-weight: 900; color: rgba(16, 185, 129, 0.08); text-transform: uppercase; letter-spacing: 3px; text-align: center; width: 80%; max-width: 500px; line-height: 1.5; pointer-events: none; border: 3px dashed rgba(16, 185, 129, 0.1); padding: 20px; border-radius: 12px; z-index: 999; }}
+            .content-box {{ position: relative; z-index: 2; }}
+            .header-title {{ text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 8px; margin-bottom: 15px; }}
+            .header-title h1 {{ margin: 0; font-size: 24px; color: #0f172a; font-weight: 900; }}
+            .header-title p {{ margin: 3px 0; font-size: 12px; font-weight: bold; color: #047857; letter-spacing: 1px; }}
+            table.info-table {{ width: 100%; margin-bottom: 15px; font-size: 12px; border-collapse: collapse; }}
+            table.info-table td {{ padding: 4px 0; }}
+            table.invoice-table {{ width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 11px; }}
+            table.invoice-table th, table.invoice-table td {{ border: 1px solid #cbd5e1; padding: 8px 10px; text-align: left; }}
+            table.invoice-table th {{ background-color: #f1f5f9; font-weight: bold; color: #0f172a; }}
+            table.invoice-table tr:nth-child(even) {{ background-color: #f8fafc; }}
+            .total-summary-box {{ margin-top: 15px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px 18px; font-size: 12px; }}
+            .signature-box {{ margin-top: 45px; width: 100%; font-size: 12px; }}
+            .footer-stamp {{ text-align: center; margin-top: 30px; font-size: 10px; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 8px; }}
+        </style>
+    </head>
+    <body>
+        <div class="a4-page">
+            <div class="watermark">NEEVPAY VERIFIED<br>PATIL INFRATECH</div>
+            <div class="content-box">
+                <div class="header-title">
+                    <h1>PATIL INFRATECH</h1>
+                    <p>NEEVPAY / SITESETU • OFFICIAL PAYMENT INVOICE & RECEIPT</p>
+                    <small style="color: #64748b;">(Certified Immutable Milestone Billing Protection)</small>
+                </div>
+
+                <table class="info-table">
+                    <tr>
+                        <td><b>📍 Project / Site:</b> <span style="color:#d97706; font-weight:bold;">{st.session_state.current_site_name}</span></td>
+                        <td style="text-align: right;"><b>📅 Invoice Date:</b> {get_ist_time().strftime('%d-%m-%Y')}</td>
+                    </tr>
+                    <tr>
+                        <td><b>👷 Engineer/Contractor:</b> {current_user_name}</td>
+                        <td style="text-align: right;"><b>📄 Statement ID:</b> NP-{random.randint(10000, 99999)}</td>
+                    </tr>
+                </table>
+                <hr style="border: 0.5px solid #cbd5e1; margin-bottom: 10px;">
+
+                <table class="invoice-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>कामाचा टप्पा (Milestone Description)</th>
+                            <th>एकूण बिल (₹)</th>
+                            <th>प्राप्त रक्कम (₹)</th>
+                            <th>उर्वरित बाकी (₹)</th>
+                            <th>स्थिती (Status)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {invoice_rows_html}
+                    </tbody>
+                </table>
+
+                <div class="total-summary-box">
+                    <table style="width: 100%;">
+                        <tr>
+                            <td><b>एकूण ठरलेली रक्कम:</b> ₹ {total_budget:,.2f}</td>
+                            <td><b>एकूण मिळालेली रक्कम:</b> <span style="color:#047857; font-weight:bold;">₹ {total_received:,.2f}</span></td>
+                            <td style="text-align: right;"><b>उर्वरित बाकी:</b> <span style="color:#b91c1c; font-weight:bold;">₹ {total_pending:,.2f}</span></td>
+                        </tr>
+                    </table>
+                </div>
+
+                <table class="signature-box">
+                    <tr>
+                        <td style="width: 50%;">
+                            <br><br>
+                            __________________________<br>
+                            <b>Contractor / Engineer Sign</b><br>
+                            <small style="color:#64748b;">(मी कामाचे व बिलाचे विवरण मान्य करतो)</small>
+                        </td>
+                        <td style="width: 50%; text-align: right;">
+                            <br><br>
+                            __________________________<br>
+                            <b>Client / Home Owner Sign</b><br>
+                            <small style="color:#64748b;">(मी केलेल्या पेमेंटची पडताळणी केली)</small>
+                        </td>
+                    </tr>
+                </table>
+
+                <div class="footer-stamp">
+                    Certified & Digitally Verified by: <b>Kanhaiya (Founder of Patil Infratech)</b>
+                </div>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+    st.components.v1.html(full_invoice_html, height=520, scrolling=True)
+
+    neev_c1, neev_c2, neev_c3 = st.columns(3)
+    with neev_c1:
+        st.download_button(
+            label="📥 Download NeevPay Bill (HTML/PDF)",
+            data=full_invoice_html,
+            file_name=f"NeevPay_Invoice_{st.session_state.current_site_name.replace(' ', '_')}.html",
+            mime="text/html",
+            type="primary",
+            use_container_width=True,
+        )
+    with neev_c2:
+        neev_df = pd.DataFrame(milestones)
+        st.download_button(
+            label="📊 Export Billing Data (.csv)",
+            data=neev_df.to_csv(index=False).encode('utf-8-sig'),
+            file_name=f"NeevPay_Data_{st.session_state.current_site_name.replace(' ', '_')}.csv",
+            mime="text/csv",
+            use_container_width=True,
+        )
+    with neev_c3:
+        st.markdown(
+            """
+            <button onclick="window.parent.print()" style="width: 100%; background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); color: white; border: none; padding: 10px 14px; border-radius: 8px; font-weight: bold; cursor: pointer; height: 38px; box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4);">
+                🖨️ Instant Print Invoice
+            </button>
+            """,
+            unsafe_allow_html=True,
+        )
 
     st.write("---")
     wa_pay_text = (
-        f"🤝 *PATIL INFRATECH - NEEVPAY PAYMENT STATEMENT*\n"
+        f"🤝 *PATIL INFRATECH - NEEVPAY INVOICE STATEMENT*\n"
         f"📍 *Site:* {st.session_state.current_site_name}\n"
-        f"👤 *Engineer/User:* {current_user_name}\n"
-        f"💰 *Total Budget:* ₹ {total_budget:,.2f}\n"
-        f"🔒 *Locked in Escrow:* ₹ {in_escrow:,.2f}\n"
-        f"✅ *Released to Contractor:* ₹ {total_released:,.2f}\n"
+        f"👤 *Engineer:* {current_user_name}\n"
+        f"💰 *Total Bill:* ₹ {total_budget:,.2f}\n"
+        f"✅ *Received:* ₹ {total_received:,.2f}\n"
+        f"🔴 *Pending Balance:* ₹ {total_pending:,.2f}\n"
+        f"🔒 *Locked Milestones:* {locked_stages}/{len(milestones)}\n"
         f"📅 *Date:* {get_ist_time().strftime('%d-%m-%Y')}\n"
         f"--------------------------------\n_NeevPay Transparent Protection_"
     )
