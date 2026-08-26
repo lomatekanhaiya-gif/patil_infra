@@ -481,21 +481,39 @@ def init_db():
     """)
 
     # १२. पेमेंट प्रोटेक्शन आणि टप्पे टेबल (Milestone Escrow & Payment Protection Table)
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS site_milestone_payments (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_key TEXT,
-            site_name TEXT DEFAULT 'Default Site',
-            stage_name TEXT,
-            planned_amount REAL DEFAULT 0.0,
-            amount_deposited REAL DEFAULT 0.0,
-            status TEXT DEFAULT 'Pending Deposit',
-            engineer_approved INTEGER DEFAULT 0,
-            client_approved INTEGER DEFAULT 0,
-            completion_date TEXT,
-            remark TEXT
-        )
-    """)
+  cursor.execute("""
+    CREATE TABLE IF NOT EXISTS site_milestone_payments (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_key TEXT,
+        site_name TEXT DEFAULT 'Default Site',
+        stage_name TEXT,
+        planned_amount REAL DEFAULT 0.0,
+        amount_deposited REAL DEFAULT 0.0,
+        status TEXT DEFAULT 'Pending Deposit',
+        engineer_approved INTEGER DEFAULT 0,
+        client_approved INTEGER DEFAULT 0,
+        is_locked INTEGER DEFAULT 0,
+        completion_date TEXT,
+        remark TEXT
+    )
+""")
+
+# आधीच तयार असलेल्या जुन्या टेबलसाठी सुरक्षित कॉलम ॲड:
+try:
+    cursor.execute(
+        "ALTER TABLE site_milestone_payments ADD COLUMN is_locked INTEGER"
+        " DEFAULT 0"
+    )
+except sqlite3.OperationalError:
+    pass
+
+try:
+    cursor.execute(
+        "ALTER TABLE site_milestone_payments ADD COLUMN site_name TEXT DEFAULT"
+        " 'Default Site'"
+    )
+except sqlite3.OperationalError:
+    pass
 
     # मास्टर ॲडमीन डिफॉल्ट एंट्री
     cursor.execute("SELECT * FROM users WHERE user_key = ?", ("9999999999",))
@@ -4412,30 +4430,32 @@ elif st.session_state.selected_module == "NeevPay":
     )
 
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        "SELECT COUNT(*) as cnt FROM site_milestone_payments WHERE user_key = ? AND site_name = ?",
-        (current_user_name, st.session_state.current_site_name),
-    )
-    count = cursor.fetchone()["cnt"]
-    if count == 0:
-        default_milestones = [
-            ("१. पाया खोदाई व प्लिंथ पूर्ण (Plinth Level)", 150000.0),
-            ("२. पहिला मजला स्लॅब कास्टिंग (Slab Level)", 250000.0),
-            ("३. वीटकाम व कन्सिल्ड वायरिंग/प्लंबिंग (Brickwork)", 180000.0),
-            ("४. आतील व बाहेरील प्लास्टर (Plastering)", 120000.0),
-            ("५. टाईल्स, रंगकाम व अंतिम ताबा (Finishing)", 100000.0),
-        ]
-        for stg, amt in default_milestones:
-            cursor.execute(
-                """
-                INSERT INTO site_milestone_payments 
-                (user_key, site_name, stage_name, planned_amount, amount_deposited, status, engineer_approved, client_approved, is_locked, remark)
-                VALUES (?, ?, ?, ?, 0.0, 'Pending Payment', 0, 0, 0, 'काही नाही')
-                """,
-                (current_user_name, st.session_state.current_site_name, stg, amt),
-            )
-        conn.commit()
+cursor = conn.cursor()
+cursor.execute(
+    "SELECT COUNT(*) as cnt FROM site_milestone_payments WHERE user_key = ? AND"
+    " site_name = ?",
+    (current_user_name, st.session_state.current_site_name),
+)
+count = cursor.fetchone()["cnt"]
+
+if count == 0:
+    default_milestones = [
+        ("१. पाया खोदाई व प्लिंथ पूर्ण (Plinth Level)", 150000.0),
+        ("२. पहिला मजला स्लॅब कास्टिंग (Slab Level)", 250000.0),
+        ("३. वीटकाम व कन्सिल्ड वायरिंग/प्लंबिंग (Brickwork)", 180000.0),
+        ("४. आतील व बाहेरील प्लास्टर (Plastering)", 120000.0),
+        ("५. टाईल्स, रंगकाम व अंतिम ताबा (Finishing)", 100000.0),
+    ]
+    for stg, amt in default_milestones:
+        cursor.execute(
+            """
+            INSERT INTO site_milestone_payments 
+            (user_key, site_name, stage_name, planned_amount, amount_deposited, status, engineer_approved, client_approved, is_locked, remark)
+            VALUES (?, ?, ?, ?, 0.0, 'Pending Payment', 0, 0, 0, 'काही नाही')
+            """,
+            (current_user_name, st.session_state.current_site_name, stg, float(amt)),
+        )
+    conn.commit()
 
     cursor.execute(
         """
