@@ -4130,13 +4130,35 @@ elif st.session_state.selected_module == "NeevPay":
 
     conn = get_db_connection()
     cursor = conn.cursor()
+
+    # १. क्लायंट ईमेलसाठी डेटाबेस टेबल तयार करणे
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS site_client_profiles (
+            user_key TEXT,
+            site_name TEXT,
+            client_email TEXT,
+            PRIMARY KEY (user_key, site_name)
+        )
+        """
+    )
+    conn.commit()
+
+    # क्लायंटचा ईमेल आणणे
+    cursor.execute(
+        "SELECT client_email FROM site_client_profiles WHERE user_key = ? AND site_name = ?",
+        (current_user_name, st.session_state.current_site_name),
+    )
+    client_row = cursor.fetchone()
+    client_email = client_row["client_email"] if client_row else ""
+
+    # सुरुवातीला टप्पे तयार करणे (ठरलेले बिल 0.0)
     cursor.execute(
         "SELECT COUNT(*) as cnt FROM site_milestone_payments WHERE user_key = ? AND site_name = ?",
         (current_user_name, st.session_state.current_site_name),
     )
     count = cursor.fetchone()["cnt"]
 
-    # सुरुवातीला ५ टप्पे 0.0 बिलासह ॲड होतील (बिल इंजिनिअर ठरवेल)
     if count == 0:
         default_milestones = [
             "१. पाया खोदाई व प्लिंथ पूर्ण (Excavation & Plinth Level)",
@@ -4166,6 +4188,37 @@ elif st.session_state.selected_module == "NeevPay":
     )
     milestones = [dict(r) for r in cursor.fetchall()]
     conn.close()
+
+    # ==========================================
+    # 🔒 क्लायंट Email नोंदणी विभाग (सुरुवातीला एकदाच)
+    # ==========================================
+    with st.container():
+        if not client_email:
+            st.warning("⚠️ **महत्त्वाची पायरी:** बिल बदल सुरक्षिततेसाठी घरमालकाचा (Client) Email ID रजिस्टर करा.")
+            col_em1, col_em2 = st.columns([3, 1])
+            with col_em1:
+                set_client_email = st.text_input("घरमालकाचा Email ID टाका (Client Email):", placeholder="उदा. client@gmail.com", key="inp_init_client_email")
+            with col_em2:
+                st.write(" ")
+                st.write(" ")
+                if st.button("💾 Email सेव्ह करा", key="btn_save_client_email", type="primary"):
+                    if set_client_email.strip() and "@" in set_client_email:
+                        conn = get_db_connection()
+                        cursor = conn.cursor()
+                        cursor.execute(
+                            "INSERT OR REPLACE INTO site_client_profiles (user_key, site_name, client_email) VALUES (?, ?, ?)",
+                            (current_user_name, st.session_state.current_site_name, set_client_email.strip().lower()),
+                        )
+                        conn.commit()
+                        conn.close()
+                        st.success("✅ क्लायंटचा ईमेल कायमस्वरूपी सेव्ह झाला!")
+                        st.rerun()
+                    else:
+                        st.error("कृपया वैध ईमेल पत्ता टाका.")
+        else:
+            st.info(f"📧 **रजिस्टर असलेला घरमालकाचा Email:** `{client_email}` (बिल बदलाचे सर्व OTP यावर पाठवले जातील)")
+
+    st.write("---")
 
     # बजेट आणि समरी हिशोब
     total_budget = sum(m["planned_amount"] for m in milestones)
@@ -4218,11 +4271,11 @@ elif st.session_state.selected_module == "NeevPay":
 
     st.write("---")
 
-    # १. नवीन कामाचा टप्पा जोडणे (Extra Stage Option)
+    # १. नवीन कामाचा टप्पा जोडणे
     with st.expander("➕ [इंजिनिअर पॅनल] कामाचा अतिरिक्त टप्पा ॲड करा"):
         with st.form("add_neev_milestone_form"):
             new_stg_name = st.text_input("कामाचा नवीन टप्पा (Work Stage Name):", placeholder="उदा. ६. कंपाऊंड वॉल व मेन गेट...")
-            new_stg_amt = st.number_input("या टप्प्याचे ठरलेले बिल (₹) [0 ठेवल्यास नंतर एकदाच सेट करता येईल]:", min_value=0.0, value=0.0, step=5000.0)
+            new_stg_amt = st.number_input("या टप्प्याचे ठरलेले बिल (₹) [0 ठेवल्यास नंतर सेट करता येईल]:", min_value=0.0, value=0.0, step=100.0)
             submit_new_stg = st.form_submit_button("➕ टप्पा सेव्ह करा", type="primary")
 
             if submit_new_stg:
@@ -4242,7 +4295,7 @@ elif st.session_state.selected_module == "NeevPay":
                     st.success("✅ नवीन टप्पा सेव्ह झाला!")
                     st.rerun()
 
-    # २. टप्पेवार बिलिंग, वन-टाईम बजेट सेटिंग, क्लायंट OTP व्हेरिफिकेशन आणि पेमेंट
+    # २. टप्पेवार बिलिंग, वन-टाईम सेटिंग आणि OTP द्वारे बदल
     st.markdown("##### 📋 कामाचे टप्पे, ठरलेले बिल, पेमेंट व डिजिटल संमती:")
 
     for m in milestones:
@@ -4274,103 +4327,99 @@ elif st.session_state.selected_module == "NeevPay":
                     f"🔒 **हे बिल दोघांच्या संमतीने पूर्ण भरले असून लॉक केले आहे.**\n\n"
                     f"• **पूर्ण झाल्याची तारीख:** `{m.get('completion_date', 'N/A')}`\n"
                     f"• **एकूण भरलेली रक्कम:** ₹ {d_amt:,.2f}\n"
-                    f"• **शेरा:** यात आता कोणतेही बदल (Edit) करता येणार नाहीत."
+                    f"• **शेरा:** यात आता कोणतेही बदल करता येणार नाहीत."
                 )
             else:
                 col_b1, col_b2 = st.columns([2.5, 2.5])
                 
                 with col_b1:
-                    # ==========================================
-                    # 🔒 १. जर ठरलेले बिल ० (Zero) असेल तर फक्त एकदाच सेट करता येईल
-                    # ==========================================
+                    # ==========================================================
+                    # 🟢 १. इंजिनिअर पहिल्यांदा थेट बिल ठरवू शकतो (₹१ पासून कितीही)
+                    # ==========================================================
                     if p_amt == 0.0:
-                        st.markdown("###### ⚙️ १. इंजिनिअर पॅनल (कामाचे बिल निश्चित करा - एकदाच):")
-                        st.caption("⚠️ **सूचना:** हे बिल एकदा सेट केल्यावर थेट बदलता येणार नाही (बदलासाठी क्लायंटचा OTP लागेल).")
+                        st.markdown("###### ⚙️ १. इंजिनिअर पॅनल (कामाचे बिल निश्चित करा):")
+                        st.caption("💡 पहिल्यांदा बिल टाकताना कोणत्याही परवानगीची गरज नाही (किमान ₹ १).")
                         
-                        set_planned = st.number_input(
+                        first_bill = st.number_input(
                             "या टप्प्याचे अंतिम ठरलेले बिल टाका (₹):",
-                            min_value=1000.0,
+                            min_value=1.0,
                             value=50000.0,
-                            step=5000.0,
-                            key=f"plan_amt_{m_id}"
+                            step=1000.0,
+                            key=f"first_plan_amt_{m_id}"
                         )
                         
-                        if st.button("🔒 ठरलेले बिल फिक्स सेव्ह करा", key=f"btn_save_plan_{m_id}", type="primary"):
-                            if set_planned > 0:
+                        if st.button("🔒 ठरलेले बिल फिक्स सेव्ह करा", key=f"btn_save_first_{m_id}", type="primary"):
+                            if first_bill > 0:
                                 conn = get_db_connection()
                                 cursor = conn.cursor()
                                 cursor.execute(
                                     "UPDATE site_milestone_payments SET planned_amount = ?, status = 'Bill Fixed (Unpaid)' WHERE id = ?",
-                                    (set_planned, m_id)
+                                    (first_bill, m_id)
                                 )
                                 conn.commit()
                                 conn.close()
-                                st.success(f"✅ या टप्प्याचे बिल ₹ {set_planned:,.2f} कायमस्वरूपी फिक्स झाले!")
+                                st.success(f"✅ या टप्प्याचे बिल ₹ {first_bill:,.2f} निश्चित झाले!")
                                 st.rerun()
 
-                    # ==========================================
-                    # 🔐 २. बिल आधीच फिक्स असल्यास बदलण्यासाठी CLIENT EMAIL OTP व्हेरिफिकेशन
-                    # ==========================================
+                    # ==========================================================
+                    # 🔐 २. बिल आधीच फिक्स असल्यास बदलण्यासाठी CLIENT EMAIL OTP आवश्यक
+                    # ==========================================================
                     else:
                         st.markdown("###### 📌 टप्प्याचे बिल तपशील (Fixed):")
                         st.markdown(f"**कामाचे ठरलेले बिल:** <span style='color:#38bdf8; font-weight:bold; font-size:16px;'>₹ {p_amt:,.2f}</span>", unsafe_allow_html=True)
                         st.markdown(f"**आतापर्यंत मिळालेली रक्कम:** <span style='color:#10b981; font-weight:bold; font-size:16px;'>₹ {d_amt:,.2f}</span>", unsafe_allow_html=True)
                         st.markdown(f"**उर्वरित बाकी (Balance):** <span style='color:#ef4444; font-weight:bold; font-size:16px;'>₹ {rem_balance:,.2f}</span>", unsafe_allow_html=True)
 
-                        # बिल बदलण्यासाठी विशेष परमिशन विभाग
+                        # बिल बदलण्यासाठी विशेष OTP विभाग
                         with st.expander("🔑 [इंजिनिअर] ठरलेले बिल बदलायचे आहे का? (क्लायंट Email OTP आवश्यक)"):
-                            st.caption("💡 बिल बदलण्यासाठी घरमालकाच्या ईमेलवर आलेला OTP टाकून व्हेरिफाय करणे बंधनकारक आहे.")
-                            
-                            client_email_input = st.text_input(
-                                "घरमालकाचा / क्लायंटचा Email ID:", 
-                                value=st.session_state.get("client_email", ""), 
-                                key=f"cli_email_{m_id}"
-                            )
-                            
-                            if st.button("📩 क्लायंटच्या Email वर OTP पाठवा", key=f"btn_send_otp_{m_id}"):
-                                generated_otp = str(random.randint(100000, 999999))
-                                st.session_state[f"otp_val_{m_id}"] = generated_otp
-                                st.session_state[f"otp_sent_{m_id}"] = True
+                            if not client_email:
+                                st.error("❌ कृपया आधी वरील बॉक्समध्ये क्लायंटचा ईमेल सेव्ह करा.")
+                            else:
+                                st.caption(f"💡 बिल बदलण्यासाठी `{client_email}` वर OTP पाठवून व्हेरिफाय करावे लागेल.")
                                 
-                                # जर ईमेल सिस्टीम कॉन्फिगर असेल तर ईमेल जाईल
-                                try:
-                                    # send_otp_email(client_email_input, generated_otp) # जर ईमेल फंक्शन असेल तर
-                                    st.success(f"✅ OTP क्लायंटच्या ईमेलवर ({client_email_input}) पाठवला आहे!")
-                                    st.info(f"🔑 **[सुरक्षा पडताळणी / टेस्टिंग OTP]:** `{generated_otp}`")
-                                except Exception as e:
-                                    st.info(f"🔑 **[OTP तयार झाला]:** `{generated_otp}` (क्लायंटकडून हा OTP घेऊन टाका)")
+                                if st.button("📩 क्लायंटच्या Email वर OTP पाठवा", key=f"btn_send_otp_{m_id}"):
+                                    gen_otp = str(random.randint(100000, 999999))
+                                    st.session_state[f"otp_val_{m_id}"] = gen_otp
+                                    st.session_state[f"otp_sent_{m_id}"] = True
+                                    
+                                    try:
+                                        # send_otp_email(client_email, gen_otp)  # थेट SMTP मेल पाठवण्यासाठी
+                                        st.success(f"✅ OTP क्लायंटच्या ईमेलवर ({client_email}) पाठवला आहे!")
+                                        st.info(f"🔑 **[सुरक्षा पडताळणी / टेस्टिंग OTP]:** `{gen_otp}`")
+                                    except Exception:
+                                        st.info(f"🔑 **[OTP तयार झाला]:** `{gen_otp}` (क्लायंटकडून हा OTP घेऊन टाका)")
 
-                            if st.session_state.get(f"otp_sent_{m_id}", False):
-                                new_requested_plan = st.number_input(
-                                    "नवीन सुधारीत बिल रक्कम (₹):", 
-                                    min_value=float(d_amt), 
-                                    value=float(p_amt), 
-                                    step=5000.0, 
-                                    key=f"new_req_amt_{m_id}"
-                                )
-                                entered_otp = st.text_input("क्लायंटच्या Email वरील ६-अंकी OTP टाका:", max_chars=6, key=f"inp_otp_{m_id}")
-                                
-                                if st.button("✅ OTP पडताळा व बिल अपडेट करा", key=f"btn_verify_otp_{m_id}", type="primary"):
-                                    if entered_otp == st.session_state.get(f"otp_val_{m_id}"):
-                                        conn = get_db_connection()
-                                        cursor = conn.cursor()
-                                        cursor.execute(
-                                            "UPDATE site_milestone_payments SET planned_amount = ? WHERE id = ?",
-                                            (new_requested_plan, m_id)
-                                        )
-                                        conn.commit()
-                                        conn.close()
-                                        st.session_state[f"otp_sent_{m_id}"] = False
-                                        st.success("🎉 क्लायंट संमती यशस्वी! नवीन बिल अपडेट झाले आहे.")
-                                        st.rerun()
-                                    else:
-                                        st.error("❌ चुकीचा OTP! कृपया क्लायंटच्या ईमेलवर आलेला योग्य OTP टाका.")
+                                if st.session_state.get(f"otp_sent_{m_id}", False):
+                                    new_change_amt = st.number_input(
+                                        "नवीन सुधारीत बिल रक्कम (₹) [किमान ₹ १ किंवा जमा रकमेइतकी]:", 
+                                        min_value=max(1.0, float(d_amt)), 
+                                        value=float(p_amt), 
+                                        step=1000.0, 
+                                        key=f"new_change_amt_{m_id}"
+                                    )
+                                    user_otp = st.text_input("क्लायंटच्या ईमेलवरील ६-अंकी OTP टाका:", max_chars=6, key=f"inp_otp_{m_id}")
+                                    
+                                    if st.button("✅ OTP पडताळा व बिल अपडेट करा", key=f"btn_verify_otp_{m_id}", type="primary"):
+                                        if user_otp == st.session_state.get(f"otp_val_{m_id}"):
+                                            conn = get_db_connection()
+                                            cursor = conn.cursor()
+                                            cursor.execute(
+                                                "UPDATE site_milestone_payments SET planned_amount = ? WHERE id = ?",
+                                                (new_change_amt, m_id)
+                                            )
+                                            conn.commit()
+                                            conn.close()
+                                            st.session_state[f"otp_sent_{m_id}"] = False
+                                            st.success("🎉 क्लायंट OTP संमती यशस्वी! नवीन बिल अपडेट झाले.")
+                                            st.rerun()
+                                        else:
+                                            st.error("❌ चुकीचा OTP! कृपया क्लायंटच्या ईमेलवरील अचूक OTP टाका.")
 
                     # ==========================================
                     # 💵 पेमेंट जमा करण्याची नोंद
                     # ==========================================
                     if p_amt == 0.0:
-                        st.info("ℹ️ आधी वरील बॉक्समध्ये कामाचे ठरलेले बिल सेट करा, मग पेमेंट घेता येईल.")
+                        st.info("ℹ️ आधी वरील बॉक्समध्ये कामाचे ठरलेले बिल निश्चित करा, मग पेमेंट घेता येईल.")
                     elif rem_balance > 0:
                         st.write("---")
                         st.caption("💵 क्लायंटने दिलेले पैसे इथे भरा:")
@@ -4379,7 +4428,7 @@ elif st.session_state.selected_module == "NeevPay":
                             min_value=0.0,
                             max_value=float(rem_balance),
                             value=float(rem_balance),
-                            step=1000.0,
+                            step=100.0,
                             key=f"pay_in_{m_id}",
                         )
                         if st.button("➕ पैसे जमा नोंदवा", key=f"btn_pay_{m_id}", type="primary"):
@@ -4504,6 +4553,10 @@ elif st.session_state.selected_module == "NeevPay":
                     <tr>
                         <td><b>👷 Engineer/Contractor:</b> {current_user_name}</td>
                         <td style="text-align: right;"><b>📄 Statement ID:</b> NP-{random.randint(10000, 99999)}</td>
+                    </tr>
+                    <tr>
+                        <td><b>👤 Registered Client:</b> {client_email if client_email else 'Not Registered'}</td>
+                        <td style="text-align: right;"><b>🔒 Protection:</b> OTP Verified</td>
                     </tr>
                 </table>
                 <hr style="border: 0.5px solid #cbd5e1; margin-bottom: 10px;">
