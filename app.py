@@ -280,7 +280,6 @@ def is_strong_password(password):
         return False, "पासवर्डमध्ये कमीत कमी एक विशेष चिन्ह (!@#$%^&*) असावे."
     return True, "Strong"
 
-
 # ==========================================
 # 📌 विभाग ५: SQLITE डेटाबेस मॅनेजमेंट आणि मॉडेल्स
 # ==========================================
@@ -481,39 +480,37 @@ def init_db():
     """)
 
     # १२. पेमेंट प्रोटेक्शन आणि टप्पे टेबल (Milestone Escrow & Payment Protection Table)
-  cursor.execute("""
-    CREATE TABLE IF NOT EXISTS site_milestone_payments (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_key TEXT,
-        site_name TEXT DEFAULT 'Default Site',
-        stage_name TEXT,
-        planned_amount REAL DEFAULT 0.0,
-        amount_deposited REAL DEFAULT 0.0,
-        status TEXT DEFAULT 'Pending Deposit',
-        engineer_approved INTEGER DEFAULT 0,
-        client_approved INTEGER DEFAULT 0,
-        is_locked INTEGER DEFAULT 0,
-        completion_date TEXT,
-        remark TEXT
-    )
-""")
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS site_milestone_payments (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_key TEXT,
+            site_name TEXT DEFAULT 'Default Site',
+            stage_name TEXT,
+            planned_amount REAL DEFAULT 0.0,
+            amount_deposited REAL DEFAULT 0.0,
+            status TEXT DEFAULT 'Pending Deposit',
+            engineer_approved INTEGER DEFAULT 0,
+            client_approved INTEGER DEFAULT 0,
+            is_locked INTEGER DEFAULT 0,
+            completion_date TEXT,
+            remark TEXT
+        )
+    """)
 
-# आधीच तयार असलेल्या जुन्या टेबलसाठी सुरक्षित कॉलम ॲड:
-try:
-    cursor.execute(
-        "ALTER TABLE site_milestone_payments ADD COLUMN is_locked INTEGER"
-        " DEFAULT 0"
-    )
-except sqlite3.OperationalError:
-    pass
+    # आधीच तयार असलेल्या जुन्या टेबलसाठी सुरक्षित कॉलम ॲड:
+    try:
+        cursor.execute(
+            "ALTER TABLE site_milestone_payments ADD COLUMN is_locked INTEGER DEFAULT 0"
+        )
+    except sqlite3.OperationalError:
+        pass
 
-try:
-    cursor.execute(
-        "ALTER TABLE site_milestone_payments ADD COLUMN site_name TEXT DEFAULT"
-        " 'Default Site'"
-    )
-except sqlite3.OperationalError:
-    pass
+    try:
+        cursor.execute(
+            "ALTER TABLE site_milestone_payments ADD COLUMN site_name TEXT DEFAULT 'Default Site'"
+        )
+    except sqlite3.OperationalError:
+        pass
 
     # मास्टर ॲडमीन डिफॉल्ट एंट्री
     cursor.execute("SELECT * FROM users WHERE user_key = ?", ("9999999999",))
@@ -604,7 +601,6 @@ except sqlite3.OperationalError:
 
 
 init_db()
-
 
 # ==========================================
 # 📌 विभाग ६: डेटाबेस क्वेरी आणि हेल्पर फंक्शन्स
