@@ -1825,7 +1825,7 @@ else:
         unsafe_allow_html=True,
     )
 
-# १३.१ ॲक्टिव्ह साईट सिलेक्टर बार आणि LIVE WEATHER & RAIN FORECAST
+# १३.१ ॲक्टिव्ह साईट सिलेक्टर बार आणि LIVE WEATHER & RAIN FORECAST (Side-by-Side in English)
 if "site_location_city" not in st.session_state:
     st.session_state.site_location_city = "Pune"
 
@@ -1838,16 +1838,16 @@ with st.container():
 
     st.markdown(
         f"""
-        <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-left: 5px solid #f59e0b; padding: 14px 18px; border-radius: 14px; margin-bottom: 15px; border: 1px solid rgba(245,158,11,0.3); box-shadow: 0 4px 15px rgba(0,0,0,0.4);">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                <div>
-                    <span style="color:#94a3b8; font-size:11px; font-weight:bold; text-transform:uppercase;">📍 चालू प्रोजेक्ट / साईट:</span><br>
+        <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-left: 5px solid #f59e0b; padding: 14px 20px; border-radius: 14px; margin-bottom: 15px; border: 1px solid rgba(245,158,11,0.3); box-shadow: 0 4px 15px rgba(0,0,0,0.4);">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                <div style="flex: 1; min-width: 250px;">
+                    <span style="color:#94a3b8; font-size:11px; font-weight:bold; text-transform:uppercase; letter-spacing: 0.5px;">📍 Active Construction Project:</span><br>
                     <b style="color:#f59e0b; font-size:18px;">🏗️ {st.session_state.current_site_name}</b>
-                    <span style="color:#64748b; font-size:13px; margin-left:8px;">({st.session_state.site_location_city})</span>
+                    <span style="color:#64748b; font-size:13px; margin-left:6px;">({st.session_state.site_location_city})</span>
                 </div>
-                <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(56, 189, 248, 0.3); padding: 8px 14px; border-radius: 10px; text-align: right;">
-                    <span style="color:#38bdf8; font-size:12px; font-weight:bold;">{rain_icon} {site_weather['temp'] if site_weather else '--'}°C | {site_weather['city'] if site_weather else st.session_state.site_location_city}</span><br>
-                    <span style="font-size:13px; font-weight:800; color:{rain_color};">🌧️ पावसाची शक्यता: {rain_val}%</span>
+                <div style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(56, 189, 248, 0.3); padding: 8px 16px; border-radius: 10px; text-align: right; min-width: 220px;">
+                    <span style="color:#38bdf8; font-size:12px; font-weight:700;">{rain_icon} {site_weather['temp'] if site_weather else '--'}°C | {site_weather['city'] if site_weather else st.session_state.site_location_city}</span><br>
+                    <span style="font-size:13px; font-weight:800; color:{rain_color};">🌧️ Rain Probability: {rain_val}%</span>
                     <small style="color:#94a3b8; font-size:10px; margin-left:4px;">(Max: {site_weather['max_rain_today'] if site_weather else '--'}%)</small>
                 </div>
             </div>
@@ -1858,22 +1858,25 @@ with st.container():
 
     sw_col1, sw_col2 = st.columns(2)
     with sw_col1:
-        with st.popover("✏️ साईटचे नाव बदला"):
+        with st.popover("✏️ Edit Site Name"):
             new_site_input = st.text_input(
-                "नवीन साईटचे नाव टाका:", value=st.session_state.current_site_name
+                "Enter Project / Site Name:", value=st.session_state.current_site_name
             )
-            if st.button("💾 सेव्ह करा", key="btn_save_site_name", type="primary"):
+            if st.button("💾 Save Site Name", key="btn_save_site_name", type="primary"):
                 if new_site_input.strip():
                     st.session_state.current_site_name = new_site_input.strip()
-                    st.success("✅ साईट अपडेट झाली!")
+                    st.success("✅ Site name updated successfully!")
                     st.rerun()
     with sw_col2:
-        with st.popover("📍 साईटचे शहर / वेदर लोकेशन सेट करा"):
-            new_city_input = st.text_input("शहराचे नाव टाका (उदा. Pune, Mumbai, Nashik, Kolhapur):", value=st.session_state.site_location_city)
-            if st.button("🌦️ वेदर अपडेट करा", key="btn_save_weather_city", type="primary"):
+        with st.popover("📍 Set Weather Location"):
+            new_city_input = st.text_input(
+                "Enter City / Location (e.g. Pune, Mumbai, Nashik):", 
+                value=st.session_state.site_location_city
+            )
+            if st.button("🌦️ Update Weather", key="btn_save_weather_city", type="primary"):
                 if new_city_input.strip():
                     st.session_state.site_location_city = new_city_input.strip()
-                    st.success("✅ वेदर लोकेशन अपडेट झाले!")
+                    st.success("✅ Weather location updated!")
                     st.rerun()
 
 if col_lo.button("🔄 Logout"):
@@ -2049,7 +2052,6 @@ if not is_user_premium:
                 conn.commit()
                 conn.close()
                 st.success("✅ ॲडमीनला रिक्वेस्ट पाठवली!")
-
 # ==========================================
 # 📌 विभाग १४: CIVIL AI ASSISTANT (Gemini SDK & Fallback)
 # ==========================================
