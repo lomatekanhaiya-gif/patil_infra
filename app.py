@@ -1835,7 +1835,7 @@ for ad in ads_list:
     )
 
 # ----------------------------------------------------
-# 📐 AutoCAD Start Screen (Recent Projects Launcher)
+# 🏗️ Project Start Portal (Recent Projects Launcher & Delete Option)
 # ----------------------------------------------------
 if "autocad_site_opened" not in st.session_state:
     st.session_state.autocad_site_opened = False
@@ -1867,10 +1867,10 @@ if not st.session_state.autocad_site_opened:
         """
         <div style="background: linear-gradient(135deg, #090d16 0%, #111827 50%, #1e293b 100%); border: 1.5px solid #3b82f6; border-radius: 16px; padding: 22px; margin-bottom: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.7);">
             <div style="display:flex; align-items:center; gap:12px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px; margin-bottom: 16px;">
-                <span style="font-size:32px;">📐</span>
+                <span style="font-size:32px;">🏗️</span>
                 <div>
-                    <h3 style="margin:0; color:#f8fafc; font-weight:900; letter-spacing:1px;">AUTOCAD START PORTAL • RECENT PROJECTS</h3>
-                    <p style="margin:2px 0 0 0; color:#94a3b8; font-size:12px;">Select an existing project drawing or initialize a new construction site</p>
+                    <h3 style="margin:0; color:#f8fafc; font-weight:900; letter-spacing:1px;">PROJECT START PORTAL • RECENT SITES</h3>
+                    <p style="margin:2px 0 0 0; color:#94a3b8; font-size:12px;">Select an existing project, manage database records, or initialize a new construction site</p>
                 </div>
             </div>
         </div>
@@ -1878,33 +1878,54 @@ if not st.session_state.autocad_site_opened:
         unsafe_allow_html=True,
     )
 
-    cad_col1, cad_col2 = st.columns([2, 1])
+    cad_col1, cad_col2 = st.columns([2.2, 1])
 
     with cad_col1:
-        st.markdown("##### 📁 Recent Projects & Drawings:")
+        st.markdown("##### 📁 Recent Projects & Sites:")
         for s_name in saved_user_sites:
-            s_box_col1, s_box_col2 = st.columns([3.5, 1.2])
+            s_box_col1, s_box_col2, s_box_col3 = st.columns([2.6, 1.1, 0.7])
             with s_box_col1:
                 st.markdown(
                     f"""
                     <div style="background: rgba(15, 23, 42, 0.9); border: 1px solid #334155; border-left: 4px solid #f59e0b; padding: 10px 14px; border-radius: 8px; margin-bottom: 6px;">
                         <b style="color:#f8fafc; font-size:14px;">🏗️ {s_name}</b><br>
-                        <small style="color:#64748b;">AutoCAD DWG / Site Database Profile</small>
+                        <small style="color:#64748b;">Active Project Database Profile</small>
                     </div>
                     """,
                     unsafe_allow_html=True,
                 )
             with s_box_col2:
                 st.markdown("<div style='margin-top:4px;'></div>", unsafe_allow_html=True)
-                if st.button("📂 Open Project", key=f"open_cad_site_{s_name}", use_container_width=True, type="primary"):
+                if st.button("📂 Open", key=f"open_cad_site_{s_name}", use_container_width=True, type="primary"):
                     st.session_state.current_site_name = s_name
                     st.session_state.autocad_site_opened = True
                     st.rerun()
+            with s_box_col3:
+                st.markdown("<div style='margin-top:4px;'></div>", unsafe_allow_html=True)
+                if st.button("🗑️", key=f"del_cad_site_{s_name}", help=f"Delete '{s_name}' and all its records", use_container_width=True):
+                    conn = get_db_connection()
+                    cursor = conn.cursor()
+                    cursor.execute("DELETE FROM site_milestone_payments WHERE user_key = ? AND site_name = ?", (current_user_name, s_name))
+                    cursor.execute("DELETE FROM site_progress WHERE user_key = ? AND site_name = ?", (current_user_name, s_name))
+                    cursor.execute("DELETE FROM site_attendance WHERE user_key = ? AND site_name = ?", (current_user_name, s_name))
+                    cursor.execute("DELETE FROM site_inventory WHERE user_key = ? AND site_name = ?", (current_user_name, s_name))
+                    cursor.execute("DELETE FROM pre_concreting_checklist WHERE user_key = ? AND site_name = ?", (current_user_name, s_name))
+                    cursor.execute("DELETE FROM project_tasks WHERE user_key = ? AND site_name = ?", (current_user_name, s_name))
+                    cursor.execute("DELETE FROM site_client_profiles WHERE user_key = ? AND site_name = ?", (current_user_name, s_name))
+                    cursor.execute("DELETE FROM history WHERE user_key = ? AND site_name = ?", (current_user_name, s_name))
+                    conn.commit()
+                    conn.close()
+
+                    if st.session_state.current_site_name == s_name:
+                        st.session_state.current_site_name = "Default Site"
+
+                    st.success(f"🗑️ '{s_name}' साईट यशस्वीरित्या डिलीट केली!")
+                    st.rerun()
 
     with cad_col2:
-        st.markdown("##### ➕ New Project Drawing:")
+        st.markdown("##### ➕ New Project Setup:")
         with st.form("cad_new_site_form"):
-            new_cad_site_name = st.text_input("New Site / Drawing Name:", placeholder="e.g. Omkar Heights Wing-B")
+            new_cad_site_name = st.text_input("New Site Name:", placeholder="e.g. Omkar Heights Wing-B")
             new_cad_city = st.text_input("Site Location / City:", value="Pune")
             btn_create_cad_site = st.form_submit_button("🚀 Create & Open", type="primary", use_container_width=True)
             if btn_create_cad_site:
@@ -1918,16 +1939,16 @@ if not st.session_state.autocad_site_opened:
                     st.warning("⚠️ Please enter a project name!")
 
     st.write("---")
-    st.info("💡 You can switch projects anytime from the top AutoCAD Ribbon.")
+    st.info("💡 You can switch projects anytime from the top Navigation Ribbon.")
     st.stop()
 
 # ----------------------------------------------------
-# 📐 AutoCAD Top Tool Ribbon Bar (Side-by-Side & Category Tabs)
+# 🏗️ Top Tool Navigation Ribbon Bar
 # ----------------------------------------------------
 st.markdown(
     """
     <div style="background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); border: 1px solid #334155; border-radius: 12px 12px 0 0; padding: 8px 14px; margin-bottom: 0px; border-bottom: 2px solid #f59e0b;">
-        <span style="font-size:11px; font-weight:800; color:#38bdf8; letter-spacing:1px;">📐 AUTOCAD WORKSPACE RIBBON • PATIL INFRATECH</span>
+        <span style="font-size:11px; font-weight:800; color:#38bdf8; letter-spacing:1px;">🏗️ WORKSPACE NAVIGATION RIBBON • PATIL INFRATECH</span>
     </div>
     """,
     unsafe_allow_html=True,
@@ -1935,7 +1956,7 @@ st.markdown(
 
 ribbon_c1, ribbon_c2, ribbon_c3, ribbon_c4, ribbon_c5, ribbon_c6 = st.columns(6)
 with ribbon_c1:
-    if st.button("🏠 Home / Start", use_container_width=True):
+    if st.button("🏠 Home / Sites", use_container_width=True):
         st.session_state.autocad_site_opened = False
         st.session_state.selected_module = None
         st.session_state.selected_site_sub_module = None
