@@ -688,7 +688,7 @@ def check_user_premium_status(username):
 is_curr_premium, _ = check_user_premium_status(current_user_name)
 
 # ==========================================
-# 📌 विभाग ८: BRANDED CONSTRUCTION THEME CSS
+# 📌 विभाग ८: BRANDED CONSTRUCTION THEME CSS (CAD WORKSPACE THEME)
 # ==========================================
 st.markdown(
     """
@@ -704,141 +704,196 @@ st.markdown(
     div[data-testid="stNumberInputStepUp"], div[data-testid="stNumberInputStepDown"] { display: none !important; }
 
     html, body, .stApp, [data-testid="stAppViewContainer"] {
-        background: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 50%, #020617 100%) !important;
-        color: #f8fafc !important;
-        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+        background: #0f1319 !important;
+        color: #e2e8f0 !important;
+        font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif !important;
     }
 
-    .brand-header {
-        background: linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #334155 100%);
-        border: 1px solid rgba(245, 158, 11, 0.4);
-        border-top: 4px solid #f59e0b;
-        padding: 24px 20px;
-        border-radius: 16px;
+    /* 🧱 CAD Title Bar & Quick Access */
+    .cad-top-title-bar {
+        background: #181d26;
+        border-bottom: 1px solid #232936;
+        padding: 5px 14px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-radius: 8px 8px 0 0;
+        margin-bottom: 0px;
+    }
+    .cad-app-icon {
+        background: #dc2626;
+        color: #ffffff;
+        font-weight: 900;
+        font-size: 15px;
+        padding: 2px 8px;
+        border-radius: 4px;
+        letter-spacing: 1px;
+        display: inline-block;
+        margin-right: 8px;
+        box-shadow: 0 0 8px rgba(220, 38, 38, 0.5);
+    }
+    .cad-qacc-btn {
+        color: #94a3b8;
+        font-size: 14px;
+        margin-right: 8px;
+        cursor: pointer;
+    }
+
+    /* 🎛️ CAD Ribbon Container */
+    .cad-ribbon-container {
+        background: #202632;
+        border-left: 1px solid #2d3545;
+        border-right: 1px solid #2d3545;
+        border-bottom: 2px solid #3b82f6;
+        padding: 10px 14px;
+        margin-bottom: 0px;
+    }
+    .cad-ribbon-group-title {
         text-align: center;
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6), 0 0 20px rgba(245, 158, 11, 0.15);
-        margin-bottom: 24px;
+        font-size: 10px;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        border-top: 1px solid #2d3545;
+        padding-top: 4px;
+        margin-top: 6px;
+        letter-spacing: 0.5px;
     }
 
+    /* 📑 CAD File / Drawing Tabs */
+    .cad-file-tabs {
+        background: #141820;
+        padding: 6px 12px 0px 12px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        border-bottom: 1px solid #2d3545;
+        margin-bottom: 14px;
+    }
+    .cad-tab-active {
+        background: #202632;
+        color: #38bdf8;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 6px 14px;
+        border-radius: 6px 6px 0 0;
+        border-top: 2px solid #38bdf8;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .cad-tab-inactive {
+        background: #181d26;
+        color: #94a3b8;
+        font-size: 12px;
+        font-weight: 600;
+        padding: 6px 14px;
+        border-radius: 6px 6px 0 0;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    /* Input Fields & Buttons */
     div[data-baseweb="input"],
     div[data-baseweb="base-input"],
     div[data-testid="stNumberInputContainer"],
     div[data-testid="stTextInput"] {
-        background-color: #0f172a !important;
+        background-color: #141820 !important;
         color: #ffffff !important;
     }
 
     input, select, textarea {
-        background-color: #0f172a !important;
+        background-color: #141820 !important;
         color: #ffffff !important;
-        border: 1px solid #334155 !important;
-        border-radius: 10px !important;
+        border: 1px solid #2d3545 !important;
+        border-radius: 6px !important;
         font-weight: 500 !important;
     }
     input:focus, textarea:focus {
-        border-color: #f59e0b !important;
-        box-shadow: 0 0 10px rgba(245, 158, 11, 0.3) !important;
+        border-color: #38bdf8 !important;
+        box-shadow: 0 0 8px rgba(56, 189, 248, 0.3) !important;
     }
 
     div.stButton > button[kind="primary"] {
-        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
-        color: #000000 !important;
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+        color: #ffffff !important;
         font-weight: 800 !important;
-        border-radius: 10px !important;
-        border: none !important;
-        padding: 12px 24px !important;
-        box-shadow: 0 4px 15px rgba(245, 158, 11, 0.35) !important;
+        border-radius: 6px !important;
+        border: 1px solid #3b82f6 !important;
+        padding: 10px 20px !important;
+        box-shadow: 0 4px 15px rgba(37, 99, 235, 0.35) !important;
         text-transform: uppercase;
         letter-spacing: 0.5px;
         transition: all 0.2s ease-in-out;
     }
     div.stButton > button[kind="primary"]:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(245, 158, 11, 0.5) !important;
-        background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%) !important;
+        box-shadow: 0 6px 20px rgba(56, 189, 248, 0.5) !important;
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
     }
 
     div.stButton > button {
-        background: #1e293b !important;
+        background: #181d26 !important;
         color: #f8fafc !important;
-        border: 1px solid #334155 !important;
-        border-radius: 10px !important;
+        border: 1px solid #2d3545 !important;
+        border-radius: 6px !important;
         font-weight: 600 !important;
         transition: all 0.2s ease;
     }
     div.stButton > button:hover {
-        border-color: #f59e0b !important;
-        color: #f59e0b !important;
+        border-color: #38bdf8 !important;
+        color: #38bdf8 !important;
+        background: #202632 !important;
     }
 
     .module-card {
-        background: rgba(30, 41, 59, 0.7);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 16px;
+        background: #181d26;
+        border: 1px solid #2d3545;
+        border-radius: 12px;
         padding: 22px 16px;
         text-align: center;
-        backdrop-filter: blur(8px);
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
     }
     .module-card:hover {
-        border-color: #f59e0b;
+        border-color: #38bdf8;
         transform: translateY(-3px);
-        box-shadow: 0 8px 25px rgba(245, 158, 11, 0.2);
+        box-shadow: 0 8px 25px rgba(56, 189, 248, 0.2);
     }
 
     .gold-vip-badge {
         background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);
         color: #000000 !important;
-        padding: 6px 16px;
-        border-radius: 20px;
+        padding: 4px 12px;
+        border-radius: 14px;
         font-weight: 800;
-        font-size: 13px;
+        font-size: 12px;
         display: inline-block;
-        box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
     }
     .free-user-badge {
-        background: #1e293b;
+        background: #141820;
         color: #38bdf8 !important;
-        padding: 6px 16px;
-        border-radius: 20px;
+        padding: 4px 12px;
+        border-radius: 14px;
         font-weight: 700;
-        font-size: 13px;
+        font-size: 12px;
         border: 1px solid #0284c7;
         display: inline-block;
     }
 
     .galaxy-loader {
         margin: 20px auto;
-        width: 80px;
-        height: 80px;
+        width: 70px;
+        height: 70px;
         border-radius: 50%;
         border: 4px solid transparent;
-        border-top-color: #f59e0b;
-        border-bottom-color: #00f2fe;
+        border-top-color: #38bdf8;
+        border-bottom-color: #f59e0b;
         animation: spin-galaxy 1.5s linear infinite;
-        box-shadow: 0 0 30px rgba(245, 158, 11, 0.5);
     }
     @keyframes spin-galaxy {
-        0% { transform: rotate(0deg) scale(1); }
-        50% { transform: rotate(180deg) scale(1.1); }
-        100% { transform: rotate(360deg) scale(1); }
-    }
-
-    /* AutoCAD Portal & Workspace Ribbon Custom Elements */
-    .autocad-dwg-card {
-        background: rgba(15, 23, 42, 0.85);
-        border: 1px solid #334155;
-        border-left: 4px solid #38bdf8;
-        border-radius: 8px;
-        padding: 10px 14px;
-        margin-bottom: 8px;
-        transition: all 0.2s ease;
-    }
-    .autocad-dwg-card:hover {
-        border-color: #38bdf8;
-        background: rgba(30, 41, 59, 0.95);
-        transform: translateX(4px);
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
     }
     </style>
     """,
@@ -1808,7 +1863,7 @@ if st.session_state.get("is_client_view", False):
     st.stop()
                     
 # ==========================================
-# 📌 विभाग १३: मुख्य युझर डॅशबोर्ड (Top Header, Ads, Notifications, Weather & Site Switcher)
+# 📌 विभाग १३: मुख्य युझर डॅशबोर्ड (CAD Workspace, Title Bar, Ribbon & Weather)
 # ==========================================
 current_user_name = st.session_state.app_user_name
 is_user_premium, status_text_str = check_user_premium_status(current_user_name)
@@ -1824,18 +1879,137 @@ conn.close()
 for ad in ads_list:
     st.markdown(
         f"""
-        <div style="background: #111827; border: 1px solid rgba(0, 242, 254, 0.3); padding: 8px 12px; border-radius: 12px; text-align: center; margin-bottom: 18px;">
+        <div style="background: #111827; border: 1px solid rgba(0, 242, 254, 0.3); padding: 8px 12px; border-radius: 8px; text-align: center; margin-bottom: 12px;">
             <span style="font-size: 9px; color: #38bdf8; font-weight: bold;">📢 SPONSOR AD</span><br>
             <b style="color: #fff; font-size: 13px;">{ad.get('title')}</b> — <span style="color: #cbd5e1; font-size: 11px;">{ad.get('desc')}</span>
-            {"<img src='" + ad.get('media_url') + "' style='max-height:50px; border-radius:6px; margin-top:3px;'/>" if ad.get('media_type') == 'Photo (PNG/JPG)' and ad.get('media_url') else ""}
+            {"<img src='" + ad.get('media_url') + "' style='max-height:45px; border-radius:4px; margin-top:3px;'/>" if ad.get('media_type') == 'Photo (PNG/JPG)' and ad.get('media_url') else ""}
             <a href="{ad.get('link')}" target="_blank" style="color: #f59e0b; font-weight: bold; text-decoration: underline; font-size: 11px; margin-left: 6px;">[Visit]</a>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
+if "site_location_city" not in st.session_state:
+    st.session_state.site_location_city = "Pune"
+
+site_weather = get_site_weather_forecast(st.session_state.site_location_city)
+curr_dwg_name = f"{st.session_state.current_site_name}.dwg".replace(" ", "_")
+
 # ----------------------------------------------------
-# 🏗️ Project Start Portal (Recent Projects Launcher & Delete Option)
+# 🖥️ CAD Suite Top Title Bar & Window Header
+# ----------------------------------------------------
+st.markdown(
+    f"""
+    <div class="cad-top-title-bar">
+        <div style="display:flex; align-items:center;">
+            <span class="cad-app-icon">P</span>
+            <span class="cad-qacc-btn" title="New Project">📄</span>
+            <span class="cad-qacc-btn" title="Open Drawing">📂</span>
+            <span class="cad-qacc-btn" title="Save">💾</span>
+            <span class="cad-qacc-btn" title="Print/Plot">🖨️</span>
+            <span class="cad-qacc-btn" title="Share WhatsApp">📱</span>
+            <span style="color:#64748b; font-size:12px; margin-left:10px;">|</span>
+            <span style="color:#cbd5e1; font-size:12px; font-weight:bold; margin-left:10px;">PATIL INFRATECH CIVIL SUITE 2027</span>
+            <span style="color:#94a3b8; font-size:11px; margin-left:6px;">- [{curr_dwg_name}]</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:12px;">
+            <div style="background:#10141d; border:1px solid #2d3545; padding:3px 10px; border-radius:4px; font-size:11px; color:#94a3b8;">
+                🔍 <span style="color:#64748b;">Type a command or keyword...</span>
+            </div>
+            <span style="font-size:12px; color:#38bdf8; font-weight:bold;">👤 {current_user_name}</span>
+            <span style="color:#64748b; font-size:11px;">{"(👑 VIP)" if is_user_premium else "(🆓 Free)"}</span>
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+# ----------------------------------------------------
+# 📐 CAD Workspace Ribbon Bar
+# ----------------------------------------------------
+with st.container():
+    st.markdown('<div class="cad-ribbon-container">', unsafe_allow_html=True)
+    
+    rc1, rc2, rc3, rc4, rc5, rc6 = st.columns([1.2, 1.2, 1.2, 1.2, 1.2, 1.8])
+    
+    with rc1:
+        st.caption("📂 Project")
+        if st.button("🏠 Start / Sites", use_container_width=True, key="cad_rb_start"):
+            st.session_state.autocad_site_opened = False
+            st.session_state.selected_module = None
+            st.session_state.selected_site_sub_module = None
+            st.session_state.selected_estimator_sub_module = None
+            st.rerun()
+        st.markdown('<div class="cad-ribbon-group-title">Home</div>', unsafe_allow_html=True)
+
+    with rc2:
+        st.caption("👷 Field Ops")
+        if st.button("👷 Site Manager", use_container_width=True, key="cad_rb_sm"):
+            st.session_state.selected_module = "Site Manager"
+            st.session_state.selected_site_sub_module = None
+            st.rerun()
+        st.markdown('<div class="cad-ribbon-group-title">Site Operations</div>', unsafe_allow_html=True)
+
+    with rc3:
+        st.caption("📐 Quantity / QS")
+        if st.button("📐 Estimator", use_container_width=True, key="cad_rb_est"):
+            st.session_state.selected_module = "Estimator Tools"
+            st.session_state.selected_estimator_sub_module = None
+            st.rerun()
+        st.markdown('<div class="cad-ribbon-group-title">Analysis</div>', unsafe_allow_html=True)
+
+    with rc4:
+        st.caption("🏗️ Structure")
+        if st.button("🏗️ BBS Schedule", use_container_width=True, key="cad_rb_bbs"):
+            st.session_state.selected_module = "Estimator Tools"
+            st.session_state.selected_estimator_sub_module = "BBS"
+            st.rerun()
+        st.markdown('<div class="cad-ribbon-group-title">Reinforcement</div>', unsafe_allow_html=True)
+
+    with rc5:
+        st.caption("🤝 Finance")
+        if st.button("🛡️ NeevPay", use_container_width=True, key="cad_rb_neev"):
+            st.session_state.selected_module = "NeevPay"
+            st.rerun()
+        st.markdown('<div class="cad-ribbon-group-title">Escrow Billing</div>', unsafe_allow_html=True)
+
+    with rc6:
+        st.caption("📍 Weather & Location")
+        w_temp = site_weather['temp'] if site_weather else '--'
+        w_rain = site_weather['rain_prob'] if site_weather else 0
+        w_city = site_weather['city'] if site_weather else st.session_state.site_location_city
+        st.markdown(
+            f"""
+            <div style="background:#141820; border:1px solid #2d3545; padding:4px 8px; border-radius:4px; font-size:11px; text-align:right;">
+                <b style="color:#38bdf8;">🌤️ {w_temp}°C</b> | <span style="color:#94a3b8;">{w_city}</span><br>
+                <span style="color:{'#ef4444' if w_rain >= 50 else '#10b981'}; font-weight:bold;">🌧️ Rain: {w_rain}%</span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.markdown('<div class="cad-ribbon-group-title">Environment</div>', unsafe_allow_html=True)
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# ----------------------------------------------------
+# 📑 CAD Drawing Tabs (Start / Current Site File Tab)
+# ----------------------------------------------------
+st.markdown(
+    f"""
+    <div class="cad-file-tabs">
+        <span class="{'cad-tab-active' if not st.session_state.get('autocad_site_opened') else 'cad-tab-inactive'}">
+            🏠 Start Screen
+        </span>
+        <span class="{'cad-tab-active' if st.session_state.get('autocad_site_opened') else 'cad-tab-inactive'}">
+            🏗️ {curr_dwg_name} ✕
+        </span>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+# ----------------------------------------------------
+# 📂 Project Start Screen Launcher (जर ड्रॉईंग ओपन नसेल तर)
 # ----------------------------------------------------
 if "autocad_site_opened" not in st.session_state:
     st.session_state.autocad_site_opened = False
@@ -1863,33 +2037,18 @@ elif st.session_state.current_site_name not in saved_user_sites:
     saved_user_sites.insert(0, st.session_state.current_site_name)
 
 if not st.session_state.autocad_site_opened:
-    st.markdown(
-        """
-        <div style="background: linear-gradient(135deg, #090d16 0%, #111827 50%, #1e293b 100%); border: 1.5px solid #3b82f6; border-radius: 16px; padding: 22px; margin-bottom: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.7);">
-            <div style="display:flex; align-items:center; gap:12px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px; margin-bottom: 16px;">
-                <span style="font-size:32px;">🏗️</span>
-                <div>
-                    <h3 style="margin:0; color:#f8fafc; font-weight:900; letter-spacing:1px;">PROJECT START PORTAL • RECENT SITES</h3>
-                    <p style="margin:2px 0 0 0; color:#94a3b8; font-size:12px;">Select an existing project, manage database records, or initialize a new construction site</p>
-                </div>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
     cad_col1, cad_col2 = st.columns([2.2, 1])
 
     with cad_col1:
-        st.markdown("##### 📁 Recent Projects & Sites:")
+        st.markdown("#### 📁 Recent Project Drawings & Databases")
         for s_name in saved_user_sites:
             s_box_col1, s_box_col2, s_box_col3 = st.columns([2.6, 1.1, 0.7])
             with s_box_col1:
                 st.markdown(
                     f"""
-                    <div style="background: rgba(15, 23, 42, 0.9); border: 1px solid #334155; border-left: 4px solid #f59e0b; padding: 10px 14px; border-radius: 8px; margin-bottom: 6px;">
+                    <div style="background: #181d26; border: 1px solid #2d3545; border-left: 4px solid #38bdf8; padding: 10px 14px; border-radius: 6px; margin-bottom: 6px;">
                         <b style="color:#f8fafc; font-size:14px;">🏗️ {s_name}</b><br>
-                        <small style="color:#64748b;">Active Project Database Profile</small>
+                        <small style="color:#64748b;">DWG / Site Data Profile • Last Active</small>
                     </div>
                     """,
                     unsafe_allow_html=True,
@@ -1919,15 +2078,15 @@ if not st.session_state.autocad_site_opened:
                     if st.session_state.current_site_name == s_name:
                         st.session_state.current_site_name = "Default Site"
 
-                    st.success(f"🗑️ '{s_name}' साईट यशस्वीरित्या डिलीट केली!")
+                    st.success(f"🗑️ '{s_name}' प्रोजेक्ट यशस्वीरित्या डिलीट केले!")
                     st.rerun()
 
     with cad_col2:
-        st.markdown("##### ➕ New Project Setup:")
+        st.markdown("#### ➕ New Project Setup")
         with st.form("cad_new_site_form"):
-            new_cad_site_name = st.text_input("New Site Name:", placeholder="e.g. Omkar Heights Wing-B")
-            new_cad_city = st.text_input("Site Location / City:", value="Pune")
-            btn_create_cad_site = st.form_submit_button("🚀 Create & Open", type="primary", use_container_width=True)
+            new_cad_site_name = st.text_input("Project Name:", placeholder="e.g. Omkar Heights Wing-B")
+            new_cad_city = st.text_input("Location / City:", value="Pune")
+            btn_create_cad_site = st.form_submit_button("🚀 Create & Open Drawing", type="primary", use_container_width=True)
             if btn_create_cad_site:
                 if new_cad_site_name.strip():
                     st.session_state.current_site_name = new_cad_site_name.strip()
@@ -1936,146 +2095,64 @@ if not st.session_state.autocad_site_opened:
                     st.success("✅ New Project Initialized!")
                     st.rerun()
                 else:
-                    st.warning("⚠️ Please enter a project name!")
+                    st.warning("⚠️ कृपया प्रोजेक्टचे नाव टाका!")
 
     st.write("---")
-    st.info("💡 You can switch projects anytime from the top Navigation Ribbon.")
+    st.info("💡 टीप: वर दिलेल्या रिबनमधील बटणे वापरून तुम्ही थेट कामाचे मॉड्यूल उघडू शकता.")
     st.stop()
 
 # ----------------------------------------------------
-# 🏗️ Top Tool Navigation Ribbon Bar
+# ⚙️ Active Project Properties & Quick Edit
 # ----------------------------------------------------
-st.markdown(
-    """
-    <div style="background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); border: 1px solid #334155; border-radius: 12px 12px 0 0; padding: 8px 14px; margin-bottom: 0px; border-bottom: 2px solid #f59e0b;">
-        <span style="font-size:11px; font-weight:800; color:#38bdf8; letter-spacing:1px;">🏗️ WORKSPACE NAVIGATION RIBBON • PATIL INFRATECH</span>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+sw_col1, sw_col2, sw_col3 = st.columns([2, 1, 1])
+with sw_col1:
+    with st.popover("✏️ Edit Project Name"):
+        new_site_input = st.text_input(
+            "Enter Project Name:", value=st.session_state.current_site_name
+        )
+        if st.button("💾 Save Project Name", key="btn_save_site_name", type="primary"):
+            if new_site_input.strip():
+                st.session_state.current_site_name = new_site_input.strip()
+                st.success("✅ Project name updated!")
+                st.rerun()
 
-ribbon_c1, ribbon_c2, ribbon_c3, ribbon_c4, ribbon_c5, ribbon_c6 = st.columns(6)
-with ribbon_c1:
-    if st.button("🏠 Home / Sites", use_container_width=True):
+with sw_col2:
+    with st.popover("📍 Set City Location"):
+        new_city_input = st.text_input(
+            "Enter City (e.g. Pune, Mumbai):", 
+            value=st.session_state.site_location_city
+        )
+        if st.button("🌦️ Update Weather", key="btn_save_weather_city", type="primary"):
+            if new_city_input.strip():
+                st.session_state.site_location_city = new_city_input.strip()
+                st.success("✅ Weather location updated!")
+                st.rerun()
+
+with sw_col3:
+    if st.button("🔄 Logout"):
+        st.session_state.app_user_name = None
+        st.session_state.otp_verified = False
         st.session_state.autocad_site_opened = False
+        if "saved_user" in st.query_params:
+            del st.query_params["saved_user"]
+        st.session_state.current_comment = "काही नाही"
         st.session_state.selected_module = None
         st.session_state.selected_site_sub_module = None
         st.session_state.selected_estimator_sub_module = None
-        st.rerun()
-with ribbon_c2:
-    if st.button("👷 Site Manager", use_container_width=True):
-        st.session_state.selected_module = "Site Manager"
-        st.session_state.selected_site_sub_module = None
-        st.rerun()
-with ribbon_c3:
-    if st.button("📐 Estimator Tools", use_container_width=True):
-        st.session_state.selected_module = "Estimator Tools"
-        st.session_state.selected_estimator_sub_module = None
-        st.rerun()
-with ribbon_c4:
-    if st.button("🤝 NeevPay Escrow", use_container_width=True):
-        st.session_state.selected_module = "NeevPay"
-        st.rerun()
-with ribbon_c5:
-    if st.button("📊 Rate Analysis", use_container_width=True):
-        st.session_state.selected_module = "Estimator Tools"
-        st.session_state.selected_estimator_sub_module = "Rate Analysis"
-        st.rerun()
-with ribbon_c6:
-    if st.button("🏗️ BBS Schedule", use_container_width=True):
-        st.session_state.selected_module = "Estimator Tools"
-        st.session_state.selected_estimator_sub_module = "BBS"
+
+        st.markdown(
+            """
+            <script>
+                localStorage.removeItem("patil_app_user");
+            </script>
+            """,
+            unsafe_allow_html=True,
+        )
         st.rerun()
 
-st.write(" ")
-
-col_u, col_lo = st.columns([3.5, 1.5])
-if is_user_premium:
-    col_u.markdown(
-        f"<span class='gold-vip-badge'>👑 VIP MEMBER: {current_user_name.upper()} ({status_text_str})</span>",
-        unsafe_allow_html=True,
-    )
-else:
-    col_u.markdown(
-        f"<span class='free-user-badge'>🆓 FREE USER: {current_user_name.upper()}</span>",
-        unsafe_allow_html=True,
-    )
-
-# १३.१ ॲक्टिव्ह साईट सिलेक्टर बार आणि LIVE WEATHER & RAIN FORECAST (Side-by-Side in English)
-if "site_location_city" not in st.session_state:
-    st.session_state.site_location_city = "Pune"
-
-site_weather = get_site_weather_forecast(st.session_state.site_location_city)
-
-with st.container():
-    rain_val = site_weather['rain_prob'] if site_weather else 0
-    rain_color = "#ef4444" if rain_val >= 50 else ("#f59e0b" if rain_val >= 20 else "#10b981")
-    rain_icon = "🌧️" if rain_val >= 50 else ("🌦️" if rain_val >= 20 else "☀️")
-
-    st.markdown(
-        f"""
-        <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-left: 5px solid #f59e0b; padding: 14px 20px; border-radius: 14px; margin-bottom: 15px; border: 1px solid rgba(245,158,11,0.3); box-shadow: 0 4px 15px rgba(0,0,0,0.4);">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-                <div style="flex: 1; min-width: 250px;">
-                    <span style="color:#94a3b8; font-size:11px; font-weight:bold; text-transform:uppercase; letter-spacing: 0.5px;">📍 Active Construction Project:</span><br>
-                    <b style="color:#f59e0b; font-size:18px;">🏗️ {st.session_state.current_site_name}</b>
-                    <span style="color:#64748b; font-size:13px; margin-left:6px;">({st.session_state.site_location_city})</span>
-                </div>
-                <div style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(56, 189, 248, 0.3); padding: 8px 16px; border-radius: 10px; text-align: right; min-width: 220px;">
-                    <span style="color:#38bdf8; font-size:12px; font-weight:700;">{rain_icon} {site_weather['temp'] if site_weather else '--'}°C | {site_weather['city'] if site_weather else st.session_state.site_location_city}</span><br>
-                    <span style="font-size:13px; font-weight:800; color:{rain_color};">🌧️ Rain Probability: {rain_val}%</span>
-                    <small style="color:#94a3b8; font-size:10px; margin-left:4px;">(Max: {site_weather['max_rain_today'] if site_weather else '--'}%)</small>
-                </div>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    sw_col1, sw_col2 = st.columns(2)
-    with sw_col1:
-        with st.popover("✏️ Edit Site Name"):
-            new_site_input = st.text_input(
-                "Enter Project / Site Name:", value=st.session_state.current_site_name
-            )
-            if st.button("💾 Save Site Name", key="btn_save_site_name", type="primary"):
-                if new_site_input.strip():
-                    st.session_state.current_site_name = new_site_input.strip()
-                    st.success("✅ Site name updated successfully!")
-                    st.rerun()
-    with sw_col2:
-        with st.popover("📍 Set Weather Location"):
-            new_city_input = st.text_input(
-                "Enter City / Location (e.g. Pune, Mumbai, Nashik):", 
-                value=st.session_state.site_location_city
-            )
-            if st.button("🌦️ Update Weather", key="btn_save_weather_city", type="primary"):
-                if new_city_input.strip():
-                    st.session_state.site_location_city = new_city_input.strip()
-                    st.success("✅ Weather location updated!")
-                    st.rerun()
-
-if col_lo.button("🔄 Logout"):
-    st.session_state.app_user_name = None
-    st.session_state.otp_verified = False
-    st.session_state.autocad_site_opened = False
-    if "saved_user" in st.query_params:
-        del st.query_params["saved_user"]
-    st.session_state.current_comment = "काही नाही"
-    st.session_state.selected_module = None
-    st.session_state.selected_site_sub_module = None
-    st.session_state.selected_estimator_sub_module = None
-
-    st.markdown(
-        """
-        <script>
-            localStorage.removeItem("patil_app_user");
-        </script>
-        """,
-        unsafe_allow_html=True,
-    )
-    st.rerun()
-
+# ----------------------------------------------------
+# 🔔 Notifications & Admin Inbox
+# ----------------------------------------------------
 current_user_data = get_user_data(current_user_name) or {}
 disp_name_inbox = current_user_name if current_user_name else ""
 
@@ -2083,15 +2160,15 @@ if current_user_data.get("unread_notification") == 1:
     admin_msg = current_user_data.get("admin_message", "")
     st.markdown(
         f"""
-        <div style="background: linear-gradient(135deg, #047857 0%, #065f46 100%); padding: 18px 22px; border-radius: 18px; margin-bottom: 18px; border: 1px solid #34d399; box-shadow: 0 6px 22px rgba(52, 211, 153, 0.35);">
-            <h4 style="color: #6ee7b7; margin: 0 0 6px 0;">🔔 नवीन नोटिफिकेशन</h4>
-            <p style="color: #ffffff; font-size: 16px; margin: 0;">{admin_msg}</p>
+        <div style="background: linear-gradient(135deg, #064e3b 0%, #0f172a 100%); padding: 14px 18px; border-radius: 8px; margin: 12px 0; border: 1px solid #10b981;">
+            <h5 style="color: #34d399; margin: 0 0 4px 0;">🔔 नवीन नोटिफिकेशन</h5>
+            <p style="color: #ffffff; font-size: 15px; margin: 0;">{admin_msg}</p>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    if st.button("✅ Mark as Read & Clear (वाचले आहे)", type="primary"):
+    if st.button("✅ Mark as Read (वाचले आहे)", type="primary"):
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute(
@@ -2110,12 +2187,12 @@ else:
         "admin_message",
         f"{disp_name_inbox} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳",
     )
-    st.markdown("### 📥 Admin Message / Code Inbox")
-    st.info(f"📢 **Admin:** {admin_msg}")
+    with st.expander("📥 System Message & Notification Inbox"):
+        st.info(f"📢 **Admin:** {admin_msg}")
 
-st.write("---")
-
-# प्रिमियम अनलॉक बॉक्स (फ्री युझर्ससाठी)
+# ----------------------------------------------------
+# 🔑 प्रिमियम अनलॉक बॉक्स (फ्री युझर्ससाठी)
+# ----------------------------------------------------
 if not is_user_premium:
     with st.expander("🔑 प्रिमियम अनलॉक करा (Enter Premium Code)"):
         input_code = st.text_input(
@@ -2229,6 +2306,8 @@ if not is_user_premium:
                 conn.commit()
                 conn.close()
                 st.success("✅ ॲडमीनला रिक्वेस्ट पाठवली!")
+
+st.write("---")
 # ==========================================
 # 📌 विभाग १४: CIVIL AI ASSISTANT (Gemini SDK & Fallback)
 # ==========================================
