@@ -52,6 +52,7 @@ try:
     HAS_GENAI = True
 except ImportError:
     HAS_GENAI = False
+    
 # ==========================================
 # 📌 विभाग २: STREAMLIT पेज कॉन्फिगरेशन
 # ==========================================
@@ -104,7 +105,7 @@ def trigger_push_state():
     )
 
 # ==========================================
-# 📌 विभाग ४: युटिलिटी आणि सपोर्ट फंक्शन्स (वेळ, ईमेल, पासवर्ड, SMTP Mailer)
+# 📌 विभाग ४: युटिलिटी आणि सपोर्ट फंक्शन्स (वेळ, ईमेल, पासवर्ड, SMTP Mailer & Weather)
 # ==========================================
 def get_ist_time():
     """भारतीय प्रमाणवेळ (IST - Indian Standard Time) मिळवण्याचे फंक्शन"""
@@ -113,44 +114,6 @@ def get_ist_time():
     return ist_now
 
 
-def get_site_weather_forecast(city_name="Pune"):
-    """ओपन-मेटिओ API द्वारे शहराचा रिअल-टाइम वेदर आणि पावसाचा अंदाज (%) आणणे"""
-    try:
-        geo_url = f"https://geocoding-api.open-meteo.com/v1/search?name={urllib.parse.quote(city_name)}&count=1&language=en&format=json"
-        geo_res = requests.get(geo_url, timeout=5).json()
-        if not geo_res.get("results"):
-            return None
-        
-        loc = geo_res["results"][0]
-        lat, lon = loc["latitude"], loc["longitude"]
-        resolved_name = loc.get("name", city_name)
-        admin1 = loc.get("admin1", "")
-
-        weather_url = (
-            f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}"
-            "&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m"
-            "&hourly=precipitation_probability&forecast_days=1&timezone=auto"
-        )
-        w_res = requests.get(weather_url, timeout=5).json()
-        curr = w_res.get("current", {})
-        hourly = w_res.get("hourly", {})
-        
-        rain_probs = hourly.get("precipitation_probability", [0])
-        curr_hour = datetime.datetime.now().hour
-        rain_prob = rain_probs[curr_hour] if curr_hour < len(rain_probs) else rain_probs[0]
-        max_rain_today = max(rain_probs) if rain_probs else rain_prob
-
-        return {
-            "city": f"{resolved_name}, {admin1}" if admin1 else resolved_name,
-            "temp": curr.get("temperature_2m", "--"),
-            "humidity": curr.get("relative_humidity_2m", "--"),
-            "wind": curr.get("wind_speed_10m", "--"),
-            "rain_prob": rain_prob,
-            "max_rain_today": max_rain_today
-        }
-    except Exception:
-        return None
-        
 def generate_random_code():
     """प्रिमियम ॲक्टिव्हेशन कोड जनरेट करणे"""
     return "PATIL-" + "".join(
@@ -245,6 +208,45 @@ def is_strong_password(password):
         return False, "पासवर्डमध्ये कमीत कमी एक विशेष चिन्ह (!@#$%^&*) असावे."
     return True, "Strong"
 
+
+def get_site_weather_forecast(city_name="Pune"):
+    """ओपन-मेटिओ API द्वारे शहराचा रिअल-टाइम वेदर आणि पावसाचा अंदाज (%) मिळवणे"""
+    try:
+        geo_url = f"https://geocoding-api.open-meteo.com/v1/search?name={urllib.parse.quote(city_name)}&count=1&language=en&format=json"
+        geo_res = requests.get(geo_url, timeout=5).json()
+        if not geo_res.get("results"):
+            return None
+        
+        loc = geo_res["results"][0]
+        lat, lon = loc["latitude"], loc["longitude"]
+        resolved_name = loc.get("name", city_name)
+        admin1 = loc.get("admin1", "")
+
+        weather_url = (
+            f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}"
+            "&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m"
+            "&hourly=precipitation_probability&forecast_days=1&timezone=auto"
+        )
+        w_res = requests.get(weather_url, timeout=5).json()
+        curr = w_res.get("current", {})
+        hourly = w_res.get("hourly", {})
+        
+        rain_probs = hourly.get("precipitation_probability", [0])
+        curr_hour = datetime.datetime.now().hour
+        rain_prob = rain_probs[curr_hour] if curr_hour < len(rain_probs) else rain_probs[0]
+        max_rain_today = max(rain_probs) if rain_probs else rain_prob
+
+        return {
+            "city": f"{resolved_name}, {admin1}" if admin1 else resolved_name,
+            "temp": curr.get("temperature_2m", "--"),
+            "humidity": curr.get("relative_humidity_2m", "--"),
+            "wind": curr.get("wind_speed_10m", "--"),
+            "rain_prob": rain_prob,
+            "max_rain_today": max_rain_today
+        }
+    except Exception:
+        return None
+        
 # ==========================================
 # 📌 विभाग ५: SQLITE डेटाबेस मॅनेजमेंट आणि मॉडेल्स
 # ==========================================
@@ -1434,14 +1436,15 @@ if st.session_state.is_admin_logged:
     st.stop()
 
 # ==========================================
-# 📌 विभाग १२: युझर ऑथेंटिकेशन (Login, Register & Email OTP)
+# 📌 विभाग १२: युझर ऑथेंटिकेशन (Login, Register, OTP & Client View)
 # ==========================================
-if st.session_state.app_user_name is None:
-    st.markdown("### 🏗️ PATIL INFRATECH - SECURE LOGIN")
+if st.session_state.app_user_name is None and not st.session_state.get("is_client_view", False):
+    st.markdown("### 🏗️ PATIL INFRATECH - SECURE ACCESS")
 
-    login_tab, otp_tab = st.tabs([
+    login_tab, otp_tab, client_tab = st.tabs([
         "🔑 Registered User Login",
         "📧 Email OTP Register / Verification",
+        "🔍 Client / Owner Live Site View (घरमालक व्ह्यू)"
     ])
 
     # १२.१ Registered User Login
@@ -1465,6 +1468,7 @@ if st.session_state.app_user_name is None:
                     if row:
                         found_user = row["user_key"]
                         st.session_state.app_user_name = found_user
+                        st.session_state.is_client_view = False
                         st.query_params["saved_user"] = found_user
 
                         st.markdown(
@@ -1476,7 +1480,7 @@ if st.session_state.app_user_name is None:
                             unsafe_allow_html=True,
                         )
 
-                        st.success("🎉 यशस्वीरित्या लॉगिन झाले! (तुमचे सेशन या डिव्हाइसवर सेव्ह केले आहे)")
+                        st.success("🎉 यशस्वीरित्या लॉगिन झाले!")
                         st.rerun()
                     else:
                         st.error("❌ चुकीचा ईमेल/Username किंवा पासवर्ड! कृपया तपासा.")
@@ -1524,10 +1528,7 @@ if st.session_state.app_user_name is None:
         if st.session_state.otp_verified and st.session_state.pending_email:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute(
-                "SELECT * FROM users WHERE email = ?",
-                (st.session_state.pending_email,),
-            )
+            cursor.execute("SELECT * FROM users WHERE email = ?", (st.session_state.pending_email,))
             row = cursor.fetchone()
             conn.close()
 
@@ -1535,6 +1536,7 @@ if st.session_state.app_user_name is None:
                 user_data = dict(row)
                 found_user = user_data["user_key"]
                 st.session_state.app_user_name = found_user
+                st.session_state.is_client_view = False
                 st.query_params["saved_user"] = found_user
 
                 st.markdown(
@@ -1622,6 +1624,7 @@ if st.session_state.app_user_name is None:
                                         send_email_message(st.session_state.pending_email, subject, body)
 
                                         st.session_state.app_user_name = custom_username
+                                        st.session_state.is_client_view = False
                                         st.query_params["saved_user"] = custom_username
 
                                         st.markdown(
@@ -1639,9 +1642,38 @@ if st.session_state.app_user_name is None:
                         else:
                             st.warning("⚠️ कृपया सर्व माहिती भरा!")
 
+    # १२.३ 🔍 Client Read-Only Live Portal View (घरमालकांसाठी)
+    with client_tab:
+        st.markdown("#### 🔍 घरमालक / क्लायंट लाईव्ह पोर्टल (Read-Only View)")
+        st.caption("घरमालक कोणत्याही पासवर्डशिवाय आपल्या साईटचे नाव निवडून थेट रिअल-टाइम प्रोग्रेस, हजेरी व बिलाचा हिशोब पाहू शकतात.")
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT DISTINCT site_name FROM site_milestone_payments UNION SELECT DISTINCT site_name FROM site_progress")
+        available_sites = [r["site_name"] for r in cursor.fetchall() if r["site_name"]]
+        conn.close()
+
+        with st.form("client_read_only_form"):
+            if available_sites:
+                c_site_select = st.selectbox("तुमच्या साईटचे नाव निवडा:", available_sites)
+            else:
+                c_site_select = st.text_input("तुमच्या साईटचे नाव टाका (उदा. पाटील रेसिडेन्सी):")
+            
+            c_verify_contact = st.text_input("तुमचा ईमेल किंवा फोन (नोंदणीसाठी / पडताळणी):").strip()
+            submit_client_view = st.form_submit_button("🔍 साईट प्रोग्रेस व बिल पाहा (View Live Status)", type="primary")
+
+            if submit_client_view:
+                if c_site_select:
+                    st.session_state.is_client_view = True
+                    st.session_state.client_view_site = c_site_select
+                    st.session_state.client_view_contact = c_verify_contact
+                    st.rerun()
+                else:
+                    st.warning("⚠️ कृपया साईटचे नाव टाका किंवा निवडा!")
+
     st.write("---")
 
-    # १२.३ ॲडमीन लॉगिन एक्सपँडर
+    # १२.४ ॲडमीन लॉगिन एक्सपँडर
     with st.expander("🛡️ Admin Login Panel"):
         with st.form("admin_login_form"):
             admin_id = st.text_input("Admin ID:")
@@ -1667,7 +1699,12 @@ if st.session_state.app_user_name is None:
                     st.error("❌ चुकीचा Admin ID किंवा Password!")
 
     st.stop()
-    if st.session_state.get("is_client_view", False):
+
+
+# ==========================================================
+# 📌 विभाग १२.५: CLIENT LIVE READ-ONLY DASHBOARD RENDERER
+# ==========================================================
+if st.session_state.get("is_client_view", False):
     c_site = st.session_state.get("client_view_site", "Default Site")
     
     col_c_top, col_c_exit = st.columns([3.5, 1.5])
@@ -1748,9 +1785,9 @@ if st.session_state.app_user_name is None:
         st.info("ℹ️ सध्या कोणताही नवीन प्रोग्रेस रिपोर्ट उपलब्ध नाही.")
 
     st.stop()
-
+                    
 # ==========================================
-# 📌 विभाग १३: मुख्य युझर डॅशबोर्ड (Top Header, Ads, Notifications & Site Switcher)
+# 📌 विभाग १३: मुख्य युझर डॅशबोर्ड (Top Header, Ads, Notifications, Weather & Site Switcher)
 # ==========================================
 current_user_name = st.session_state.app_user_name
 is_user_premium, status_text_str = check_user_premium_status(current_user_name)
@@ -1788,32 +1825,7 @@ else:
         unsafe_allow_html=True,
     )
 
-# १३.१ ॲक्टिव्ह साईट सिलेक्टर बार (Active Site Switcher)
-with st.container():
-    st.markdown(
-        """
-        <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-left: 5px solid #f59e0b; padding: 12px 18px; border-radius: 12px; margin-bottom: 15px; border: 1px solid rgba(245,158,11,0.3);">
-            <span style="color:#94a3b8; font-size:11px; font-weight:bold;">📍 चालू प्रोजेक्ट / साईट:</span><br>
-            <b style="color:#f59e0b; font-size:17px;">🏗️ """
-        + str(st.session_state.current_site_name)
-        + """</b>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    with st.popover("✏️ साईटचे नाव बदला"):
-        new_site_input = st.text_input(
-            "नवीन साईटचे नाव टाका:", value=st.session_state.current_site_name
-        )
-        if st.button("💾 सेव्ह करा", key="btn_save_site_name", type="primary"):
-            if new_site_input.strip():
-                st.session_state.current_site_name = new_site_input.strip()
-                st.success("✅ साईट अपडेट झाली!")
-                st.rerun()
-                # ==========================================
-# 📌 विभाग १३.१: ॲक्टिव्ह साईट सिलेक्टर आणि LIVE WEATHER & RAIN FORECAST BAR
-# ==========================================
+# १३.१ ॲक्टिव्ह साईट सिलेक्टर बार आणि LIVE WEATHER & RAIN FORECAST
 if "site_location_city" not in st.session_state:
     st.session_state.site_location_city = "Pune"
 
@@ -1826,7 +1838,7 @@ with st.container():
 
     st.markdown(
         f"""
-        <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-left: 5px solid #f59e0b; padding: 14px 18px; border-radius: 14px; margin-bottom: 18px; border: 1px solid rgba(245,158,11,0.3); box-shadow: 0 4px 15px rgba(0,0,0,0.4);">
+        <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-left: 5px solid #f59e0b; padding: 14px 18px; border-radius: 14px; margin-bottom: 15px; border: 1px solid rgba(245,158,11,0.3); box-shadow: 0 4px 15px rgba(0,0,0,0.4);">
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                 <div>
                     <span style="color:#94a3b8; font-size:11px; font-weight:bold; text-transform:uppercase;">📍 चालू प्रोजेक्ट / साईट:</span><br>
@@ -1847,8 +1859,10 @@ with st.container():
     sw_col1, sw_col2 = st.columns(2)
     with sw_col1:
         with st.popover("✏️ साईटचे नाव बदला"):
-            new_site_input = st.text_input("नवीन साईटचे नाव टाका:", value=st.session_state.current_site_name)
-            if st.button("💾 साईट नाव सेव्ह करा", key="btn_save_site_name", type="primary"):
+            new_site_input = st.text_input(
+                "नवीन साईटचे नाव टाका:", value=st.session_state.current_site_name
+            )
+            if st.button("💾 सेव्ह करा", key="btn_save_site_name", type="primary"):
                 if new_site_input.strip():
                     st.session_state.current_site_name = new_site_input.strip()
                     st.success("✅ साईट अपडेट झाली!")
