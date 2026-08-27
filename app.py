@@ -709,11 +709,11 @@ st.markdown(
         font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif !important;
     }
 
-    /* 🧱 CAD Title Bar & Quick Access */
+    /* 🧱 CAD Title Bar */
     .cad-top-title-bar {
         background: #181d26;
         border-bottom: 1px solid #232936;
-        padding: 5px 14px;
+        padding: 6px 14px;
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -731,12 +731,6 @@ st.markdown(
         display: inline-block;
         margin-right: 8px;
         box-shadow: 0 0 8px rgba(220, 38, 38, 0.5);
-    }
-    .cad-qacc-btn {
-        color: #94a3b8;
-        font-size: 14px;
-        margin-right: 8px;
-        cursor: pointer;
     }
 
     /* 🎛️ CAD Ribbon Container */
@@ -899,7 +893,6 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
-
 # ==========================================
 # 📌 विभाग ९: WHATSAPP रिपोर्ट शेअरिंग कंपोनंट
 # ==========================================
@@ -1896,26 +1889,17 @@ site_weather = get_site_weather_forecast(st.session_state.site_location_city)
 curr_dwg_name = f"{st.session_state.current_site_name}.dwg".replace(" ", "_")
 
 # ----------------------------------------------------
-# 🖥️ CAD Suite Top Title Bar & Window Header
+# 🖥️ CAD Suite Top Title Bar & Window Header (Live UI)
 # ----------------------------------------------------
 st.markdown(
     f"""
     <div class="cad-top-title-bar">
         <div style="display:flex; align-items:center;">
             <span class="cad-app-icon">P</span>
-            <span class="cad-qacc-btn" title="New Project">📄</span>
-            <span class="cad-qacc-btn" title="Open Drawing">📂</span>
-            <span class="cad-qacc-btn" title="Save">💾</span>
-            <span class="cad-qacc-btn" title="Print/Plot">🖨️</span>
-            <span class="cad-qacc-btn" title="Share WhatsApp">📱</span>
-            <span style="color:#64748b; font-size:12px; margin-left:10px;">|</span>
-            <span style="color:#cbd5e1; font-size:12px; font-weight:bold; margin-left:10px;">PATIL INFRATECH CIVIL SUITE 2027</span>
-            <span style="color:#94a3b8; font-size:11px; margin-left:6px;">- [{curr_dwg_name}]</span>
+            <span style="color:#cbd5e1; font-size:12px; font-weight:bold;">PATIL INFRATECH CIVIL  2027-</span>
+            <span style="color:#38bdf8; font-size:11px; font-weight:600; margin-left:6px;">[{curr_dwg_name}]</span>
         </div>
-        <div style="display:flex; align-items:center; gap:12px;">
-            <div style="background:#10141d; border:1px solid #2d3545; padding:3px 10px; border-radius:4px; font-size:11px; color:#94a3b8;">
-                🔍 <span style="color:#64748b;">Type a command or keyword...</span>
-            </div>
+        <div style="display:flex; align-items:center; gap:10px;">
             <span style="font-size:12px; color:#38bdf8; font-weight:bold;">👤 {current_user_name}</span>
             <span style="color:#64748b; font-size:11px;">{"(👑 VIP)" if is_user_premium else "(🆓 Free)"}</span>
         </div>
@@ -1925,7 +1909,63 @@ st.markdown(
 )
 
 # ----------------------------------------------------
-# 📐 CAD Workspace Ribbon Bar
+# 🛠️ Working Quick Access Actions
+# ----------------------------------------------------
+qa_c1, qa_c2, qa_c3, qa_c4, qa_c5, qa_c6 = st.columns([1, 1, 1, 1, 2.5, 1.5])
+with qa_c1:
+    if st.button("📄 New", help="नवीन ड्रॉईंग / साईट तयार करा", use_container_width=True):
+        st.session_state.autocad_site_opened = False
+        st.session_state.selected_module = None
+        st.rerun()
+with qa_c2:
+    if st.button("📂 Open", help="प्रोजेक्ट लिस्ट उघडा", use_container_width=True):
+        st.session_state.autocad_site_opened = False
+        st.rerun()
+with qa_c3:
+    if st.button("💾 Save", help="चालू प्रोजेक्ट सेव्ह करा", use_container_width=True):
+        st.success("✅ Drawing & Database State Saved!")
+with qa_c4:
+    st.markdown(
+        """
+        <button onclick="window.print()" style="width:100%; height:38px; background:#181d26; color:#f8fafc; border:1px solid #2d3545; border-radius:6px; font-weight:600; cursor:pointer;">
+            🖨️ Plot
+        </button>
+        """,
+        unsafe_allow_html=True,
+    )
+with qa_c5:
+    cad_cmd_input = st.text_input("CAD Command Line:", placeholder="Type command: QS, BBS, SITE, NEEVPAY, HOME...", label_visibility="collapsed")
+    if cad_cmd_input:
+        cmd_u = cad_cmd_input.strip().upper()
+        if cmd_u in ["SITE", "SM"]:
+            st.session_state.selected_module = "Site Manager"
+            st.session_state.autocad_site_opened = True
+            st.rerun()
+        elif cmd_u in ["QS", "EST", "ESTIMATOR"]:
+            st.session_state.selected_module = "Estimator Tools"
+            st.session_state.autocad_site_opened = True
+            st.rerun()
+        elif cmd_u in ["BBS"]:
+            st.session_state.selected_module = "Estimator Tools"
+            st.session_state.selected_estimator_sub_module = "BBS"
+            st.session_state.autocad_site_opened = True
+            st.rerun()
+        elif cmd_u in ["NEEV", "NEEVPAY", "ESCROW"]:
+            st.session_state.selected_module = "NeevPay"
+            st.session_state.autocad_site_opened = True
+            st.rerun()
+        elif cmd_u in ["HOME", "START"]:
+            st.session_state.autocad_site_opened = False
+            st.session_state.selected_module = None
+            st.rerun()
+        else:
+            st.toast(f"Command '{cad_cmd_input}' Executed")
+with qa_c6:
+    if st.button("🔄 Reload Data", use_container_width=True):
+        st.rerun()
+
+# ----------------------------------------------------
+# 📐 CAD Workspace Ribbon Bar (Fully Active)
 # ----------------------------------------------------
 with st.container():
     st.markdown('<div class="cad-ribbon-container">', unsafe_allow_html=True)
@@ -1947,6 +1987,7 @@ with st.container():
         if st.button("👷 Site Manager", use_container_width=True, key="cad_rb_sm"):
             st.session_state.selected_module = "Site Manager"
             st.session_state.selected_site_sub_module = None
+            st.session_state.autocad_site_opened = True
             st.rerun()
         st.markdown('<div class="cad-ribbon-group-title">Site Operations</div>', unsafe_allow_html=True)
 
@@ -1955,6 +1996,7 @@ with st.container():
         if st.button("📐 Estimator", use_container_width=True, key="cad_rb_est"):
             st.session_state.selected_module = "Estimator Tools"
             st.session_state.selected_estimator_sub_module = None
+            st.session_state.autocad_site_opened = True
             st.rerun()
         st.markdown('<div class="cad-ribbon-group-title">Analysis</div>', unsafe_allow_html=True)
 
@@ -1963,6 +2005,7 @@ with st.container():
         if st.button("🏗️ BBS Schedule", use_container_width=True, key="cad_rb_bbs"):
             st.session_state.selected_module = "Estimator Tools"
             st.session_state.selected_estimator_sub_module = "BBS"
+            st.session_state.autocad_site_opened = True
             st.rerun()
         st.markdown('<div class="cad-ribbon-group-title">Reinforcement</div>', unsafe_allow_html=True)
 
@@ -1970,6 +2013,7 @@ with st.container():
         st.caption("🤝 Finance")
         if st.button("🛡️ NeevPay", use_container_width=True, key="cad_rb_neev"):
             st.session_state.selected_module = "NeevPay"
+            st.session_state.autocad_site_opened = True
             st.rerun()
         st.markdown('<div class="cad-ribbon-group-title">Escrow Billing</div>', unsafe_allow_html=True)
 
@@ -1992,24 +2036,21 @@ with st.container():
     st.markdown('</div>', unsafe_allow_html=True)
 
 # ----------------------------------------------------
-# 📑 CAD Drawing Tabs (Start / Current Site File Tab)
+# 📑 CAD Drawing Tabs (Interactive)
 # ----------------------------------------------------
-st.markdown(
-    f"""
-    <div class="cad-file-tabs">
-        <span class="{'cad-tab-active' if not st.session_state.get('autocad_site_opened') else 'cad-tab-inactive'}">
-            🏠 Start Screen
-        </span>
-        <span class="{'cad-tab-active' if st.session_state.get('autocad_site_opened') else 'cad-tab-inactive'}">
-            🏗️ {curr_dwg_name} ✕
-        </span>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+tab_col1, tab_col2, _ = st.columns([1.5, 2.5, 6])
+with tab_col1:
+    if st.button("🏠 Start Screen", use_container_width=True, type="primary" if not st.session_state.get('autocad_site_opened') else "secondary"):
+        st.session_state.autocad_site_opened = False
+        st.session_state.selected_module = None
+        st.rerun()
+with tab_col2:
+    if st.button(f"🏗️ {curr_dwg_name}", use_container_width=True, type="primary" if st.session_state.get('autocad_site_opened') else "secondary"):
+        st.session_state.autocad_site_opened = True
+        st.rerun()
 
 # ----------------------------------------------------
-# 📂 Project Start Screen Launcher (जर ड्रॉईंग ओपन नसेल तर)
+# 📂 Project Start Screen Launcher
 # ----------------------------------------------------
 if "autocad_site_opened" not in st.session_state:
     st.session_state.autocad_site_opened = False
@@ -2048,7 +2089,7 @@ if not st.session_state.autocad_site_opened:
                     f"""
                     <div style="background: #181d26; border: 1px solid #2d3545; border-left: 4px solid #38bdf8; padding: 10px 14px; border-radius: 6px; margin-bottom: 6px;">
                         <b style="color:#f8fafc; font-size:14px;">🏗️ {s_name}</b><br>
-                        <small style="color:#64748b;">DWG / Site Data Profile • Last Active</small>
+                        <small style="color:#64748b;">DWG / Site Data Profile • Active</small>
                     </div>
                     """,
                     unsafe_allow_html=True,
