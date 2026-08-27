@@ -620,6 +620,11 @@ for key, default in [
     ("admin_selected_user", None),
     ("current_site_name", "पाटील रेसिडेन्सी - साईट १"),
     ("all_sites_data", {"Default Site": {"milestones": [], "created_at": "26-08-2026"}}),
+    ("site_location_city", "Pune"),
+    ("autocad_site_opened", False),
+    ("is_client_view", False),
+    ("client_view_site", None),
+    ("client_view_contact", None),
 ]:
     if key not in st.session_state:
         st.session_state[key] = default
@@ -818,6 +823,22 @@ st.markdown(
         0% { transform: rotate(0deg) scale(1); }
         50% { transform: rotate(180deg) scale(1.1); }
         100% { transform: rotate(360deg) scale(1); }
+    }
+
+    /* AutoCAD Portal & Workspace Ribbon Custom Elements */
+    .autocad-dwg-card {
+        background: rgba(15, 23, 42, 0.85);
+        border: 1px solid #334155;
+        border-left: 4px solid #38bdf8;
+        border-radius: 8px;
+        padding: 10px 14px;
+        margin-bottom: 8px;
+        transition: all 0.2s ease;
+    }
+    .autocad-dwg-card:hover {
+        border-color: #38bdf8;
+        background: rgba(30, 41, 59, 0.95);
+        transform: translateX(4px);
     }
     </style>
     """,
@@ -1813,6 +1834,140 @@ for ad in ads_list:
         unsafe_allow_html=True,
     )
 
+# ----------------------------------------------------
+# 📐 AutoCAD Start Screen (Recent Projects Launcher)
+# ----------------------------------------------------
+if "autocad_site_opened" not in st.session_state:
+    st.session_state.autocad_site_opened = False
+
+conn = get_db_connection()
+cursor = conn.cursor()
+cursor.execute(
+    """
+    SELECT DISTINCT site_name FROM site_milestone_payments WHERE user_key = ?
+    UNION
+    SELECT DISTINCT site_name FROM site_progress WHERE user_key = ?
+    UNION
+    SELECT DISTINCT site_name FROM site_attendance WHERE user_key = ?
+    UNION
+    SELECT DISTINCT site_name FROM history WHERE user_key = ?
+    """,
+    (current_user_name, current_user_name, current_user_name, current_user_name),
+)
+saved_user_sites = [r["site_name"] for r in cursor.fetchall() if r["site_name"]]
+conn.close()
+
+if not saved_user_sites:
+    saved_user_sites = [st.session_state.current_site_name]
+elif st.session_state.current_site_name not in saved_user_sites:
+    saved_user_sites.insert(0, st.session_state.current_site_name)
+
+if not st.session_state.autocad_site_opened:
+    st.markdown(
+        """
+        <div style="background: linear-gradient(135deg, #090d16 0%, #111827 50%, #1e293b 100%); border: 1.5px solid #3b82f6; border-radius: 16px; padding: 22px; margin-bottom: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.7);">
+            <div style="display:flex; align-items:center; gap:12px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px; margin-bottom: 16px;">
+                <span style="font-size:32px;">📐</span>
+                <div>
+                    <h3 style="margin:0; color:#f8fafc; font-weight:900; letter-spacing:1px;">AUTOCAD START PORTAL • RECENT PROJECTS</h3>
+                    <p style="margin:2px 0 0 0; color:#94a3b8; font-size:12px;">Select an existing project drawing or initialize a new construction site</p>
+                </div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    cad_col1, cad_col2 = st.columns([2, 1])
+
+    with cad_col1:
+        st.markdown("##### 📁 Recent Projects & Drawings:")
+        for s_name in saved_user_sites:
+            s_box_col1, s_box_col2 = st.columns([3.5, 1.2])
+            with s_box_col1:
+                st.markdown(
+                    f"""
+                    <div style="background: rgba(15, 23, 42, 0.9); border: 1px solid #334155; border-left: 4px solid #f59e0b; padding: 10px 14px; border-radius: 8px; margin-bottom: 6px;">
+                        <b style="color:#f8fafc; font-size:14px;">🏗️ {s_name}</b><br>
+                        <small style="color:#64748b;">AutoCAD DWG / Site Database Profile</small>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+            with s_box_col2:
+                st.markdown("<div style='margin-top:4px;'></div>", unsafe_allow_html=True)
+                if st.button("📂 Open Project", key=f"open_cad_site_{s_name}", use_container_width=True, type="primary"):
+                    st.session_state.current_site_name = s_name
+                    st.session_state.autocad_site_opened = True
+                    st.rerun()
+
+    with cad_col2:
+        st.markdown("##### ➕ New Project Drawing:")
+        with st.form("cad_new_site_form"):
+            new_cad_site_name = st.text_input("New Site / Drawing Name:", placeholder="e.g. Omkar Heights Wing-B")
+            new_cad_city = st.text_input("Site Location / City:", value="Pune")
+            btn_create_cad_site = st.form_submit_button("🚀 Create & Open", type="primary", use_container_width=True)
+            if btn_create_cad_site:
+                if new_cad_site_name.strip():
+                    st.session_state.current_site_name = new_cad_site_name.strip()
+                    st.session_state.site_location_city = new_cad_city.strip() if new_cad_city.strip() else "Pune"
+                    st.session_state.autocad_site_opened = True
+                    st.success("✅ New Project Initialized!")
+                    st.rerun()
+                else:
+                    st.warning("⚠️ Please enter a project name!")
+
+    st.write("---")
+    st.info("💡 You can switch projects anytime from the top AutoCAD Ribbon.")
+    st.stop()
+
+# ----------------------------------------------------
+# 📐 AutoCAD Top Tool Ribbon Bar (Side-by-Side & Category Tabs)
+# ----------------------------------------------------
+st.markdown(
+    """
+    <div style="background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); border: 1px solid #334155; border-radius: 12px 12px 0 0; padding: 8px 14px; margin-bottom: 0px; border-bottom: 2px solid #f59e0b;">
+        <span style="font-size:11px; font-weight:800; color:#38bdf8; letter-spacing:1px;">📐 AUTOCAD WORKSPACE RIBBON • PATIL INFRATECH</span>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+ribbon_c1, ribbon_c2, ribbon_c3, ribbon_c4, ribbon_c5, ribbon_c6 = st.columns(6)
+with ribbon_c1:
+    if st.button("🏠 Home / Start", use_container_width=True):
+        st.session_state.autocad_site_opened = False
+        st.session_state.selected_module = None
+        st.session_state.selected_site_sub_module = None
+        st.session_state.selected_estimator_sub_module = None
+        st.rerun()
+with ribbon_c2:
+    if st.button("👷 Site Manager", use_container_width=True):
+        st.session_state.selected_module = "Site Manager"
+        st.session_state.selected_site_sub_module = None
+        st.rerun()
+with ribbon_c3:
+    if st.button("📐 Estimator Tools", use_container_width=True):
+        st.session_state.selected_module = "Estimator Tools"
+        st.session_state.selected_estimator_sub_module = None
+        st.rerun()
+with ribbon_c4:
+    if st.button("🤝 NeevPay Escrow", use_container_width=True):
+        st.session_state.selected_module = "NeevPay"
+        st.rerun()
+with ribbon_c5:
+    if st.button("📊 Rate Analysis", use_container_width=True):
+        st.session_state.selected_module = "Estimator Tools"
+        st.session_state.selected_estimator_sub_module = "Rate Analysis"
+        st.rerun()
+with ribbon_c6:
+    if st.button("🏗️ BBS Schedule", use_container_width=True):
+        st.session_state.selected_module = "Estimator Tools"
+        st.session_state.selected_estimator_sub_module = "BBS"
+        st.rerun()
+
+st.write(" ")
+
 col_u, col_lo = st.columns([3.5, 1.5])
 if is_user_premium:
     col_u.markdown(
@@ -1882,6 +2037,7 @@ with st.container():
 if col_lo.button("🔄 Logout"):
     st.session_state.app_user_name = None
     st.session_state.otp_verified = False
+    st.session_state.autocad_site_opened = False
     if "saved_user" in st.query_params:
         del st.query_params["saved_user"]
     st.session_state.current_comment = "काही नाही"
