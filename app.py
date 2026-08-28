@@ -1856,7 +1856,7 @@ if st.session_state.get("is_client_view", False):
     st.stop()
                     
 # ==========================================
-# 📌 विभाग १३: मुख्य युझर डॅशबोर्ड (CAD Workspace, Title Bar, Ribbon & Weather)
+# 📌 विभाग १३: मुख्य युझर डॅशबोर्ड (Site Name, Weather, Notice Box & Controls)
 # ==========================================
 current_user_name = st.session_state.app_user_name
 is_user_premium, status_text_str = check_user_premium_status(current_user_name)
@@ -1886,291 +1886,58 @@ if "site_location_city" not in st.session_state:
     st.session_state.site_location_city = "Pune"
 
 site_weather = get_site_weather_forecast(st.session_state.site_location_city)
-curr_dwg_name = f"{st.session_state.current_site_name}.dwg".replace(" ", "_")
 
 # ----------------------------------------------------
-# 🖥️ CAD Suite Top Title Bar & Window Header (Live UI)
+# 🌟 डॅशबोर्ड मुख्य ॲक्शन बार (Site, Weather, City & Logout)
 # ----------------------------------------------------
-st.markdown(
-    f"""
-    <div class="cad-top-title-bar">
-        <div style="display:flex; align-items:center;">
-            <span class="cad-app-icon">P</span>
-            <span style="color:#cbd5e1; font-size:12px; font-weight:bold;">PATIL INFRATECH CIVIL  2027-</span>
-            <span style="color:#38bdf8; font-size:11px; font-weight:600; margin-left:6px;">[{curr_dwg_name}]</span>
-        </div>
-        <div style="display:flex; align-items:center; gap:10px;">
-            <span style="font-size:12px; color:#38bdf8; font-weight:bold;">👤 {current_user_name}</span>
-            <span style="color:#64748b; font-size:11px;">{"(👑 VIP)" if is_user_premium else "(🆓 Free)"}</span>
-        </div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+top_c1, top_c2, top_c3, top_c4 = st.columns([3, 2, 1.5, 1])
 
-# ----------------------------------------------------
-# 🛠️ Working Quick Access Actions
-# ----------------------------------------------------
-qa_c1, qa_c2, qa_c3, qa_c4, qa_c5, qa_c6 = st.columns([1, 1, 1, 1, 2.5, 1.5])
-with qa_c1:
-    if st.button("📄 New", help="नवीन ड्रॉईंग / साईट तयार करा", use_container_width=True):
-        st.session_state.autocad_site_opened = False
-        st.session_state.selected_module = None
-        st.rerun()
-with qa_c2:
-    if st.button("📂 Open", help="प्रोजेक्ट लिस्ट उघडा", use_container_width=True):
-        st.session_state.autocad_site_opened = False
-        st.rerun()
-with qa_c3:
-    if st.button("💾 Save", help="चालू प्रोजेक्ट सेव्ह करा", use_container_width=True):
-        st.success("✅ Drawing & Database State Saved!")
-with qa_c4:
+with top_c1:
     st.markdown(
-        """
-        <button onclick="window.print()" style="width:100%; height:38px; background:#181d26; color:#f8fafc; border:1px solid #2d3545; border-radius:6px; font-weight:600; cursor:pointer;">
-            🖨️ Plot
-        </button>
+        f"""
+        <div style="background: #181d26; border: 1px solid #2d3545; border-left: 4px solid #38bdf8; padding: 6px 12px; border-radius: 6px;">
+            <span style="font-size: 11px; color: #94a3b8; font-weight: 600;">📍 चालू साईट:</span><br>
+            <b style="color: #ffffff; font-size: 15px;">🏗️ {st.session_state.current_site_name}</b>
+        </div>
         """,
         unsafe_allow_html=True,
     )
-with qa_c5:
-    cad_cmd_input = st.text_input("CAD Command Line:", placeholder="Type command: QS, BBS, SITE, NEEVPAY, HOME...", label_visibility="collapsed")
-    if cad_cmd_input:
-        cmd_u = cad_cmd_input.strip().upper()
-        if cmd_u in ["SITE", "SM"]:
-            st.session_state.selected_module = "Site Manager"
-            st.session_state.autocad_site_opened = True
-            st.rerun()
-        elif cmd_u in ["QS", "EST", "ESTIMATOR"]:
-            st.session_state.selected_module = "Estimator Tools"
-            st.session_state.autocad_site_opened = True
-            st.rerun()
-        elif cmd_u in ["BBS"]:
-            st.session_state.selected_module = "Estimator Tools"
-            st.session_state.selected_estimator_sub_module = "BBS"
-            st.session_state.autocad_site_opened = True
-            st.rerun()
-        elif cmd_u in ["NEEV", "NEEVPAY", "ESCROW"]:
-            st.session_state.selected_module = "NeevPay"
-            st.session_state.autocad_site_opened = True
-            st.rerun()
-        elif cmd_u in ["HOME", "START"]:
-            st.session_state.autocad_site_opened = False
-            st.session_state.selected_module = None
-            st.rerun()
-        else:
-            st.toast(f"Command '{cad_cmd_input}' Executed")
-with qa_c6:
-    if st.button("🔄 Reload Data", use_container_width=True):
-        st.rerun()
-
-# ----------------------------------------------------
-# 📐 CAD Workspace Ribbon Bar (Fully Active)
-# ----------------------------------------------------
-with st.container():
-    st.markdown('<div class="cad-ribbon-container">', unsafe_allow_html=True)
-    
-    rc1, rc2, rc3, rc4, rc5, rc6 = st.columns([1.2, 1.2, 1.2, 1.2, 1.2, 1.8])
-    
-    with rc1:
-        st.caption("📂 Project")
-        if st.button("🏠 Start / Sites", use_container_width=True, key="cad_rb_start"):
-            st.session_state.autocad_site_opened = False
-            st.session_state.selected_module = None
-            st.session_state.selected_site_sub_module = None
-            st.session_state.selected_estimator_sub_module = None
-            st.rerun()
-        st.markdown('<div class="cad-ribbon-group-title">Home</div>', unsafe_allow_html=True)
-
-    with rc2:
-        st.caption("👷 Field Ops")
-        if st.button("👷 Site Manager", use_container_width=True, key="cad_rb_sm"):
-            st.session_state.selected_module = "Site Manager"
-            st.session_state.selected_site_sub_module = None
-            st.session_state.autocad_site_opened = True
-            st.rerun()
-        st.markdown('<div class="cad-ribbon-group-title">Site Operations</div>', unsafe_allow_html=True)
-
-    with rc3:
-        st.caption("📐 Quantity / QS")
-        if st.button("📐 Estimator", use_container_width=True, key="cad_rb_est"):
-            st.session_state.selected_module = "Estimator Tools"
-            st.session_state.selected_estimator_sub_module = None
-            st.session_state.autocad_site_opened = True
-            st.rerun()
-        st.markdown('<div class="cad-ribbon-group-title">Analysis</div>', unsafe_allow_html=True)
-
-    with rc4:
-        st.caption("🏗️ Structure")
-        if st.button("🏗️ BBS Schedule", use_container_width=True, key="cad_rb_bbs"):
-            st.session_state.selected_module = "Estimator Tools"
-            st.session_state.selected_estimator_sub_module = "BBS"
-            st.session_state.autocad_site_opened = True
-            st.rerun()
-        st.markdown('<div class="cad-ribbon-group-title">Reinforcement</div>', unsafe_allow_html=True)
-
-    with rc5:
-        st.caption("🤝 Finance")
-        if st.button("🛡️ NeevPay", use_container_width=True, key="cad_rb_neev"):
-            st.session_state.selected_module = "NeevPay"
-            st.session_state.autocad_site_opened = True
-            st.rerun()
-        st.markdown('<div class="cad-ribbon-group-title">Escrow Billing</div>', unsafe_allow_html=True)
-
-    with rc6:
-        st.caption("📍 Weather & Location")
-        w_temp = site_weather['temp'] if site_weather else '--'
-        w_rain = site_weather['rain_prob'] if site_weather else 0
-        w_city = site_weather['city'] if site_weather else st.session_state.site_location_city
-        st.markdown(
-            f"""
-            <div style="background:#141820; border:1px solid #2d3545; padding:4px 8px; border-radius:4px; font-size:11px; text-align:right;">
-                <b style="color:#38bdf8;">🌤️ {w_temp}°C</b> | <span style="color:#94a3b8;">{w_city}</span><br>
-                <span style="color:{'#ef4444' if w_rain >= 50 else '#10b981'}; font-weight:bold;">🌧️ Rain: {w_rain}%</span>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-        st.markdown('<div class="cad-ribbon-group-title">Environment</div>', unsafe_allow_html=True)
-
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# ----------------------------------------------------
-# 📑 CAD Drawing Tabs (Interactive)
-# ----------------------------------------------------
-tab_col1, tab_col2, _ = st.columns([1.5, 2.5, 6])
-with tab_col1:
-    if st.button("🏠 Start Screen", use_container_width=True, type="primary" if not st.session_state.get('autocad_site_opened') else "secondary"):
-        st.session_state.autocad_site_opened = False
-        st.session_state.selected_module = None
-        st.rerun()
-with tab_col2:
-    if st.button(f"🏗️ {curr_dwg_name}", use_container_width=True, type="primary" if st.session_state.get('autocad_site_opened') else "secondary"):
-        st.session_state.autocad_site_opened = True
-        st.rerun()
-
-# ----------------------------------------------------
-# 📂 Project Start Screen Launcher
-# ----------------------------------------------------
-if "autocad_site_opened" not in st.session_state:
-    st.session_state.autocad_site_opened = False
-
-conn = get_db_connection()
-cursor = conn.cursor()
-cursor.execute(
-    """
-    SELECT DISTINCT site_name FROM site_milestone_payments WHERE user_key = ?
-    UNION
-    SELECT DISTINCT site_name FROM site_progress WHERE user_key = ?
-    UNION
-    SELECT DISTINCT site_name FROM site_attendance WHERE user_key = ?
-    UNION
-    SELECT DISTINCT site_name FROM history WHERE user_key = ?
-    """,
-    (current_user_name, current_user_name, current_user_name, current_user_name),
-)
-saved_user_sites = [r["site_name"] for r in cursor.fetchall() if r["site_name"]]
-conn.close()
-
-if not saved_user_sites:
-    saved_user_sites = [st.session_state.current_site_name]
-elif st.session_state.current_site_name not in saved_user_sites:
-    saved_user_sites.insert(0, st.session_state.current_site_name)
-
-if not st.session_state.autocad_site_opened:
-    cad_col1, cad_col2 = st.columns([2.2, 1])
-
-    with cad_col1:
-        st.markdown("#### 📁 Recent Project Drawings & Databases")
-        for s_name in saved_user_sites:
-            s_box_col1, s_box_col2, s_box_col3 = st.columns([2.6, 1.1, 0.7])
-            with s_box_col1:
-                st.markdown(
-                    f"""
-                    <div style="background: #181d26; border: 1px solid #2d3545; border-left: 4px solid #38bdf8; padding: 10px 14px; border-radius: 6px; margin-bottom: 6px;">
-                        <b style="color:#f8fafc; font-size:14px;">🏗️ {s_name}</b><br>
-                        <small style="color:#64748b;">DWG / Site Data Profile • Active</small>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-            with s_box_col2:
-                st.markdown("<div style='margin-top:4px;'></div>", unsafe_allow_html=True)
-                if st.button("📂 Open", key=f"open_cad_site_{s_name}", use_container_width=True, type="primary"):
-                    st.session_state.current_site_name = s_name
-                    st.session_state.autocad_site_opened = True
-                    st.rerun()
-            with s_box_col3:
-                st.markdown("<div style='margin-top:4px;'></div>", unsafe_allow_html=True)
-                if st.button("🗑️", key=f"del_cad_site_{s_name}", help=f"Delete '{s_name}' and all its records", use_container_width=True):
-                    conn = get_db_connection()
-                    cursor = conn.cursor()
-                    cursor.execute("DELETE FROM site_milestone_payments WHERE user_key = ? AND site_name = ?", (current_user_name, s_name))
-                    cursor.execute("DELETE FROM site_progress WHERE user_key = ? AND site_name = ?", (current_user_name, s_name))
-                    cursor.execute("DELETE FROM site_attendance WHERE user_key = ? AND site_name = ?", (current_user_name, s_name))
-                    cursor.execute("DELETE FROM site_inventory WHERE user_key = ? AND site_name = ?", (current_user_name, s_name))
-                    cursor.execute("DELETE FROM pre_concreting_checklist WHERE user_key = ? AND site_name = ?", (current_user_name, s_name))
-                    cursor.execute("DELETE FROM project_tasks WHERE user_key = ? AND site_name = ?", (current_user_name, s_name))
-                    cursor.execute("DELETE FROM site_client_profiles WHERE user_key = ? AND site_name = ?", (current_user_name, s_name))
-                    cursor.execute("DELETE FROM history WHERE user_key = ? AND site_name = ?", (current_user_name, s_name))
-                    conn.commit()
-                    conn.close()
-
-                    if st.session_state.current_site_name == s_name:
-                        st.session_state.current_site_name = "Default Site"
-
-                    st.success(f"🗑️ '{s_name}' प्रोजेक्ट यशस्वीरित्या डिलीट केले!")
-                    st.rerun()
-
-    with cad_col2:
-        st.markdown("#### ➕ New Project Setup")
-        with st.form("cad_new_site_form"):
-            new_cad_site_name = st.text_input("Project Name:", placeholder="e.g. Omkar Heights Wing-B")
-            new_cad_city = st.text_input("Location / City:", value="Pune")
-            btn_create_cad_site = st.form_submit_button("🚀 Create & Open Drawing", type="primary", use_container_width=True)
-            if btn_create_cad_site:
-                if new_cad_site_name.strip():
-                    st.session_state.current_site_name = new_cad_site_name.strip()
-                    st.session_state.site_location_city = new_cad_city.strip() if new_cad_city.strip() else "Pune"
-                    st.session_state.autocad_site_opened = True
-                    st.success("✅ New Project Initialized!")
-                    st.rerun()
-                else:
-                    st.warning("⚠️ कृपया प्रोजेक्टचे नाव टाका!")
-
-    st.write("---")
-    st.info("💡 टीप: वर दिलेल्या रिबनमधील बटणे वापरून तुम्ही थेट कामाचे मॉड्यूल उघडू शकता.")
-    st.stop()
-
-# ----------------------------------------------------
-# ⚙️ Active Project Properties & Quick Edit
-# ----------------------------------------------------
-sw_col1, sw_col2, sw_col3 = st.columns([2, 1, 1])
-with sw_col1:
-    with st.popover("✏️ Edit Project Name"):
+    with st.popover("✏️ साईट नाव बदला"):
         new_site_input = st.text_input(
-            "Enter Project Name:", value=st.session_state.current_site_name
+            "नवीन साईटचे नाव टाका:", value=st.session_state.current_site_name
         )
-        if st.button("💾 Save Project Name", key="btn_save_site_name", type="primary"):
+        if st.button("💾 सेव्ह करा", key="btn_save_top_site", type="primary", use_container_width=True):
             if new_site_input.strip():
                 st.session_state.current_site_name = new_site_input.strip()
-                st.success("✅ Project name updated!")
                 st.rerun()
 
-with sw_col2:
+with top_c2:
+    w_temp = site_weather['temp'] if site_weather else '--'
+    w_rain = site_weather['rain_prob'] if site_weather else 0
+    w_city = site_weather['city'] if site_weather else st.session_state.site_location_city
+    st.markdown(
+        f"""
+        <div style="background: #181d26; border: 1px solid #2d3545; padding: 6px 12px; border-radius: 6px; text-align: center;">
+            <span style="font-size: 11px; color: #94a3b8;">🌤️ हवामान ({w_city})</span><br>
+            <b style="color: #38bdf8; font-size: 14px;">{w_temp}°C</b> | <span style="color: {'#ef4444' if w_rain >= 50 else '#10b981'}; font-weight: bold; font-size: 13px;">🌧️ {w_rain}% पाऊस</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+with top_c3:
     with st.popover("📍 Set City Location"):
         new_city_input = st.text_input(
-            "Enter City (e.g. Pune, Mumbai):", 
+            "शहर टाका (उदा. Pune):", 
             value=st.session_state.site_location_city
         )
-        if st.button("🌦️ Update Weather", key="btn_save_weather_city", type="primary"):
+        if st.button("🌦️ अपडेट करा", key="btn_top_weather_update", type="primary", use_container_width=True):
             if new_city_input.strip():
                 st.session_state.site_location_city = new_city_input.strip()
-                st.success("✅ Weather location updated!")
                 st.rerun()
 
-with sw_col3:
-    if st.button("🔄 Logout"):
+with top_c4:
+    if st.button("🔄 Logout", use_container_width=True):
         st.session_state.app_user_name = None
         st.session_state.otp_verified = False
         st.session_state.autocad_site_opened = False
@@ -2192,7 +1959,7 @@ with sw_col3:
         st.rerun()
 
 # ----------------------------------------------------
-# 🔔 Notifications & Admin Inbox
+# 🔔 नोटीस बॉक्स आणि इनबॉक्स (Notice Box)
 # ----------------------------------------------------
 current_user_data = get_user_data(current_user_name) or {}
 disp_name_inbox = current_user_name if current_user_name else ""
@@ -2201,9 +1968,9 @@ if current_user_data.get("unread_notification") == 1:
     admin_msg = current_user_data.get("admin_message", "")
     st.markdown(
         f"""
-        <div style="background: linear-gradient(135deg, #064e3b 0%, #0f172a 100%); padding: 14px 18px; border-radius: 8px; margin: 12px 0; border: 1px solid #10b981;">
-            <h5 style="color: #34d399; margin: 0 0 4px 0;">🔔 नवीन नोटिफिकेशन</h5>
-            <p style="color: #ffffff; font-size: 15px; margin: 0;">{admin_msg}</p>
+        <div style="background: linear-gradient(135deg, #064e3b 0%, #0f172a 100%); padding: 12px 16px; border-radius: 8px; margin: 12px 0; border: 1px solid #10b981;">
+            <h5 style="color: #34d399; margin: 0 0 4px 0;">🔔 नवीन ॲडमीन नोटीस</h5>
+            <p style="color: #ffffff; font-size: 14px; margin: 0;">{admin_msg}</p>
         </div>
         """,
         unsafe_allow_html=True,
@@ -2221,15 +1988,15 @@ if current_user_data.get("unread_notification") == 1:
         )
         conn.commit()
         conn.close()
-        st.success("✅ मेसेज वाचून क्लियर केला आहे!")
+        st.success("✅ नोटीस क्लियर झाली!")
         st.rerun()
 else:
     admin_msg = current_user_data.get(
         "admin_message",
         f"{disp_name_inbox} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳",
     )
-    with st.expander("📥 System Message & Notification Inbox"):
-        st.info(f"📢 **Admin:** {admin_msg}")
+    with st.expander("📥 नोटीस व मेसेज इनबॉक्स (Notice Box)"):
+        st.info(f"📢 **Admin Message:** {admin_msg}")
 
 # ----------------------------------------------------
 # 🔑 प्रिमियम अनलॉक बॉक्स (फ्री युझर्ससाठी)
@@ -2241,7 +2008,7 @@ if not is_user_premium:
         ).strip()
         c_btn1, c_btn2 = st.columns(2)
         with c_btn1:
-            if st.button("🔓 Activate Premium", type="primary"):
+            if st.button("🔓 Activate Premium", type="primary", use_container_width=True):
                 u_info = get_user_data(current_user_name) or {}
 
                 if input_code == "4528":
@@ -2337,7 +2104,7 @@ if not is_user_premium:
                         conn.close()
                         st.error("❌ चुकीचा किंवा आधीच वापरलेला कोड!")
         with c_btn2:
-            if st.button("📩 Request Code"):
+            if st.button("📩 Request Code", use_container_width=True):
                 conn = get_db_connection()
                 cursor = conn.cursor()
                 cursor.execute(
@@ -2350,81 +2117,10 @@ if not is_user_premium:
 
 st.write("---")
 # ==========================================
-# 📌 विभाग १४: CIVIL AI ASSISTANT (Gemini SDK & Fallback)
+# 📌 विभाग १४: CIVIL AI ASSISTANT (REMOVED)
 # ==========================================
-locks_cfg = get_feature_locks()
-ai_lock_setting = locks_cfg.get("Civil AI Assistant", "Premium")
-
-if ai_lock_setting == "Free" or is_user_premium:
-    with st.expander("🤖 Patil Infratech Civil AI Assistant (Ask Anything)"):
-        user_ai_query = st.text_input(
-            "तुमचा प्रश्न किंवा शंका इथे लिहा:",
-            placeholder="उदा. What is the dry volume factor for concrete...",
-            key="civil_ai_input",
-        )
-        if st.button("🚀 Ask Civil AI", type="primary"):
-            if user_ai_query.strip():
-                api_key = (
-                    st.secrets.get("GEMINI_API_KEY") 
-                    if hasattr(st, "secrets") and "GEMINI_API_KEY" in st.secrets 
-                    else os.getenv("GEMINI_API_KEY", "")
-                )
-                
-                ai_response_text = ""
-                
-                if HAS_GENAI and api_key:
-                    try:
-                        client = genai.Client(api_key=api_key)
-                        prompt = (
-                            "You are a Senior Civil Engineer for Patil Infratech. "
-                            "Provide a direct, professional, and precise engineering answer: "
-                            f"{user_ai_query}"
-                        )
-                        response = client.models.generate_content(
-                            model="gemini-1.5-flash", 
-                            contents=prompt
-                        )
-                        if response and response.text:
-                            ai_response_text = response.text
-                    except Exception:
-                        ai_response_text = ""
-                
-                # जर एआय किंवा एपीआय की उपलब्ध नसेल, तर स्मार्ट इंजिनिअरिंग उत्तर देणे
-                if not ai_response_text:
-                    q_lower = user_ai_query.lower()
-                    if "cement bag" in q_lower or "volume" in q_lower:
-                        ai_response_text = (
-                            "👷‍♂️ **Patil Infratech Expert Answer:**\n"
-                            "• Weight of 1 cement bag = **50 kg**\n"
-                            "• Density of cement = **1440 kg/m³**\n"
-                            "• Volume in m³ = **0.0347 m³**\n"
-                            "• Volume in Cubic Feet (CFT) = **1.225 CFT**"
-                        )
-                    elif "concrete" in q_lower or "dry volume" in q_lower:
-                        ai_response_text = (
-                            "👷‍♂️ **Patil Infratech Expert Answer:**\n"
-                            "• Wet volume of concrete is multiplied by a **Dry Volume Factor of 1.54** "
-                            "to calculate the required quantities of dry materials (Cement, Sand, and Aggregate)."
-                        )
-                    else:
-                        ai_response_text = (
-                            f"👷‍♂️ **Patil Infratech Expert Engineer Analysis:** Regarding your query *'{user_ai_query}'*, "
-                            "please check IS-456 standards or use our built-in Rate Analysis and BBS modules for exact calculations."
-                        )
-
-                st.markdown(
-                    f"""
-                    <div style="background: #111827; border-left: 5px solid #00f2fe; padding: 18px; border-radius: 14px; margin-top: 12px; box-shadow: 0 4px 20px rgba(0, 242, 254, 0.2); color: #f8fafc;">
-                        <b>🎯 Civil AI Answer:</b><br><br>{ai_response_text}
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-            else:
-                st.warning("⚠️ कृपया आधी तुमचा प्रश्न किंवा शंका इथे लिहा!")
-else:
-    st.info("🔒 Civil AI Assistant हे प्रिमियम फिचर आहे.")
-
+# Civil AI Assistant feature removed as requested.
+pass
 # ==========================================
 # 📌 विभाग १५: मुख्य मॉड्यूल निवड कार्ड्स (Site Manager vs Estimator Tools vs NeevPay)
 # ==========================================
