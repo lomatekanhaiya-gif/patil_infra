@@ -1807,239 +1807,111 @@ if st.session_state.get("is_client_view", False):
 
     st.stop()
                     
-# ==========================================
-# 📌 विभाग १३: मुख्य युझर डॅशबोर्ड (Top Header, Ads, Notifications, Weather & Site Switcher)
-# ==========================================
+# ==============================================================================
+# 📌 विभाग १३: मुख्य युझर डॅशबोर्ड (Top Action Bar, Weather, Site & Notice Box)
+# ==============================================================================
 current_user_name = st.session_state.app_user_name
 is_user_premium, status_text_str = check_user_premium_status(current_user_name)
 
+# १. स्पॉन्सर जाहिराती (ॲक्टिव्ह असल्यास)
 conn = get_db_connection()
 cursor = conn.cursor()
 cursor.execute(
-    "SELECT * FROM ads WHERE active = 1 AND position = 'Main App Header (Top Banner)'"
+    "SELECT * FROM ads WHERE active = 1 AND position = 'Main App Header (Top"
+    " Banner)'"
 )
 ads_list = [dict(r) for r in cursor.fetchall()]
 conn.close()
 
 for ad in ads_list:
-    st.markdown(
-        f"""
-        <div style="background: #111827; border: 1px solid rgba(0, 242, 254, 0.3); padding: 8px 12px; border-radius: 12px; text-align: center; margin-bottom: 18px;">
+  st.markdown(
+      f"""
+        <div style="background: #111827; border: 1px solid rgba(0, 242, 254, 0.3); padding: 8px 12px; border-radius: 10px; text-align: center; margin-bottom: 15px;">
             <span style="font-size: 9px; color: #38bdf8; font-weight: bold;">📢 SPONSOR AD</span><br>
             <b style="color: #fff; font-size: 13px;">{ad.get('title')}</b> — <span style="color: #cbd5e1; font-size: 11px;">{ad.get('desc')}</span>
-            {"<img src='" + ad.get('media_url') + "' style='max-height:50px; border-radius:6px; margin-top:3px;'/>" if ad.get('media_type') == 'Photo (PNG/JPG)' and ad.get('media_url') else ""}
+            {"<img src='" + ad.get('media_url') + "' style='max-height:45px; border-radius:4px; margin-top:3px;'/>" if ad.get('media_type') == 'Photo (PNG/JPG)' and ad.get('media_url') else ""}
             <a href="{ad.get('link')}" target="_blank" style="color: #f59e0b; font-weight: bold; text-decoration: underline; font-size: 11px; margin-left: 6px;">[Visit]</a>
         </div>
         """,
-        unsafe_allow_html=True,
-    )
+      unsafe_allow_html=True,
+  )
 
-# ----------------------------------------------------
-# 📐 AutoCAD Start Screen (Recent Projects Launcher)
-# ----------------------------------------------------
-if "autocad_site_opened" not in st.session_state:
-    st.session_state.autocad_site_opened = False
-
-conn = get_db_connection()
-cursor = conn.cursor()
-cursor.execute(
-    """
-    SELECT DISTINCT site_name FROM site_milestone_payments WHERE user_key = ?
-    UNION
-    SELECT DISTINCT site_name FROM site_progress WHERE user_key = ?
-    UNION
-    SELECT DISTINCT site_name FROM site_attendance WHERE user_key = ?
-    UNION
-    SELECT DISTINCT site_name FROM history WHERE user_key = ?
-    """,
-    (current_user_name, current_user_name, current_user_name, current_user_name),
-)
-saved_user_sites = [r["site_name"] for r in cursor.fetchall() if r["site_name"]]
-conn.close()
-
-if not saved_user_sites:
-    saved_user_sites = [st.session_state.current_site_name]
-elif st.session_state.current_site_name not in saved_user_sites:
-    saved_user_sites.insert(0, st.session_state.current_site_name)
-
-if not st.session_state.autocad_site_opened:
-    st.markdown(
-        """
-        <div style="background: linear-gradient(135deg, #090d16 0%, #111827 50%, #1e293b 100%); border: 1.5px solid #3b82f6; border-radius: 16px; padding: 22px; margin-bottom: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.7);">
-            <div style="display:flex; align-items:center; gap:12px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px; margin-bottom: 16px;">
-                <span style="font-size:32px;">📐</span>
-                <div>
-                    <h3 style="margin:0; color:#f8fafc; font-weight:900; letter-spacing:1px;">AUTOCAD START PORTAL • RECENT PROJECTS</h3>
-                    <p style="margin:2px 0 0 0; color:#94a3b8; font-size:12px;">Select an existing project drawing or initialize a new construction site</p>
-                </div>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    cad_col1, cad_col2 = st.columns([2, 1])
-
-    with cad_col1:
-        st.markdown("##### 📁 Recent Projects & Drawings:")
-        for s_name in saved_user_sites:
-            s_box_col1, s_box_col2 = st.columns([3.5, 1.2])
-            with s_box_col1:
-                st.markdown(
-                    f"""
-                    <div style="background: rgba(15, 23, 42, 0.9); border: 1px solid #334155; border-left: 4px solid #f59e0b; padding: 10px 14px; border-radius: 8px; margin-bottom: 6px;">
-                        <b style="color:#f8fafc; font-size:14px;">🏗️ {s_name}</b><br>
-                        <small style="color:#64748b;">AutoCAD DWG / Site Database Profile</small>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-            with s_box_col2:
-                st.markdown("<div style='margin-top:4px;'></div>", unsafe_allow_html=True)
-                if st.button("📂 Open Project", key=f"open_cad_site_{s_name}", use_container_width=True, type="primary"):
-                    st.session_state.current_site_name = s_name
-                    st.session_state.autocad_site_opened = True
-                    st.rerun()
-
-    with cad_col2:
-        st.markdown("##### ➕ New Project Drawing:")
-        with st.form("cad_new_site_form"):
-            new_cad_site_name = st.text_input("New Site / Drawing Name:", placeholder="e.g. Omkar Heights Wing-B")
-            new_cad_city = st.text_input("Site Location / City:", value="Pune")
-            btn_create_cad_site = st.form_submit_button("🚀 Create & Open", type="primary", use_container_width=True)
-            if btn_create_cad_site:
-                if new_cad_site_name.strip():
-                    st.session_state.current_site_name = new_cad_site_name.strip()
-                    st.session_state.site_location_city = new_cad_city.strip() if new_cad_city.strip() else "Pune"
-                    st.session_state.autocad_site_opened = True
-                    st.success("✅ New Project Initialized!")
-                    st.rerun()
-                else:
-                    st.warning("⚠️ Please enter a project name!")
-
-    st.write("---")
-    st.info("💡 You can switch projects anytime from the top AutoCAD Ribbon.")
-    st.stop()
-
-# ----------------------------------------------------
-# 📐 AutoCAD Top Tool Ribbon Bar (Side-by-Side & Category Tabs)
-# ----------------------------------------------------
-st.markdown(
-    """
-    <div style="background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); border: 1px solid #334155; border-radius: 12px 12px 0 0; padding: 8px 14px; margin-bottom: 0px; border-bottom: 2px solid #f59e0b;">
-        <span style="font-size:11px; font-weight:800; color:#38bdf8; letter-spacing:1px;">📐 AUTOCAD WORKSPACE RIBBON • PATIL INFRATECH</span>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
-
-ribbon_c1, ribbon_c2, ribbon_c3, ribbon_c4, ribbon_c5, ribbon_c6 = st.columns(6)
-with ribbon_c1:
-    if st.button("🏠 Home / Start", use_container_width=True):
-        st.session_state.autocad_site_opened = False
-        st.session_state.selected_module = None
-        st.session_state.selected_site_sub_module = None
-        st.session_state.selected_estimator_sub_module = None
-        st.rerun()
-with ribbon_c2:
-    if st.button("👷 Site Manager", use_container_width=True):
-        st.session_state.selected_module = "Site Manager"
-        st.session_state.selected_site_sub_module = None
-        st.rerun()
-with ribbon_c3:
-    if st.button("📐 Estimator Tools", use_container_width=True):
-        st.session_state.selected_module = "Estimator Tools"
-        st.session_state.selected_estimator_sub_module = None
-        st.rerun()
-with ribbon_c4:
-    if st.button("🤝 NeevPay Escrow", use_container_width=True):
-        st.session_state.selected_module = "NeevPay"
-        st.rerun()
-with ribbon_c5:
-    if st.button("📊 Rate Analysis", use_container_width=True):
-        st.session_state.selected_module = "Estimator Tools"
-        st.session_state.selected_estimator_sub_module = "Rate Analysis"
-        st.rerun()
-with ribbon_c6:
-    if st.button("🏗️ BBS Schedule", use_container_width=True):
-        st.session_state.selected_module = "Estimator Tools"
-        st.session_state.selected_estimator_sub_module = "BBS"
-        st.rerun()
-
-st.write(" ")
-
-col_u, col_lo = st.columns([3.5, 1.5])
-if is_user_premium:
-    col_u.markdown(
-        f"<span class='gold-vip-badge'>👑 VIP MEMBER: {current_user_name.upper()} ({status_text_str})</span>",
-        unsafe_allow_html=True,
-    )
-else:
-    col_u.markdown(
-        f"<span class='free-user-badge'>🆓 FREE USER: {current_user_name.upper()}</span>",
-        unsafe_allow_html=True,
-    )
-
-# १३.१ ॲक्टिव्ह साईट सिलेक्टर बार आणि LIVE WEATHER & RAIN FORECAST (Side-by-Side in English)
+# २. हवामान डेटा (Open-Meteo API)
 if "site_location_city" not in st.session_state:
-    st.session_state.site_location_city = "Pune"
+  st.session_state.site_location_city = "Pune"
 
 site_weather = get_site_weather_forecast(st.session_state.site_location_city)
+w_temp = site_weather["temp"] if site_weather else "--"
+w_rain = site_weather["rain_prob"] if site_weather else 0
+w_city = (
+    site_weather["city"] if site_weather else st.session_state.site_location_city
+)
 
-with st.container():
-    rain_val = site_weather['rain_prob'] if site_weather else 0
-    rain_color = "#ef4444" if rain_val >= 50 else ("#f59e0b" if rain_val >= 20 else "#10b981")
-    rain_icon = "🌧️" if rain_val >= 50 else ("🌦️" if rain_val >= 20 else "☀️")
+# ----------------------------------------------------
+# 🌟 फोटोप्रमाणे मुख्य ॲक्शन बार (Site, Weather, City & Logout)
+# ----------------------------------------------------
+top_c1, top_c2, top_c3, top_c4 = st.columns([3.2, 2.2, 1.6, 1.2])
 
-    st.markdown(
-        f"""
-        <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-left: 5px solid #f59e0b; padding: 14px 20px; border-radius: 14px; margin-bottom: 15px; border: 1px solid rgba(245,158,11,0.3); box-shadow: 0 4px 15px rgba(0,0,0,0.4);">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-                <div style="flex: 1; min-width: 250px;">
-                    <span style="color:#94a3b8; font-size:11px; font-weight:bold; text-transform:uppercase; letter-spacing: 0.5px;">📍 Active Construction Project:</span><br>
-                    <b style="color:#f59e0b; font-size:18px;">🏗️ {st.session_state.current_site_name}</b>
-                    <span style="color:#64748b; font-size:13px; margin-left:6px;">({st.session_state.site_location_city})</span>
-                </div>
-                <div style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(56, 189, 248, 0.3); padding: 8px 16px; border-radius: 10px; text-align: right; min-width: 220px;">
-                    <span style="color:#38bdf8; font-size:12px; font-weight:700;">{rain_icon} {site_weather['temp'] if site_weather else '--'}°C | {site_weather['city'] if site_weather else st.session_state.site_location_city}</span><br>
-                    <span style="font-size:13px; font-weight:800; color:{rain_color};">🌧️ Rain Probability: {rain_val}%</span>
-                    <small style="color:#94a3b8; font-size:10px; margin-left:4px;">(Max: {site_weather['max_rain_today'] if site_weather else '--'}%)</small>
-                </div>
-            </div>
+with top_c1:
+  st.markdown(
+      f"""
+        <div style="background: #141820; border: 1px solid #2d3545; border-left: 4px solid #38bdf8; padding: 8px 14px; border-radius: 8px;">
+            <span style="font-size: 11px; color: #94a3b8; font-weight: 600;">📍 चालू साईट:</span><br>
+            <b style="color: #ffffff; font-size: 15px;">🏗️ {st.session_state.current_site_name}</b>
         </div>
         """,
-        unsafe_allow_html=True,
+      unsafe_allow_html=True,
+  )
+  with st.popover("✏️ साईट नाव बदला"):
+    new_site_input = st.text_input(
+        "नवीन साईटचे नाव टाका:",
+        value=st.session_state.current_site_name,
+        key="top_site_edit_input",
     )
+    if st.button(
+        "💾 सेव्ह करा",
+        key="btn_save_top_site",
+        type="primary",
+        use_container_width=True,
+    ):
+      if new_site_input.strip():
+        st.session_state.current_site_name = new_site_input.strip()
+        st.rerun()
 
-    sw_col1, sw_col2 = st.columns(2)
-    with sw_col1:
-        with st.popover("✏️ Edit Site Name"):
-            new_site_input = st.text_input(
-                "Enter Project / Site Name:", value=st.session_state.current_site_name
-            )
-            if st.button("💾 Save Site Name", key="btn_save_site_name", type="primary"):
-                if new_site_input.strip():
-                    st.session_state.current_site_name = new_site_input.strip()
-                    st.success("✅ Site name updated successfully!")
-                    st.rerun()
-    with sw_col2:
-        with st.popover("📍 Set Weather Location"):
-            new_city_input = st.text_input(
-                "Enter City / Location (e.g. Pune, Mumbai, Nashik):", 
-                value=st.session_state.site_location_city
-            )
-            if st.button("🌦️ Update Weather", key="btn_save_weather_city", type="primary"):
-                if new_city_input.strip():
-                    st.session_state.site_location_city = new_city_input.strip()
-                    st.success("✅ Weather location updated!")
-                    st.rerun()
+with top_c2:
+  st.markdown(
+      f"""
+        <div style="background: #141820; border: 1px solid #2d3545; padding: 8px 14px; border-radius: 8px; text-align: center;">
+            <span style="font-size: 11px; color: #94a3b8;">🌤️ हवामान ({w_city})</span><br>
+            <b style="color: #38bdf8; font-size: 14px;">{w_temp}°C</b> | <span style="color: {'#ef4444' if w_rain >= 50 else '#10b981'}; font-weight: bold; font-size: 13px;">🌧️ {w_rain}% पाऊस</span>
+        </div>
+        """,
+      unsafe_allow_html=True,
+  )
 
-if col_lo.button("🔄 Logout"):
+with top_c3:
+  with st.popover("📍 Set City Location"):
+    new_city_input = st.text_input(
+        "शहर टाका (उदा. Pune):",
+        value=st.session_state.site_location_city,
+        key="top_city_edit_input",
+    )
+    if st.button(
+        "🌦️ अपडेट करा",
+        key="btn_top_weather_update",
+        type="primary",
+        use_container_width=True,
+    ):
+      if new_city_input.strip():
+        st.session_state.site_location_city = new_city_input.strip()
+        st.rerun()
+
+with top_c4:
+  if st.button("🔄 Logout", key="top_logout_btn", use_container_width=True):
     st.session_state.app_user_name = None
     st.session_state.otp_verified = False
-    st.session_state.autocad_site_opened = False
     if "saved_user" in st.query_params:
-        del st.query_params["saved_user"]
+      del st.query_params["saved_user"]
     st.session_state.current_comment = "काही नाही"
     st.session_state.selected_module = None
     st.session_state.selected_site_sub_module = None
@@ -2055,159 +1927,180 @@ if col_lo.button("🔄 Logout"):
     )
     st.rerun()
 
+# ----------------------------------------------------
+# 🔔 नोटीस बॉक्स आणि इनबॉक्स (Notice Box)
+# ----------------------------------------------------
 current_user_data = get_user_data(current_user_name) or {}
 disp_name_inbox = current_user_name if current_user_name else ""
 
 if current_user_data.get("unread_notification") == 1:
-    admin_msg = current_user_data.get("admin_message", "")
-    st.markdown(
-        f"""
-        <div style="background: linear-gradient(135deg, #047857 0%, #065f46 100%); padding: 18px 22px; border-radius: 18px; margin-bottom: 18px; border: 1px solid #34d399; box-shadow: 0 6px 22px rgba(52, 211, 153, 0.35);">
-            <h4 style="color: #6ee7b7; margin: 0 0 6px 0;">🔔 नवीन नोटिफिकेशन</h4>
-            <p style="color: #ffffff; font-size: 16px; margin: 0;">{admin_msg}</p>
+  admin_msg = current_user_data.get("admin_message", "")
+  st.markdown(
+      f"""
+        <div style="background: linear-gradient(135deg, #064e3b 0%, #0f172a 100%); padding: 12px 16px; border-radius: 8px; margin: 12px 0; border: 1px solid #10b981;">
+            <h5 style="color: #34d399; margin: 0 0 4px 0;">🔔 नवीन ॲडमीन नोटीस</h5>
+            <p style="color: #ffffff; font-size: 14px; margin: 0;">{admin_msg}</p>
         </div>
         """,
-        unsafe_allow_html=True,
-    )
+      unsafe_allow_html=True,
+  )
 
-    if st.button("✅ Mark as Read & Clear (वाचले आहे)", type="primary"):
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute(
-            "UPDATE users SET unread_notification = 0, admin_message = ? WHERE user_key = ?",
-            (
-                f"{disp_name_inbox} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳",
-                current_user_name,
-            ),
-        )
-        conn.commit()
-        conn.close()
-        st.success("✅ मेसेज वाचून क्लियर केला आहे!")
-        st.rerun()
+  if st.button("✅ Mark as Read (वाचले आहे)", type="primary", key="btn_read_notice"):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE users SET unread_notification = 0, admin_message = ? WHERE"
+        " user_key = ?",
+        (
+            f"{disp_name_inbox} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक"
+            " स्वागत आहे🥳",
+            current_user_name,
+        ),
+    )
+    conn.commit()
+    conn.close()
+    st.success("✅ नोटीस क्लियर झाली!")
+    st.rerun()
 else:
-    admin_msg = current_user_data.get(
-        "admin_message",
-        f"{disp_name_inbox} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳",
-    )
-    st.markdown("### 📥 Admin Message / Code Inbox")
-    st.info(f"📢 **Admin:** {admin_msg}")
+  admin_msg = current_user_data.get(
+      "admin_message",
+      f"{disp_name_inbox} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक"
+      " स्वागत आहे🥳",
+  )
+  with st.expander("📥 नोटीस व मेसेज इनबॉक्स (Notice Box)"):
+    st.info(f"📢 **Admin Message:** {admin_msg}")
 
-st.write("---")
-
-# प्रिमियम अनलॉक बॉक्स (फ्री युझर्ससाठी)
+# ----------------------------------------------------
+# 🔑 प्रिमियम अनलॉक बॉक्स (फ्री युझर्ससाठी)
+# ----------------------------------------------------
 if not is_user_premium:
-    with st.expander("🔑 प्रिमियम अनलॉक करा (Enter Premium Code)"):
-        input_code = st.text_input(
-            "Enter Code (e.g. PATIL-XXXXX):", key="home_code_input"
-        ).strip()
-        c_btn1, c_btn2 = st.columns(2)
-        with c_btn1:
-            if st.button("🔓 Activate Premium", type="primary"):
-                u_info = get_user_data(current_user_name) or {}
+  with st.expander("🔑 प्रिमियम अनलॉक करा (Enter Premium Code)"):
+    input_code = st.text_input(
+        "Enter Code (e.g. PATIL-XXXXX):", key="home_code_input"
+    ).strip()
+    c_btn1, c_btn2 = st.columns(2)
+    with c_btn1:
+      if st.button(
+          "🔓 Activate Premium",
+          key="btn_activate_prem_main",
+          type="primary",
+          use_container_width=True,
+      ):
+        u_info = get_user_data(current_user_name) or {}
 
-                if input_code == "4528":
-                    uses_count = u_info.get("master_code_uses", 0)
-                    if uses_count >= 3:
-                        st.error("❌ हा मास्टर कोड तुम्ही आधीच ३ वेळा वापरला आहे! मर्यादा संपली आहे.")
-                    else:
-                        exp_datetime = get_ist_time() + datetime.timedelta(hours=8)
-                        exp_str = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
+        if input_code == "4528":
+          uses_count = u_info.get("master_code_uses", 0)
+          if uses_count >= 3:
+            st.error(
+                "❌ हा मास्टर कोड तुम्ही आधीच ३ वेळा वापरला आहे! मर्यादा"
+                " संपली आहे."
+            )
+          else:
+            exp_datetime = get_ist_time() + datetime.timedelta(hours=8)
+            exp_str = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
 
-                        conn = get_db_connection()
-                        cursor = conn.cursor()
-                        cursor.execute(
-                            """
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute(
+                """
                             UPDATE users 
                             SET master_code_uses = ?, is_premium = 1, premium_expiry = ?, seen_popup = 0,
                                 activated_by = ?, admin_message = ?, unread_notification = 0
                             WHERE user_key = ?
                             """,
-                            (
-                                uses_count + 1,
-                                exp_str,
-                                "Master Code 4528 (8 Hours VIP)",
-                                f"🎉 मास्टर कोड 4528 द्वारे तुला ८ तासांचे प्रिमियम मिळाले आहे! (वापर: {uses_count + 1}/3)",
-                                current_user_name,
-                            ),
-                        )
-                        conn.commit()
-                        conn.close()
-                        st.success("🎉 मास्टर कोड द्वारे ८ तासांचे प्रिमियम अनलॉक झाले!")
-                        st.rerun()
+                (
+                    uses_count + 1,
+                    exp_str,
+                    "Master Code 4528 (8 Hours VIP)",
+                    f"🎉 मास्टर कोड 4528 द्वारे तुला ८ तासांचे प्रिमियम मिळाले आहे! (वापर: {uses_count + 1}/3)",
+                    current_user_name,
+                ),
+            )
+            conn.commit()
+            conn.close()
+            st.success("🎉 मास्टर कोड द्वारे ८ तासांचे प्रिमियम अनलॉक झाले!")
+            st.rerun()
 
-                elif input_code == "kanha_1p":
-                    exp_datetime = get_ist_time() + datetime.timedelta(days=1)
-                    exp_str = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
+        elif input_code == "kanha_1p":
+          exp_datetime = get_ist_time() + datetime.timedelta(days=1)
+          exp_str = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
 
-                    conn = get_db_connection()
-                    cursor = conn.cursor()
-                    cursor.execute(
-                        """
+          conn = get_db_connection()
+          cursor = conn.cursor()
+          cursor.execute(
+              """
                         UPDATE users 
                         SET is_premium = 1, premium_expiry = ?, seen_popup = 0, activated_by = ?,
                             admin_message = ?, unread_notification = 0
                         WHERE user_key = ?
                         """,
-                        (
-                            exp_str,
-                            "Master Code",
-                            f"{current_user_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳",
-                            current_user_name,
-                        ),
-                    )
-                    conn.commit()
-                    conn.close()
-                    st.success("🎉 मास्टर कोडद्वारे प्रिमियम यशस्वीरित्या सुरू झाले!")
-                    st.rerun()
-                else:
-                    conn = get_db_connection()
-                    cursor = conn.cursor()
-                    cursor.execute(
-                        "SELECT * FROM premium_codes WHERE code = ?", (input_code,)
-                    )
-                    c_row = cursor.fetchone()
+              (
+                  exp_str,
+                  "Master Code",
+                  f"{current_user_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳",
+                  current_user_name,
+              ),
+          )
+          conn.commit()
+          conn.close()
+          st.success("🎉 मास्टर कोडद्वारे प्रिमियम यशस्वीरित्या सुरू झाले!")
+          st.rerun()
+        else:
+          conn = get_db_connection()
+          cursor = conn.cursor()
+          cursor.execute(
+              "SELECT * FROM premium_codes WHERE code = ?", (input_code,)
+          )
+          c_row = cursor.fetchone()
 
-                    if c_row and dict(c_row).get("used") == 0:
-                        exp_datetime = get_ist_time() + datetime.timedelta(days=28)
-                        exp_str = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
-                        now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
+          if c_row and dict(c_row).get("used") == 0:
+            exp_datetime = get_ist_time() + datetime.timedelta(days=28)
+            exp_str = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
+            now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
 
-                        cursor.execute(
-                            "UPDATE premium_codes SET used = 1, used_by = ?, used_date = ? WHERE code = ?",
-                            (current_user_name, now_str, input_code),
-                        )
-                        cursor.execute(
-                            """
+            cursor.execute(
+                "UPDATE premium_codes SET used = 1, used_by = ?, used_date = ?"
+                " WHERE code = ?",
+                (current_user_name, now_str, input_code),
+            )
+            cursor.execute(
+                """
                             UPDATE users 
                             SET is_premium = 1, premium_expiry = ?, seen_popup = 0, activated_by = ?,
                                 admin_message = ?, unread_notification = 0
                             WHERE user_key = ?
                             """,
-                            (
-                                exp_str,
-                                "Patil Infratech",
-                                f"{current_user_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳",
-                                current_user_name,
-                            ),
-                        )
-                        conn.commit()
-                        conn.close()
-                        st.success("🎉 प्रिमियम यशस्वीरित्या सुरू झाले!")
-                        st.rerun()
-                    else:
-                        conn.close()
-                        st.error("❌ चुकीचा किंवा आधीच वापरलेला कोड!")
-        with c_btn2:
-            if st.button("📩 Request Code"):
-                conn = get_db_connection()
-                cursor = conn.cursor()
-                cursor.execute(
-                    "UPDATE users SET requested_code = 1 WHERE user_key = ?",
-                    (current_user_name,),
-                )
-                conn.commit()
-                conn.close()
-                st.success("✅ ॲडमीनला रिक्वेस्ट पाठवली!")
+                (
+                    exp_str,
+                    "Patil Infratech",
+                    f"{current_user_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳",
+                    current_user_name,
+                ),
+            )
+            conn.commit()
+            conn.close()
+            st.success("🎉 प्रिमियम यशस्वीरित्या सुरू झाले!")
+            st.rerun()
+          else:
+            conn.close()
+            st.error("❌ चुकीचा किंवा आधीच वापरलेला कोड!")
+    with c_btn2:
+      if st.button(
+          "📩 Request Code",
+          key="btn_req_code_main",
+          use_container_width=True,
+      ):
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "UPDATE users SET requested_code = 1 WHERE user_key = ?",
+            (current_user_name,),
+        )
+        conn.commit()
+        conn.close()
+        st.success("✅ ॲडमीनला रिक्वेस्ट पाठवली!")
+
+st.write("---")
 # ==========================================
 # 📌 विभाग १४: CIVIL AI ASSISTANT (Gemini SDK & Fallback)
 # ==========================================
