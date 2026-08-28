@@ -2203,6 +2203,17 @@ if st.session_state.selected_module is None:
 # ==========================================
 # 📌 विभाग १६: ESTIMATOR TOOLS मुख्य मॉड्यूल (Sub-modules)
 # ==========================================
+locks_cfg = get_feature_locks()
+
+if st.session_state.selected_module is None:
+    st.markdown("<h3 style='text-align:center; margin-bottom:20px;'>🚀 कृपया मॉड्यूल निवडा</h3>", unsafe_allow_html=True)
+
+    calc_lock = locks_cfg.get("Civil Calculator", "Free")
+    site_lock = locks_cfg.get("Site Manager", "Free")
+    neev_lock = locks_cfg.get("NeevPay", "Free")
+
+    main_col1, main_col2, main_col3 = st.columns(3)
+    
 elif st.session_state.selected_module == "Estimator Tools":
     if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_estimator"):
         st.session_state.selected_module = None
