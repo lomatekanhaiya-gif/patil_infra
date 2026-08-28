@@ -2,28 +2,28 @@
 # 📦 PATIL INFRATECH - CIVIL ENGINEERING SUITE & SITE MANAGEMENT SYSTEM
 # ==============================================================================
 # Concept & Logic: Kanhaiya (Founder of Patil Infratech)
-# Architecture: Streamlit Web UI + SQLite3 + Gemini GenAI SDK
+# Architecture: Streamlit Web UI + SQLite3 Database
 # ==============================================================================
 #
 # 📑 अनुक्रमणिका व विभाग नकाशा (TABLE OF CONTENTS / INDEX):
 # ------------------------------------------------------------------------------
 # 📌 विभाग १  : आवश्यक लायब्ररी आणि पॅकेजेस इम्पोर्ट
-# 📌 विभाग २  : STREAMLIT पेज कॉन्फिगरेशन (Must be first Streamlit command)
+# 📌 विभाग २  : STREAMLIT पेज कॉन्फिगरेशन
 # 📌 विभाग ३  : ब्राउझर लोकल स्टोरेज आणि मोबाईल बॅक बटन हँडलर
-# 📌 विभाग ४  : युटिलिटी आणि सपोर्ट फंक्शन्स (वेळ, ईमेल OTP, पासवर्ड सुरक्षा, SMTP Mailer)
-# 📌 विभाग ५  : SQLITE डेटाबेस मॅनेजमेंट आणि मॉडेल्स (Tables Creation & Init DB)
-# 📌 विभाग ६  : डेटाबेस क्वेरी आणि हेल्पर फंक्शन्स (Default Tasks & Rates)
+# 📌 विभाग ४  : युटिलिटी आणि सपोर्ट फंक्शन्स (वेळ, ईमेल OTP, पासवर्ड सुरक्षा, Weather)
+# 📌 विभाग ५  : SQLITE डेटाबेस मॅनेजमेंट आणि मॉडेल्स
+# 📌 विभाग ६  : डेटाबेस क्वेरी आणि हेल्पर फंक्शन्स
 # 📌 विभाग ७  : सेशन स्टेट्स आणि प्रिमियम ऑथेंटिकेशन व्यवस्था
 # 📌 विभाग ८  : BRANDED CONSTRUCTION THEME CSS
-# 📌 विभाग ९  : WHATSAPP रिपोर्ट शेअरिंग कंपोनंट (Safe Dynamic Key Protection)
+# 📌 विभाग ९  : WHATSAPP रिपोर्ट शेअरिंग कंपोनंट
 # 📌 विभाग १० : वेलकम स्क्रीन ॲनिमेशन (3D Cosmic Loader & Sponsor Ads)
 # 📌 विभाग ११ : ॲडमीन पॅनल (Admin Command Center)
-# 📌 विभाग १२ : युझर ऑथेंटिकेशन (Login, Register & Email OTP)
-# 📌 विभाग १३ : मुख्य युझर डॅशबोर्ड (Top Header, Ads, Notifications & Site Switcher)
-# 📌 विभाग १४ : CIVIL AI ASSISTANT (Gemini SDK & Expert Knowledge Fallback)
+# 📌 विभाग १२ : युझर ऑथेंटिकेशन (Login, Register & Client Live View)
+# 📌 विभाग १३ : मुख्य युझर डॅशबोर्ड (Top Action Bar, Weather, Site & Notice Box)
+# 📌 विभाग १४ : FEATURE LOCKS CONFIGURATION
 # 📌 विभाग १५ : मुख्य मॉड्यूल निवड कार्ड्स (Site Manager vs Estimator Tools vs NeevPay)
-# 📌 विभाग १६ : ESTIMATOR TOOLS मुख्य मॉड्यूल (Sub-modules)
-# 📌 विभाग १७ : SITE MANAGER मुख्य मॉड्यूल (Sub-modules)
+# 📌 विभाग १६ : ESTIMATOR TOOLS मुख्य मॉड्यूल (Rate Analysis, BBS, QS & 3-in-1 PDF)
+# 📌 विभाग १७ : SITE MANAGER मुख्य मॉड्यूल (Attendance, Stock, Progress, Checklist, Timeline)
 # 📌 विभाग १८ : NEEVPAY / SITESETU मुख्य मॉड्यूल (Milestone Escrow & Payment Protection)
 # ==============================================================================
 
@@ -46,13 +46,6 @@ import pandas as pd
 import requests
 import streamlit as st
 
-# Official Google GenAI SDK Import
-try:
-    from google import genai
-    HAS_GENAI = True
-except ImportError:
-    HAS_GENAI = False
-    
 # ==========================================
 # 📌 विभाग २: STREAMLIT पेज कॉन्फिगरेशन
 # ==========================================
@@ -69,7 +62,6 @@ st.set_page_config(
 st.markdown(
     """
     <script>
-    // १. मोबाईलचा बॅक बटन दाबताच ट्रिगर होणारा इव्हेंट
     window.onpopstate = function(event) {
         const backButtons = Array.from(window.parent.document.querySelectorAll("button"));
         const mainBackButton = backButtons.find(btn => 
@@ -84,7 +76,6 @@ st.markdown(
         }
     };
 
-    // २. स्लीप मोडनंतर किंवा स्क्रीन रिफ्रेश झाल्यावर LocalStorage मधून लॉगिन पूर्ववत करणे
     const savedUser = localStorage.getItem("patil_app_user");
     const urlParams = new URLSearchParams(window.location.search);
     if (savedUser && !urlParams.has("saved_user")) {
@@ -98,14 +89,14 @@ st.markdown(
 
 
 def trigger_push_state():
-    """जेव्हा युझर नवीन सब-मॉड्यूलवर क्लिक करेल तेव्हा ब्राउझर हिस्ट्रीमध्ये पुश करण्यासाठी हूक"""
+    """जेव्हा युझर नवीन सब-मॉड्यूलवर क्लिक करेल तेव्हा हिस्ट्री पुश करण्यासाठी हूक"""
     st.markdown(
         "<script>window.history.pushState({inSubModule: true}, '');</script>",
         unsafe_allow_html=True,
     )
 
 # ==========================================
-# 📌 विभाग ४: युटिलिटी आणि सपोर्ट फंक्शन्स (वेळ, ईमेल, पासवर्ड, SMTP Mailer & Weather)
+# 📌 विभाग ४: युटिलिटी आणि सपोर्ट फंक्शन्स
 # ==========================================
 def get_ist_time():
     """भारतीय प्रमाणवेळ (IST - Indian Standard Time) मिळवण्याचे फंक्शन"""
@@ -152,52 +143,6 @@ def send_email_message(receiver_email, subject, body_text):
         return False
 
 
-def send_live_otp_email(to_email, otp_code, purpose="Verification"):
-    """NeevPay साठी थेट ईमेलवर HTML फॉरमॅटमध्ये OTP पाठवणारे फंक्शन"""
-    sender_email = (
-        st.secrets.get("EMAIL_USER", "your_email@gmail.com")
-        if hasattr(st, "secrets") and "EMAIL_USER" in st.secrets
-        else "your_email@gmail.com"
-    )
-    sender_password = (
-        st.secrets.get("EMAIL_PASS", "your_gmail_app_password")
-        if hasattr(st, "secrets") and "EMAIL_PASS" in st.secrets
-        else "your_gmail_app_password"
-    )
-
-    msg = MIMEMultipart()
-    msg['From'] = f"Patil Infratech NeevPay <{sender_email}>"
-    msg['To'] = to_email
-    msg['Subject'] = f"🔐 NeevPay Security OTP: {otp_code}"
-
-    html_content = f"""
-    <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #10b981; border-radius: 10px; max-width: 500px;">
-        <h2 style="color: #064e3b; margin-top:0;">PATIL INFRATECH - NEEVPAY</h2>
-        <p>प्रिय क्लायंट / घरमालक,</p>
-        <p>तुमच्या साईटच्या <b>{purpose}</b> साठी खालील OTP तयार करण्यात आला आहे:</p>
-        <div style="text-align: center; margin: 20px 0;">
-            <span style="font-size: 28px; font-weight: 900; letter-spacing: 5px; color: #10b981; background: #f0fdf4; padding: 10px 20px; border-radius: 8px; border: 1px dashed #10b981;">
-                {otp_code}
-            </span>
-        </div>
-        <p style="color: #ef4444; font-size: 13px;">⚠️ हा OTP अत्यंत गोपनीय आहे. इंजिनिअरशी चर्चा करून संमती असल्यासच हा OTP शेअर करा.</p>
-        <hr style="border: 0.5px solid #e2e8f0;">
-        <small style="color: #64748b;">Patil Infratech • Automated Security System</small>
-    </div>
-    """
-    msg.attach(MIMEText(html_content, 'html'))
-
-    try:
-        server = smtplib.SMTP('smtp.gmail.com', 587)
-        server.starttls()
-        server.login(sender_email, sender_password)
-        server.send_message(msg)
-        server.quit()
-        return True, "Email Sent"
-    except Exception as e:
-        return False, str(e)
-
-
 def is_strong_password(password):
     """पासवर्ड सुरक्षितता तपासणी"""
     if len(password) < 8:
@@ -210,7 +155,7 @@ def is_strong_password(password):
 
 
 def get_site_weather_forecast(city_name="Pune"):
-    """ओपन-मेटिओ API द्वारे शहराचा रिअल-टाइम वेदर आणि पावसाचा अंदाज (%) मिळवणे"""
+    """ओपन-मेटिओ API द्वारे शहराचा रिअल-टाइम वेदर मिळवणे"""
     try:
         geo_url = f"https://geocoding-api.open-meteo.com/v1/search?name={urllib.parse.quote(city_name)}&count=1&language=en&format=json"
         geo_res = requests.get(geo_url, timeout=5).json()
@@ -246,7 +191,7 @@ def get_site_weather_forecast(city_name="Pune"):
         }
     except Exception:
         return None
-        
+
 # ==========================================
 # 📌 विभाग ५: SQLITE डेटाबेस मॅनेजमेंट आणि मॉडेल्स
 # ==========================================
@@ -261,7 +206,7 @@ def get_db_connection():
 
 
 def init_db():
-    """सर्व डेटाबेस टेबल्स तयार करणे आणि सुरक्षित अपग्रेड करणे"""
+    """सर्व डेटाबेस टेबल्स तयार करणे"""
     conn = get_db_connection()
     cursor = conn.cursor()
 
@@ -494,7 +439,6 @@ def init_db():
         "Site Manager": "Free",
         "NeevPay": "Free",
         "WhatsApp Share": "Premium",
-        "Civil AI Assistant": "Premium",
     }
     for f_name, f_lvl in default_locks.items():
         cursor.execute(
@@ -619,9 +563,7 @@ for key, default in [
     ("admin_view", "main"),
     ("admin_selected_user", None),
     ("current_site_name", "पाटील रेसिडेन्सी - साईट १"),
-    ("all_sites_data", {"Default Site": {"milestones": [], "created_at": "26-08-2026"}}),
     ("site_location_city", "Pune"),
-    ("autocad_site_opened", False),
     ("is_client_view", False),
     ("client_view_site", None),
     ("client_view_contact", None),
@@ -643,7 +585,7 @@ if current_user_name:
 
 
 def check_user_premium_status(username):
-    """प्रिमियम वैधता आणि उरलेला कालावधी तपासणे"""
+    """प्रिमियम वैधता तपासणे"""
     if not username:
         return False, "Free"
     if username.lower() == "kanha" or username == "9999999999":
@@ -688,7 +630,7 @@ def check_user_premium_status(username):
 is_curr_premium, _ = check_user_premium_status(current_user_name)
 
 # ==========================================
-# 📌 विभाग ८: BRANDED CONSTRUCTION THEME CSS (CAD WORKSPACE THEME)
+# 📌 विभाग ८: BRANDED CONSTRUCTION THEME CSS
 # ==========================================
 st.markdown(
     """
@@ -709,85 +651,6 @@ st.markdown(
         font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif !important;
     }
 
-    /* 🧱 CAD Title Bar */
-    .cad-top-title-bar {
-        background: #181d26;
-        border-bottom: 1px solid #232936;
-        padding: 6px 14px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-radius: 8px 8px 0 0;
-        margin-bottom: 0px;
-    }
-    .cad-app-icon {
-        background: #dc2626;
-        color: #ffffff;
-        font-weight: 900;
-        font-size: 15px;
-        padding: 2px 8px;
-        border-radius: 4px;
-        letter-spacing: 1px;
-        display: inline-block;
-        margin-right: 8px;
-        box-shadow: 0 0 8px rgba(220, 38, 38, 0.5);
-    }
-
-    /* 🎛️ CAD Ribbon Container */
-    .cad-ribbon-container {
-        background: #202632;
-        border-left: 1px solid #2d3545;
-        border-right: 1px solid #2d3545;
-        border-bottom: 2px solid #3b82f6;
-        padding: 10px 14px;
-        margin-bottom: 0px;
-    }
-    .cad-ribbon-group-title {
-        text-align: center;
-        font-size: 10px;
-        font-weight: 700;
-        color: #64748b;
-        text-transform: uppercase;
-        border-top: 1px solid #2d3545;
-        padding-top: 4px;
-        margin-top: 6px;
-        letter-spacing: 0.5px;
-    }
-
-    /* 📑 CAD File / Drawing Tabs */
-    .cad-file-tabs {
-        background: #141820;
-        padding: 6px 12px 0px 12px;
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        border-bottom: 1px solid #2d3545;
-        margin-bottom: 14px;
-    }
-    .cad-tab-active {
-        background: #202632;
-        color: #38bdf8;
-        font-size: 12px;
-        font-weight: 700;
-        padding: 6px 14px;
-        border-radius: 6px 6px 0 0;
-        border-top: 2px solid #38bdf8;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-    }
-    .cad-tab-inactive {
-        background: #181d26;
-        color: #94a3b8;
-        font-size: 12px;
-        font-weight: 600;
-        padding: 6px 14px;
-        border-radius: 6px 6px 0 0;
-        display: inline-flex;
-        align-items: center;
-    }
-
-    /* Input Fields & Buttons */
     div[data-baseweb="input"],
     div[data-baseweb="base-input"],
     div[data-testid="stNumberInputContainer"],
@@ -893,6 +756,7 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
 # ==========================================
 # 📌 विभाग ९: WHATSAPP रिपोर्ट शेअरिंग कंपोनंट
 # ==========================================
@@ -985,7 +849,7 @@ def render_whatsapp_feature(encoded_msg, key_prefix):
                     st.success("✅ ॲडमीनला कोडसाठी रिक्वेस्ट पाठवली आहे!")
 
 # ==========================================
-# 📌 विभाग १०: वेलकम स्क्रीन ॲनिमेशन (3D Cosmic Loader & Sponsor Ads)
+# 📌 विभाग १०: वेलकम स्क्रीन ॲनिमेशन
 # ==========================================
 welcome_placeholder = st.empty()
 
@@ -998,13 +862,15 @@ if not st.session_state.welcome_completed:
         st.markdown(
             """
             <div class="brand-header">
-                <div style="font-size: 38px; margin-bottom: 4px;">🏗️</div>
-                <h1 style='color: #ffffff; margin:0; font-size: 30px; font-weight: 900; letter-spacing: 1px;'>PATIL INFRATECH</h1>
-                <p style='color: #f59e0b; margin:6px 0 0 0; font-size: 15px; font-weight: 700; text-transform: uppercase;'>
+                <div style="font-size: 38px; margin-bottom: 4px; text-align:center;">🏗️</div>
+                <h1 style='color: #ffffff; margin:0; font-size: 30px; font-weight: 900; letter-spacing: 1px; text-align:center;'>PATIL INFRATECH</h1>
+                <p style='color: #f59e0b; margin:6px 0 0 0; font-size: 15px; font-weight: 700; text-transform: uppercase; text-align:center;'>
                     Civil Engineering • Quantity Surveying • Site Management
                 </p>
-                <div style="margin-top: 10px; display: inline-block; background: rgba(0,0,0,0.3); padding: 4px 14px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);">
-                    <small style='color: #94a3b8; font-size: 12px;'>Concept & Logic by: <b style="color:#f8fafc;">Kanhaiya (Founder)</b></small>
+                <div style="margin-top: 10px; text-align:center;">
+                    <span style="background: rgba(0,0,0,0.3); padding: 4px 14px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); color: #94a3b8; font-size: 12px;">
+                        Concept & Logic by: <b style="color:#f8fafc;">Kanhaiya (Founder)</b>
+                    </span>
                 </div>
             </div>
             """,
@@ -1059,7 +925,7 @@ if not st.session_state.welcome_completed:
 # मुख्य ॲप हेडर बॅनर
 st.markdown(
     """
-    <div class="brand-header">
+    <div style="background: #111827; padding: 18px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #1e293b; text-align: center;">
         <div style="font-size: 38px; margin-bottom: 4px;">🏗️</div>
         <h1 style='color: #ffffff; margin:0; font-size: 30px; font-weight: 900; letter-spacing: 1px;'>PATIL INFRATECH</h1>
         <p style='color: #f59e0b; margin:6px 0 0 0; font-size: 15px; font-weight: 700; text-transform: uppercase;'>
@@ -1079,8 +945,8 @@ st.markdown(
 if st.session_state.is_admin_logged:
     st.markdown(
         """
-        <div class="admin-command-center">
-            <h1 style='color: #ec38bc; margin:0; font-size: 28px; text-align: center;'>⚡ KANHAIYA'S EXECUTIVE COMMAND CENTER</h1>
+        <div style="background: #1e1b4b; border: 1px solid #ec38bc; padding: 15px; border-radius: 12px; margin-bottom: 15px;">
+            <h1 style='color: #ec38bc; margin:0; font-size: 26px; text-align: center;'>⚡ KANHAIYA'S EXECUTIVE COMMAND CENTER</h1>
             <p style='color: #cbd5e1; margin:5px 0 0 0; font-size: 14px; text-align: center;'>👑 Patil Infratech Master Control & Management Hub</p>
         </div>
         """,
@@ -1155,7 +1021,6 @@ if st.session_state.is_admin_logged:
         fl_site = st.selectbox("Site Manager Access:", ["Free", "Premium"], index=0 if cur_locks.get("Site Manager", "Free") == "Free" else 1)
         fl_neev = st.selectbox("NeevPay Payment Protection Access:", ["Free", "Premium"], index=0 if cur_locks.get("NeevPay", "Free") == "Free" else 1)
         fl_wa = st.selectbox("WhatsApp Full Report Share:", ["Free", "Premium"], index=0 if cur_locks.get("WhatsApp Share", "Free") == "Free" else 1)
-        fl_ai = st.selectbox("Civil AI Assistant Access:", ["Free", "Premium"], index=0 if cur_locks.get("Civil AI Assistant", "Premium") == "Free" else 1)
 
         if st.button("💾 Save Feature Lock Settings", type="primary"):
             conn = get_db_connection()
@@ -1168,7 +1033,6 @@ if st.session_state.is_admin_logged:
                 "Site Manager": fl_site,
                 "NeevPay": fl_neev,
                 "WhatsApp Share": fl_wa,
-                "Civil AI Assistant": fl_ai,
             }
             for f_name, f_lvl in new_locks.items():
                 cursor.execute(
@@ -1228,9 +1092,9 @@ if st.session_state.is_admin_logged:
             st.markdown(f"#### 👤 MANAGE USER: <span style='color:#ec38bc;'>{u_name.upper()}</span>", unsafe_allow_html=True)
             st.markdown(
                 f"""
-                <div class="admin-user-card">
+                <div style="background: #181d26; border: 1px solid #2d3545; padding: 15px; border-radius: 8px;">
                     <p style="margin:5px 0; font-size:16px;"><b>माहिती/स्टेटस:</b> <span class="gold-vip-badge">{status_badge}</span></p>
-                    <p style="margin:5px 0; font-size:15px;"><b>Username/UID:</b> <code style="color:#00f2fe; font-size:15px;">{u_uid}</code> | <b>Password:</b> <code>{u_pin}</code> | <b>Email:</b> <code>{u_email}</code></p>
+                    <p style="margin:5px 0; font-size:15px;"><b>Username/UID:</b> <code style="color:#00f2fe;">{u_uid}</code> | <b>Password:</b> <code>{u_pin}</code> | <b>Email:</b> <code>{u_email}</code></p>
                     <p style="margin:8px 0 5px 0; font-size:15px;"><b>प्रिमियम मुदत (Expiry):</b> <code>{exp_date}</code></p>
                     <p style="margin:5px 0; font-size:15px;"><b>ॲक्टिव्ह कोड (Unused):</b> <code style="color:#10b981; font-size:16px;">{assigned_code if assigned_code else 'काही नाही'}</code></p>
                     <p style="margin:5px 0; font-size:14px; color:#94a3b8;"><b>युझर कमेंट:</b> {u_comm}</p>
@@ -1310,26 +1174,6 @@ if st.session_state.is_admin_logged:
                     st.warning(f"❌ {u_name} चे प्रिमियम काढले आहे.")
                     st.rerun()
 
-            st.markdown("---")
-            current_msg = info.get("admin_message", "Admin message...")
-            new_msg = st.text_input(
-                f"✍️ {u_name} साठी इनबॉक्स मेसेज बदलणे (Notification Send):",
-                value=current_msg,
-                key=f"win_msg_{target_user}",
-            )
-            if st.button(f"✉️ मेसेज सेव्ह करा व पाठवा ({u_name})", key=f"win_btn_msg_{target_user}"):
-                if new_msg.strip():
-                    conn = get_db_connection()
-                    cursor = conn.cursor()
-                    cursor.execute(
-                        "UPDATE users SET admin_message = ?, unread_notification = 1 WHERE user_key = ?",
-                        (new_msg.strip(), target_user),
-                    )
-                    conn.commit()
-                    conn.close()
-                    st.success(f"✅ '{u_name}' च्या इनबॉक्समध्ये नवीन मेसेज पाठवला (Notification Sent)!")
-                    st.rerun()
-
             if st.button(f"🗑️ Delete User: {u_name}", key=f"win_del_{target_user}"):
                 conn = get_db_connection()
                 cursor = conn.cursor()
@@ -1361,45 +1205,27 @@ if st.session_state.is_admin_logged:
             conn.close()
 
             if all_users:
-                now_time = get_ist_time()
                 for info in all_users:
                     mob = info.get("user_key")
                     u_name = info.get("id", mob)
                     u_uid = info.get("uid", "N/A")
                     u_prem = bool(info.get("is_premium", 0))
                     is_req = bool(info.get("requested_code", 0))
-                    last_active_str = info.get("last_active", None)
 
-                    is_online = False
-                    if last_active_str:
-                        try:
-                            last_active_dt = datetime.datetime.strptime(
-                                last_active_str, "%Y-%m-%d %H:%M:%S"
-                            )
-                            diff_seconds = (now_time - last_active_dt).total_seconds()
-                            if diff_seconds <= 120:
-                                is_online = True
-                        except Exception:
-                            pass
-
-                    status_indicator = (
-                        "🟢 Active (Online)" if is_online else "🔴 Inactive (Offline)"
-                    )
-
-                    col_u1, col_u2 = st.columns([3.2, 1.8])
+                    col_u1, col_u2 = st.columns([3.5, 1.5])
                     if u_prem:
                         col_u1.markdown(
-                            f"<span class='gold-vip-badge'>👑 VIP: {u_name.upper()}</span> (User ID: <code>{u_uid}</code>)<br><small style='color: {'#10b981' if is_online else '#ef4444'}; font-weight: bold;'>Status: {status_indicator}</small>",
+                            f"<span class='gold-vip-badge'>👑 VIP: {u_name.upper()}</span> (User ID: <code>{u_uid}</code>)",
                             unsafe_allow_html=True,
                         )
                     elif is_req:
                         col_u1.markdown(
-                            f"#### 👤 **{u_name}** `[🚨 CODE]` (User ID: `{u_uid}`)<br><small style='color: {'#10b981' if is_online else '#ef4444'}; font-weight: bold;'>Status: {status_indicator}</small>",
+                            f"#### 👤 **{u_name}** `[🚨 CODE]` (User ID: `{u_uid}`)",
                             unsafe_allow_html=True,
                         )
                     else:
                         col_u1.markdown(
-                            f"<span class='free-user-badge'>🆓 FREE: {u_name.upper()}</span> (User ID: <code>{u_uid}</code>)<br><small style='color: {'#10b981' if is_online else '#ef4444'}; font-weight: bold;'>Status: {status_indicator}</small>",
+                            f"<span class='free-user-badge'>🆓 FREE: {u_name.upper()}</span> (User ID: <code>{u_uid}</code>)",
                             unsafe_allow_html=True,
                         )
 
@@ -1453,7 +1279,6 @@ if st.session_state.is_admin_logged:
                     st.warning("⚠️ कृपया ॲडचे नाव टाका!")
 
         st.markdown("---")
-        st.markdown("##### 📋 सध्या चालू असलेल्या जाहिराती (Active Ads List):")
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM ads ORDER BY id DESC")
@@ -1472,8 +1297,6 @@ if st.session_state.is_admin_logged:
                     conn.close()
                     st.success("🗑️ ॲड डिलीट केली!")
                     st.rerun()
-        else:
-            st.info("ℹ️ सध्या कोणतीही ॲड किंवा स्पॉन्सरशिप उपलब्ध नाही.")
 
     elif current_tab == "broadcast":
         st.markdown("### 🔔 Broadcast Notification to All Users")
@@ -1499,13 +1322,14 @@ if st.session_state.is_admin_logged:
                     conn.commit()
                     conn.close()
                     st.success("🎉 ब्रॉडकास्ट मेसेज सर्व युझर्सना यशस्वीरित्या पाठवला गेला आहे!")
+                    st.rerun()
                 else:
                     st.warning("⚠️ कृपया पाठवण्यासाठी काहीतरी मेसेज लिहा!")
 
     st.stop()
 
 # ==========================================
-# 📌 विभाग १२: युझर ऑथेंटिकेशन (Login, Register, OTP & Client View)
+# 📌 विभाग १२: युझर ऑथेंटिकेशन
 # ==========================================
 if st.session_state.app_user_name is None and not st.session_state.get("is_client_view", False):
     st.markdown("### 🏗️ PATIL INFRATECH - SECURE ACCESS")
@@ -1556,7 +1380,7 @@ if st.session_state.app_user_name is None and not st.session_state.get("is_clien
                 else:
                     st.warning("⚠️ कृपया ईमेल/Username आणि पासवर्ड दोन्ही भरा.")
 
-    # १२.२ Email OTP Registration & Setup
+    # १२.२ Email OTP Registration
     with otp_tab:
         st.markdown("#### 📧 Email OTP Verification & Account Creation")
         email_input = st.text_input("तुमचा ईमेल आयडी टाका (Email ID):", key="otp_email_key").strip()
@@ -1621,13 +1445,13 @@ if st.session_state.app_user_name is None and not st.session_state.get("is_clien
                 time.sleep(1)
                 st.rerun()
             else:
-                st.info("✨ नवीन युझर! कृपया खालील माहिती भरून युझरनेम आणि मजबूत पासवर्ड सेट करा:")
+                st.info("✨ नवीन युझर! कृपया खालील माहिती भरून युझरनेम आणि पासवर्ड सेट करा:")
                 with st.form("custom_reg_form"):
                     custom_username = st.text_input("तुमचे नाव किंवा युनिक Username बनावा:").strip()
                     custom_password = st.text_input(
                         "मजबूत पासवर्ड (Set Strong Password):",
                         type="password",
-                        help="कमीत कमी ८ अक्षरे, १ अंक आणि १ विशेष चिन्ह (!@#$%) असणे आवश्यक आहे.",
+                        help="कमीत कमी ८ अक्षरे, १ अंक आणि १ विशेष चिन्ह असणे आवश्यक आहे.",
                     ).strip()
                     confirm_password = st.text_input("पासवर्ड पुन्हा टाका (Confirm Password):", type="password").strip()
 
@@ -1636,11 +1460,11 @@ if st.session_state.app_user_name is None and not st.session_state.get("is_clien
                     if submit_custom_reg:
                         if custom_username and custom_password and confirm_password:
                             if custom_password != confirm_password:
-                                st.error("❌ पासवर्ड आणि कंफर्म पासवर्ड जुळत नाहीत!")
+                                st.error("❌ पासवर्ड जुळत नाहीत!")
                             else:
                                 is_strong, msg = is_strong_password(custom_password)
                                 if not is_strong:
-                                    st.error(f"❌ पासवर्ड कमजोर आहे: {msg}")
+                                    st.error(f"❌ {msg}")
                                 else:
                                     conn = get_db_connection()
                                     cursor = conn.cursor()
@@ -1650,7 +1474,7 @@ if st.session_state.app_user_name is None and not st.session_state.get("is_clien
                                     )
                                     if cursor.fetchone():
                                         conn.close()
-                                        st.error("❌ हा Username आधीच वापरला गेला आहे, कृपया दुसरा टाका!")
+                                        st.error("❌ हा Username आधीच वापरला गेला आहे!")
                                     else:
                                         welcome_msg = f"{custom_username} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳"
                                         now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
@@ -1680,18 +1504,6 @@ if st.session_state.app_user_name is None and not st.session_state.get("is_clien
                                         conn.commit()
                                         conn.close()
 
-                                        subject = "PATIL INFRATECH - Account Created Successfully!"
-                                        body = (
-                                            f"नमस्कार {custom_username}!\n\nपाटील इन्फ्राटेक मध्ये"
-                                            " तुमचे अकाउंट यशस्वीरित्या तयार झाले आहे.\n\nतुमचा"
-                                            f" लॉगिन तपशील:\nUsername: {custom_username}\nPassword:"
-                                            f" {custom_password}\nRegistered Email:"
-                                            f" {st.session_state.pending_email}\n\nतुम्ही पुढील"
-                                            " वेळी ईमेल/युझरनेम आणि पासवर्ड वापरून लॉगिन करू"
-                                            " शकता.\n\n- Kanhaiya (Founder of Patil Infratech)"
-                                        )
-                                        send_email_message(st.session_state.pending_email, subject, body)
-
                                         st.session_state.app_user_name = custom_username
                                         st.session_state.is_client_view = False
                                         st.query_params["saved_user"] = custom_username
@@ -1704,17 +1516,14 @@ if st.session_state.app_user_name is None and not st.session_state.get("is_clien
                                             """,
                                             unsafe_allow_html=True,
                                         )
-
-                                        st.success("🎉 अकाउंट यशस्वीरित्या तयार झाले! डिटेल्स ईमेलवर पाठवले आहेत.")
+                                        st.success("🎉 अकाउंट यशस्वीरित्या तयार झाले!")
                                         time.sleep(1)
                                         st.rerun()
-                        else:
-                            st.warning("⚠️ कृपया सर्व माहिती भरा!")
 
-    # १२.३ 🔍 Client Read-Only Live Portal View (घरमालकांसाठी)
+    # १२.३ Client Read-Only Live Portal View
     with client_tab:
         st.markdown("#### 🔍 घरमालक / क्लायंट लाईव्ह पोर्टल (Read-Only View)")
-        st.caption("घरमालक कोणत्याही पासवर्डशिवाय आपल्या साईटचे नाव निवडून थेट रिअल-टाइम प्रोग्रेस, हजेरी व बिलाचा हिशोब पाहू शकतात.")
+        st.caption("घरमालक कोणत्याही पासवर्डशिवाय थेट रिअल-टाइम प्रोग्रेस, हजेरी व बिलाचा हिशोब पाहू शकतात.")
         
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -1749,16 +1558,8 @@ if st.session_state.app_user_name is None and not st.session_state.get("is_clien
             admin_pass = st.text_input("Password:", type="password")
             submit_admin = st.form_submit_button("🔓 Login to Admin Panel", type="primary")
 
-            secret_admin_id = (
-                st.secrets.get("ADMIN_ID", "kanha_1p")
-                if hasattr(st, "secrets") and "ADMIN_ID" in st.secrets
-                else "kanha_1p"
-            )
-            secret_admin_pass = (
-                st.secrets.get("ADMIN_PASS", "@Dellg15")
-                if hasattr(st, "secrets") and "ADMIN_PASS" in st.secrets
-                else "@Dellg15"
-            )
+            secret_admin_id = st.secrets.get("ADMIN_ID", "kanha_1p") if hasattr(st, "secrets") and "ADMIN_ID" in st.secrets else "kanha_1p"
+            secret_admin_pass = st.secrets.get("ADMIN_PASS", "@Dellg15") if hasattr(st, "secrets") and "ADMIN_PASS" in st.secrets else "@Dellg15"
 
             if submit_admin:
                 if admin_id == secret_admin_id and admin_pass == secret_admin_pass:
@@ -1769,7 +1570,6 @@ if st.session_state.app_user_name is None and not st.session_state.get("is_clien
 
     st.stop()
 
-
 # ==========================================================
 # 📌 विभाग १२.५: CLIENT LIVE READ-ONLY DASHBOARD RENDERER
 # ==========================================================
@@ -1778,7 +1578,7 @@ if st.session_state.get("is_client_view", False):
     
     col_c_top, col_c_exit = st.columns([3.5, 1.5])
     with col_c_top:
-        st.markdown(f"<span class='free-user-badge' style='color:#10b981; border-color:#10b981;'>👁️ CLIENT LIVE PORTAL (READ-ONLY)</span>", unsafe_allow_html=True)
+        st.markdown("<span class='free-user-badge' style='color:#10b981; border-color:#10b981;'>👁️ CLIENT LIVE PORTAL (READ-ONLY)</span>", unsafe_allow_html=True)
     with col_c_exit:
         if st.button("🚪 पोर्टल बंद करा (Exit View)", type="primary"):
             st.session_state.is_client_view = False
@@ -1797,12 +1597,9 @@ if st.session_state.get("is_client_view", False):
 
     conn = get_db_connection()
     cursor = conn.cursor()
-
-    # १. पेमेंट व बिल डेटा
     cursor.execute("SELECT * FROM site_milestone_payments WHERE site_name = ? ORDER BY id ASC", (c_site,))
     c_milestones = [dict(r) for r in cursor.fetchall()]
 
-    # २. प्रोग्रेस डेटा
     cursor.execute("SELECT * FROM site_progress WHERE site_name = ? ORDER BY id DESC LIMIT 5", (c_site,))
     c_progress = [dict(r) for r in cursor.fetchall()]
     conn.close()
@@ -1854,7 +1651,7 @@ if st.session_state.get("is_client_view", False):
         st.info("ℹ️ सध्या कोणताही नवीन प्रोग्रेस रिपोर्ट उपलब्ध नाही.")
 
     st.stop()
-                    
+
 # ==========================================
 # 📌 विभाग १३: मुख्य युझर डॅशबोर्ड (Site Name, Weather, Notice Box & Controls)
 # ==========================================
@@ -2116,88 +1913,24 @@ if not is_user_premium:
                 st.success("✅ ॲडमीनला रिक्वेस्ट पाठवली!")
 
 st.write("---")
+
 # ==========================================
-# 📌 विभाग १४: CIVIL AI ASSISTANT (REMOVED)
-# ==========================================
-# ==========================================
-# 📌 विभाग १४: CIVIL AI ASSISTANT (Gemini SDK & Fallback)
+# 📌 विभाग १४: FEATURE LOCKS CONFIGURATION
 # ==========================================
 locks_cfg = get_feature_locks()
-ai_lock_setting = locks_cfg.get("Civil AI Assistant", "Premium")
 
-if ai_lock_setting == "Free" or is_user_premium:
-    with st.expander("🤖 Patil Infratech Civil AI Assistant (Ask Anything)"):
-        user_ai_query = st.text_input(
-            "तुमचा प्रश्न किंवा शंका इथे लिहा:",
-            placeholder="उदा. What is the dry volume factor for concrete...",
-            key="civil_ai_input",
-        )
-        if st.button("🚀 Ask Civil AI", type="primary"):
-            if user_ai_query.strip():
-                api_key = (
-                    st.secrets.get("GEMINI_API_KEY") 
-                    if hasattr(st, "secrets") and "GEMINI_API_KEY" in st.secrets 
-                    else os.getenv("GEMINI_API_KEY", "")
-                )
-                
-                ai_response_text = ""
-                
-                if HAS_GENAI and api_key:
-                    try:
-                        client = genai.Client(api_key=api_key)
-                        prompt = (
-                            "You are a Senior Civil Engineer for Patil Infratech. "
-                            "Provide a direct, professional, and precise engineering answer: "
-                            f"{user_ai_query}"
-                        )
-                        response = client.models.generate_content(
-                            model="gemini-1.5-flash", 
-                            contents=prompt
-                        )
-                        if response and response.text:
-                            ai_response_text = response.text
-                    except Exception:
-                        ai_response_text = ""
-                
-                # जर एआय किंवा एपीआय की उपलब्ध नसेल, तर स्मार्ट इंजिनिअरिंग उत्तर देणे
-                if not ai_response_text:
-                    q_lower = user_ai_query.lower()
-                    if "cement bag" in q_lower or "volume" in q_lower:
-                        ai_response_text = (
-                            "👷‍♂️ **Patil Infratech Expert Answer:**\n"
-                            "• Weight of 1 cement bag = **50 kg**\n"
-                            "• Density of cement = **1440 kg/m³**\n"
-                            "• Volume in m³ = **0.0347 m³**\n"
-                            "• Volume in Cubic Feet (CFT) = **1.225 CFT**"
-                        )
-                    elif "concrete" in q_lower or "dry volume" in q_lower:
-                        ai_response_text = (
-                            "👷‍♂️ **Patil Infratech Expert Answer:**\n"
-                            "• Wet volume of concrete is multiplied by a **Dry Volume Factor of 1.54** "
-                            "to calculate the required quantities of dry materials (Cement, Sand, and Aggregate)."
-                        )
-                    else:
-                        ai_response_text = (
-                            f"👷‍♂️ **Patil Infratech Expert Engineer Analysis:** Regarding your query *'{user_ai_query}'*, "
-                            "please check IS-456 standards or use our built-in Rate Analysis and BBS modules for exact calculations."
-                        )
-
-                st.markdown(
-                    f"""
-                    <div style="background: #111827; border-left: 5px solid #00f2fe; padding: 18px; border-radius: 14px; margin-top: 12px; box-shadow: 0 4px 20px rgba(0, 242, 254, 0.2); color: #f8fafc;">
-                        <b>🎯 Civil AI Answer:</b><br><br>{ai_response_text}
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-            else:
-                st.warning("⚠️ कृपया आधी तुमचा प्रश्न किंवा शंका इथे लिहा!")
-else:
-    st.info("🔒 Civil AI Assistant हे प्रिमियम फिचर आहे.") 
-    
-    # ==========================================
+# ==========================================
 # 📌 विभाग १५: मुख्य मॉड्यूल निवड कार्ड्स (Site Manager vs Estimator Tools vs NeevPay)
 # ==========================================
+if st.session_state.selected_module is None:
+    st.markdown("<h3 style='text-align:center; margin-bottom:20px;'>🚀 कृपया मॉड्यूल निवडा</h3>", unsafe_allow_html=True)
+
+    calc_lock = locks_cfg.get("Civil Calculator", "Free")
+    site_lock = locks_cfg.get("Site Manager", "Free")
+    neev_lock = locks_cfg.get("NeevPay", "Free")
+
+    main_col1, main_col2, main_col3 = st.columns(3)
+
     # १. साईट मॅनेजर कार्ड
     with main_col1:
         site_badge = "🆓 Free Access" if site_lock == "Free" else "👑 VIP Premium"
@@ -2266,19 +1999,8 @@ else:
                 st.rerun()
 
 # ==========================================
-# 📌 विभाग १६: ESTIMATOR TOOLS मुख्य मॉड्यूल (Sub-modules)
+# 📌 विभाग १६: ESTIMATOR TOOLS मुख्य मॉड्यूल
 # ==========================================
-locks_cfg = get_feature_locks()
-
-if st.session_state.selected_module is None:
-    st.markdown("<h3 style='text-align:center; margin-bottom:20px;'>🚀 कृपया मॉड्यूल निवडा</h3>", unsafe_allow_html=True)
-
-    calc_lock = locks_cfg.get("Civil Calculator", "Free")
-    site_lock = locks_cfg.get("Site Manager", "Free")
-    neev_lock = locks_cfg.get("NeevPay", "Free")
-
-    main_col1, main_col2, main_col3 = st.columns(3)
-    
 elif st.session_state.selected_module == "Estimator Tools":
     if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_estimator"):
         st.session_state.selected_module = None
@@ -2713,7 +2435,7 @@ elif st.session_state.selected_module == "Estimator Tools":
                         unsafe_allow_html=True,
                     )
 
-        # १६.२ Rate Analysis Module (Concrete, Brickwork, Plaster)
+        # १६.२ Rate Analysis Module
         elif est_sub_mod == "Rate Analysis":
             master_rates = get_market_rates()
             st.markdown(
@@ -3160,7 +2882,7 @@ elif st.session_state.selected_module == "Estimator Tools":
             cover = st.number_input("Clear Cover (mm):", min_value=10, max_value=100, step=5, key="bbs_cover")
             st.caption(f"💡 **टीप:** {rcc_comp} साठी मानांकित Clear Cover **{cover} mm** आपोआप सेट केला आहे.")
 
-            st.markdown("#### [३] स्टील बारचे प्रकार आणि व्यास (Steel Reinforcement Details)")
+            st.markdown("#### [३] स्टील बारचे प्रकार आणि व्यास")
             dia_list = [8, 10, 12, 16, 20, 25, 32]
             num_members = st.number_input("एकूण घटक संख्या (No. of Identical Members):", min_value=1, value=1, step=1, key="bbs_mem")
 
@@ -3345,10 +3067,6 @@ elif st.session_state.selected_module == "Estimator Tools":
                     table_rows += f"| {item['Desc']} | {item['Nos']} | {item['Dia']} mm | {item['Len']:.3f} m | {item['TotLen']:.2f} m | {item['Wt']:.3f} Kg/m | {item['TotWt']:.2f} Kg |\n"
 
                 report_table = f"""
-<div class="print-container">
-<h2>🏗️ PATIL INFRATECH - BAR BENDING SCHEDULE (BBS)</h2>
-<p><strong>Prepared For:</strong> {current_user_name} | <strong>Component:</strong> {rcc_comp} | <strong>Date:</strong> {get_ist_time().strftime('%d-%m-%Y')}</p>
-
 | DESCRIPTION | NOS | DIA | LENGTH | TOTAL LENGTH | WEIGHT | TOTAL WEIGHT |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 {table_rows}
@@ -3359,9 +3077,8 @@ elif st.session_state.selected_module == "Estimator Tools":
 * **Total Steel Weight:** **{total_weight_kg:.2f} Kg** ({total_weight_kg/1000:.3f} MT)
 * **Steel Rate:** ₹ {steel_rate_kg:.2f} / Kg
 * **GRAND TOTAL COST:** **₹ {total_cost:.2f}/-**
-</div>
 """
-                st.markdown(report_table, unsafe_allow_html=True)
+                st.markdown(report_table)
 
                 msg_text = f"🏗️ *PATIL INFRATECH - BAR BENDING SCHEDULE (BBS)*\n👤 *Prepared For:* {current_user_name}\n📐 *Component:* {rcc_comp}\n📅 *Date:* {get_ist_time().strftime('%d-%m-%Y')}\n📐 *Size:* {length_m:.2f}m x {width_m:.2f}m x {height_m:.2f}m\n\n📊 *DETAILED BAR SCHEDULE:*\n--------------------------------\n"
                 for idx, item in enumerate(calc_list, 1):
@@ -3397,20 +3114,8 @@ elif st.session_state.selected_module == "Estimator Tools":
         # १६.४ Quantity Surveying & Abstract Sheet Master
         elif est_sub_mod == "Quantity Surveying":
             st.subheader("📈 Quantity Surveying & Abstract Sheet Master")
-            st.caption("💡 नोटबुकच्या मोजमाप पद्धतीनुसार खालील टेबलमध्ये Description, Nos, Length, Width, Height भरा. हिशोब तयार करा!")
+            st.caption("💡 नोटबुकच्या मोजमाप पद्धतीनुसार खालील टेबलमध्ये Description, Nos, Length, Width, Height भरा.")
 
-            with st.expander("📷 2D Plan / Blueprint / Camera Reference"):
-                plan_option = st.radio("ब्लूप्रिंट इनपुट पद्धत निवडा:", ["Upload 2D Plan Image", "Capture via Camera (Live)"], horizontal=True)
-                if "Upload" in plan_option:
-                    uploaded_plan = st.file_uploader("Upload Blueprint (PNG/JPG):", type=["png", "jpg", "jpeg"])
-                    if uploaded_plan:
-                        st.image(uploaded_plan, caption="Uploaded 2D Floor Plan", use_column_width=True)
-                else:
-                    cam_pic = st.camera_input("📸 Capture 2D Plan from Camera")
-                    if cam_pic:
-                        st.image(cam_pic, caption="Captured Blueprint Reference", use_column_width=True)
-
-            st.markdown("### 🏢 Construction Stages Measurement Sheet (Excavation to Finishing)")
             stages = [
                 "Earthwork in Excavation", "P.C.C. Bedding", "Foundation / Footing RCC Work",
                 "Plinth Beam & Masonry Work", "Superstructure Brickwork", "RCC Columns & Beams",
@@ -3440,7 +3145,6 @@ elif st.session_state.selected_module == "Estimator Tools":
                     else:
                         h_val = st.number_input(f"Height #{idx}", min_value=0.0, value=0.0, step=0.05, key=f"qs_h_{idx}")
 
-                # Deductions Input Blocks
                 bw_ded_vol = 0.0
                 if is_brickwork:
                     st.markdown("##### 🚪 Brickwork Deductions (Doors / Windows in m³)")
@@ -3499,7 +3203,6 @@ elif st.session_state.selected_module == "Estimator Tools":
                     if pl_ded_area > 0:
                         st.markdown(f"**🔴 Total Plaster Deduction: `{pl_ded_area:.3f} m²`**")
 
-                # Main Calculation & Net Deduction Logic
                 if nos_val > 0 and l_val > 0 and w_val > 0 and (is_area_unit or h_val > 0):
                     if is_area_unit:
                         single_qty = l_val * w_val
@@ -3517,7 +3220,7 @@ elif st.session_state.selected_module == "Estimator Tools":
                     else:
                         net_total_qty = total_qty
 
-                    st.markdown(f"**📐 Gross Qty: `{total_qty:.3f} {unit_label}` | Net Qty (वजावट करून): <span style='color:#10b981;'>`{net_total_qty:.3f} {unit_label}`</span>**", unsafe_allow_html=True)
+                    st.markdown(f"**📐 Gross Qty: `{total_qty:.3f} {unit_label}` | Net Qty: <span style='color:#10b981;'>`{net_total_qty:.3f} {unit_label}`</span>**", unsafe_allow_html=True)
 
                     mat_summary = "मटेरियल लागू नाही"
                     if "P.C.C." in stg_name:
@@ -3526,7 +3229,6 @@ elif st.session_state.selected_module == "Estimator Tools":
                         sand_m3 = (4 / 13) * dry_vol
                         agg_m3 = (8 / 13) * dry_vol
                         mat_summary = f"Cement: {c_bags} Bags, Sand: {sand_m3:.2f} m³, Aggregate: {agg_m3:.2f} m³"
-                        st.info(f"• **Cement:** {c_bags} Bags | **Sand:** {sand_m3:.2f} m³ | **Aggregate:** {agg_m3:.2f} m³")
 
                     elif "RCC" in stg_name or "Column" in stg_name or "Slab" in stg_name or "Footing" in stg_name:
                         dry_vol = net_total_qty * 1.54
@@ -3535,7 +3237,6 @@ elif st.session_state.selected_module == "Estimator Tools":
                         agg_m3 = (3 / 5.5) * dry_vol
                         steel_kg = net_total_qty * 80.0
                         mat_summary = f"Cement: {c_bags} Bags, Sand: {sand_m3:.2f} m³, Aggregate: {agg_m3:.2f} m³, Steel: {steel_kg:.1f} Kg"
-                        st.info(f"• **Cement:** {c_bags} Bags | **Sand:** {sand_m3:.2f} m³ | **Aggregate:** {agg_m3:.2f} m³ | **Steel:** {steel_kg:.1f} Kg")
 
                     elif "Brickwork" in stg_name:
                         bricks = math.ceil(net_total_qty * 500)
@@ -3543,7 +3244,6 @@ elif st.session_state.selected_module == "Estimator Tools":
                         c_bags = math.ceil((1 / 5) * mortar_vol * 28.8)
                         sand_m3 = (4 / 5) * mortar_vol
                         mat_summary = f"Bricks: {bricks} Nos, Cement: {c_bags} Bags, Sand: {sand_m3:.2f} m³"
-                        st.info(f"• **Bricks:** {bricks} Nos | **Cement:** {c_bags} Bags | **Sand:** {sand_m3:.2f} m³")
 
                     elif "Plaster" in stg_name:
                         thickness = 0.012
@@ -3552,7 +3252,6 @@ elif st.session_state.selected_module == "Estimator Tools":
                         c_bags = math.ceil((1 / 5) * dry_vol * 28.8)
                         sand_m3 = (4 / 5) * dry_vol
                         mat_summary = f"Cement: {c_bags} Bags, Sand: {sand_m3:.2f} m³"
-                        st.info(f"• **Cement (12mm):** {c_bags} Bags | **Sand:** {sand_m3:.2f} m³")
 
                     stage_results.append({
                         "Stage": desc_val,
@@ -3579,7 +3278,7 @@ elif st.session_state.selected_module == "Estimator Tools":
 
             if st.button("📈 GENERATE ABSTRACT SHEET & MATERIAL REPORT", type="primary", key="qs_gen_btn"):
                 if not stage_results:
-                    st.warning("⚠️ कृपया कमीत कमी एका स्टेजसाठी Nos, Length, Width आणि Height च्या व्हॅल्यू भरा!")
+                    st.warning("⚠️ कृपया कमीत कमी एका स्टेजसाठी व्हॅल्यू भरा!")
                 else:
                     st.success("🎉 Abstract Sheet & Material Report यशस्वीरित्या तयार झाला आहे!")
                     st.markdown("### 📊 ABSTRACT SHEET & MATERIAL REPORT")
@@ -3593,22 +3292,13 @@ elif st.session_state.selected_module == "Estimator Tools":
                         whatsapp_text_items += f"• *{r['Stage']}*\n  - Nos: {r['Nos']} | Size: {r['Dimensions']}\n  - Total Net Qty: {r['TotalQty']}\n  - Material: {r['Material']}\n\n"
 
                     final_report_html = f"""
-<div class="print-container">
-<h2>📊 PATIL INFRATECH - ABSTRACT SHEET & QUANTITY SURVEY</h2>
-<p><strong>Prepared For:</strong> {current_user_name} | <strong>Date:</strong> {get_ist_time().strftime('%d-%m-%Y')}</p>
-
 | Description | Nos | Length x Width x Height | Net Quantity | Material Required |
 | :--- | :--- | :--- | :--- | :--- |
 {table_rows}
-
----
-### 📌 SUMMARY
-* **Status:** Report Generated Successfully (Deductions Applied)
-</div>
 """
-                    st.markdown(final_report_html, unsafe_allow_html=True)
+                    st.markdown(final_report_html)
 
-                    msg_text = f"📊 *PATIL INFRATECH - ABSTRACT SHEET*\n👤 *Prepared For:* {current_user_name}\n📅 *Date:* {get_ist_time().strftime('%d-%m-%Y')}\n\n📋 *MEASUREMENT DETAILS (NET QUANTITIES):*\n{whatsapp_text_items}_Generated by Patil Infratech_"
+                    msg_text = f"📊 *PATIL INFRATECH - ABSTRACT SHEET*\n👤 *Prepared For:* {current_user_name}\n📅 *Date:* {get_ist_time().strftime('%d-%m-%Y')}\n\n📋 *MEASUREMENT DETAILS:*\n{whatsapp_text_items}_Generated by Patil Infratech_"
                     encoded_msg = urllib.parse.quote(msg_text)
 
                     btn_col1, btn_col2 = st.columns(2)
@@ -3636,7 +3326,7 @@ elif st.session_state.selected_module == "Estimator Tools":
                         conn.close()
 
 # ==========================================
-# 📌 विभाग १७: SITE MANAGER मुख्य मॉड्यूल (Sub-modules)
+# 📌 विभाग १७: SITE MANAGER मुख्य मॉड्यूल
 # ==========================================
 elif st.session_state.selected_module == "Site Manager":
     if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_site"):
@@ -3764,14 +3454,10 @@ elif st.session_state.selected_module == "Site Manager":
 
             st.markdown("##### 👥 कामगारांची माहिती भरा:")
             w_cols = st.columns([1.5, 1, 1, 1])
-            with w_cols[0]:
-                st.markdown("**कामगार प्रकार**")
-            with w_cols[1]:
-                st.markdown("**संख्या (Nos)**")
-            with w_cols[2]:
-                st.markdown("**रोजंदारी (Rate ₹)**")
-            with w_cols[3]:
-                st.markdown("**एकूण (Total ₹)**")
+            w_cols[0].markdown("**कामगार प्रकार**")
+            w_cols[1].markdown("**संख्या (Nos)**")
+            w_cols[2].markdown("**रोजंदारी (Rate ₹)**")
+            w_cols[3].markdown("**एकूण (Total ₹)**")
 
             w_data = {}
             total_labor_cost = 0.0
@@ -3806,7 +3492,6 @@ elif st.session_state.selected_module == "Site Manager":
                 f"""
                 <div style="background: #111827; padding: 18px; border-radius: 16px; border-left: 5px solid #10b981; margin-top: 12px; box-shadow: 0 4px 20px rgba(16, 185, 129, 0.2);">
                     <h4 style="margin:0; color:#10b981;">💰 Today's Total Labor Cost: ₹ {total_labor_cost:.2f}/-</h4>
-                    <p style="margin:5px 0 0 0; font-size:13px; color:#cbd5e1;">(सर्व कामगारांची एकूण मजुरी)</p>
                 </div>
                 """,
                 unsafe_allow_html=True,
@@ -3883,15 +3568,15 @@ elif st.session_state.selected_module == "Site Manager":
                 else:
                     stock_dict[mat] -= qty
 
-            st.markdown("##### 📊 Live Cement & Material Stock Balance:")
+            st.markdown("##### 📊 Live Material Stock Balance:")
             if stock_dict:
                 for item, count in stock_dict.items():
                     if count <= 10:
                         st.markdown(
                             f"""
                             <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; padding: 12px 16px; border-radius: 12px; margin-bottom: 8px;">
-                                <span style="color: #ef4444; font-weight: bold; font-size: 16px;">⚠️ Warning: {item} Stock Low! Re-order Soon</span><br>
-                                <span style="color: #ffffff; font-size: 14px;">Current Stock: <b>{count} Bags/Units</b></span>
+                                <span style="color: #ef4444; font-weight: bold; font-size: 16px;">⚠️ Warning: {item} Stock Low!</span><br>
+                                <span style="color: #ffffff; font-size: 14px;">Current Stock: <b>{count} Units</b></span>
                             </div>
                             """,
                             unsafe_allow_html=True,
@@ -3900,13 +3585,13 @@ elif st.session_state.selected_module == "Site Manager":
                         st.markdown(
                             f"""
                             <div style="background: #111827; border: 1px solid #00f2fe; padding: 10px 16px; border-radius: 12px; margin-bottom: 8px;">
-                                <span style="color: #38bdf8; font-weight: bold;">Current {item} Stock:</span> <code style="font-size:16px; color:#10b981;">{count} Bags/Units</code>
+                                <span style="color: #38bdf8; font-weight: bold;">Current {item} Stock:</span> <code style="font-size:16px; color:#10b981;">{count} Units</code>
                             </div>
                             """,
                             unsafe_allow_html=True,
                         )
             else:
-                st.info("ℹ️ सध्या स्टॉकमध्ये कोणतीही एंट्री उपलब्ध नाही. खालील इन-आऊट फॉर्म भरा.")
+                st.info("ℹ️ सध्या स्टॉकमध्ये कोणतीही नोंद नाही.")
 
             st.write("---")
             st.markdown("##### ➕/➖ Material IN-OUT Entry:")
@@ -3928,28 +3613,27 @@ elif st.session_state.selected_module == "Site Manager":
                         mat_name,
                         trans_type,
                         entry_qty,
-                        "Bags/Units",
+                        "Units",
                         st.session_state.current_site_name,
                     ),
                 )
                 conn.commit()
                 conn.close()
-                st.success("✅ स्टॉक एंट्री सेव्ह झाली!")
+                st.success("✅ स्टॉक नोंद सेव्ह झाली!")
                 st.rerun()
 
-        # १७.३ Daily Progress Report & Photos
+        # १७.३ Daily Progress Report
         elif sub_mod == "Progress":
-            st.markdown("#### 📸 साईट प्रोग्रेस रिपोर्ट (Daily Progress & Photo Upload)")
-
+            st.markdown("#### 📸 साईट प्रोग्रेस रिपोर्ट")
             work_stage = st.text_input("कामाचा टप्पा (Stage Name):", value="Plinth Level Completed", key="prog_stage_input")
             work_percent = st.slider("Work % Slider (कामाची टक्केवारी):", 0, 100, 40, key="prog_percent_slider")
-            site_photo = st.file_uploader("मोबाईल किंवा कॅमेऱ्याने फोटो अपलोड करा:", type=["png", "jpg", "jpeg"], key="prog_photo_upload")
-            site_remark = st.text_area("कामाचा रिमार्क / शेरा:", placeholder="उदा. साईटवर प्लिंथ लेव्हल कास्टिंगचे काम पूर्ण झाले आहे...", key="prog_remark_input")
+            site_photo = st.file_uploader("फोटो अपलोड करा:", type=["png", "jpg", "jpeg"], key="prog_photo_upload")
+            site_remark = st.text_area("कामाचा रिमार्क / शेरा:", placeholder="उदा. काम वेगाने सुरू आहे...", key="prog_remark_input")
 
             if site_photo:
-                st.image(site_photo, caption="Uploaded Site Work Photo", use_column_width=True)
+                st.image(site_photo, caption="Uploaded Site Work Photo", use_container_width=True)
 
-            if st.button("📊 Generate Instant PDF Report & WhatsApp Summary", type="primary", key="save_prog_btn"):
+            if st.button("📊 Save Progress Report & Summary", type="primary", key="save_prog_btn"):
                 conn = get_db_connection()
                 cursor = conn.cursor()
                 cursor.execute(
@@ -3980,36 +3664,22 @@ elif st.session_state.selected_module == "Site Manager":
                 st.code(report_summary)
 
                 encoded_prog_msg = urllib.parse.quote(report_summary)
-
-                btn_col1, btn_col2 = st.columns(2)
-                with btn_col1:
-                    try:
-                        render_whatsapp_feature(encoded_prog_msg, "site_prog_wa")
-                    except Exception:
-                        st.markdown(f"[Send WhatsApp](https://wa.me/?text={encoded_prog_msg})")
-                with btn_col2:
-                    st.markdown(
-                        """
-                        <button onclick="window.print()" style="width: 100%; background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px; box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4);">
-                            📄 Download Instant PDF Report
-                        </button>
-                        """,
-                        unsafe_allow_html=True,
-                    )
+                st.write(" ")
+                render_whatsapp_feature(encoded_prog_msg, "site_prog_wa")
 
         # १७.४ Pre-Concreting Digital Checklist
         elif sub_mod == "Checklist":
             st.markdown("#### 🏗️ Pre-Concreting Checklist (स्लॅब भरण्यापूर्वीची डिजिटल चेकलिस्ट)")
-            st.caption("💡 काँक्रीटिंग किंवा स्लॅब भरण्यापूर्वी साईट इंजिनिअरने खालील सर्व बाबी तपासून टिक-मार्क करणे आवश्यक आहे.")
+            st.caption("💡 काँक्रीटिंग सुरू करण्यापूर्वी खालील सर्व बाबी तपासून टिक करा.")
 
             default_chk_items = [
-                "Cover Blocks (कव्हर ब्लॉक्स) लावलेले आहेत का?",
+                "Cover Blocks (कव्हर ब्लॉक्स) योग्य लावले आहेत का?",
                 "Shuttering (शटरिंग) चा लेव्हल व सपोर्ट ओके आहे का?",
                 "Electrical Conduit Pipes व जंक्शन बॉक्सेस टाकले आहेत का?",
-                "Curing (क्युरिंग) साठी पाण्याची योग्य सोय आहे का?",
+                "Curing (क्युरिंग) साठी पाण्याची सोय आहे का?",
                 "सरयांचे अंतर (Reinforcement Spacing) व लॅपिंग ओके आहे का?",
-                "शटरिंग ऑइल (Shuttering Oil) लावून कचरा साफ केला आहे का?",
-                "कँक्रीट व्हायब्रेटर (Vibrator) चालू स्थितीत तयार आहे का?",
+                "शटरिंग ऑइल लावून कचरा साफ केला आहे का?",
+                "कँक्रीट व्हायब्रेटर चालू स्थितीत तयार आहे का?",
             ]
 
             conn = get_db_connection()
@@ -4039,55 +3709,10 @@ elif st.session_state.selected_module == "Site Manager":
             checked_items = sum(1 for item in db_items if item["is_checked"] == 1)
             progress_percentage = int((checked_items / total_items) * 100) if total_items > 0 else 0
 
-            st.markdown(
-                f"""
-                <div style="background: #111827; border: 1px solid rgba(0, 242, 254, 0.4); padding: 18px; border-radius: 16px; margin-bottom: 20px;">
-                    <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 15px; margin-bottom: 8px;">
-                        <span>पूर्णता: <span style="color:#00f2fe;">{progress_percentage}%</span></span>
-                        <span>{checked_items}/{total_items} चेक केले</span>
-                    </div>
-                """,
-                unsafe_allow_html=True,
-            )
+            st.markdown(f"**पूर्णता:** `{progress_percentage}%` ({checked_items}/{total_items} तपासले)")
             st.progress(progress_percentage)
 
-            if progress_percentage == 100 and total_items > 0:
-                st.markdown(
-                    """
-                    <div style="background: #166534; color: #dcfce7; padding: 10px; border-radius: 10px; text-align: center; font-weight: bold; font-size: 15px; margin-top: 10px;">
-                        ✅ काँक्रीटिंग सुरू करण्यास पूर्ण परवानगी आहे! (All Checks Passed)
-                    </div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-            else:
-                st.markdown(
-                    """
-                    <div style="background: #991b1b; color: #fee2e2; padding: 10px; border-radius: 10px; text-align: center; font-weight: bold; font-size: 15px; margin-top: 10px;">
-                        🛑 काँक्रीटिंग सुरू करू नका (अजून काही पॉईंट्स बाकी आहेत)
-                    </div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-
-            with st.expander("➕ नवीन चेकलिस्ट पॉईंट जोडा"):
-                new_chk_text = st.text_input("नवीन तपासणी पॉईंट टाका:", placeholder="उदा. जनरेटर बॅकअपची सोय आहे का?...", key="new_chk_input")
-                if st.button("प्लस (+)", key="btn_add_chk_item"):
-                    if new_chk_text.strip():
-                        conn = get_db_connection()
-                        cursor = conn.cursor()
-                        cursor.execute(
-                            "INSERT INTO pre_concreting_checklist (user_key, item_text, is_checked, created_at, site_name) VALUES (?, ?, 0, ?, ?)",
-                            (current_user_name, new_chk_text.strip(), get_ist_time().strftime("%Y-%m-%d %H:%M:%S"), st.session_state.current_site_name),
-                        )
-                        conn.commit()
-                        conn.close()
-                        st.success("✅ नवीन पॉईंट चेकलिस्टमध्ये जोडला गेला!")
-                        st.rerun()
-
-            st.markdown("##### 📝 चेकलिस्ट आयटम्स (टिक-मार्क करा):")
+            st.markdown("##### 📝 चेकलिस्ट आयटम्स:")
             for item in db_items:
                 item_id = item["id"]
                 item_text = item["item_text"]
@@ -4116,135 +3741,52 @@ elif st.session_state.selected_module == "Site Manager":
                         conn.close()
                         st.rerun()
 
-            st.write("---")
-            if st.button("🔄 चेकलिस्ट रिसेट करा (पुन्हा नवीन स्लॅबसाठी तपासणी करा)"):
-                conn = get_db_connection()
-                cursor = conn.cursor()
-                cursor.execute(
-                    "UPDATE pre_concreting_checklist SET is_checked = 0 WHERE user_key = ?",
-                    (current_user_name,),
-                )
-                conn.commit()
-                conn.close()
-                st.success("✅ सर्व टिक-मार्क्स रिसेट झाले आहेत!")
-                st.rerun()
-
-        # १७.५ Weekly Site Dashboard & Logs
+        # १७.५ Weekly Dashboard
         elif sub_mod == "Weekly":
             st.markdown("#### 📊 मागील ७ दिवसांचा साइट रिपोर्ट (Weekly Site Dashboard)")
-            st.caption("💡 मागील ७ दिवसांमधील तुमची हजेरी (Attendance), मटेरियल खर्च आणि कामाची प्रगती. तुम्ही चुकीची एंट्री येथून डिलीट करू शकता.")
-
             today = datetime.date.today()
             week_ago = today - datetime.timedelta(days=7)
-            str_today = str(today)
-            str_week_ago = str(week_ago)
 
             conn = get_db_connection()
-
-            # १. Attendance Logs
             att_df = pd.read_sql_query(
-                f"SELECT rowid as id, date as Date, total_cost as Daily_Wage_Cost FROM site_attendance WHERE user_key = '{current_user_name}' AND date BETWEEN '{str_week_ago}' AND '{str_today}' ORDER BY date DESC",
+                f"SELECT rowid as id, date as Date, total_cost as Daily_Wage_Cost FROM site_attendance WHERE user_key = '{current_user_name}' AND date BETWEEN '{str(week_ago)}' AND '{str(today)}' ORDER BY date DESC",
                 conn,
             )
-
-            # २. Inventory Logs
             inv_df = pd.read_sql_query(
-                f"SELECT rowid as id, date as Date, material_name as Material, transaction_type as Status, quantity as Qty FROM site_inventory WHERE user_key = '{current_user_name}' AND date BETWEEN '{str_week_ago}' AND '{str_today}' ORDER BY date DESC",
+                f"SELECT rowid as id, date as Date, material_name as Material, transaction_type as Status, quantity as Qty FROM site_inventory WHERE user_key = '{current_user_name}' AND date BETWEEN '{str(week_ago)}' AND '{str(today)}' ORDER BY date DESC",
                 conn,
             )
-
-            # ३. Progress Logs
             prog_df = pd.read_sql_query(
-                f"SELECT rowid as id, date as Date, stage_name as Work_Stage, progress_percent as Completed_Percent FROM site_progress WHERE user_key = '{current_user_name}' AND date BETWEEN '{str_week_ago}' AND '{str_today}' ORDER BY date DESC",
+                f"SELECT rowid as id, date as Date, stage_name as Work_Stage, progress_percent as Completed_Percent FROM site_progress WHERE user_key = '{current_user_name}' AND date BETWEEN '{str(week_ago)}' AND '{str(today)}' ORDER BY date DESC",
                 conn,
             )
-
             conn.close()
 
-            with st.expander("👷 मागील ७ दिवसांची हजेरी आणि मजुरी खर्च (Wages)", expanded=True):
+            with st.expander("👷 मागील ७ दिवसांचा मजुरी खर्च (Wages)", expanded=True):
                 if not att_df.empty:
                     total_week_wage = att_df["Daily_Wage_Cost"].sum()
-                    st.markdown(f"**💰 एकूण ७ दिवसांचा मजुरी खर्च:** <span style='color:#10b981; font-size:18px;'>₹ {total_week_wage:,.2f}</span>", unsafe_allow_html=True)
+                    st.markdown(f"**💰 एकूण मजुरी खर्च:** <span style='color:#10b981; font-size:18px;'>₹ {total_week_wage:,.2f}</span>", unsafe_allow_html=True)
                     st.dataframe(att_df.drop(columns=["id"]), use_container_width=True, hide_index=True)
-
-                    st.markdown("---")
-                    c1, c2 = st.columns([3, 1])
-                    with c1:
-                        att_del_opt = st.selectbox(
-                            "❌ डिलीट करण्यासाठी रेकॉर्ड निवडा:",
-                            att_df.to_dict("records"),
-                            format_func=lambda x: f"तारीख: {x['Date']} | रक्कम: ₹ {x['Daily_Wage_Cost']}",
-                            key="sel_del_att",
-                        )
-                    with c2:
-                        st.markdown("<div style='margin-top:28px;'></div>", unsafe_allow_html=True)
-                        if st.button("🗑️ Delete Record", key="btn_del_att", use_container_width=True):
-                            conn = get_db_connection()
-                            conn.execute("DELETE FROM site_attendance WHERE rowid=?", (att_del_opt["id"],))
-                            conn.commit()
-                            conn.close()
-                            st.success("✅ रेकॉर्ड यशस्वीरित्या डिलीट झाले!")
-                            st.rerun()
                 else:
-                    st.info("ℹ️ मागील ७ दिवसात कोणतीही हजेरी नोंदवली नाही.")
+                    st.info("ℹ️ मागील ७ दिवसात हजेरी नोंद नाही.")
 
-            with st.expander("📦 मागील ७ दिवसांचा मटेरियल ट्रॅकर (Material IN/OUT)"):
+            with st.expander("📦 मागील ७ दिवसांचा मटेरियल ट्रॅकर"):
                 if not inv_df.empty:
                     st.dataframe(inv_df.drop(columns=["id"]), use_container_width=True, hide_index=True)
-
-                    st.markdown("---")
-                    c1, c2 = st.columns([3, 1])
-                    with c1:
-                        inv_del_opt = st.selectbox(
-                            "❌ डिलीट करण्यासाठी रेकॉर्ड निवडा:",
-                            inv_df.to_dict("records"),
-                            format_func=lambda x: f"{x['Date']} | {x['Material']} | {x['Status']} ({x['Qty']})",
-                            key="sel_del_inv",
-                        )
-                    with c2:
-                        st.markdown("<div style='margin-top:28px;'></div>", unsafe_allow_html=True)
-                        if st.button("🗑️ Delete Record", key="btn_del_inv", use_container_width=True):
-                            conn = get_db_connection()
-                            conn.execute("DELETE FROM site_inventory WHERE rowid=?", (inv_del_opt["id"],))
-                            conn.commit()
-                            conn.close()
-                            st.success("✅ रेकॉर्ड यशस्वीरित्या डिलीट झाले!")
-                            st.rerun()
                 else:
-                    st.info("ℹ️ मागील ७ दिवसात कोणतेही मटेरियल IN/OUT नोंदवले नाही.")
+                    st.info("ℹ️ मागील ७ दिवसात साहित्य नोंद नाही.")
 
-            with st.expander("📸 मागील ७ दिवसांची कामाची प्रगती (Progress)"):
+            with st.expander("📸 मागील ७ दिवसांची प्रगती (Progress)"):
                 if not prog_df.empty:
                     for _, row in prog_df.iterrows():
                         st.markdown(f"**📅 Date:** `{row['Date']}` | **🚧 Work:** {row['Work_Stage']} | **📈 Progress:** `{row['Completed_Percent']}%`")
                         st.progress(int(row["Completed_Percent"]))
-
-                    st.markdown("---")
-                    c1, c2 = st.columns([3, 1])
-                    with c1:
-                        prog_del_opt = st.selectbox(
-                            "❌ डिलीट करण्यासाठी रेकॉर्ड निवडा:",
-                            prog_df.to_dict("records"),
-                            format_func=lambda x: f"{x['Date']} | {x['Work_Stage']}",
-                            key="sel_del_prog",
-                        )
-                    with c2:
-                        st.markdown("<div style='margin-top:28px;'></div>", unsafe_allow_html=True)
-                        if st.button("🗑️ Delete Record", key="btn_del_prog", use_container_width=True):
-                            conn = get_db_connection()
-                            conn.execute("DELETE FROM site_progress WHERE rowid=?", (prog_del_opt["id"],))
-                            conn.commit()
-                            conn.close()
-                            st.success("✅ रेकॉर्ड यशस्वीरित्या डिलीट झाले!")
-                            st.rerun()
                 else:
-                    st.info("ℹ️ मागील ७ दिवसात कामाचा कोणताही प्रोग्रेस रिपोर्ट नोंदवला नाही.")
+                    st.info("ℹ️ मागील ७ दिवसात प्रोग्रेस नोंद नाही.")
 
-        # १७.६ Project Timeline, Delay Analysis & Finish Date Tracker
+        # १७.६ Project Timeline & Delay Tracker
         elif sub_mod == "Timeline":
-            st.markdown("#### ⏳ प्रोजेक्ट टाईमलाईन व डिले ट्रॅकर (Finish Date Calculator)")
-            st.caption(f"📍 सध्याची साईट: **{st.session_state.current_site_name}** | एखाद्या टप्प्याला उशीर झाल्यास प्रोजेक्ट कधी पूर्ण होईल याचा थेट हिशोब.")
-
+            st.markdown("#### ⏳ प्रोजेक्ट टाईमलाईन व डिले ट्रॅकर")
             load_default_tasks_if_empty(current_user_name, st.session_state.current_site_name)
 
             col_p1, _ = st.columns([2, 2])
@@ -4273,64 +3815,22 @@ elif st.session_state.selected_module == "Site Manager":
             total_critical_delay = sum(t["delay_days"] for t in tasks if t["is_critical"] == 1) if tasks else 0
             total_projected_days = total_planned_days + total_critical_delay
 
-            original_finish_date = proj_start_date + datetime.timedelta(days=total_planned_days)
             new_projected_finish_date = proj_start_date + datetime.timedelta(days=total_projected_days)
 
             m1, m2, m3, m4 = st.columns(4)
-            with m1:
-                st.markdown(
-                    f"""
-                    <div style="background: #111827; border: 1px solid #334155; padding: 14px; border-radius: 12px; text-align: center;">
-                        <span style="color:#94a3b8; font-size:12px;">मूळ अंदाजित दिवस</span>
-                        <h3 style="margin: 4px 0; color:#38bdf8;">{total_planned_days} दिवस</h3>
-                        <small style="color:#64748b;">({original_finish_date.strftime('%d-%m-%Y')})</small>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-            with m2:
-                delay_color = "#ef4444" if total_critical_delay > 0 else "#10b981"
-                st.markdown(
-                    f"""
-                    <div style="background: #111827; border: 1px solid {delay_color}; padding: 14px; border-radius: 12px; text-align: center;">
-                        <span style="color:#94a3b8; font-size:12px;">झालेला एकूण उशीर (Delay)</span>
-                        <h3 style="margin: 4px 0; color:{delay_color};">+{total_critical_delay} दिवस</h3>
-                        <small style="color:#64748b;">(Critical Path)</small>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-            with m3:
-                st.markdown(
-                    f"""
-                    <div style="background: #111827; border: 1px solid #f59e0b; padding: 14px; border-radius: 12px; text-align: center;">
-                        <span style="color:#94a3b8; font-size:12px;">नवीन अंदाजित दिवस</span>
-                        <h3 style="margin: 4px 0; color:#f59e0b;">{total_projected_days} दिवस</h3>
-                        <small style="color:#64748b;">(एकूण कालावधी)</small>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-            with m4:
-                st.markdown(
-                    f"""
-                    <div style="background: #111827; border: 1px solid #10b981; padding: 14px; border-radius: 12px; text-align: center;">
-                        <span style="color:#94a3b8; font-size:12px;">ताबा / फायनल समाप्ती तारीख</span>
-                        <h3 style="margin: 4px 0; color:#10b981; font-size: 18px;">{new_projected_finish_date.strftime('%d %b %Y')}</h3>
-                        <small style="color:#64748b;">(Projected Handover)</small>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
+            m1.metric("मूळ दिवस", f"{total_planned_days} दिवस")
+            m2.metric("एकूण उशीर", f"+{total_critical_delay} दिवस")
+            m3.metric("नवीन एकूण दिवस", f"{total_projected_days} दिवस")
+            m4.metric("ताबा तारीख", f"{new_projected_finish_date.strftime('%d %b %Y')}")
 
             st.write("---")
-            st.markdown("##### 📋 कामांचे टप्पे आणि उशीर व्यवस्थापन (Update Progress & Delays):")
+            st.markdown("##### 📋 कामांचे टप्पे व्यवस्थापन:")
 
             header_c = st.columns([0.6, 2.8, 1.2, 1.2, 1.4, 1.0])
             header_c[0].markdown("**क्र.**")
-            header_c[1].markdown("**कामाचा टप्पा (Task)**")
+            header_c[1].markdown("**कामाचा टप्पा**")
             header_c[2].markdown("**नियोजित दिवस**")
-            header_c[3].markdown("**उशीर (Delay)**")
+            header_c[3].markdown("**उशीर (Days)**")
             header_c[4].markdown("**स्टेटस**")
             header_c[5].markdown("**Critical?**")
 
@@ -4341,42 +3841,15 @@ elif st.session_state.selected_module == "Site Manager":
                 tc[0].markdown(f"<p style='margin-top:8px;'>{t['stage_order']}</p>", unsafe_allow_html=True)
                 tc[1].markdown(f"<p style='margin-top:8px; font-weight:600;'>{t['task_name']}</p>", unsafe_allow_html=True)
 
-                new_plan = tc[2].number_input(
-                    f"Plan_{t_id}",
-                    min_value=1,
-                    value=t["planned_duration"],
-                    step=1,
-                    key=f"plan_dur_{t_id}",
-                    label_visibility="collapsed",
-                )
-                new_delay = tc[3].number_input(
-                    f"Delay_{t_id}",
-                    min_value=0,
-                    value=t["delay_days"],
-                    step=1,
-                    key=f"delay_dur_{t_id}",
-                    label_visibility="collapsed",
-                )
-                new_status = tc[4].selectbox(
-                    f"Status_{t_id}",
-                    ["Pending", "In Progress", "Completed"],
-                    index=["Pending", "In Progress", "Completed"].index(t["status"]),
-                    key=f"status_{t_id}",
-                    label_visibility="collapsed",
-                )
-                is_crit = tc[5].checkbox(
-                    "",
-                    value=bool(t["is_critical"]),
-                    key=f"crit_{t_id}",
-                    help="हे काम उशिरा झाल्यास थेट पूर्ण प्रोजेक्ट पुढे ढकलला जाईल का?",
-                )
+                new_plan = tc[2].number_input(f"Plan_{t_id}", min_value=1, value=t["planned_duration"], step=1, key=f"plan_dur_{t_id}", label_visibility="collapsed")
+                new_delay = tc[3].number_input(f"Delay_{t_id}", min_value=0, value=t["delay_days"], step=1, key=f"delay_dur_{t_id}", label_visibility="collapsed")
+                new_status = tc[4].selectbox(f"Status_{t_id}", ["Pending", "In Progress", "Completed"], index=["Pending", "In Progress", "Completed"].index(t["status"]), key=f"status_{t_id}", label_visibility="collapsed")
+                is_crit = tc[5].checkbox("", value=bool(t["is_critical"]), key=f"crit_{t_id}")
 
-                updated_tasks.append(
-                    (new_plan, new_delay, new_status, 1 if is_crit else 0, t_id)
-                )
+                updated_tasks.append((new_plan, new_delay, new_status, 1 if is_crit else 0, t_id))
 
             st.write(" ")
-            if st.button("💾 बदल सेव्ह करा आणि नवीन तारीख कॅल्क्युलेट करा", type="primary", use_container_width=True):
+            if st.button("💾 बदल सेव्ह करा", type="primary", use_container_width=True):
                 conn = get_db_connection()
                 cursor = conn.cursor()
                 for p, d, s, c, tid in updated_tasks:
@@ -4393,43 +3866,30 @@ elif st.session_state.selected_module == "Site Manager":
                 st.success("✅ प्रोजेक्ट टाईमलाईन अपडेट झाली!")
                 st.rerun()
 
-            st.write("---")
-            wa_timeline_text = (
-                "🏗️ *PATIL INFRATECH - PROJECT TIMELINE REPORT*\n"
-                f"📍 *Site:* {st.session_state.current_site_name}\n"
-                f"📅 *Start Date:* {proj_start_date.strftime('%d-%m-%Y')}\n"
-                f"⏱️ *Planned Duration:* {total_planned_days} Days\n"
-                f"🚨 *Total Delay:* +{total_critical_delay} Days\n"
-                f"🎯 *Projected Handover Date:* {new_projected_finish_date.strftime('%d-%m-%Y')}\n"
-                "--------------------------------\n_Generated by Patil Infratech_"
-            )
-
-            render_whatsapp_feature(
-                urllib.parse.quote(wa_timeline_text), "site_timeline_wa"
-            )
 # ==========================================
-# विभाग १८: NEEVPAY / SITESETU मुख्य मॉड्यूल (Milestone Escrow & Payment Protection)
+# 📌 विभाग १८: NEEVPAY / SITESETU मुख्य मॉड्यूल
 # ==========================================
 elif st.session_state.selected_module == "NeevPay":
-    if st.button("मुख्य मेनूवर जा (Back to Main)", key="btn_back_neevpay"):
+    if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_neevpay"):
         st.session_state.selected_module = None
         st.rerun()
 
     st.write("---")
-    neevpay_banner = (
-        "<div style='background: linear-gradient(135deg, #064e3b 0%, #0f172a 100%); "
-        "padding: 18px; border-radius: 16px; border: 1px solid #10b981; margin-bottom: 20px;'>"
-        "<h2 style='margin: 0; color: #10b981; font-weight: 900;'>NEEVPAY / SITESETU - SMART PAYMENT ESCROW & BILLING</h2>"
-        "<p style='margin: 5px 0 0 0; color: #cbd5e1; font-size: 14px;'>"
-        "इंजिनिअर व घरमालक यांच्यातील कामावर आधारित पारदर्शक बिलिंग, संमती-आधारित पेमेंट लॉक व अधिकृत Master Invoice व्यवस्था."
-        "</p></div>"
+    st.markdown(
+        """
+        <div style='background: linear-gradient(135deg, #064e3b 0%, #0f172a 100%); padding: 18px; border-radius: 16px; border: 1px solid #10b981; margin-bottom: 20px;'>
+            <h2 style='margin: 0; color: #10b981; font-weight: 900;'>NEEVPAY / SITESETU - SMART PAYMENT ESCROW & BILLING</h2>
+            <p style='margin: 5px 0 0 0; color: #cbd5e1; font-size: 14px;'>
+                इंजिनिअर व घरमालक यांच्यातील कामावर आधारित पारदर्शक बिलिंग व डिजिटल संमती व्यवस्था.
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
-    st.markdown(neevpay_banner, unsafe_allow_html=True)
 
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # क्लायंटचा नोंदणीकृत ईमेल आणणे
     cursor.execute(
         "SELECT client_email FROM site_client_profiles WHERE user_key = ? AND site_name = ?",
         (current_user_name, st.session_state.current_site_name),
@@ -4437,7 +3897,6 @@ elif st.session_state.selected_module == "NeevPay":
     client_row = cursor.fetchone()
     client_email = client_row["client_email"] if client_row else ""
 
-    # डेटाबेसमधून चालू साईटचे सर्व टप्पे आणणे
     cursor.execute(
         """
         SELECT * FROM site_milestone_payments 
@@ -4449,60 +3908,48 @@ elif st.session_state.selected_module == "NeevPay":
     milestones = [dict(r) for r in cursor.fetchall()]
     conn.close()
 
-    # ==========================================================
-    # १. क्लायंट ईमेल नोंदणी व व्यवस्थापन
-    # ==========================================================
-    with st.container():
-        if not client_email:
-            st.warning("NeevPay इनव्हॉइस व सुरक्षिततेसाठी घरमालकाचा (Client) Email ID सेव्ह करा.")
+    # १. क्लायंट ईमेल व्यवस्थापन
+    if not client_email:
+        st.warning("⚠️ NeevPay इनव्हॉइससाठी घरमालकाचा (Client) Email ID सेव्ह करा.")
+        c_mail_in = st.text_input("घरमालकाचा ईमेल पत्ता (Client Email ID):", placeholder="client@gmail.com", key="reg_client_mail")
 
-            c_mail_in = st.text_input(
-                "घरमालकाचा ईमेल पत्ता (Client Email ID):",
-                placeholder="client@gmail.com",
-                key="reg_client_mail",
-            )
-
-            if st.button("ईमेल सेव्ह करा", key="btn_save_init_email", type="primary"):
-                if c_mail_in.strip() and "@" in c_mail_in:
-                    conn = get_db_connection()
-                    cursor = conn.cursor()
-                    cursor.execute(
-                        "INSERT OR REPLACE INTO site_client_profiles (user_key, site_name, client_email) VALUES (?, ?, ?)",
-                        (
-                            current_user_name,
-                            st.session_state.current_site_name,
-                            c_mail_in.strip().lower(),
-                        ),
-                    )
-                    conn.commit()
-                    conn.close()
-                    st.success("घरमालकाचा ईमेल यशस्वीरित्या सेव्ह झाला!")
-                    st.rerun()
-                else:
-                    st.error("कृपया योग्य ईमेल पत्ता टाका.")
-        else:
-            c_info_col1, c_info_col2 = st.columns([3, 1])
-            with c_info_col1:
-                st.info(f"रजिस्टर असलेला अधिकृत Email: `{client_email}` (या ईमेलवर इनव्हॉइस पाठवले जाईल)")
-            with c_info_col2:
-                with st.popover("ईमेल बदला"):
-                    new_mail_edit = st.text_input("नवीन ईमेल टाका:", value=client_email, key="edit_c_mail")
-                    if st.button("अपडेट करा", key="btn_update_c_mail", type="primary"):
-                        if new_mail_edit.strip() and "@" in new_mail_edit:
-                            conn = get_db_connection()
-                            cursor = conn.cursor()
-                            cursor.execute(
-                                "UPDATE site_client_profiles SET client_email = ? WHERE user_key = ? AND site_name = ?",
-                                (new_mail_edit.strip().lower(), current_user_name, st.session_state.current_site_name),
-                            )
-                            conn.commit()
-                            conn.close()
-                            st.success("ईमेल अपडेट झाला!")
-                            st.rerun()
+        if st.button("ईमेल सेव्ह करा", key="btn_save_init_email", type="primary"):
+            if c_mail_in.strip() and "@" in c_mail_in:
+                conn = get_db_connection()
+                cursor = conn.cursor()
+                cursor.execute(
+                    "INSERT OR REPLACE INTO site_client_profiles (user_key, site_name, client_email) VALUES (?, ?, ?)",
+                    (current_user_name, st.session_state.current_site_name, c_mail_in.strip().lower()),
+                )
+                conn.commit()
+                conn.close()
+                st.success("घरमालकाचा ईमेल यशस्वीरित्या सेव्ह झाला!")
+                st.rerun()
+            else:
+                st.error("कृपया योग्य ईमेल पत्ता टाका.")
+    else:
+        c_info_col1, c_info_col2 = st.columns([3, 1])
+        with c_info_col1:
+            st.info(f"रजिस्टर असलेला अधिकृत Email: `{client_email}`")
+        with c_info_col2:
+            with st.popover("ईमेल बदला"):
+                new_mail_edit = st.text_input("नवीन ईमेल टाका:", value=client_email, key="edit_c_mail")
+                if st.button("अपडेट करा", key="btn_update_c_mail", type="primary"):
+                    if new_mail_edit.strip() and "@" in new_mail_edit:
+                        conn = get_db_connection()
+                        cursor = conn.cursor()
+                        cursor.execute(
+                            "UPDATE site_client_profiles SET client_email = ? WHERE user_key = ? AND site_name = ?",
+                            (new_mail_edit.strip().lower(), current_user_name, st.session_state.current_site_name),
+                        )
+                        conn.commit()
+                        conn.close()
+                        st.success("ईमेल अपडेट झाला!")
+                        st.rerun()
 
     st.write("---")
 
-    # बजेट आणि समरी हिशोब
+    # बजेट समरी
     total_budget = sum(m["planned_amount"] for m in milestones)
     total_received = sum(m["amount_deposited"] for m in milestones)
     total_pending = max(0.0, total_budget - total_received)
@@ -4510,56 +3957,15 @@ elif st.session_state.selected_module == "NeevPay":
     overall_site_pct = (total_received / total_budget * 100) if total_budget > 0 else 0.0
 
     e1, e2, e3, e4 = st.columns(4)
-    with e1:
-        st.markdown(
-            f"""
-            <div style="background: #111827; border: 1px solid #334155; padding: 14px; border-radius: 12px; text-align: center;">
-                <span style="color:#94a3b8; font-size:12px;">एकूण ठरलेले बजेट / बिल</span>
-                <h4 style="margin: 4px 0; color:#38bdf8;">Rs. {total_budget:,.2f}</h4>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-    with e2:
-        st.markdown(
-            f"""
-            <div style="background: #111827; border: 1px solid #10b981; padding: 14px; border-radius: 12px; text-align: center;">
-                <span style="color:#94a3b8; font-size:12px;">क्लायंटने दिलेली रक्कम</span>
-                <h4 style="margin: 4px 0; color:#10b981;">Rs. {total_received:,.2f}</h4>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-    with e3:
-        p_color = "#ef4444" if total_pending > 0 else "#10b981"
-        st.markdown(
-            f"""
-            <div style="background: #111827; border: 1px solid {p_color}; padding: 14px; border-radius: 12px; text-align: center;">
-                <span style="color:#94a3b8; font-size:12px;">उर्वरित बाकी रक्कम (Balance)</span>
-                <h4 style="margin: 4px 0; color:{p_color};">Rs. {total_pending:,.2f}</h4>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-    with e4:
-        st.markdown(
-            f"""
-            <div style="background: #111827; border: 1px solid #00f2fe; padding: 14px; border-radius: 12px; text-align: center;">
-                <span style="color:#94a3b8; font-size:12px;">पूर्ण टप्पे व प्रगती</span>
-                <h4 style="margin: 4px 0; color:#00f2fe;">{locked_stages}/{len(milestones)} ({overall_site_pct:.1f}%)</h4>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+    e1.metric("एकूण ठरलेले बजेट", f"Rs. {total_budget:,.2f}")
+    e2.metric("प्राप्त रक्कम", f"Rs. {total_received:,.2f}")
+    e3.metric("शिल्लक बाकी", f"Rs. {total_pending:,.2f}")
+    e4.metric("प्रगती (%)", f"{overall_site_pct:.1f}% ({locked_stages}/{len(milestones)} टप्पे)")
 
     st.write("---")
 
-    # ==========================================================
-    # २. इंजिनिअर पॅनल: नवीन कामाचा टप्पा आणि बिल स्वतः तयार करा
-    # ==========================================================
+    # २. नवीन कामाचा टप्पा जोडा
     with st.expander("कामाचे नवीन बिल / टप्पा तयार करा", expanded=(len(milestones) == 0)):
-        st.caption("इंजिनिअर कामाचा प्रकार निवडून किंवा स्वतः लिहून त्याचे ठरलेले बिल निश्चित करू शकतो.")
-
         work_presets = [
             "पाया खोदाई व प्लिंथ काम (Excavation & Plinth Level)",
             "आरसीसी कॉलम्स कास्टिंग (RCC Columns Casting)",
@@ -4572,16 +3978,15 @@ elif st.session_state.selected_module == "NeevPay":
             "इतर सानुकूल काम (Custom Work Name...)"
         ]
 
-        selected_work_type = st.selectbox("कामाचा प्रकार निवडा (Select Work Stage):", work_presets, key="sel_work_preset")
-
+        selected_work_type = st.selectbox("कामाचा प्रकार निवडा:", work_presets, key="sel_work_preset")
         if selected_work_type == "इतर सानुकूल काम (Custom Work Name...)":
-            custom_stage_name = st.text_input("कामाचे नाव टाका (Custom Work Name):", placeholder="उदा. वॉटरप्रूफिंग व टेरेस काम...", key="custom_stg_input")
+            custom_stage_name = st.text_input("कामाचे नाव टाका:", placeholder="उदा. वॉटरप्रूफिंग...", key="custom_stg_input")
             final_stage_name = custom_stage_name.strip()
         else:
             final_stage_name = selected_work_type
 
         init_stage_amt = st.number_input(
-            "या कामाचे ठरलेले बिल (Rs.) [किमान Rs. 1]:",
+            "या कामाचे ठरलेले बिल (Rs.):",
             min_value=1.0,
             value=50000.0,
             step=1000.0,
@@ -4598,400 +4003,60 @@ elif st.session_state.selected_module == "NeevPay":
                     (user_key, site_name, stage_name, planned_amount, amount_deposited, status, engineer_approved, client_approved, is_locked, remark)
                     VALUES (?, ?, ?, ?, 0.0, 'Bill Fixed (Unpaid)', 0, 0, 0, 'काही नाही')
                     """,
-                    (
-                        current_user_name,
-                        st.session_state.current_site_name,
-                        final_stage_name,
-                        float(init_stage_amt),
-                    ),
+                    (current_user_name, st.session_state.current_site_name, final_stage_name, float(init_stage_amt)),
                 )
                 conn.commit()
                 conn.close()
-                st.success(f"'{final_stage_name}' चे Rs. {init_stage_amt:,.2f} चे बिल निश्चित झाले!")
+                st.success(f"'{final_stage_name}' चे बिल सेव्ह झाले!")
                 st.rerun()
-            else:
-                st.warning("कृपया कामाचे नाव टाका!")
 
-    # ==========================================================
-    # ३. NEEVPAY MASTER BILL / ESCROW STATEMENT PDF & DIRECT EMAIL
-    # ==========================================================
-    if milestones:
-        with st.expander("NeevPay Master Escrow Statement & Invoicing (PDF / Print / Email)", expanded=False):
-            st.caption("क्लायंट व इंजिनिअरसाठी अधिकृत डिजिटल A4 Master Statement, PDF इनव्हॉइस आणि थेट ईमेल सुविधा.")
-
-            table_rows_html = ""
-            for idx, m_item in enumerate(milestones, 1):
-                p_val = float(m_item["planned_amount"])
-                d_val = float(m_item["amount_deposited"])
-                bal_val = max(0.0, p_val - d_val)
-                stage_pct = (d_val / p_val * 100) if p_val > 0 else 0.0
-
-                if m_item.get("is_locked") == 1:
-                    st_badge = "<span style='color: #10b981; font-weight:bold;'>FULLY PAID (100%)</span>"
-                elif d_val >= p_val and p_val > 0:
-                    st_badge = "<span style='color: #0284c7; font-weight:bold;'>READY TO LOCK</span>"
-                elif d_val > 0:
-                    st_badge = f"<span style='color: #d97706; font-weight:bold;'>PARTIAL ({stage_pct:.1f}%)</span>"
-                elif p_val > 0:
-                    st_badge = "<span style='color: #ef4444; font-weight:bold;'>UNPAID</span>"
-                else:
-                    st_badge = "<span style='color: #64748b;'>BILL PENDING</span>"
-
-                table_rows_html += f"""
-                <tr>
-                    <td style="text-align:center; font-weight:bold;">{idx}</td>
-                    <td><b>{m_item['stage_name']}</b></td>
-                    <td style="text-align:right;">Rs. {p_val:,.2f}</td>
-                    <td style="text-align:right; color:#10b981; font-weight:bold;">Rs. {d_val:,.2f}</td>
-                    <td style="text-align:right; color:#ef4444; font-weight:bold;">Rs. {bal_val:,.2f}</td>
-                    <td style="text-align:center;">{st_badge}</td>
-                    <td style="text-align:center; font-size:10px;">{m_item.get('completion_date') or '-'}</td>
-                </tr>
-                """
-
-            neevpay_html_doc = f"""<!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="utf-8">
-                <title>NEEVPAY MASTER ESCROW STATEMENT - {st.session_state.current_site_name}</title>
-                <style>
-                    @page {{ size: A4 portrait; margin: 8mm; }}
-                    @media print {{
-                        body {{ background: #ffffff !important; color: #000000 !important; }}
-                        .no-print {{ display: none !important; }}
-                    }}
-                    body {{ background-color: #e2e8f0; font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 10px; color: #0f172a; }}
-                    .a4-page {{ position: relative; background: #ffffff; width: 100%; max-width: 780px; margin: 0 auto 20px auto; padding: 25px 30px; border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); border: 1.5px solid #0f172a; box-sizing: border-box; min-height: 1020px; overflow: hidden; }}
-                    .watermark {{ position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-28deg); font-size: 22px; font-weight: 900; color: rgba(15, 23, 42, 0.08); text-transform: uppercase; letter-spacing: 2.5px; text-align: center; width: 78%; max-width: 500px; line-height: 1.5; pointer-events: none; user-select: none; border: 3px dashed rgba(15, 23, 42, 0.08); padding: 15px 25px; border-radius: 12px; z-index: 999; }}
-                    .content-box {{ position: relative; z-index: 2; }}
-                    .header-title {{ text-align: center; border-bottom: 2px solid #064e3b; padding-bottom: 6px; margin-bottom: 12px; }}
-                    .header-title h1 {{ margin: 0; font-size: 22px; color: #064e3b; font-weight: 900; letter-spacing: 0.5px; }}
-                    .header-title p {{ margin: 2px 0; font-size: 11px; font-weight: bold; color: #10b981; }}
-                    table.info-table {{ width: 100%; margin-bottom: 12px; font-size: 12px; border-collapse: collapse; }}
-                    table.info-table td {{ padding: 3px 0; }}
-                    .section-header {{ background: #064e3b; color: #ffffff; padding: 6px 12px; font-size: 12px; font-weight: bold; border-radius: 4px; margin: 12px 0 8px 0; }}
-                    table.custom-data-table {{ width: 100%; border-collapse: collapse; margin: 8px 0 15px 0; font-size: 11px; }}
-                    table.custom-data-table th, table.custom-data-table td {{ border: 1px solid #cbd5e1; padding: 6px 8px; text-align: left; }}
-                    table.custom-data-table th {{ background-color: rgba(241, 245, 249, 0.95); font-weight: bold; color: #0f172a; }}
-                    table.custom-data-table tr:nth-child(even) {{ background-color: rgba(248, 250, 252, 0.6); }}
-                    .summary-box {{ background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; margin-top: 15px; font-size: 12px; }}
-                    .signature-box {{ margin-top: 40px; width: 100%; font-size: 12px; }}
-                    .footer-stamp {{ text-align: center; margin-top: 25px; font-size: 10px; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 5px; }}
-                </style>
-            </head>
-            <body>
-                <div class="a4-page">
-                    <div class="watermark">NEEVPAY ESCROW<br>PATIL INFRATECH VERIFIED</div>
-                    <div class="content-box">
-                        <div class="header-title">
-                            <h1>PATIL INFRATECH - NEEVPAY ESCROW</h1>
-                            <p>SMART MILESTONE PAYMENT PROTECTION & MASTER INVOICE</p>
-                            <small style="color: #64748b;">(Digital Milestone Escrow & Verification Protocol)</small>
-                        </div>
-
-                        <table class="info-table">
-                            <tr>
-                                <td><b>Project / Site:</b> <span style="color:#064e3b; font-weight:bold;">{st.session_state.current_site_name}</span></td>
-                                <td style="text-align: right;"><b>Statement Date:</b> {get_ist_time().strftime('%d-%m-%Y')}</td>
-                            </tr>
-                            <tr>
-                                <td><b>Engineer:</b> {current_user_name}</td>
-                                <td style="text-align: right;"><b>Client Email:</b> {client_email or 'Not Registered'}</td>
-                            </tr>
-                        </table>
-                        <hr style="border: 0.5px solid #cbd5e1; margin-bottom: 8px;">
-
-                        <div class="section-header">
-                            MILESTONE-WISE PAYMENT & COMPLETION STATEMENT
-                        </div>
-
-                        <table class="custom-data-table">
-                            <thead>
-                                <tr>
-                                    <th style="text-align:center; width:30px;">#</th>
-                                    <th>कामाचा टप्पा (Milestone Stage)</th>
-                                    <th style="text-align:right;">ठरलेले बिल</th>
-                                    <th style="text-align:right;">जमा रक्कम</th>
-                                    <th style="text-align:right;">उर्वरित बाकी</th>
-                                    <th style="text-align:center;">सद्यस्थिती</th>
-                                    <th style="text-align:center;">लॉक दिनांक</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {table_rows_html}
-                            </tbody>
-                        </table>
-
-                        <div class="summary-box">
-                            <table style="width:100%; font-size:12px;">
-                                <tr>
-                                    <td><b>एकूण ठरलेले बजेट:</b> <span style="color:#0284c7; font-weight:bold;">Rs. {total_budget:,.2f}</span></td>
-                                    <td><b>क्लायंटकडून प्राप्त:</b> <span style="color:#10b981; font-weight:bold;">Rs. {total_received:,.2f}</span></td>
-                                    <td><b>शिल्लक बाकी:</b> <span style="color:#ef4444; font-weight:bold;">Rs. {total_pending:,.2f}</span></td>
-                                    <td><b>प्रगती:</b> <span style="color:#00f2fe; font-weight:bold;">{overall_site_pct:.1f}% ({locked_stages}/{len(milestones)} टप्पे)</span></td>
-                                </tr>
-                            </table>
-                        </div>
-
-                        <table class="signature-box">
-                            <tr>
-                                <td style="width: 50%;">
-                                    <br><br>
-                                    __________________________<br>
-                                    <b>Site Engineer Signature</b><br>
-                                    <small style="color:#64748b;">Patil Infratech Authorized</small>
-                                </td>
-                                <td style="width: 50%; text-align: right;">
-                                    <br><br>
-                                    __________________________<br>
-                                    <b>Client (Owner) Signature</b><br>
-                                    <small style="color:#64748b;">Verified Approver</small>
-                                </td>
-                            </tr>
-                        </table>
-
-                        <div class="footer-stamp">
-                            System Verified & Secured by: <b>Patil Infratech NeevPay Protocol</b> • Generated on {get_ist_time().strftime('%d-%m-%Y %H:%M:%S')}
-                        </div>
-                    </div>
-                </div>
-            </body>
-            </html>
-            """
-
-            st.components.v1.html(neevpay_html_doc, height=520, scrolling=True)
-
-            st.write("---")
-            np_c1, np_c2, np_c3, np_c4 = st.columns(4)
-
-            with np_c1:
-                st.download_button(
-                    label="Download Master HTML",
-                    data=neevpay_html_doc,
-                    file_name=f"NeevPay_Master_Invoice_{st.session_state.current_site_name.replace(' ', '_')}.html",
-                    mime="text/html",
-                    type="primary",
-                    use_container_width=True,
-                )
-
-            with np_c2:
-                neev_export_data = []
-                for m_item in milestones:
-                    neev_export_data.append({
-                        "Site": st.session_state.current_site_name,
-                        "Client Email": client_email,
-                        "Stage": m_item["stage_name"],
-                        "Planned Bill (Rs)": m_item["planned_amount"],
-                        "Deposited (Rs)": m_item["amount_deposited"],
-                        "Balance (Rs)": max(0.0, m_item["planned_amount"] - m_item["amount_deposited"]),
-                        "Progress %": f"{(m_item['amount_deposited']/m_item['planned_amount']*100):.1f}%" if m_item["planned_amount"] > 0 else "0%",
-                        "Status": m_item["status"],
-                        "Locked": "Yes" if m_item.get("is_locked") == 1 else "No",
-                        "Completion Date": m_item.get("completion_date") or "-"
-                    })
-                neev_csv = pd.DataFrame(neev_export_data).to_csv(index=False).encode('utf-8-sig')
-
-                st.download_button(
-                    label="Export CSV Data",
-                    data=neev_csv,
-                    file_name=f"NeevPay_Escrow_{st.session_state.current_site_name.replace(' ', '_')}.csv",
-                    mime="text/csv",
-                    use_container_width=True,
-                )
-
-            with np_c3:
-                st.markdown(
-                    """
-                    <button onclick="window.parent.print()" style="width: 100%; background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); color: white; border: none; padding: 10px 14px; border-radius: 8px; font-weight: bold; cursor: pointer; height: 38px; box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4);">
-                        Instant Print (A4)
-                    </button>
-                    """,
-                    unsafe_allow_html=True,
-                )
-
-            with np_c4:
-                # इंजिनिअर स्वतः क्लिक करून क्लायंटला अधिकृत ईमेल पाठवेल
-                if st.button("Email Invoice to Client", key="btn_send_client_invoice_mail", use_container_width=True):
-                    if client_email:
-                        mail_subj = f"Official Escrow Statement: {st.session_state.current_site_name}"
-                        mail_body = f"""
-नमस्कार,
-
-तुमच्या '{st.session_state.current_site_name}' या साईटचे अद्ययावत NeevPay Escrow पेमेंट स्टेटमेंट खालीलप्रमाणे आहे:
-
-एकूण ठरलेले बजेट: Rs. {total_budget:,.2f}
-आतापर्यंत प्राप्त रक्कम: Rs. {total_received:,.2f}
-शिल्लक उर्वरित बाकी: Rs. {total_pending:,.2f}
-एकूण साईट प्रगती: {overall_site_pct:.1f}% ({locked_stages}/{len(milestones)} टप्पे पूर्ण)
-साईट इंजिनिअर: {current_user_name}
-दिनांक: {get_ist_time().strftime('%d-%m-%Y')}
-
-अधिक माहितीसाठी साईट इंजिनिअरशी संपर्क साधावा.
-
-- Patil Infratech Team
-                        """
-                        ok_mail = send_email_message(client_email, mail_subj, mail_body)
-                        if ok_mail:
-                            st.success(f"अधिकृत इनव्हॉइस '{client_email}' वर पाठवले!")
-                        else:
-                            st.error("ईमेल पाठवण्यात त्रुटी आली. कृपया क्रेडेन्शियल्स तपासा.")
-                    else:
-                        st.warning("कृपया आधी क्लायंटचा ईमेल आयडी सेव्ह करा.")
-
-            np_wa_text = (
-                f"*PATIL INFRATECH - NEEVPAY MASTER ESCROW STATEMENT*\n"
-                f"*Site:* {st.session_state.current_site_name}\n"
-                f"*Engineer:* {current_user_name}\n"
-                f"*Client Email:* {client_email or 'N/A'}\n"
-                f"*Date:* {get_ist_time().strftime('%d-%m-%Y')}\n\n"
-                f"*Total Planned Bill:* Rs. {total_budget:,.2f}\n"
-                f"*Total Deposited:* Rs. {total_received:,.2f}\n"
-                f"*Pending Balance:* Rs. {total_pending:,.2f}\n"
-                f"*Overall Progress:* {overall_site_pct:.1f}% ({locked_stages}/{len(milestones)} टप्पे पूर्ण)\n\n"
-                f"_Smart Escrow Master Statement Generated._"
-            )
-            st.write(" ")
-            render_whatsapp_feature(urllib.parse.quote(np_wa_text), "neevpay_master_wa")
-
-    st.write("---")
-
-    # ==========================================================
-    # ४. तयार केलेले टप्पे, पेमेंट व डिजिटल पडताळणी यादी
-    # ==========================================================
+    # ३. टप्पे यादी आणि पडताळणी
     if not milestones:
-        st.info("या साईटवर अजून कोणतेही कामाचे बिल तयार केलेले नाही. कृपया वरील बॉक्समधून कामाचा टप्पा जोडा.")
+        st.info("ℹ️ या साईटवर अजून कोणतेही कामाचे बिल तयार केलेले नाही.")
     else:
-        st.markdown("##### कामाचे टप्पे, ठरलेले बिल, पेमेंट व डिजिटल पडताळणी:")
-
+        st.markdown("##### कामाचे टप्पे, ठरलेले बिल व पेमेंट:")
         for m in milestones:
             m_id = m["id"]
             st_name = m["stage_name"]
             p_amt = float(m["planned_amount"])
             d_amt = float(m["amount_deposited"])
-            status = m["status"]
             eng_app = bool(m["engineer_approved"])
             cli_app = bool(m["client_approved"])
             is_locked = bool(m.get("is_locked", 0))
             rem_balance = max(0.0, p_amt - d_amt)
-            curr_stage_pct = (d_amt / p_amt * 100) if p_amt > 0 else 0.0
 
-            # स्टेटस बॅज
-            if is_locked:
-                lock_badge = "LOCKED (पूर्ण पेड व पडताळणी पूर्ण)"
-            elif p_amt == 0:
-                lock_badge = "BILL NOT SET"
-            elif d_amt >= p_amt and p_amt > 0:
-                lock_badge = "READY TO LOCK (100% Paid)"
-            elif d_amt > 0:
-                lock_badge = f"PARTIAL ({curr_stage_pct:.1f}%)"
-            else:
-                lock_badge = "UNPAID"
-
-            with st.expander(
-                f"{st_name} | {lock_badge} | ठरलेले बिल: Rs. {p_amt:,.2f} (जमा: Rs. {d_amt:,.2f})",
-                expanded=not is_locked,
-            ):
+            with st.expander(f"{st_name} | {'LOCKED ✅' if is_locked else 'ACTIVE'} | बिल: Rs. {p_amt:,.2f} (जमा: Rs. {d_amt:,.2f})", expanded=not is_locked):
                 if is_locked:
-                    st.success(
-                        f"हा टप्पा १००% पूर्ण भरला असून सुरक्षितपणे लॉक केला आहे.\n\n"
-                        f"• पूर्ण झाल्याची तारीख: `{m.get('completion_date', 'N/A')}`\n"
-                        f"• एकूण भरलेली रक्कम: Rs. {d_amt:,.2f} (100% Complete)\n"
-                        f"• शेरा: यात आता कोणतेही बदल करता येणार नाहीत."
-                    )
+                    st.success(f"✅ हा टप्पा १००% पूर्ण भरला असून सुरक्षितपणे लॉक केला आहे. (तारीख: {m.get('completion_date', '-')})")
                 else:
                     col_b1, col_b2 = st.columns([2.5, 2.5])
-
                     with col_b1:
-                        st.markdown("###### टप्प्याचे बिल तपशील (Fixed):")
-                        st.markdown(
-                            f"**कामाचे ठरलेले बिल:** <span style='color:#38bdf8; font-weight:bold; font-size:16px;'>Rs. {p_amt:,.2f}</span>",
-                            unsafe_allow_html=True,
-                        )
-                        st.markdown(
-                            f"**आतापर्यंत मिळालेली रक्कम:** <span style='color:#10b981; font-weight:bold; font-size:16px;'>Rs. {d_amt:,.2f} ({curr_stage_pct:.1f}%)</span>",
-                            unsafe_allow_html=True,
-                        )
-                        st.markdown(
-                            f"**उर्वरित बाकी (Balance):** <span style='color:#ef4444; font-weight:bold; font-size:16px;'>Rs. {rem_balance:,.2f}</span>",
-                            unsafe_allow_html=True,
-                        )
-
-                        # बिल बदलण्यासाठी थेट संमती पर्याय
-                        with st.expander("ठरलेले बिल बदलायचे आहे का?"):
-                            new_change_amt = st.number_input(
-                                "नवीन सुधारीत बिल रक्कम (Rs.):",
-                                min_value=max(1.0, float(d_amt)),
-                                value=float(p_amt),
-                                step=1000.0,
-                                key=f"new_change_amt_{m_id}",
-                            )
-
-                            if st.button("नवीन बिल अपडेट करा", key=f"btn_update_bill_{m_id}", type="primary"):
-                                conn = get_db_connection()
-                                cursor = conn.cursor()
-                                cursor.execute(
-                                    "UPDATE site_milestone_payments SET planned_amount = ? WHERE id = ?",
-                                    (new_change_amt, m_id),
-                                )
-                                conn.commit()
-                                conn.close()
-                                st.success("नवीन बिल अपडेट झाले!")
-                                st.rerun()
-
-                        # ==========================================================
-                        # पेमेंट जमा करण्याची नोंद
-                        # ==========================================================
+                        st.markdown(f"**उर्वरित बाकी:** Rs. {rem_balance:,.2f}")
                         if p_amt > 0.0 and rem_balance > 0:
-                            st.write("---")
                             if eng_app and cli_app:
-                                st.caption("क्लायंटने दिलेले पैसे इथे भरा:")
-                                add_pay = st.number_input(
-                                    f"पैसे ॲड करा (जास्तीत जास्त Rs. {rem_balance:,.2f}):",
-                                    min_value=0.0,
-                                    max_value=float(rem_balance),
-                                    value=float(rem_balance),
-                                    step=100.0,
-                                    key=f"pay_in_{m_id}",
-                                )
+                                add_pay = st.number_input(f"पैसे ॲड करा (Rs.):", min_value=0.0, max_value=float(rem_balance), value=float(rem_balance), step=100.0, key=f"pay_in_{m_id}")
                                 if st.button("पैसे जमा नोंदवा", key=f"btn_pay_{m_id}", type="primary"):
-                                    if add_pay > 0:
-                                        new_total_dep = d_amt + add_pay
-                                        new_st = (
-                                            "Payment Completed"
-                                            if new_total_dep >= p_amt
-                                            else "Partially Paid"
-                                        )
-                                        conn = get_db_connection()
-                                        cursor = conn.cursor()
-                                        cursor.execute(
-                                            "UPDATE site_milestone_payments SET amount_deposited = ?, status = ? WHERE id = ?",
-                                            (new_total_dep, new_st, m_id),
-                                        )
-                                        conn.commit()
-                                        conn.close()
-                                        st.success(f"Rs. {add_pay:,.2f} ची पेमेंट नोंद यशस्वी झाली!")
-                                        st.rerun()
+                                    new_total_dep = d_amt + add_pay
+                                    conn = get_db_connection()
+                                    cursor = conn.cursor()
+                                    cursor.execute(
+                                        "UPDATE site_milestone_payments SET amount_deposited = ?, status = ? WHERE id = ?",
+                                        (new_total_dep, "Paid", m_id),
+                                    )
+                                    conn.commit()
+                                    conn.close()
+                                    st.success(f"Rs. {add_pay:,.2f} ची नोंद झाली!")
+                                    st.rerun()
                             else:
-                                st.info("पेमेंट नोंदणीसाठी: उजव्या बाजूला इंजिनिअर व क्लायंट या दोघांचे पडताळणी स्टेटस पूर्ण करून सेव्ह करा.")
+                                st.info("पेमेंटसाठी: उजवीकडे दोघांचे पडताळणी स्टेटस चेक करा.")
 
-                    # डिजिटल पडताळणी व टप्पा लॉक करणे
                     with col_b2:
-                        st.markdown("###### काम व पेमेंट पडताळणी (Approval)")
+                        st.markdown("###### पडताळणी (Approval)")
+                        eng_check = st.checkbox("इंजिनिअर: काम समाधानकारक पूर्ण झाले", value=eng_app, key=f"chk_eng_{m_id}")
+                        cli_check = st.checkbox("क्लायंट: काम व पेमेंट तपासले", value=cli_app, key=f"chk_cli_{m_id}")
 
-                        eng_check = st.checkbox(
-                            "इंजिनिअर: काम समाधानकारक पूर्ण झाले आहे",
-                            value=eng_app,
-                            key=f"chk_eng_{m_id}",
-                        )
-                        cli_check = st.checkbox(
-                            "क्लायंट: काम व पेमेंट तपासले असून सहमत आहे",
-                            value=cli_app,
-                            key=f"chk_cli_{m_id}",
-                        )
-
-                        # पडताळणी स्टेटस अपडेट करणे
                         if eng_check != eng_app or cli_check != cli_app:
-                            if st.button("पडताळणी स्टेटस सेव्ह करा", key=f"btn_save_app_{m_id}"):
+                            if st.button("पडताळणी सेव्ह करा", key=f"btn_save_app_{m_id}"):
                                 conn = get_db_connection()
                                 cursor = conn.cursor()
                                 cursor.execute(
@@ -5000,49 +4065,18 @@ elif st.session_state.selected_module == "NeevPay":
                                 )
                                 conn.commit()
                                 conn.close()
-                                st.success("पडताळणी अपडेट झाली!")
                                 st.rerun()
 
-                        # फायनल लॉक करणे (ईमेल पाठवण्याशिवाय - साधे व जलद)
-                        if p_amt > 0 and d_amt >= p_amt:
-                            if eng_check and cli_check:
-                                st.write("---")
-                                st.info("१००% पेमेंट पूर्ण झाले असून दोन्ही पडताळणी पूर्ण आहेत.")
-                                if st.button(
-                                    "हा टप्पा अंतिम लॉक करा (Lock Milestone)",
-                                    key=f"btn_lock_{m_id}",
-                                    type="primary",
-                                ):
-                                    today_str = get_ist_time().strftime("%d-%m-%Y %H:%M")
-                                    conn = get_db_connection()
-                                    cursor = conn.cursor()
-                                    cursor.execute(
-                                        """
-                                        UPDATE site_milestone_payments 
-                                        SET is_locked = 1, status = 'Fully Completed & Locked', completion_date = ? 
-                                        WHERE id = ?
-                                        """,
-                                        (today_str, m_id),
-                                    )
-                                    conn.commit()
-                                    conn.close()
-                                    st.success(f"'{st_name}' यशस्वीरित्या लॉक झाला!")
-                                    st.rerun()
-                            else:
-                                st.warning("टप्पा लॉक करण्यासाठी वरील दोन्ही पडताळणी चेकबॉक्स टिक असणे गरजेचे आहे.")
-                        else:
-                            st.caption("१००% पेमेंट जमा झाल्यावरच हा टप्पा फायनल लॉक करता येईल.")
-
-                        # टप्पा डिलीट करण्याचा पर्याय (फक्त जमा रक्कम नसतानाच उपलब्ध)
-                        st.write("---")
-                        if d_amt > 0:
-                            st.caption(f"या टप्प्यावर Rs. {d_amt:,.2f} जमा असल्याने सुरक्षिततेसाठी हा टप्पा डिलीट करता येणार नाही.")
-                        else:
-                            if st.button("हा टप्पा डिलीट करा", key=f"btn_del_stage_{m_id}"):
+                        if p_amt > 0 and d_amt >= p_amt and eng_check and cli_check:
+                            if st.button("🔒 हा टप्पा अंतिम लॉक करा", key=f"btn_lock_{m_id}", type="primary"):
+                                today_str = get_ist_time().strftime("%d-%m-%Y %H:%M")
                                 conn = get_db_connection()
                                 cursor = conn.cursor()
-                                cursor.execute("DELETE FROM site_milestone_payments WHERE id = ?", (m_id,))
+                                cursor.execute(
+                                    "UPDATE site_milestone_payments SET is_locked = 1, completion_date = ? WHERE id = ?",
+                                    (today_str, m_id),
+                                )
                                 conn.commit()
                                 conn.close()
-                                st.warning(f"'{st_name}' टप्पा डिलीट केला!")
+                                st.success("टप्पा लॉक झाला!")
                                 st.rerun()
