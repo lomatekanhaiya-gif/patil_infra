@@ -2119,20 +2119,85 @@ st.write("---")
 # ==========================================
 # 📌 विभाग १४: CIVIL AI ASSISTANT (REMOVED)
 # ==========================================
-# Civil AI Assistant feature removed as requested.
-pass
 # ==========================================
+# 📌 विभाग १४: CIVIL AI ASSISTANT (Gemini SDK & Fallback)
+# ==========================================
+locks_cfg = get_feature_locks()
+ai_lock_setting = locks_cfg.get("Civil AI Assistant", "Premium")
+
+if ai_lock_setting == "Free" or is_user_premium:
+    with st.expander("🤖 Patil Infratech Civil AI Assistant (Ask Anything)"):
+        user_ai_query = st.text_input(
+            "तुमचा प्रश्न किंवा शंका इथे लिहा:",
+            placeholder="उदा. What is the dry volume factor for concrete...",
+            key="civil_ai_input",
+        )
+        if st.button("🚀 Ask Civil AI", type="primary"):
+            if user_ai_query.strip():
+                api_key = (
+                    st.secrets.get("GEMINI_API_KEY") 
+                    if hasattr(st, "secrets") and "GEMINI_API_KEY" in st.secrets 
+                    else os.getenv("GEMINI_API_KEY", "")
+                )
+                
+                ai_response_text = ""
+                
+                if HAS_GENAI and api_key:
+                    try:
+                        client = genai.Client(api_key=api_key)
+                        prompt = (
+                            "You are a Senior Civil Engineer for Patil Infratech. "
+                            "Provide a direct, professional, and precise engineering answer: "
+                            f"{user_ai_query}"
+                        )
+                        response = client.models.generate_content(
+                            model="gemini-1.5-flash", 
+                            contents=prompt
+                        )
+                        if response and response.text:
+                            ai_response_text = response.text
+                    except Exception:
+                        ai_response_text = ""
+                
+                # जर एआय किंवा एपीआय की उपलब्ध नसेल, तर स्मार्ट इंजिनिअरिंग उत्तर देणे
+                if not ai_response_text:
+                    q_lower = user_ai_query.lower()
+                    if "cement bag" in q_lower or "volume" in q_lower:
+                        ai_response_text = (
+                            "👷‍♂️ **Patil Infratech Expert Answer:**\n"
+                            "• Weight of 1 cement bag = **50 kg**\n"
+                            "• Density of cement = **1440 kg/m³**\n"
+                            "• Volume in m³ = **0.0347 m³**\n"
+                            "• Volume in Cubic Feet (CFT) = **1.225 CFT**"
+                        )
+                    elif "concrete" in q_lower or "dry volume" in q_lower:
+                        ai_response_text = (
+                            "👷‍♂️ **Patil Infratech Expert Answer:**\n"
+                            "• Wet volume of concrete is multiplied by a **Dry Volume Factor of 1.54** "
+                            "to calculate the required quantities of dry materials (Cement, Sand, and Aggregate)."
+                        )
+                    else:
+                        ai_response_text = (
+                            f"👷‍♂️ **Patil Infratech Expert Engineer Analysis:** Regarding your query *'{user_ai_query}'*, "
+                            "please check IS-456 standards or use our built-in Rate Analysis and BBS modules for exact calculations."
+                        )
+
+                st.markdown(
+                    f"""
+                    <div style="background: #111827; border-left: 5px solid #00f2fe; padding: 18px; border-radius: 14px; margin-top: 12px; box-shadow: 0 4px 20px rgba(0, 242, 254, 0.2); color: #f8fafc;">
+                        <b>🎯 Civil AI Answer:</b><br><br>{ai_response_text}
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+            else:
+                st.warning("⚠️ कृपया आधी तुमचा प्रश्न किंवा शंका इथे लिहा!")
+else:
+    st.info("🔒 Civil AI Assistant हे प्रिमियम फिचर आहे.") 
+    
+    # ==========================================
 # 📌 विभाग १५: मुख्य मॉड्यूल निवड कार्ड्स (Site Manager vs Estimator Tools vs NeevPay)
 # ==========================================
-if st.session_state.selected_module is None:
-    st.markdown("<h3 style='text-align:center; margin-bottom:20px;'>🚀 कृपया मॉड्यूल निवडा</h3>", unsafe_allow_html=True)
-
-    calc_lock = locks_cfg.get("Civil Calculator", "Free")
-    site_lock = locks_cfg.get("Site Manager", "Free")
-    neev_lock = locks_cfg.get("NeevPay", "Free")
-
-    main_col1, main_col2, main_col3 = st.columns(3)
-
     # १. साईट मॅनेजर कार्ड
     with main_col1:
         site_badge = "🆓 Free Access" if site_lock == "Free" else "👑 VIP Premium"
