@@ -11,33 +11,48 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
-
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
 
-      - name: Install Bubblewrap CLI
-        run: npm install -g @bubblewrap/cli
-
-      - name: Auto Build APK from Streamlit
+      - name: Install Capacitor & CLI
         run: |
-          mkdir -p build && cd build
-          export BUBBLEWRAP_JDK_PATH=$JAVA_HOME
-          export BUBBLEWRAP_ANDROID_SDK_DIR=$ANDROID_HOME
-          npx @bubblewrap/cli init --manifest="https://patilinfra1-gpdharashiv.streamlit.app/manifest.json" --skipPwaValidation --yes || true
-          npx @bubblewrap/cli build --skipSigning || true
+          npm init -y
+          npm install @capacitor/core @capacitor/cli @capacitor/android
+          npx cap init "Patil Infratech" "com.patil.infratech" --web-dir .
+
+      - name: Configure Streamlit Web URL
+        run: |
+          cat << 'EOF' > capacitor.config.json
+          {
+            "appId": "com.patil.infratech",
+            "appName": "Patil Infratech",
+            "webDir": ".",
+            "server": {
+              "url": "https://patilinfra1-gpdharashiv.streamlit.app",
+              "cleartext": true
+            }
+          }
+          EOF
+
+      - name: Add Android Platform
+        run: npx cap add android
+
+      - name: Build Android APK with Gradle
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Patil-Infratech-APK
-          path: build/*.apk
+          path: android/app/build/outputs/apk/debug/*.apk
