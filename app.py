@@ -707,23 +707,31 @@ st.markdown(
         display: block !important;
     }
 
-    /* मूळ Sidebar Open बटण कायम ठळक दिसणे */
-    [data-testid="stSidebarCollapsedControl"] {
+    /* मूळ Sidebar Open / Un-hide बटण कायम स्क्रीनवर ठळक दिसणे */
+    [data-testid="stSidebarCollapsedControl"],
+    div[data-testid="collapsedControl"],
+    button[data-testid="stSidebarCollapseButton"] {
         display: flex !important;
         visibility: visible !important;
         position: fixed !important;
-        top: 10px !important;
-        left: 10px !important;
-        z-index: 999999 !important;
+        top: 15px !important;
+        left: 15px !important;
+        z-index: 9999999 !important;
         background: #0f172a !important;
         border: 2px solid #f59e0b !important;
         border-radius: 8px !important;
-        padding: 5px !important;
+        padding: 6px !important;
+        cursor: pointer !important;
+        box-shadow: 0 0 15px rgba(245, 158, 11, 0.4) !important;
     }
-    [data-testid="stSidebarCollapsedControl"] svg {
+
+    [data-testid="stSidebarCollapsedControl"] svg,
+    div[data-testid="collapsedControl"] svg,
+    button[data-testid="stSidebarCollapseButton"] svg {
         fill: #f59e0b !important;
-        width: 22px !important;
-        height: 22px !important;
+        color: #f59e0b !important;
+        width: 24px !important;
+        height: 24px !important;
     }
 
     /* Main App Background */
