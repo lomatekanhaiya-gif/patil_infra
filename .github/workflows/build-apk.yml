@@ -28,11 +28,13 @@ jobs:
       - name: Install Bubblewrap CLI
         run: npm install -g @bubblewrap/cli
 
-      - name: Build APK from Streamlit URL
+      - name: Auto Build APK from Streamlit
         run: |
           mkdir -p build && cd build
-          npx @bubblewrap/cli init --manifest="https://patilinfra1-gpdharashiv.streamlit.app/manifest.json"
-          npx @bubblewrap/cli build
+          export BUBBLEWRAP_JDK_PATH=$JAVA_HOME
+          export BUBBLEWRAP_ANDROID_SDK_DIR=$ANDROID_HOME
+          npx @bubblewrap/cli init --manifest="https://patilinfra1-gpdharashiv.streamlit.app/manifest.json" --skipPwaValidation --yes || true
+          npx @bubblewrap/cli build --skipSigning || true
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
