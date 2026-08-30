@@ -700,21 +700,29 @@ st.markdown(
     button[title="Increment"], button[title="Decrement"] { display: none !important; }
     div[data-testid="stNumberInputStepUp"], div[data-testid="stNumberInputStepDown"] { display: none !important; }
 
-    /* 🌟 साईडबार उघडण्याचे चिन्ह (> Arrow) स्क्रीनवर कायम स्पष्ट दिसण्यासाठी */
+    /* 🌟 १. बंद झालेला साईडबार परत उघडण्यासाठी (> बाण) बटण स्क्रीनवर कायम दिसणे */
     header[data-testid="stHeader"] {
         background-color: transparent !important;
-        z-index: 99999 !important;
+        visibility: visible !important;
+        display: block !important;
+        z-index: 100000 !important;
     }
 
-    button[data-testid="stSidebarCollapseButton"], 
-    button[data-testid="stSidebarCollapsedControl"],
+    /* साईडबार उघडण्याचे बटण (Arrow Icon Button) हायलाइट व आकर्षक करणे */
+    [data-testid="stSidebarCollapsedControl"],
+    button[data-testid="stSidebarCollapseButton"],
     button[data-testid="baseButton-header"] {
+        display: flex !important;
+        visibility: visible !important;
         color: #f59e0b !important;
         background: #0f172a !important;
-        border: 1.5px solid #f59e0b !important;
-        border-radius: 8px !important;
-        padding: 4px 8px !important;
-        box-shadow: 0 0 12px rgba(245, 158, 11, 0.4) !important;
+        border: 2px solid #f59e0b !important;
+        border-radius: 10px !important;
+        padding: 6px 10px !important;
+        margin-left: 10px !important;
+        margin-top: 8px !important;
+        box-shadow: 0 0 15px rgba(245, 158, 11, 0.4) !important;
+        cursor: pointer !important;
     }
 
     /* Main App Background */
@@ -731,7 +739,7 @@ st.markdown(
         z-index: 9999 !important;
     }
 
-    /* 🌟 कायम फिक्स राहणारा टॉप रिबन बार */
+    /* 🌟 २. कायम फिक्स राहणारा टॉप रिबन बार (Sticky Ribbon) */
     .fixed-top-ribbon-container {
         position: sticky;
         top: 0px;
