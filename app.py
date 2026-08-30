@@ -700,21 +700,21 @@ st.markdown(
     button[title="Increment"], button[title="Decrement"] { display: none !important; }
     div[data-testid="stNumberInputStepUp"], div[data-testid="stNumberInputStepDown"] { display: none !important; }
 
-    /* साईडबार उघडण्याचे चिन्ह (> Arrow) दिसण्यासाठी हेडर पारदर्शक ठेवणे */
+    /* 🌟 साईडबार उघडण्याचे चिन्ह (> Arrow) स्क्रीनवर कायम स्पष्ट दिसण्यासाठी */
     header[data-testid="stHeader"] {
         background-color: transparent !important;
-        z-index: 100000 !important;
+        z-index: 99999 !important;
     }
 
-    /* साईडबार टॉगल/ओपन बटनला स्पष्ट आणि आकर्षक बनवणे */
     button[data-testid="stSidebarCollapseButton"], 
     button[data-testid="stSidebarCollapsedControl"],
     button[data-testid="baseButton-header"] {
         color: #f59e0b !important;
         background: #0f172a !important;
-        border: 1px solid #334155 !important;
+        border: 1.5px solid #f59e0b !important;
         border-radius: 8px !important;
-        box-shadow: 0 0 10px rgba(245, 158, 11, 0.3) !important;
+        padding: 4px 8px !important;
+        box-shadow: 0 0 12px rgba(245, 158, 11, 0.4) !important;
     }
 
     /* Main App Background */
@@ -731,7 +731,7 @@ st.markdown(
         z-index: 9999 !important;
     }
 
-    /* 🌟 कायम फिक्स राहणारा टॉप रिबन बार (Sticky & Fixed Top Bar) */
+    /* 🌟 कायम फिक्स राहणारा टॉप रिबन बार */
     .fixed-top-ribbon-container {
         position: sticky;
         top: 0px;
@@ -746,7 +746,7 @@ st.markdown(
         box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
     }
 
-    /* Input Boxes */
+    /* Inputs */
     div[data-baseweb="input"],
     div[data-baseweb="base-input"],
     div[data-testid="stNumberInputContainer"],
@@ -1763,7 +1763,7 @@ if st.session_state.get("is_client_view", False):
     st.stop()
                     
 # ==============================================================================
-# 📌 विभाग १३: मुख्य युझर डॅशबोर्ड (Fixed Top Ribbon & Sidebar Controller)
+# 📌 विभाग १३: मुख्य युझर डॅशबोर्ड (Fixed Top Ribbon & Sidebar Re-open Handler)
 # ==============================================================================
 current_user_name = st.session_state.app_user_name
 is_user_premium, status_text_str = check_user_premium_status(current_user_name)
@@ -1780,7 +1780,7 @@ w_city = (
 )
 
 # ==============================================================================
-# ⬅️ डावा फिक्स पॅनल (Left Sidebar - Gemini Style)
+# ⬅️ डावा फिक्स पॅनल (Left Sidebar)
 # ==============================================================================
 with st.sidebar:
     st.markdown("### 🏗️ PATIL INFRATECH")
@@ -1966,7 +1966,23 @@ site_lock_main = locks_cfg_main.get("Site Manager", "Free")
 neev_lock_main = locks_cfg_main.get("NeevPay", "Free")
 
 st.markdown('<div class="fixed-top-ribbon-container">', unsafe_allow_html=True)
-top_ribbon_c1, top_ribbon_c2, top_ribbon_c3 = st.columns(3)
+top_ribbon_c0, top_ribbon_c1, top_ribbon_c2, top_ribbon_c3 = st.columns([1, 2.3, 2.3, 2.3])
+
+# 🌟 डावा साईडबार उघडण्याचे थेट बटण
+with top_ribbon_c0:
+    st.markdown(
+        """
+        <button onclick="
+            const sb = window.parent.document.querySelector('button[data-testid=\\'stSidebarCollapseButton\\']') || 
+                       window.parent.document.querySelector('button[data-testid=\\'stSidebarCollapsedControl\\']') ||
+                       window.parent.document.querySelector('button[data-testid=\\'baseButton-header\\']');
+            if(sb) { sb.click(); }
+        " style="width:100%; height:38px; background:#0f172a; color:#f59e0b; border:1px solid #f59e0b; border-radius:8px; font-weight:bold; cursor:pointer; font-size:12px;">
+            📂 Sidebar
+        </button>
+        """,
+        unsafe_allow_html=True,
+    )
 
 with top_ribbon_c1:
     is_active_site = (st.session_state.selected_module == "Site Manager")
