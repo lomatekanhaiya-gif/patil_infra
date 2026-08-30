@@ -60,8 +60,7 @@ st.set_page_config(
     page_title="PATIL INFRATECH | Civil Engineering Suite",
     page_icon="🏗️",
     layout="wide",
-    initial_sidebar_state="collapsed",
-)
+    initial_sidebar_state="expanded",  # Gemini सारखा डावा पॅनल कायम ओपन राहील
 
 # ==========================================
 # 📌 विभाग ३: ब्राउझर लोकल स्टोरेज आणि मोबाईल बॅक बटन हँडलर
@@ -688,7 +687,7 @@ def check_user_premium_status(username):
 is_curr_premium, _ = check_user_premium_status(current_user_name)
 
 # ==========================================
-# 📌 विभाग ८: BRANDED CONSTRUCTION THEME CSS
+# 📌 विभाग ८: BRANDED THEME & FIXED LAYOUT CSS
 # ==========================================
 st.markdown(
     """
@@ -703,23 +702,35 @@ st.markdown(
     button[title="Increment"], button[title="Decrement"] { display: none !important; }
     div[data-testid="stNumberInputStepUp"], div[data-testid="stNumberInputStepDown"] { display: none !important; }
 
+    /* Main App Background */
     html, body, .stApp, [data-testid="stAppViewContainer"] {
         background: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 50%, #020617 100%) !important;
         color: #f8fafc !important;
         font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
     }
 
-    .brand-header {
-        background: linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #334155 100%);
-        border: 1px solid rgba(245, 158, 11, 0.4);
-        border-top: 4px solid #f59e0b;
-        padding: 24px 20px;
-        border-radius: 16px;
-        text-align: center;
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6), 0 0 20px rgba(245, 158, 11, 0.15);
-        margin-bottom: 24px;
+    /* Fixed Left Sidebar Styling (Gemini Style) */
+    section[data-testid="stSidebar"] {
+        background-color: #0b0f19 !important;
+        border-right: 1px solid #1e293b !important;
+    }
+    section[data-testid="stSidebar"] > div {
+        padding-top: 1.5rem !important;
     }
 
+    /* Fixed / Sticky Top Ribbon */
+    .sticky-top-ribbon {
+        position: sticky;
+        top: 0;
+        z-index: 999;
+        background: rgba(15, 23, 42, 0.95);
+        backdrop-filter: blur(10px);
+        padding: 10px 0;
+        border-bottom: 1px solid #334155;
+        margin-bottom: 15px;
+    }
+
+    /* Input Boxes */
     div[data-baseweb="input"],
     div[data-baseweb="base-input"],
     div[data-testid="stNumberInputContainer"],
@@ -735,27 +746,18 @@ st.markdown(
         border-radius: 10px !important;
         font-weight: 500 !important;
     }
-    input:focus, textarea:focus {
-        border-color: #f59e0b !important;
-        box-shadow: 0 0 10px rgba(245, 158, 11, 0.3) !important;
-    }
 
+    /* Primary & Standard Buttons */
     div.stButton > button[kind="primary"] {
         background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
         color: #000000 !important;
         font-weight: 800 !important;
         border-radius: 10px !important;
         border: none !important;
-        padding: 12px 24px !important;
+        padding: 10px 20px !important;
         box-shadow: 0 4px 15px rgba(245, 158, 11, 0.35) !important;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
         transition: all 0.2s ease-in-out;
-    }
-    div.stButton > button[kind="primary"]:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(245, 158, 11, 0.5) !important;
-        background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%) !important;
     }
 
     div.stButton > button {
@@ -784,67 +786,11 @@ st.markdown(
     .module-card:hover {
         border-color: #f59e0b;
         transform: translateY(-3px);
-        box-shadow: 0 8px 25px rgba(245, 158, 11, 0.2);
-    }
-
-    .gold-vip-badge {
-        background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);
-        color: #000000 !important;
-        padding: 6px 16px;
-        border-radius: 20px;
-        font-weight: 800;
-        font-size: 13px;
-        display: inline-block;
-        box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
-    }
-    .free-user-badge {
-        background: #1e293b;
-        color: #38bdf8 !important;
-        padding: 6px 16px;
-        border-radius: 20px;
-        font-weight: 700;
-        font-size: 13px;
-        border: 1px solid #0284c7;
-        display: inline-block;
-    }
-
-    .galaxy-loader {
-        margin: 20px auto;
-        width: 80px;
-        height: 80px;
-        border-radius: 50%;
-        border: 4px solid transparent;
-        border-top-color: #f59e0b;
-        border-bottom-color: #00f2fe;
-        animation: spin-galaxy 1.5s linear infinite;
-        box-shadow: 0 0 30px rgba(245, 158, 11, 0.5);
-    }
-    @keyframes spin-galaxy {
-        0% { transform: rotate(0deg) scale(1); }
-        50% { transform: rotate(180deg) scale(1.1); }
-        100% { transform: rotate(360deg) scale(1); }
-    }
-
-    /* AutoCAD Portal & Workspace Ribbon Custom Elements */
-    .autocad-dwg-card {
-        background: rgba(15, 23, 42, 0.85);
-        border: 1px solid #334155;
-        border-left: 4px solid #38bdf8;
-        border-radius: 8px;
-        padding: 10px 14px;
-        margin-bottom: 8px;
-        transition: all 0.2s ease;
-    }
-    .autocad-dwg-card:hover {
-        border-color: #38bdf8;
-        background: rgba(30, 41, 59, 0.95);
-        transform: translateX(4px);
     }
     </style>
     """,
     unsafe_allow_html=True,
 )
-
 # ==========================================
 # 📌 विभाग ९: WHATSAPP रिपोर्ट शेअरिंग कंपोनंट
 # ==========================================
@@ -1808,56 +1754,29 @@ if st.session_state.get("is_client_view", False):
     st.stop()
                     
 # ==============================================================================
-# 📌 विभाग १३: मुख्य युझर डॅशबोर्ड (डावा कंट्रोल बार आणि टॉप रिबन मेनू)
+# 📌 विभाग १३: मुख्य युझर डॅशबोर्ड (Gemini Style Fixed Sidebar & Top Ribbon)
 # ==============================================================================
 current_user_name = st.session_state.app_user_name
 is_user_premium, status_text_str = check_user_premium_status(current_user_name)
 
-# १. स्पॉन्सर जाहिराती (ॲक्टिव्ह असल्यास)
-conn = get_db_connection()
-cursor = conn.cursor()
-cursor.execute(
-    "SELECT * FROM ads WHERE active = 1 AND position = 'Main App Header (Top Banner)'"
-)
-ads_list = [dict(r) for r in cursor.fetchall()]
-conn.close()
-
-for ad in ads_list:
-    st.markdown(
-        f"""
-        <div style="background: #111827; border: 1px solid rgba(0, 242, 254, 0.3); padding: 8px 12px; border-radius: 10px; text-align: center; margin-bottom: 15px;">
-            <span style="font-size: 9px; color: #38bdf8; font-weight: bold;">📢 SPONSOR AD</span><br>
-            <b style="color: #fff; font-size: 13px;">{ad.get('title')}</b> — <span style="color: #cbd5e1; font-size: 11px;">{ad.get('desc')}</span>
-            {"<img src='" + ad.get('media_url') + "' style='max-height:45px; border-radius:4px; margin-top:3px;'/>" if ad.get('media_type') == 'Photo (PNG/JPG)' and ad.get('media_url') else ""}
-            <a href="{ad.get('link')}" target="_blank" style="color: #f59e0b; font-weight: bold; text-decoration: underline; font-size: 11px; margin-left: 6px;">[Visit]</a>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-# २. हवामान डेटा (Open-Meteo API)
+# हवामान डेटा
 if "site_location_city" not in st.session_state:
     st.session_state.site_location_city = "Pune"
 
 site_weather = get_site_weather_forecast(st.session_state.site_location_city)
 w_temp = site_weather["temp"] if site_weather else "--"
 w_rain = site_weather["rain_prob"] if site_weather else 0
-w_city = (
-    site_weather["city"] if site_weather else st.session_state.site_location_city
-)
+w_city = site_weather["city"] if site_weather else st.session_state.site_location_city
 
-# ------------------------------------------------------------------------------
-# 🌟 लेआउट विभाजन: डावा व्हर्टिकल कंट्रोल कॉलम (Left) आणि उजवा मुख्य वर्कस्पेस (Right)
-# ------------------------------------------------------------------------------
-left_dash_col, right_dash_col = st.columns([1.2, 3.8], gap="medium")
+# ==============================================================================
+# ⬅️ १. फिक्स डावा पॅनल (Fixed Left Sidebar - Gemini Style)
+# ==============================================================================
+with st.sidebar:
+    st.markdown("### 🏗️ PATIL INFRATECH")
+    st.caption("Site Management & Civil Suite")
+    st.write("---")
 
-# ==========================================================
-# ⬅️ डावा व्हर्टिकल कॉलम (Site, Weather, Notice, Premium, Logout)
-# ==========================================================
-with left_dash_col:
-    st.markdown("#### ⚙️ Quick Settings")
-
-    # चालू साईट व नाव बदलणे
+    # चालू साईट
     st.markdown(
         f"""
         <div style="background: #141820; border: 1px solid #2d3545; border-left: 4px solid #38bdf8; padding: 8px 12px; border-radius: 8px; margin-bottom: 6px;">
@@ -1871,22 +1790,17 @@ with left_dash_col:
         new_site_input = st.text_input(
             "नवीन साईटचे नाव टाका:",
             value=st.session_state.current_site_name,
-            key="top_site_edit_input",
+            key="side_site_edit_input",
         )
-        if st.button(
-            "💾 सेव्ह करा",
-            key="btn_save_top_site",
-            type="primary",
-            use_container_width=True,
-        ):
+        if st.button("💾 सेव्ह करा", key="btn_save_side_site", type="primary", use_container_width=True):
             if new_site_input.strip():
                 st.session_state.current_site_name = new_site_input.strip()
                 st.rerun()
 
-    # हवामान व शहर बदलणे
+    # हवामान
     st.markdown(
         f"""
-        <div style="background: #141820; border: 1px solid #2d3545; padding: 8px 12px; border-radius: 8px; text-align: center; margin-top: 10px; margin-bottom: 6px;">
+        <div style="background: #141820; border: 1px solid #2d3545; padding: 8px 12px; border-radius: 8px; text-align: center; margin-top: 8px; margin-bottom: 6px;">
             <span style="font-size: 11px; color: #94a3b8;">🌤️ हवामान ({w_city})</span><br>
             <b style="color: #38bdf8; font-size: 14px;">{w_temp}°C</b> | <span style="color: {'#ef4444' if w_rain >= 50 else '#10b981'}; font-weight: bold; font-size: 13px;">🌧️ {w_rain}% पाऊस</span>
         </div>
@@ -1897,19 +1811,14 @@ with left_dash_col:
         new_city_input = st.text_input(
             "शहर टाका (उदा. Pune):",
             value=st.session_state.site_location_city,
-            key="top_city_edit_input",
+            key="side_city_edit_input",
         )
-        if st.button(
-            "🌦️ अपडेट करा",
-            key="btn_top_weather_update",
-            type="primary",
-            use_container_width=True,
-        ):
+        if st.button("🌦️ अपडेट करा", key="btn_side_weather_update", type="primary", use_container_width=True):
             if new_city_input.strip():
                 st.session_state.site_location_city = new_city_input.strip()
                 st.rerun()
 
-    # नोटीस बॉक्स आणि इनबॉक्स
+    # नोटीस बॉक्स
     current_user_data = get_user_data(current_user_name) or {}
     disp_name_inbox = current_user_name if current_user_name else ""
 
@@ -1925,7 +1834,7 @@ with left_dash_col:
             unsafe_allow_html=True,
         )
 
-        if st.button("✅ Mark as Read (वाचले आहे)", type="primary", key="btn_read_notice", use_container_width=True):
+        if st.button("✅ Mark as Read", type="primary", key="btn_read_notice_side", use_container_width=True):
             conn = get_db_connection()
             cursor = conn.cursor()
             cursor.execute(
@@ -1947,137 +1856,75 @@ with left_dash_col:
         with st.expander("📥 नोटीस व मेसेज इनबॉक्स"):
             st.info(f"📢 **Admin Message:** {admin_msg}")
 
-    # प्रिमियम अनलॉक बॉक्स (फ्री युझर्ससाठी)
+    # प्रिमियम अनलॉक
     if not is_user_premium:
-        with st.expander("🔑 प्रिमियम अनलॉक करा (Enter Premium Code)"):
-            input_code = st.text_input(
-                "Enter Code (e.g. PATIL-XXXXX):", key="home_code_input"
-            ).strip()
+        with st.expander("🔑 प्रिमियम अनलॉक करा"):
+            input_code = st.text_input("Enter Code:", key="side_code_input").strip()
             c_btn1, c_btn2 = st.columns(2)
             with c_btn1:
-                if st.button(
-                    "🔓 Activate Premium",
-                    key="btn_activate_prem_main",
-                    type="primary",
-                    use_container_width=True,
-                ):
+                if st.button("🔓 Unlock", key="btn_activate_prem_side", type="primary", use_container_width=True):
                     u_info = get_user_data(current_user_name) or {}
 
                     if input_code == "4528":
                         uses_count = u_info.get("master_code_uses", 0)
                         if uses_count >= 3:
-                            st.error(
-                                "❌ हा मास्टर कोड तुम्ही आधीच ३ वेळा वापरला आहे! मर्यादा"
-                                " संपली आहे."
-                            )
+                            st.error("❌ मर्यादा संपली आहे.")
                         else:
-                            exp_datetime = get_ist_time() + datetime.timedelta(hours=8)
-                            exp_str = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
-
+                            exp_str = (get_ist_time() + datetime.timedelta(hours=8)).strftime("%Y-%m-%d %H:%M:%S")
                             conn = get_db_connection()
                             cursor = conn.cursor()
                             cursor.execute(
-                                """
-                                UPDATE users 
-                                SET master_code_uses = ?, is_premium = 1, premium_expiry = ?, seen_popup = 0,
-                                    activated_by = ?, admin_message = ?, unread_notification = 0
-                                WHERE user_key = ?
-                                """,
-                                (
-                                    uses_count + 1,
-                                    exp_str,
-                                    "Master Code 4528 (8 Hours VIP)",
-                                    f"🎉 मास्टर कोड 4528 द्वारे तुला ८ तासांचे प्रिमियम मिळाले आहे! (वापर: {uses_count + 1}/3)",
-                                    current_user_name,
-                                ),
+                                "UPDATE users SET master_code_uses = ?, is_premium = 1, premium_expiry = ?, activated_by = ? WHERE user_key = ?",
+                                (uses_count + 1, exp_str, "Master Code 4528 (8 Hours VIP)", current_user_name),
                             )
                             conn.commit()
                             conn.close()
-                            st.success("🎉 मास्टर कोड द्वारे ८ तासांचे प्रिमियम अनलॉक झाले!")
+                            st.success("🎉 ८ तास VIP सुरू झाले!")
                             st.rerun()
 
                     elif input_code == "kanha_1p":
-                        exp_datetime = get_ist_time() + datetime.timedelta(days=1)
-                        exp_str = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
-
+                        exp_str = (get_ist_time() + datetime.timedelta(days=1)).strftime("%Y-%m-%d %H:%M:%S")
                         conn = get_db_connection()
                         cursor = conn.cursor()
                         cursor.execute(
-                            """
-                            UPDATE users 
-                            SET is_premium = 1, premium_expiry = ?, seen_popup = 0, activated_by = ?,
-                                admin_message = ?, unread_notification = 0
-                            WHERE user_key = ?
-                            """,
-                            (
-                                exp_str,
-                                "Master Code",
-                                f"{current_user_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳",
-                                current_user_name,
-                            ),
+                            "UPDATE users SET is_premium = 1, premium_expiry = ?, activated_by = ? WHERE user_key = ?",
+                            (exp_str, "Master Code", current_user_name),
                         )
                         conn.commit()
                         conn.close()
-                        st.success("🎉 मास्टर कोडद्वारे प्रिमियम यशस्वीरित्या सुरू झाले!")
+                        st.success("🎉 प्रिमियम सुरू झाले!")
                         st.rerun()
                     else:
                         conn = get_db_connection()
                         cursor = conn.cursor()
-                        cursor.execute(
-                            "SELECT * FROM premium_codes WHERE code = ?", (input_code,)
-                        )
+                        cursor.execute("SELECT * FROM premium_codes WHERE code = ?", (input_code,))
                         c_row = cursor.fetchone()
 
                         if c_row and dict(c_row).get("used") == 0:
-                            exp_datetime = get_ist_time() + datetime.timedelta(days=28)
-                            exp_str = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
+                            exp_str = (get_ist_time() + datetime.timedelta(days=28)).strftime("%Y-%m-%d %H:%M:%S")
                             now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
-
-                            cursor.execute(
-                                "UPDATE premium_codes SET used = 1, used_by = ?, used_date = ?"
-                                " WHERE code = ?",
-                                (current_user_name, now_str, input_code),
-                            )
-                            cursor.execute(
-                                """
-                                UPDATE users 
-                                SET is_premium = 1, premium_expiry = ?, seen_popup = 0, activated_by = ?,
-                                    admin_message = ?, unread_notification = 0
-                                WHERE user_key = ?
-                                """,
-                                (
-                                    exp_str,
-                                    "Patil Infratech",
-                                    f"{current_user_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳",
-                                    current_user_name,
-                                ),
-                            )
+                            cursor.execute("UPDATE premium_codes SET used = 1, used_by = ?, used_date = ? WHERE code = ?", (current_user_name, now_str, input_code))
+                            cursor.execute("UPDATE users SET is_premium = 1, premium_expiry = ?, activated_by = ? WHERE user_key = ?", (exp_str, "Patil Infratech", current_user_name))
                             conn.commit()
                             conn.close()
-                            st.success("🎉 प्रिमियम यशस्वीरित्या सुरू झाले!")
+                            st.success("🎉 प्रिमियम सुरू झाले!")
                             st.rerun()
                         else:
                             conn.close()
-                            st.error("❌ चुकीचा किंवा आधीच वापरलेला कोड!")
+                            st.error("❌ अमान्य कोड!")
+
             with c_btn2:
-                if st.button(
-                    "📩 Request Code",
-                    key="btn_req_code_main",
-                    use_container_width=True,
-                ):
+                if st.button("📩 Request", key="btn_req_code_side", use_container_width=True):
                     conn = get_db_connection()
                     cursor = conn.cursor()
-                    cursor.execute(
-                        "UPDATE users SET requested_code = 1 WHERE user_key = ?",
-                        (current_user_name,),
-                    )
+                    cursor.execute("UPDATE users SET requested_code = 1 WHERE user_key = ?", (current_user_name,))
                     conn.commit()
                     conn.close()
-                    st.success("✅ ॲडमीनला रिक्वेस्ट पाठवली!")
+                    st.success("✅ रिक्वेस्ट पाठवली!")
 
     # लॉगआउट बटण
     st.write("---")
-    if st.button("🔄 Logout", key="top_logout_btn", use_container_width=True):
+    if st.button("🔄 Logout", key="side_logout_btn", use_container_width=True):
         st.session_state.app_user_name = None
         st.session_state.otp_verified = False
         if "saved_user" in st.query_params:
@@ -2087,72 +1934,66 @@ with left_dash_col:
         st.session_state.selected_site_sub_module = None
         st.session_state.selected_estimator_sub_module = None
 
-        st.markdown(
-            """
-            <script>
-                localStorage.removeItem("patil_app_user");
-            </script>
-            """,
-            unsafe_allow_html=True,
-        )
+        st.markdown("<script>localStorage.removeItem('patil_app_user');</script>", unsafe_allow_html=True)
         st.rerun()
 
 # ==========================================================
-# ➡️ उजवा मुख्य भाग (Top Ribbon Bar & Workspace Container)
+# ➡️ २. टॉप रिबन बार (Top Non-Scrollable Ribbon)
 # ==========================================================
-with right_dash_col:
-    locks_cfg_main = get_feature_locks()
-    site_lock_main = locks_cfg_main.get("Site Manager", "Free")
-    neev_lock_main = locks_cfg_main.get("NeevPay", "Free")
+locks_cfg_main = get_feature_locks()
+site_lock_main = locks_cfg_main.get("Site Manager", "Free")
+neev_lock_main = locks_cfg_main.get("NeevPay", "Free")
 
-    # 🌟 मुख्य ३ मॉड्यूल्ससाठी टॉप हॉरिझॉन्टल रिबन बार
-    top_ribbon_c1, top_ribbon_c2, top_ribbon_c3 = st.columns(3)
+# Top Fixed Ribbon Structure
+st.markdown('<div class="sticky-top-ribbon">', unsafe_allow_html=True)
+top_ribbon_c1, top_ribbon_c2, top_ribbon_c3 = st.columns(3)
 
-    with top_ribbon_c1:
-        is_active_site = (st.session_state.selected_module == "Site Manager")
-        if st.button(
-            "👷‍♂️ Site Manager",
-            key="ribbon_btn_site",
-            use_container_width=True,
-            type="primary" if is_active_site else "secondary"
-        ):
-            if site_lock_main == "Premium" and not is_user_premium:
-                st.error("🔒 हे फीचर प्रिमियम युझर्ससाठी आहे!")
-            else:
-                st.session_state.selected_module = "Site Manager"
-                st.session_state.selected_site_sub_module = None
-                trigger_push_state()
-                st.rerun()
-
-    with top_ribbon_c2:
-        is_active_est = (st.session_state.selected_module == "Estimator Tools")
-        if st.button(
-            "📐 Estimator Tools",
-            key="ribbon_btn_estimator",
-            use_container_width=True,
-            type="primary" if is_active_est else "secondary"
-        ):
-            st.session_state.selected_module = "Estimator Tools"
-            st.session_state.selected_estimator_sub_module = None
+with top_ribbon_c1:
+    is_active_site = (st.session_state.selected_module == "Site Manager")
+    if st.button(
+        "👷‍♂️ Site Manager",
+        key="ribbon_btn_site",
+        use_container_width=True,
+        type="primary" if is_active_site else "secondary"
+    ):
+        if site_lock_main == "Premium" and not is_user_premium:
+            st.error("🔒 हे फीचर प्रिमियम युझर्ससाठी आहे!")
+        else:
+            st.session_state.selected_module = "Site Manager"
+            st.session_state.selected_site_sub_module = None
             trigger_push_state()
             st.rerun()
 
-    with top_ribbon_c3:
-        is_active_neev = (st.session_state.selected_module == "NeevPay")
-        if st.button(
-            "🤝 NeevPay Escrow",
-            key="ribbon_btn_neevpay",
-            use_container_width=True,
-            type="primary" if is_active_neev else "secondary"
-        ):
-            if neev_lock_main == "Premium" and not is_user_premium:
-                st.error("🔒 हे फीचर प्रिमियम युझर्ससाठी आहे!")
-            else:
-                st.session_state.selected_module = "NeevPay"
-                trigger_push_state()
-                st.rerun()
+with top_ribbon_c2:
+    is_active_est = (st.session_state.selected_module == "Estimator Tools")
+    if st.button(
+        "📐 Estimator Tools",
+        key="ribbon_btn_estimator",
+        use_container_width=True,
+        type="primary" if is_active_est else "secondary"
+    ):
+        st.session_state.selected_module = "Estimator Tools"
+        st.session_state.selected_estimator_sub_module = None
+        trigger_push_state()
+        st.rerun()
 
-    st.write("---")
+with top_ribbon_c3:
+    is_active_neev = (st.session_state.selected_module == "NeevPay")
+    if st.button(
+        "🤝 NeevPay Escrow",
+        key="ribbon_btn_neevpay",
+        use_container_width=True,
+        type="primary" if is_active_neev else "secondary"
+    ):
+        if neev_lock_main == "Premium" and not is_user_premium:
+            st.error("🔒 हे फीचर प्रिमियम युझर्ससाठी आहे!")
+        else:
+            st.session_state.selected_module = "NeevPay"
+            trigger_push_state()
+            st.rerun()
+
+st.markdown('</div>', unsafe_allow_html=True)
+st.write("---")
 # ==========================================
 # 📌 विभाग १४: CIVIL AI ASSISTANT (Gemini SDK & Fallback)
 # ==========================================
