@@ -60,7 +60,7 @@ st.set_page_config(
     page_title="PATIL INFRATECH | Civil Engineering Suite",
     page_icon="🏗️",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded",
 )
 # ==========================================
 # 📌 विभाग ३: ब्राउझर लोकल स्टोरेज आणि मोबाईल बॅक बटन हँडलर
@@ -687,7 +687,7 @@ def check_user_premium_status(username):
 is_curr_premium, _ = check_user_premium_status(current_user_name)
 
 # ==========================================
-# 📌 विभाग ८: BRANDED THEME, SIDEBAR TOGGLE & FIXED TOP RIBBON CSS
+# 📌 विभाग ८: BRANDED THEME & PERMANENT SIDEBAR TOGGLE CSS
 # ==========================================
 st.markdown(
     """
@@ -700,29 +700,53 @@ st.markdown(
     button[title="Increment"], button[title="Decrement"] { display: none !important; }
     div[data-testid="stNumberInputStepUp"], div[data-testid="stNumberInputStepDown"] { display: none !important; }
 
-    /* 🌟 १. बंद झालेला साईडबार परत उघडण्यासाठी (> बाण) बटण स्क्रीनवर कायम दिसणे */
+    /* 🌟 १. बंद झालेला साईडबार उघडणारे अधिकृत चिन्ह (Toggle Control) कायम स्क्रीनवर दृश्यमान ठेवणे */
     header[data-testid="stHeader"] {
-        background-color: transparent !important;
+        background: transparent !important;
         visibility: visible !important;
         display: block !important;
-        z-index: 100000 !important;
+        height: 2.8rem !important;
+        z-index: 999999 !important;
     }
 
-    /* साईडबार उघडण्याचे बटण (Arrow Icon Button) हायलाइट व आकर्षक करणे */
-    [data-testid="stSidebarCollapsedControl"],
+    [data-testid="stSidebarCollapsedControl"] {
+        display: block !important;
+        visibility: visible !important;
+        position: fixed !important;
+        top: 10px !important;
+        left: 10px !important;
+        z-index: 1000000 !important;
+    }
+
+    [data-testid="stSidebarCollapsedControl"] button,
     button[data-testid="stSidebarCollapseButton"],
     button[data-testid="baseButton-header"] {
         display: flex !important;
         visibility: visible !important;
-        color: #f59e0b !important;
         background: #0f172a !important;
+        color: #f59e0b !important;
         border: 2px solid #f59e0b !important;
-        border-radius: 10px !important;
-        padding: 6px 10px !important;
-        margin-left: 10px !important;
-        margin-top: 8px !important;
-        box-shadow: 0 0 15px rgba(245, 158, 11, 0.4) !important;
+        border-radius: 8px !important;
+        padding: 4px 8px !important;
+        box-shadow: 0 0 15px rgba(245, 158, 11, 0.6) !important;
         cursor: pointer !important;
+    }
+
+    [data-testid="stSidebarCollapsedControl"] svg,
+    button[data-testid="stSidebarCollapseButton"] svg {
+        fill: #f59e0b !important;
+        stroke: #f59e0b !important;
+    }
+
+    /* 🌟 २. फिक्स डावा साईडबार स्टायलिंग */
+    section[data-testid="stSidebar"] {
+        background-color: #0b0f19 !important;
+        border-right: 1px solid #1e293b !important;
+        z-index: 99999 !important;
+    }
+
+    section[data-testid="stSidebar"] > div {
+        padding-top: 1rem !important;
     }
 
     /* Main App Background */
@@ -732,14 +756,7 @@ st.markdown(
         font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
     }
 
-    /* Fixed Left Sidebar Styling */
-    section[data-testid="stSidebar"] {
-        background-color: #0b0f19 !important;
-        border-right: 1px solid #1e293b !important;
-        z-index: 9999 !important;
-    }
-
-    /* 🌟 २. कायम फिक्स राहणारा टॉप रिबन बार (Sticky Ribbon) */
+    /* 🌟 ३. फिक्स टॉप रिबन बार */
     .fixed-top-ribbon-container {
         position: sticky;
         top: 0px;
