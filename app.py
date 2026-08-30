@@ -52,7 +52,7 @@ try:
     HAS_GENAI = True
 except ImportError:
     HAS_GENAI = False
-    
+
 # ==========================================
 # 📌 विभाग २: STREAMLIT पेज कॉन्फिगरेशन
 # ==========================================
@@ -60,8 +60,8 @@ st.set_page_config(
     page_title="PATIL INFRATECH | Civil Engineering Suite",
     page_icon="🏗️",
     layout="wide",
-    initial_sidebar_state="expanded",  # Gemini सारखा डावा पॅनल कायम ओपन राहील
-
+    initial_sidebar_state="expanded"
+)
 # ==========================================
 # 📌 विभाग ३: ब्राउझर लोकल स्टोरेज आणि मोबाईल बॅक बटन हँडलर
 # ==========================================
