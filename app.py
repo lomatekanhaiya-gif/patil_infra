@@ -1758,7 +1758,20 @@ if st.session_state.get("is_client_view", False):
         st.info("ℹ️ सध्या कोणताही नवीन प्रोग्रेस रिपोर्ट उपलब्ध नाही.")
 
     st.stop()
-                    
+# ==============================================================================
+# 📌 विभाग १३: मुख्य युझर डॅशबोर्ड (Gemini Style Fixed Sidebar & Top Ribbon)
+# ==============================================================================
+current_user_name = st.session_state.app_user_name
+is_user_premium, status_text_str = check_user_premium_status(current_user_name)
+
+# हवामान डेटा
+if "site_location_city" not in st.session_state:
+    st.session_state.site_location_city = "Pune"
+
+site_weather = get_site_weather_forecast(st.session_state.site_location_city)
+w_temp = site_weather["temp"] if site_weather else "--"
+w_rain = site_weather["rain_prob"] if site_weather else 0
+w_city = site_weather["city"] if site_weather else st.session_state.site_location_city                  
 # ==============================================================================
 # ⬅️ १. फिक्स डावा पॅनल (Fixed Left Sidebar - No Hide Button)
 # ==============================================================================
