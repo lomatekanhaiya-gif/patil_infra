@@ -60,7 +60,7 @@ st.set_page_config(
     page_title="PATIL INFRATECH | Civil Engineering Suite",
     page_icon="🏗️",
     layout="wide",
-    initial_sidebar_state="collapsed",
+    initial_sidebar_state="expanded",  # Gemini सारखा sidebar दिसावा म्हणून
 )
 
 # ==========================================
@@ -1808,37 +1808,14 @@ if st.session_state.get("is_client_view", False):
     st.stop()
                     
 # ==============================================================================
-# 📌 विभाग १३: मुख्य युझर डॅशबोर्ड (Top Action Bar, Weather, Site & Notice Box)
+# 📌 विभाग १३: GEMINI-STYLE LEFT SIDEBAR (Site, Weather, Notice & Controls)
 # ==============================================================================
 current_user_name = st.session_state.app_user_name
 is_user_premium, status_text_str = check_user_premium_status(current_user_name)
 
-# १. स्पॉन्सर जाहिराती (ॲक्टिव्ह असल्यास)
-conn = get_db_connection()
-cursor = conn.cursor()
-cursor.execute(
-    "SELECT * FROM ads WHERE active = 1 AND position = 'Main App Header (Top"
-    " Banner)'"
-)
-ads_list = [dict(r) for r in cursor.fetchall()]
-conn.close()
-
-for ad in ads_list:
-  st.markdown(
-      f"""
-        <div style="background: #111827; border: 1px solid rgba(0, 242, 254, 0.3); padding: 8px 12px; border-radius: 10px; text-align: center; margin-bottom: 15px;">
-            <span style="font-size: 9px; color: #38bdf8; font-weight: bold;">📢 SPONSOR AD</span><br>
-            <b style="color: #fff; font-size: 13px;">{ad.get('title')}</b> — <span style="color: #cbd5e1; font-size: 11px;">{ad.get('desc')}</span>
-            {"<img src='" + ad.get('media_url') + "' style='max-height:45px; border-radius:4px; margin-top:3px;'/>" if ad.get('media_type') == 'Photo (PNG/JPG)' and ad.get('media_url') else ""}
-            <a href="{ad.get('link')}" target="_blank" style="color: #f59e0b; font-weight: bold; text-decoration: underline; font-size: 11px; margin-left: 6px;">[Visit]</a>
-        </div>
-        """,
-      unsafe_allow_html=True,
-  )
-
-# २. हवामान डेटा (Open-Meteo API)
+# १. हवामान डेटा (Open-Meteo API)
 if "site_location_city" not in st.session_state:
-  st.session_state.site_location_city = "Pune"
+    st.session_state.site_location_city = "Pune"
 
 site_weather = get_site_weather_forecast(st.session_state.site_location_city)
 w_temp = site_weather["temp"] if site_weather else "--"
@@ -1847,260 +1824,236 @@ w_city = (
     site_weather["city"] if site_weather else st.session_state.site_location_city
 )
 
-# ----------------------------------------------------
-# 🌟 फोटोप्रमाणे मुख्य ॲक्शन बार (Site, Weather, City & Logout)
-# ----------------------------------------------------
-top_c1, top_c2, top_c3, top_c4 = st.columns([3.2, 2.2, 1.6, 1.2])
-
-with top_c1:
-  st.markdown(
-      f"""
-        <div style="background: #141820; border: 1px solid #2d3545; border-left: 4px solid #38bdf8; padding: 8px 14px; border-radius: 8px;">
-            <span style="font-size: 11px; color: #94a3b8; font-weight: 600;">📍 चालू साईट:</span><br>
-            <b style="color: #ffffff; font-size: 15px;">🏗️ {st.session_state.current_site_name}</b>
-        </div>
-        """,
-      unsafe_allow_html=True,
-  )
-  with st.popover("✏️ साईट नाव बदला"):
-    new_site_input = st.text_input(
-        "नवीन साईटचे नाव टाका:",
-        value=st.session_state.current_site_name,
-        key="top_site_edit_input",
-    )
-    if st.button(
-        "💾 सेव्ह करा",
-        key="btn_save_top_site",
-        type="primary",
-        use_container_width=True,
-    ):
-      if new_site_input.strip():
-        st.session_state.current_site_name = new_site_input.strip()
-        st.rerun()
-
-with top_c2:
-  st.markdown(
-      f"""
-        <div style="background: #141820; border: 1px solid #2d3545; padding: 8px 14px; border-radius: 8px; text-align: center;">
-            <span style="font-size: 11px; color: #94a3b8;">🌤️ हवामान ({w_city})</span><br>
-            <b style="color: #38bdf8; font-size: 14px;">{w_temp}°C</b> | <span style="color: {'#ef4444' if w_rain >= 50 else '#10b981'}; font-weight: bold; font-size: 13px;">🌧️ {w_rain}% पाऊस</span>
-        </div>
-        """,
-      unsafe_allow_html=True,
-  )
-
-with top_c3:
-  with st.popover("📍 Set City Location"):
-    new_city_input = st.text_input(
-        "शहर टाका (उदा. Pune):",
-        value=st.session_state.site_location_city,
-        key="top_city_edit_input",
-    )
-    if st.button(
-        "🌦️ अपडेट करा",
-        key="btn_top_weather_update",
-        type="primary",
-        use_container_width=True,
-    ):
-      if new_city_input.strip():
-        st.session_state.site_location_city = new_city_input.strip()
-        st.rerun()
-
-with top_c4:
-  if st.button("🔄 Logout", key="top_logout_btn", use_container_width=True):
-    st.session_state.app_user_name = None
-    st.session_state.otp_verified = False
-    if "saved_user" in st.query_params:
-      del st.query_params["saved_user"]
-    st.session_state.current_comment = "काही नाही"
-    st.session_state.selected_module = None
-    st.session_state.selected_site_sub_module = None
-    st.session_state.selected_estimator_sub_module = None
-
-    st.markdown(
-        """
-        <script>
-            localStorage.removeItem("patil_app_user");
-        </script>
-        """,
-        unsafe_allow_html=True,
-    )
-    st.rerun()
-
-# ----------------------------------------------------
-# 🔔 नोटीस बॉक्स आणि इनबॉक्स (Notice Box)
-# ----------------------------------------------------
 current_user_data = get_user_data(current_user_name) or {}
 disp_name_inbox = current_user_name if current_user_name else ""
 
-if current_user_data.get("unread_notification") == 1:
-  admin_msg = current_user_data.get("admin_message", "")
-  st.markdown(
-      f"""
-        <div style="background: linear-gradient(135deg, #064e3b 0%, #0f172a 100%); padding: 12px 16px; border-radius: 8px; margin: 12px 0; border: 1px solid #10b981;">
-            <h5 style="color: #34d399; margin: 0 0 4px 0;">🔔 नवीन ॲडमीन नोटीस</h5>
-            <p style="color: #ffffff; font-size: 14px; margin: 0;">{admin_msg}</p>
+# ------------------------------------------------------------------------------
+# 🌟 डाव्या बाजूचा GEMINI STYLE SIDEBAR
+# ------------------------------------------------------------------------------
+with st.sidebar:
+    st.markdown(
+        """
+        <div style="text-align: center; padding: 10px 0 15px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 15px;">
+            <span style="font-size: 26px;">🏗️</span>
+            <h3 style="margin: 4px 0 0 0; font-size: 18px; font-weight: 800; color: #f59e0b;">PATIL INFRATECH</h3>
+            <small style="color: #94a3b8; font-size: 11px;">Site Control Panel</small>
         </div>
         """,
-      unsafe_allow_html=True,
-  )
-
-  if st.button("✅ Mark as Read (वाचले आहे)", type="primary", key="btn_read_notice"):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        "UPDATE users SET unread_notification = 0, admin_message = ? WHERE"
-        " user_key = ?",
-        (
-            f"{disp_name_inbox} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक"
-            " स्वागत आहे🥳",
-            current_user_name,
-        ),
+        unsafe_allow_html=True,
     )
-    conn.commit()
-    conn.close()
-    st.success("✅ नोटीस क्लियर झाली!")
-    st.rerun()
-else:
-  admin_msg = current_user_data.get(
-      "admin_message",
-      f"{disp_name_inbox} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक"
-      " स्वागत आहे🥳",
-  )
-  with st.expander("📥 नोटीस व मेसेज इनबॉक्स (Notice Box)"):
-    st.info(f"📢 **Admin Message:** {admin_msg}")
 
-# ----------------------------------------------------
-# 🔑 प्रिमियम अनलॉक बॉक्स (फ्री युझर्ससाठी)
-# ----------------------------------------------------
-if not is_user_premium:
-  with st.expander("🔑 प्रिमियम अनलॉक करा (Enter Premium Code)"):
-    input_code = st.text_input(
-        "Enter Code (e.g. PATIL-XXXXX):", key="home_code_input"
-    ).strip()
-    c_btn1, c_btn2 = st.columns(2)
-    with c_btn1:
-      if st.button(
-          "🔓 Activate Premium",
-          key="btn_activate_prem_main",
-          type="primary",
-          use_container_width=True,
-      ):
-        u_info = get_user_data(current_user_name) or {}
+    # १. चालू साईट बॉक्स
+    st.markdown(
+        f"""
+        <div style="background: #141820; border: 1px solid #2d3545; border-left: 4px solid #38bdf8; padding: 10px 12px; border-radius: 10px; margin-bottom: 8px;">
+            <span style="font-size: 11px; color: #94a3b8; font-weight: 600;">📍 चालू साईट:</span><br>
+            <b style="color: #ffffff; font-size: 14px;">🏗️ {st.session_state.current_site_name}</b>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
-        if input_code == "4528":
-          uses_count = u_info.get("master_code_uses", 0)
-          if uses_count >= 3:
-            st.error(
-                "❌ हा मास्टर कोड तुम्ही आधीच ३ वेळा वापरला आहे! मर्यादा"
-                " संपली आहे."
-            )
-          else:
-            exp_datetime = get_ist_time() + datetime.timedelta(hours=8)
-            exp_str = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
+    with st.popover("✏️ साईट नाव बदला", use_container_width=True):
+        new_site_input = st.text_input(
+            "नवीन साईटचे नाव टाका:",
+            value=st.session_state.current_site_name,
+            key="side_site_edit_input",
+        )
+        if st.button("💾 सेव्ह करा", key="btn_save_side_site", type="primary", use_container_width=True):
+            if new_site_input.strip():
+                st.session_state.current_site_name = new_site_input.strip()
+                st.rerun()
 
+    st.write("")
+
+    # २. हवामान बॉक्स
+    st.markdown(
+        f"""
+        <div style="background: #141820; border: 1px solid #2d3545; padding: 10px 12px; border-radius: 10px; text-align: center; margin-bottom: 8px;">
+            <span style="font-size: 11px; color: #94a3b8;">🌤️ हवामान ({w_city})</span><br>
+            <b style="color: #38bdf8; font-size: 15px;">{w_temp}°C</b> | <span style="color: {'#ef4444' if w_rain >= 50 else '#10b981'}; font-weight: bold; font-size: 13px;">🌧️ {w_rain}% पाऊस</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # ३. शहर बदलणे
+    with st.popover("📍 Set City Location", use_container_width=True):
+        new_city_input = st.text_input(
+            "शहर टाका (उदा. Pune):",
+            value=st.session_state.site_location_city,
+            key="side_city_edit_input",
+        )
+        if st.button("🌦️ अपडेट करा", key="btn_side_weather_update", type="primary", use_container_width=True):
+            if new_city_input.strip():
+                st.session_state.site_location_city = new_city_input.strip()
+                st.rerun()
+
+    # ४. लॉगआउट बटण
+    if st.button("🔄 Logout", key="side_logout_btn", use_container_width=True):
+        st.session_state.app_user_name = None
+        st.session_state.otp_verified = False
+        if "saved_user" in st.query_params:
+            del st.query_params["saved_user"]
+        st.session_state.current_comment = "काही नाही"
+        st.session_state.selected_module = None
+        st.session_state.selected_site_sub_module = None
+        st.session_state.selected_estimator_sub_module = None
+
+        st.markdown(
+            """
+            <script>
+                localStorage.removeItem("patil_app_user");
+            </script>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.rerun()
+
+    st.markdown("<hr style='border: 0.5px solid rgba(255,255,255,0.1); margin: 15px 0;'>", unsafe_allow_html=True)
+
+    # ५. नोटीस बॉक्स
+    if current_user_data.get("unread_notification") == 1:
+        admin_msg = current_user_data.get("admin_message", "")
+        st.markdown(
+            f"""
+            <div style="background: linear-gradient(135deg, #064e3b 0%, #0f172a 100%); padding: 12px; border-radius: 10px; margin-bottom: 8px; border: 1px solid #10b981;">
+                <h6 style="color: #34d399; margin: 0 0 4px 0;">🔔 नवीन ॲडमीन नोटीस</h6>
+                <p style="color: #ffffff; font-size: 12px; margin: 0;">{admin_msg}</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        if st.button("✅ Mark as Read", type="primary", key="btn_read_notice_side", use_container_width=True):
             conn = get_db_connection()
             cursor = conn.cursor()
             cursor.execute(
-                """
+                "UPDATE users SET unread_notification = 0, admin_message = ? WHERE user_key = ?",
+                (
+                    f"{disp_name_inbox} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳",
+                    current_user_name,
+                ),
+            )
+            conn.commit()
+            conn.close()
+            st.rerun()
+    else:
+        admin_msg = current_user_data.get(
+            "admin_message",
+            f"{disp_name_inbox} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳",
+        )
+        with st.expander("📥 नोटीस व मेसेज इनबॉक्स"):
+            st.info(f"📢 {admin_msg}")
+
+    # ६. प्रिमियम अनलॉक बॉक्स
+    if not is_user_premium:
+        with st.expander("🔑 प्रिमियम अनलॉक करा"):
+            input_code = st.text_input("Enter Code:", key="side_code_input").strip()
+            
+            if st.button("🔓 Unlock", key="btn_activate_prem_side", type="primary", use_container_width=True):
+                u_info = get_user_data(current_user_name) or {}
+
+                if input_code == "4528":
+                    uses_count = u_info.get("master_code_uses", 0)
+                    if uses_count >= 3:
+                        st.error("❌ मर्यादा संपली आहे (Max 3).")
+                    else:
+                        exp_datetime = get_ist_time() + datetime.timedelta(hours=8)
+                        exp_str = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
+
+                        conn = get_db_connection()
+                        cursor = conn.cursor()
+                        cursor.execute(
+                            """
                             UPDATE users 
                             SET master_code_uses = ?, is_premium = 1, premium_expiry = ?, seen_popup = 0,
                                 activated_by = ?, admin_message = ?, unread_notification = 0
                             WHERE user_key = ?
                             """,
-                (
-                    uses_count + 1,
-                    exp_str,
-                    "Master Code 4528 (8 Hours VIP)",
-                    f"🎉 मास्टर कोड 4528 द्वारे तुला ८ तासांचे प्रिमियम मिळाले आहे! (वापर: {uses_count + 1}/3)",
-                    current_user_name,
-                ),
-            )
-            conn.commit()
-            conn.close()
-            st.success("🎉 मास्टर कोड द्वारे ८ तासांचे प्रिमियम अनलॉक झाले!")
-            st.rerun()
+                            (
+                                uses_count + 1,
+                                exp_str,
+                                "Master Code 4528 (8 Hours VIP)",
+                                f"🎉 ८ तासांचे प्रिमियम मिळाले आहे! ({uses_count + 1}/3)",
+                                current_user_name,
+                            ),
+                        )
+                        conn.commit()
+                        conn.close()
+                        st.success("🎉 प्रिमियम अनलॉक झाले!")
+                        st.rerun()
 
-        elif input_code == "kanha_1p":
-          exp_datetime = get_ist_time() + datetime.timedelta(days=1)
-          exp_str = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
+                elif input_code == "kanha_1p":
+                    exp_datetime = get_ist_time() + datetime.timedelta(days=1)
+                    exp_str = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
 
-          conn = get_db_connection()
-          cursor = conn.cursor()
-          cursor.execute(
-              """
+                    conn = get_db_connection()
+                    cursor = conn.cursor()
+                    cursor.execute(
+                        """
                         UPDATE users 
                         SET is_premium = 1, premium_expiry = ?, seen_popup = 0, activated_by = ?,
                             admin_message = ?, unread_notification = 0
                         WHERE user_key = ?
                         """,
-              (
-                  exp_str,
-                  "Master Code",
-                  f"{current_user_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳",
-                  current_user_name,
-              ),
-          )
-          conn.commit()
-          conn.close()
-          st.success("🎉 मास्टर कोडद्वारे प्रिमियम यशस्वीरित्या सुरू झाले!")
-          st.rerun()
-        else:
-          conn = get_db_connection()
-          cursor = conn.cursor()
-          cursor.execute(
-              "SELECT * FROM premium_codes WHERE code = ?", (input_code,)
-          )
-          c_row = cursor.fetchone()
+                        (
+                            exp_str,
+                            "Master Code",
+                            f"{current_user_name} स्वागत आहे🥳",
+                            current_user_name,
+                        ),
+                    )
+                    conn.commit()
+                    conn.close()
+                    st.success("🎉 प्रिमियम सुरू झाले!")
+                    st.rerun()
+                else:
+                    conn = get_db_connection()
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT * FROM premium_codes WHERE code = ?", (input_code,))
+                    c_row = cursor.fetchone()
 
-          if c_row and dict(c_row).get("used") == 0:
-            exp_datetime = get_ist_time() + datetime.timedelta(days=28)
-            exp_str = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
-            now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
+                    if c_row and dict(c_row).get("used") == 0:
+                        exp_datetime = get_ist_time() + datetime.timedelta(days=28)
+                        exp_str = exp_datetime.strftime("%Y-%m-%d %H:%M:%S")
+                        now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
 
-            cursor.execute(
-                "UPDATE premium_codes SET used = 1, used_by = ?, used_date = ?"
-                " WHERE code = ?",
-                (current_user_name, now_str, input_code),
-            )
-            cursor.execute(
-                """
+                        cursor.execute(
+                            "UPDATE premium_codes SET used = 1, used_by = ?, used_date = ? WHERE code = ?",
+                            (current_user_name, now_str, input_code),
+                        )
+                        cursor.execute(
+                            """
                             UPDATE users 
                             SET is_premium = 1, premium_expiry = ?, seen_popup = 0, activated_by = ?,
                                 admin_message = ?, unread_notification = 0
                             WHERE user_key = ?
                             """,
-                (
-                    exp_str,
-                    "Patil Infratech",
-                    f"{current_user_name} मी कन्हैया आपले पाटील इन्फ्राटेक मध्ये आपले हार्दिक स्वागत आहे🥳",
-                    current_user_name,
-                ),
-            )
-            conn.commit()
-            conn.close()
-            st.success("🎉 प्रिमियम यशस्वीरित्या सुरू झाले!")
-            st.rerun()
-          else:
-            conn.close()
-            st.error("❌ चुकीचा किंवा आधीच वापरलेला कोड!")
-    with c_btn2:
-      if st.button(
-          "📩 Request Code",
-          key="btn_req_code_main",
-          use_container_width=True,
-      ):
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute(
-            "UPDATE users SET requested_code = 1 WHERE user_key = ?",
-            (current_user_name,),
-        )
-        conn.commit()
-        conn.close()
-        st.success("✅ ॲडमीनला रिक्वेस्ट पाठवली!")
+                            (
+                                exp_str,
+                                "Patil Infratech",
+                                f"{current_user_name} स्वागत आहे🥳",
+                                current_user_name,
+                            ),
+                        )
+                        conn.commit()
+                        conn.close()
+                        st.success("🎉 प्रिमियम सुरू झाले!")
+                        st.rerun()
+                    else:
+                        conn.close()
+                        st.error("❌ चुकीचा किंवा वापरलेला कोड!")
 
-st.write("---")
+            if st.button("📩 Request Code", key="btn_req_code_side", use_container_width=True):
+                conn = get_db_connection()
+                cursor = conn.cursor()
+                cursor.execute(
+                    "UPDATE users SET requested_code = 1 WHERE user_key = ?",
+                    (current_user_name,),
+                )
+                conn.commit()
+                conn.close()
+                st.success("✅ रिक्वेस्ट पाठवली!")
 # ==========================================
 # 📌 विभाग १४: CIVIL AI ASSISTANT (Gemini SDK & Fallback)
 # ==========================================
