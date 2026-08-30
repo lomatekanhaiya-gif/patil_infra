@@ -14,12 +14,12 @@
 # 📌 विभाग ५  : SQLITE डेटाबेस मॅनेजमेंट आणि मॉडेल्स (Tables Creation & Init DB)
 # 📌 विभाग ६  : डेटाबेस क्वेरी आणि हेल्पर फंक्शन्स (Default Tasks & Rates)
 # 📌 विभाग ७  : सेशन स्टेट्स आणि प्रिमियम ऑथेंटिकेशन व्यवस्था
-# 📌 विभाग ८  : BRANDED THEME, SIDEBAR TOGGLE & FIXED TOP RIBBON CSS
+# 📌 विभाग ८  : BRANDED CONSTRUCTION THEME CSS
 # 📌 विभाग ९  : WHATSAPP रिपोर्ट शेअरिंग कंपोनंट (Safe Dynamic Key Protection)
 # 📌 विभाग १० : वेलकम स्क्रीन ॲनिमेशन (3D Cosmic Loader & Sponsor Ads)
 # 📌 विभाग ११ : ॲडमीन पॅनल (Admin Command Center)
 # 📌 विभाग १२ : युझर ऑथेंटिकेशन (Login, Register & Email OTP)
-# 📌 विभाग १३ : मुख्य युझर डॅशबोर्ड (Fixed Top Ribbon & Sidebar Re-open Handler)
+# 📌 विभाग १३ : मुख्य युझर डॅशबोर्ड (Top Header, Ads, Notifications & Site Switcher)
 # 📌 विभाग १४ : CIVIL AI ASSISTANT (Gemini SDK & Expert Knowledge Fallback)
 # 📌 विभाग १५ : मुख्य मॉड्यूल निवड कार्ड्स (Site Manager vs Estimator Tools vs NeevPay)
 # 📌 विभाग १६ : ESTIMATOR TOOLS मुख्य मॉड्यूल (Sub-modules)
@@ -52,7 +52,7 @@ try:
     HAS_GENAI = True
 except ImportError:
     HAS_GENAI = False
-
+    
 # ==========================================
 # 📌 विभाग २: STREAMLIT पेज कॉन्फिगरेशन
 # ==========================================
@@ -60,8 +60,7 @@ st.set_page_config(
     page_title="PATIL INFRATECH | Civil Engineering Suite",
     page_icon="🏗️",
     layout="wide",
-    initial_sidebar_state="expanded",
-)
+    initial_sidebar_state="expanded",  # Gemini सारखा डावा पॅनल कायम ओपन राहील
 
 # ==========================================
 # 📌 विभाग ३: ब्राउझर लोकल स्टोरेज आणि मोबाईल बॅक बटन हँडलर
@@ -688,67 +687,20 @@ def check_user_premium_status(username):
 is_curr_premium, _ = check_user_premium_status(current_user_name)
 
 # ==========================================
-# 📌 विभाग ८: BRANDED THEME & PERMANENT SIDEBAR TOGGLE CSS
+# 📌 विभाग ८: BRANDED THEME & FIXED LAYOUT CSS
 # ==========================================
 st.markdown(
     """
     <style>
     #MainMenu { visibility: hidden; }
+    header[data-testid="stHeader"] { visibility: hidden; height: 0%; display: none !important; }
     footer { visibility: hidden; display: none !important; }
+    .stAppHeader { display: none !important; }
     [data-testid="stToolbar"] { visibility: hidden !important; display: none !important; }
     [data-testid="stDecoration"] { display: none !important; }
     [data-testid="stStatusWidget"] { visibility: hidden !important; }
     button[title="Increment"], button[title="Decrement"] { display: none !important; }
     div[data-testid="stNumberInputStepUp"], div[data-testid="stNumberInputStepDown"] { display: none !important; }
-
-    /* 🌟 १. बंद झालेला साईडबार उघडणारे अधिकृत चिन्ह (Toggle Control) स्क्रीनवर कायम दृश्यमान ठेवणे */
-    header[data-testid="stHeader"] {
-        background: transparent !important;
-        visibility: visible !important;
-        display: block !important;
-        height: 2.8rem !important;
-        z-index: 999999 !important;
-    }
-
-    [data-testid="stSidebarCollapsedControl"] {
-        display: block !important;
-        visibility: visible !important;
-        position: fixed !important;
-        top: 10px !important;
-        left: 10px !important;
-        z-index: 1000000 !important;
-    }
-
-    [data-testid="stSidebarCollapsedControl"] button,
-    button[data-testid="stSidebarCollapseButton"],
-    button[data-testid="baseButton-header"] {
-        display: flex !important;
-        visibility: visible !important;
-        background: #0f172a !important;
-        color: #f59e0b !important;
-        border: 2px solid #f59e0b !important;
-        border-radius: 8px !important;
-        padding: 4px 8px !important;
-        box-shadow: 0 0 15px rgba(245, 158, 11, 0.6) !important;
-        cursor: pointer !important;
-    }
-
-    [data-testid="stSidebarCollapsedControl"] svg,
-    button[data-testid="stSidebarCollapseButton"] svg {
-        fill: #f59e0b !important;
-        stroke: #f59e0b !important;
-    }
-
-    /* 🌟 २. फिक्स डावा साईडबार स्टायलिंग */
-    section[data-testid="stSidebar"] {
-        background-color: #0b0f19 !important;
-        border-right: 1px solid #1e293b !important;
-        z-index: 99999 !important;
-    }
-
-    section[data-testid="stSidebar"] > div {
-        padding-top: 1rem !important;
-    }
 
     /* Main App Background */
     html, body, .stApp, [data-testid="stAppViewContainer"] {
@@ -757,22 +709,28 @@ st.markdown(
         font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
     }
 
-    /* 🌟 ३. फिक्स टॉप रिबन बार */
-    .fixed-top-ribbon-container {
-        position: sticky;
-        top: 0px;
-        z-index: 9990;
-        background: rgba(15, 23, 42, 0.96);
-        backdrop-filter: blur(12px);
-        border: 1px solid #334155;
-        border-top: 2px solid #f59e0b;
-        border-radius: 12px;
-        padding: 10px 14px;
-        margin-bottom: 18px;
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+    /* Fixed Left Sidebar Styling (Gemini Style) */
+    section[data-testid="stSidebar"] {
+        background-color: #0b0f19 !important;
+        border-right: 1px solid #1e293b !important;
+    }
+    section[data-testid="stSidebar"] > div {
+        padding-top: 1.5rem !important;
     }
 
-    /* Inputs */
+    /* Fixed / Sticky Top Ribbon */
+    .sticky-top-ribbon {
+        position: sticky;
+        top: 0;
+        z-index: 999;
+        background: rgba(15, 23, 42, 0.95);
+        backdrop-filter: blur(10px);
+        padding: 10px 0;
+        border-bottom: 1px solid #334155;
+        margin-bottom: 15px;
+    }
+
+    /* Input Boxes */
     div[data-baseweb="input"],
     div[data-baseweb="base-input"],
     div[data-testid="stNumberInputContainer"],
@@ -789,15 +747,17 @@ st.markdown(
         font-weight: 500 !important;
     }
 
-    /* Buttons */
+    /* Primary & Standard Buttons */
     div.stButton > button[kind="primary"] {
         background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
         color: #000000 !important;
         font-weight: 800 !important;
         border-radius: 10px !important;
         border: none !important;
-        padding: 8px 18px !important;
+        padding: 10px 20px !important;
         box-shadow: 0 4px 15px rgba(245, 158, 11, 0.35) !important;
+        text-transform: uppercase;
+        transition: all 0.2s ease-in-out;
     }
 
     div.stButton > button {
@@ -806,6 +766,11 @@ st.markdown(
         border: 1px solid #334155 !important;
         border-radius: 10px !important;
         font-weight: 600 !important;
+        transition: all 0.2s ease;
+    }
+    div.stButton > button:hover {
+        border-color: #f59e0b !important;
+        color: #f59e0b !important;
     }
 
     .module-card {
@@ -826,7 +791,6 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
-
 # ==========================================
 # 📌 विभाग ९: WHATSAPP रिपोर्ट शेअरिंग कंपोनंट
 # ==========================================
@@ -957,7 +921,7 @@ if not st.session_state.welcome_completed:
             ad_dict = dict(ad)
             st.markdown(
                 f"""
-                <div style="background: #0f172a; border: 1px solid #f59e0b; padding: 10px 14px; border-radius: 12px; text-align: center; margin-left: auto; margin-right: auto; max-width: 300px; box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);">
+                <div style="background: #0f172a; border: 1px solid #f59e0b; padding: 10px 14px; border-radius: 12px; text-align: center; margin: 15px auto; max-width: 300px; box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);">
                     <span style="font-size: 10px; color: #f59e0b; font-weight: bold;">⭐ SPONSOR</span><br>
                     <b style="color: #ffffff; font-size: 14px;">{ad_dict.get('title')}</b>
                     <p style="color: #94a3b8; font-size: 11px; margin: 3px 0;">{ad_dict.get('desc')}</p>
@@ -1790,28 +1754,26 @@ if st.session_state.get("is_client_view", False):
     st.stop()
                     
 # ==============================================================================
-# 📌 विभाग १३: मुख्य युझर डॅशबोर्ड (Fixed Top Ribbon & Sidebar Re-open Handler)
+# 📌 विभाग १३: मुख्य युझर डॅशबोर्ड (Gemini Style Fixed Sidebar & Top Ribbon)
 # ==============================================================================
 current_user_name = st.session_state.app_user_name
 is_user_premium, status_text_str = check_user_premium_status(current_user_name)
 
-# १. हवामान डेटा
+# हवामान डेटा
 if "site_location_city" not in st.session_state:
     st.session_state.site_location_city = "Pune"
 
 site_weather = get_site_weather_forecast(st.session_state.site_location_city)
 w_temp = site_weather["temp"] if site_weather else "--"
 w_rain = site_weather["rain_prob"] if site_weather else 0
-w_city = (
-    site_weather["city"] if site_weather else st.session_state.site_location_city
-)
+w_city = site_weather["city"] if site_weather else st.session_state.site_location_city
 
 # ==============================================================================
-# ⬅️ डावा फिक्स पॅनल (Left Sidebar)
+# ⬅️ १. फिक्स डावा पॅनल (Fixed Left Sidebar - Gemini Style)
 # ==============================================================================
 with st.sidebar:
     st.markdown("### 🏗️ PATIL INFRATECH")
-    st.caption("Site Management & Civil Engineering Suite")
+    st.caption("Site Management & Civil Suite")
     st.write("---")
 
     # चालू साईट
@@ -1912,13 +1874,8 @@ with st.sidebar:
                             conn = get_db_connection()
                             cursor = conn.cursor()
                             cursor.execute(
-                                """
-                                UPDATE users 
-                                SET master_code_uses = ?, is_premium = 1, premium_expiry = ?, seen_popup = 0,
-                                    activated_by = ?, admin_message = ?, unread_notification = 0
-                                WHERE user_key = ?
-                                """,
-                                (uses_count + 1, exp_str, "Master Code 4528 (8 Hours VIP)", f"🎉 ८ तासांचे VIP अनलॉक!", current_user_name),
+                                "UPDATE users SET master_code_uses = ?, is_premium = 1, premium_expiry = ?, activated_by = ? WHERE user_key = ?",
+                                (uses_count + 1, exp_str, "Master Code 4528 (8 Hours VIP)", current_user_name),
                             )
                             conn.commit()
                             conn.close()
@@ -1930,13 +1887,8 @@ with st.sidebar:
                         conn = get_db_connection()
                         cursor = conn.cursor()
                         cursor.execute(
-                            """
-                            UPDATE users 
-                            SET is_premium = 1, premium_expiry = ?, seen_popup = 0, activated_by = ?,
-                                admin_message = ?, unread_notification = 0
-                            WHERE user_key = ?
-                            """,
-                            (exp_str, "Master Code", f"{current_user_name} आपले स्वागत आहे🥳", current_user_name),
+                            "UPDATE users SET is_premium = 1, premium_expiry = ?, activated_by = ? WHERE user_key = ?",
+                            (exp_str, "Master Code", current_user_name),
                         )
                         conn.commit()
                         conn.close()
@@ -1985,31 +1937,16 @@ with st.sidebar:
         st.markdown("<script>localStorage.removeItem('patil_app_user');</script>", unsafe_allow_html=True)
         st.rerun()
 
-# ==============================================================================
-# 🔝 २. कायम फिक्स राहणारा टॉप रिबन बार (Fixed Sticky Top Ribbon)
-# ==============================================================================
+# ==========================================================
+# ➡️ २. टॉप रिबन बार (Top Non-Scrollable Ribbon)
+# ==========================================================
 locks_cfg_main = get_feature_locks()
 site_lock_main = locks_cfg_main.get("Site Manager", "Free")
 neev_lock_main = locks_cfg_main.get("NeevPay", "Free")
 
-st.markdown('<div class="fixed-top-ribbon-container">', unsafe_allow_html=True)
-top_ribbon_c0, top_ribbon_c1, top_ribbon_c2, top_ribbon_c3 = st.columns([1, 2.3, 2.3, 2.3])
-
-# 🌟 डावा साईडबार उघडण्याचे थेट बटण
-with top_ribbon_c0:
-    st.markdown(
-        """
-        <button onclick="
-            const sb = window.parent.document.querySelector('button[data-testid=\\'stSidebarCollapseButton\\']') || 
-                       window.parent.document.querySelector('button[data-testid=\\'stSidebarCollapsedControl\\']') ||
-                       window.parent.document.querySelector('button[data-testid=\\'baseButton-header\\']');
-            if(sb) { sb.click(); }
-        " style="width:100%; height:38px; background:#0f172a; color:#f59e0b; border:1px solid #f59e0b; border-radius:8px; font-weight:bold; cursor:pointer; font-size:12px;">
-            📂 Sidebar
-        </button>
-        """,
-        unsafe_allow_html=True,
-    )
+# Top Fixed Ribbon Structure
+st.markdown('<div class="sticky-top-ribbon">', unsafe_allow_html=True)
+top_ribbon_c1, top_ribbon_c2, top_ribbon_c3 = st.columns(3)
 
 with top_ribbon_c1:
     is_active_site = (st.session_state.selected_module == "Site Manager")
@@ -2056,7 +1993,7 @@ with top_ribbon_c3:
             st.rerun()
 
 st.markdown('</div>', unsafe_allow_html=True)
-
+st.write("---")
 # ==========================================
 # 📌 विभाग १४: CIVIL AI ASSISTANT (Gemini SDK & Fallback)
 # ==========================================
@@ -3229,7 +3166,7 @@ elif st.session_state.selected_module == "Estimator Tools":
                     t_tot_wt = t_tot_len * t_unit_wt
                     calc_list.append({
                         "Desc": "Top Main Bars", "Nos": t_nos, "Dia": bm_top_dia,
-                        "Len": t_cut_m, "TotLen": t_tot_len, "Wt": m_unit_wt, "TotWt": t_tot_wt,
+                        "Len": t_cut_m, "TotLen": t_tot_len, "Wt": t_unit_wt, "TotWt": t_tot_wt,
                     })
 
                     b_ld = max(300.0, 30 * bm_bot_dia)
@@ -4350,12 +4287,11 @@ elif st.session_state.selected_module == "Site Manager":
             render_whatsapp_feature(
                 urllib.parse.quote(wa_timeline_text), "site_timeline_wa"
             )
-
 # ==========================================
-# 📌 विभाग १८: NEEVPAY / SITESETU मुख्य मॉड्यूल (Milestone Escrow & Payment Protection)
+# विभाग १८: NEEVPAY / SITESETU मुख्य मॉड्यूल (Milestone Escrow & Payment Protection)
 # ==========================================
 elif st.session_state.selected_module == "NeevPay":
-    if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_neevpay"):
+    if st.button("मुख्य मेनूवर जा (Back to Main)", key="btn_back_neevpay"):
         st.session_state.selected_module = None
         st.rerun()
 
@@ -4398,7 +4334,7 @@ elif st.session_state.selected_module == "NeevPay":
     # ==========================================================
     with st.container():
         if not client_email:
-            st.warning("⚠️ NeevPay इनव्हॉइस व सुरक्षिततेसाठी घरमालकाचा (Client) Email ID सेव्ह करा.")
+            st.warning("NeevPay इनव्हॉइस व सुरक्षिततेसाठी घरमालकाचा (Client) Email ID सेव्ह करा.")
 
             c_mail_in = st.text_input(
                 "घरमालकाचा ईमेल पत्ता (Client Email ID):",
@@ -4406,7 +4342,7 @@ elif st.session_state.selected_module == "NeevPay":
                 key="reg_client_mail",
             )
 
-            if st.button("💾 ईमेल सेव्ह करा", key="btn_save_init_email", type="primary"):
+            if st.button("ईमेल सेव्ह करा", key="btn_save_init_email", type="primary"):
                 if c_mail_in.strip() and "@" in c_mail_in:
                     conn = get_db_connection()
                     cursor = conn.cursor()
@@ -4420,16 +4356,16 @@ elif st.session_state.selected_module == "NeevPay":
                     )
                     conn.commit()
                     conn.close()
-                    st.success("✅ घरमालकाचा ईमेल यशस्वीरित्या सेव्ह झाला!")
+                    st.success("घरमालकाचा ईमेल यशस्वीरित्या सेव्ह झाला!")
                     st.rerun()
                 else:
-                    st.error("❌ कृपया योग्य ईमेल पत्ता टाका.")
+                    st.error("कृपया योग्य ईमेल पत्ता टाका.")
         else:
             c_info_col1, c_info_col2 = st.columns([3, 1])
             with c_info_col1:
-                st.info(f"📧 रजिस्टर असलेला अधिकृत Email: `{client_email}` (या ईमेलवर इनव्हॉइस पाठवले जाईल)")
+                st.info(f"रजिस्टर असलेला अधिकृत Email: `{client_email}` (या ईमेलवर इनव्हॉइस पाठवले जाईल)")
             with c_info_col2:
-                with st.popover("✏️ ईमेल बदला"):
+                with st.popover("ईमेल बदला"):
                     new_mail_edit = st.text_input("नवीन ईमेल टाका:", value=client_email, key="edit_c_mail")
                     if st.button("अपडेट करा", key="btn_update_c_mail", type="primary"):
                         if new_mail_edit.strip() and "@" in new_mail_edit:
@@ -4441,7 +4377,7 @@ elif st.session_state.selected_module == "NeevPay":
                             )
                             conn.commit()
                             conn.close()
-                            st.success("✅ ईमेल अपडेट झाला!")
+                            st.success("ईमेल अपडेट झाला!")
                             st.rerun()
 
     st.write("---")
@@ -4499,9 +4435,9 @@ elif st.session_state.selected_module == "NeevPay":
     st.write("---")
 
     # ==========================================================
-    # २. इंजिनिअर पॅनल: नवीन कामाचा टप्पा आणि बिल तयार करा
+    # २. इंजिनिअर पॅनल: नवीन कामाचा टप्पा आणि बिल स्वतः तयार करा
     # ==========================================================
-    with st.expander("➕ कामाचे नवीन बिल / टप्पा तयार करा", expanded=(len(milestones) == 0)):
+    with st.expander("कामाचे नवीन बिल / टप्पा तयार करा", expanded=(len(milestones) == 0)):
         st.caption("इंजिनिअर कामाचा प्रकार निवडून किंवा स्वतः लिहून त्याचे ठरलेले बिल निश्चित करू शकतो.")
 
         work_presets = [
@@ -4532,7 +4468,7 @@ elif st.session_state.selected_module == "NeevPay":
             key="new_stage_init_amt"
         )
 
-        if st.button("💾 कामाचे बिल निश्चित करा व सेव्ह करा", key="btn_create_custom_milestone", type="primary"):
+        if st.button("कामाचे बिल निश्चित करा व सेव्ह करा", key="btn_create_custom_milestone", type="primary"):
             if final_stage_name:
                 conn = get_db_connection()
                 cursor = conn.cursor()
@@ -4551,16 +4487,16 @@ elif st.session_state.selected_module == "NeevPay":
                 )
                 conn.commit()
                 conn.close()
-                st.success(f"✅ '{final_stage_name}' चे Rs. {init_stage_amt:,.2f} चे बिल निश्चित झाले!")
+                st.success(f"'{final_stage_name}' चे Rs. {init_stage_amt:,.2f} चे बिल निश्चित झाले!")
                 st.rerun()
             else:
-                st.warning("⚠️ कृपया कामाचे नाव टाका!")
+                st.warning("कृपया कामाचे नाव टाका!")
 
     # ==========================================================
-    # ३. NEEVPAY MASTER BILL / ESCROW STATEMENT & INVOICE
+    # ३. NEEVPAY MASTER BILL / ESCROW STATEMENT PDF & DIRECT EMAIL
     # ==========================================================
     if milestones:
-        with st.expander("📑 NeevPay Master Escrow Statement & Invoicing (PDF / Print / Email)", expanded=False):
+        with st.expander("NeevPay Master Escrow Statement & Invoicing (PDF / Print / Email)", expanded=False):
             st.caption("क्लायंट व इंजिनिअरसाठी अधिकृत डिजिटल A4 Master Statement, PDF इनव्हॉइस आणि थेट ईमेल सुविधा.")
 
             table_rows_html = ""
@@ -4672,7 +4608,7 @@ elif st.session_state.selected_module == "NeevPay":
                                     <td><b>एकूण ठरलेले बजेट:</b> <span style="color:#0284c7; font-weight:bold;">Rs. {total_budget:,.2f}</span></td>
                                     <td><b>क्लायंटकडून प्राप्त:</b> <span style="color:#10b981; font-weight:bold;">Rs. {total_received:,.2f}</span></td>
                                     <td><b>शिल्लक बाकी:</b> <span style="color:#ef4444; font-weight:bold;">Rs. {total_pending:,.2f}</span></td>
-                                    <td><b>प्रगती:</b> <span style="color:#00f2fe; font-weight:bold;">{overall_site_pct:.1f}% ({locked_stages}/{len(milestones)} टप्पे पूर्ण)</span></td>
+                                    <td><b>प्रगती:</b> <span style="color:#00f2fe; font-weight:bold;">{overall_site_pct:.1f}% ({locked_stages}/{len(milestones)} टप्पे)</span></td>
                                 </tr>
                             </table>
                         </div>
@@ -4710,7 +4646,7 @@ elif st.session_state.selected_module == "NeevPay":
 
             with np_c1:
                 st.download_button(
-                    label="📥 Download Master HTML",
+                    label="Download Master HTML",
                     data=neevpay_html_doc,
                     file_name=f"NeevPay_Master_Invoice_{st.session_state.current_site_name.replace(' ', '_')}.html",
                     mime="text/html",
@@ -4736,7 +4672,7 @@ elif st.session_state.selected_module == "NeevPay":
                 neev_csv = pd.DataFrame(neev_export_data).to_csv(index=False).encode('utf-8-sig')
 
                 st.download_button(
-                    label="📊 Export CSV Data",
+                    label="Export CSV Data",
                     data=neev_csv,
                     file_name=f"NeevPay_Escrow_{st.session_state.current_site_name.replace(' ', '_')}.csv",
                     mime="text/csv",
@@ -4747,14 +4683,15 @@ elif st.session_state.selected_module == "NeevPay":
                 st.markdown(
                     """
                     <button onclick="window.parent.print()" style="width: 100%; background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); color: white; border: none; padding: 10px 14px; border-radius: 8px; font-weight: bold; cursor: pointer; height: 38px; box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4);">
-                        🖨️ Instant Print (A4)
+                        Instant Print (A4)
                     </button>
                     """,
                     unsafe_allow_html=True,
                 )
 
             with np_c4:
-                if st.button("✉️ Email Invoice to Client", key="btn_send_client_invoice_mail", use_container_width=True):
+                # इंजिनिअर स्वतः क्लिक करून क्लायंटला अधिकृत ईमेल पाठवेल
+                if st.button("Email Invoice to Client", key="btn_send_client_invoice_mail", use_container_width=True):
                     if client_email:
                         mail_subj = f"Official Escrow Statement: {st.session_state.current_site_name}"
                         mail_body = f"""
@@ -4775,11 +4712,11 @@ elif st.session_state.selected_module == "NeevPay":
                         """
                         ok_mail = send_email_message(client_email, mail_subj, mail_body)
                         if ok_mail:
-                            st.success(f"✅ अधिकृत इनव्हॉइस '{client_email}' वर पाठवले!")
+                            st.success(f"अधिकृत इनव्हॉइस '{client_email}' वर पाठवले!")
                         else:
-                            st.error("❌ ईमेल पाठवण्यात त्रुटी आली. कृपया क्रेडेन्शियल्स तपासा.")
+                            st.error("ईमेल पाठवण्यात त्रुटी आली. कृपया क्रेडेन्शियल्स तपासा.")
                     else:
-                        st.warning("⚠️ कृपया आधी क्लायंटचा ईमेल आयडी सेव्ह करा.")
+                        st.warning("कृपया आधी क्लायंटचा ईमेल आयडी सेव्ह करा.")
 
             np_wa_text = (
                 f"*PATIL INFRATECH - NEEVPAY MASTER ESCROW STATEMENT*\n"
@@ -4802,9 +4739,9 @@ elif st.session_state.selected_module == "NeevPay":
     # ४. तयार केलेले टप्पे, पेमेंट व डिजिटल पडताळणी यादी
     # ==========================================================
     if not milestones:
-        st.info("ℹ️ या साईटवर अजून कोणतेही कामाचे बिल तयार केलेले नाही. कृपया वरील बॉक्समधून कामाचा टप्पा जोडा.")
+        st.info("या साईटवर अजून कोणतेही कामाचे बिल तयार केलेले नाही. कृपया वरील बॉक्समधून कामाचा टप्पा जोडा.")
     else:
-        st.markdown("##### 📋 कामाचे टप्पे, ठरलेले बिल, पेमेंट व डिजिटल पडताळणी:")
+        st.markdown("##### कामाचे टप्पे, ठरलेले बिल, पेमेंट व डिजिटल पडताळणी:")
 
         for m in milestones:
             m_id = m["id"]
@@ -4820,15 +4757,15 @@ elif st.session_state.selected_module == "NeevPay":
 
             # स्टेटस बॅज
             if is_locked:
-                lock_badge = "🔒 LOCKED (पूर्ण पेड व पडताळणी पूर्ण)"
+                lock_badge = "LOCKED (पूर्ण पेड व पडताळणी पूर्ण)"
             elif p_amt == 0:
-                lock_badge = "⚪ BILL NOT SET"
+                lock_badge = "BILL NOT SET"
             elif d_amt >= p_amt and p_amt > 0:
-                lock_badge = "🟢 READY TO LOCK (100% Paid)"
+                lock_badge = "READY TO LOCK (100% Paid)"
             elif d_amt > 0:
-                lock_badge = f"🟡 PARTIAL ({curr_stage_pct:.1f}%)"
+                lock_badge = f"PARTIAL ({curr_stage_pct:.1f}%)"
             else:
-                lock_badge = "🔴 UNPAID"
+                lock_badge = "UNPAID"
 
             with st.expander(
                 f"{st_name} | {lock_badge} | ठरलेले बिल: Rs. {p_amt:,.2f} (जमा: Rs. {d_amt:,.2f})",
@@ -4836,7 +4773,7 @@ elif st.session_state.selected_module == "NeevPay":
             ):
                 if is_locked:
                     st.success(
-                        f"🔒 हा टप्पा १००% पूर्ण भरला असून सुरक्षितपणे लॉक केला आहे.\n\n"
+                        f"हा टप्पा १००% पूर्ण भरला असून सुरक्षितपणे लॉक केला आहे.\n\n"
                         f"• पूर्ण झाल्याची तारीख: `{m.get('completion_date', 'N/A')}`\n"
                         f"• एकूण भरलेली रक्कम: Rs. {d_amt:,.2f} (100% Complete)\n"
                         f"• शेरा: यात आता कोणतेही बदल करता येणार नाहीत."
@@ -4845,7 +4782,7 @@ elif st.session_state.selected_module == "NeevPay":
                     col_b1, col_b2 = st.columns([2.5, 2.5])
 
                     with col_b1:
-                        st.markdown("###### 📊 टप्प्याचे बिल तपशील:")
+                        st.markdown("###### टप्प्याचे बिल तपशील (Fixed):")
                         st.markdown(
                             f"**कामाचे ठरलेले बिल:** <span style='color:#38bdf8; font-weight:bold; font-size:16px;'>Rs. {p_amt:,.2f}</span>",
                             unsafe_allow_html=True,
@@ -4859,8 +4796,8 @@ elif st.session_state.selected_module == "NeevPay":
                             unsafe_allow_html=True,
                         )
 
-                        # बिल बदलण्याचा पर्याय
-                        with st.expander("✏️ ठरलेले बिल बदलायचे आहे का?"):
+                        # बिल बदलण्यासाठी थेट संमती पर्याय
+                        with st.expander("ठरलेले बिल बदलायचे आहे का?"):
                             new_change_amt = st.number_input(
                                 "नवीन सुधारीत बिल रक्कम (Rs.):",
                                 min_value=max(1.0, float(d_amt)),
@@ -4869,7 +4806,7 @@ elif st.session_state.selected_module == "NeevPay":
                                 key=f"new_change_amt_{m_id}",
                             )
 
-                            if st.button("💾 नवीन बिल अपडेट करा", key=f"btn_update_bill_{m_id}", type="primary"):
+                            if st.button("नवीन बिल अपडेट करा", key=f"btn_update_bill_{m_id}", type="primary"):
                                 conn = get_db_connection()
                                 cursor = conn.cursor()
                                 cursor.execute(
@@ -4878,10 +4815,12 @@ elif st.session_state.selected_module == "NeevPay":
                                 )
                                 conn.commit()
                                 conn.close()
-                                st.success("✅ नवीन बिल अपडेट झाले!")
+                                st.success("नवीन बिल अपडेट झाले!")
                                 st.rerun()
 
+                        # ==========================================================
                         # पेमेंट जमा करण्याची नोंद
+                        # ==========================================================
                         if p_amt > 0.0 and rem_balance > 0:
                             st.write("---")
                             if eng_app and cli_app:
@@ -4894,7 +4833,7 @@ elif st.session_state.selected_module == "NeevPay":
                                     step=100.0,
                                     key=f"pay_in_{m_id}",
                                 )
-                                if st.button("💵 पैसे जमा नोंदवा", key=f"btn_pay_{m_id}", type="primary"):
+                                if st.button("पैसे जमा नोंदवा", key=f"btn_pay_{m_id}", type="primary"):
                                     if add_pay > 0:
                                         new_total_dep = d_amt + add_pay
                                         new_st = (
@@ -4910,29 +4849,29 @@ elif st.session_state.selected_module == "NeevPay":
                                         )
                                         conn.commit()
                                         conn.close()
-                                        st.success(f"✅ Rs. {add_pay:,.2f} ची पेमेंट नोंद यशस्वी झाली!")
+                                        st.success(f"Rs. {add_pay:,.2f} ची पेमेंट नोंद यशस्वी झाली!")
                                         st.rerun()
                             else:
-                                st.info("ℹ️ पेमेंट नोंदणीसाठी: उजव्या बाजूला इंजिनिअर व क्लायंट या दोघांचे पडताळणी चेकबॉक्स टिक करून सेव्ह करा.")
+                                st.info("पेमेंट नोंदणीसाठी: उजव्या बाजूला इंजिनिअर व क्लायंट या दोघांचे पडताळणी स्टेटस पूर्ण करून सेव्ह करा.")
 
                     # डिजिटल पडताळणी व टप्पा लॉक करणे
                     with col_b2:
-                        st.markdown("###### 🛡️ काम व पेमेंट पडताळणी (Approval)")
+                        st.markdown("###### काम व पेमेंट पडताळणी (Approval)")
 
                         eng_check = st.checkbox(
-                            "👷‍♂️ इंजिनिअर: काम समाधानकारक पूर्ण झाले आहे",
+                            "इंजिनिअर: काम समाधानकारक पूर्ण झाले आहे",
                             value=eng_app,
                             key=f"chk_eng_{m_id}",
                         )
                         cli_check = st.checkbox(
-                            "👤 क्लायंट: काम व पेमेंट तपासले असून सहमत आहे",
+                            "क्लायंट: काम व पेमेंट तपासले असून सहमत आहे",
                             value=cli_app,
                             key=f"chk_cli_{m_id}",
                         )
 
                         # पडताळणी स्टेटस अपडेट करणे
                         if eng_check != eng_app or cli_check != cli_app:
-                            if st.button("💾 पडताळणी स्टेटस सेव्ह करा", key=f"btn_save_app_{m_id}"):
+                            if st.button("पडताळणी स्टेटस सेव्ह करा", key=f"btn_save_app_{m_id}"):
                                 conn = get_db_connection()
                                 cursor = conn.cursor()
                                 cursor.execute(
@@ -4941,16 +4880,16 @@ elif st.session_state.selected_module == "NeevPay":
                                 )
                                 conn.commit()
                                 conn.close()
-                                st.success("✅ पडताळणी अपडेट झाली!")
+                                st.success("पडताळणी अपडेट झाली!")
                                 st.rerun()
 
-                        # फायनल लॉक करणे
+                        # फायनल लॉक करणे (ईमेल पाठवण्याशिवाय - साधे व जलद)
                         if p_amt > 0 and d_amt >= p_amt:
                             if eng_check and cli_check:
                                 st.write("---")
-                                st.info("🎉 १००% पेमेंट पूर्ण झाले असून दोन्ही पडताळणी पूर्ण आहेत.")
+                                st.info("१००% पेमेंट पूर्ण झाले असून दोन्ही पडताळणी पूर्ण आहेत.")
                                 if st.button(
-                                    "🔒 हा टप्पा अंतिम लॉक करा (Lock Milestone)",
+                                    "हा टप्पा अंतिम लॉक करा (Lock Milestone)",
                                     key=f"btn_lock_{m_id}",
                                     type="primary",
                                 ):
@@ -4967,23 +4906,23 @@ elif st.session_state.selected_module == "NeevPay":
                                     )
                                     conn.commit()
                                     conn.close()
-                                    st.success(f"🔒 '{st_name}' यशस्वीरित्या लॉक झाला!")
+                                    st.success(f"'{st_name}' यशस्वीरित्या लॉक झाला!")
                                     st.rerun()
                             else:
-                                st.warning("⚠️ टप्पा लॉक करण्यासाठी वरील दोन्ही पडताळणी चेकबॉक्स टिक असणे गरजेचे आहे.")
+                                st.warning("टप्पा लॉक करण्यासाठी वरील दोन्ही पडताळणी चेकबॉक्स टिक असणे गरजेचे आहे.")
                         else:
-                            st.caption("🔒 १००% पेमेंट जमा झाल्यावरच हा टप्पा फायनल लॉक करता येईल.")
+                            st.caption("१००% पेमेंट जमा झाल्यावरच हा टप्पा फायनल लॉक करता येईल.")
 
-                        # टप्पा डिलीट करण्याचा पर्याय
+                        # टप्पा डिलीट करण्याचा पर्याय (फक्त जमा रक्कम नसतानाच उपलब्ध)
                         st.write("---")
                         if d_amt > 0:
-                            st.caption(f"🔒 या टप्प्यावर Rs. {d_amt:,.2f} जमा असल्याने सुरक्षिततेसाठी हा टप्पा डिलीट करता येणार नाही.")
+                            st.caption(f"या टप्प्यावर Rs. {d_amt:,.2f} जमा असल्याने सुरक्षिततेसाठी हा टप्पा डिलीट करता येणार नाही.")
                         else:
-                            if st.button("🗑️ हा टप्पा डिलीट करा", key=f"btn_del_stage_{m_id}"):
+                            if st.button("हा टप्पा डिलीट करा", key=f"btn_del_stage_{m_id}"):
                                 conn = get_db_connection()
                                 cursor = conn.cursor()
                                 cursor.execute("DELETE FROM site_milestone_payments WHERE id = ?", (m_id,))
                                 conn.commit()
                                 conn.close()
-                                st.warning(f"🗑️ '{st_name}' टप्पा डिलीट केला!")
+                                st.warning(f"'{st_name}' टप्पा डिलीट केला!")
                                 st.rerun()
