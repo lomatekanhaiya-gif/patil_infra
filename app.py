@@ -693,14 +693,43 @@ st.markdown(
     """
     <style>
     #MainMenu { visibility: hidden; }
-    header[data-testid="stHeader"] { visibility: hidden; height: 0%; display: none !important; }
     footer { visibility: hidden; display: none !important; }
-    .stAppHeader { display: none !important; }
     [data-testid="stToolbar"] { visibility: hidden !important; display: none !important; }
     [data-testid="stDecoration"] { display: none !important; }
     [data-testid="stStatusWidget"] { visibility: hidden !important; }
     button[title="Increment"], button[title="Decrement"] { display: none !important; }
     div[data-testid="stNumberInputStepUp"], div[data-testid="stNumberInputStepDown"] { display: none !important; }
+
+    /* Top Header पारदर्शक ठेवणे व टॉगल बटणासाठी जागा देणे */
+    header[data-testid="stHeader"] {
+        background: transparent !important;
+        z-index: 1000 !important;
+    }
+    .stAppHeader {
+        background: transparent !important;
+    }
+
+    /* Sidebar Collapse / Expand (Open/Close) बटण दाखवणे व डिझाइन करणे */
+    button[data-testid="stSidebarCollapseButton"],
+    [data-testid="stSidebarCollapsedControl"],
+    button[data-testid="baseButton-headerNoPadding"] {
+        display: flex !important;
+        visibility: visible !important;
+        color: #f59e0b !important;
+        background: rgba(15, 23, 42, 0.85) !important;
+        border: 1px solid #334155 !important;
+        border-radius: 8px !important;
+        padding: 4px 8px !important;
+        margin-left: 8px !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    button[data-testid="stSidebarCollapseButton"]:hover,
+    [data-testid="stSidebarCollapsedControl"]:hover {
+        border-color: #f59e0b !important;
+        color: #ffffff !important;
+        background: #1e293b !important;
+    }
 
     /* Main App Background */
     html, body, .stApp, [data-testid="stAppViewContainer"] {
@@ -1769,10 +1798,26 @@ w_rain = site_weather["rain_prob"] if site_weather else 0
 w_city = site_weather["city"] if site_weather else st.session_state.site_location_city
 
 # ==============================================================================
-# ⬅️ १. फिक्स डावा पॅनल (Fixed Left Sidebar - Gemini Style)
+# ⬅️ १. फिक्स डावा पॅनल (Fixed Left Sidebar - Gemini Style with Close/Open Support)
 # ==============================================================================
 with st.sidebar:
-    st.markdown("### 🏗️ PATIL INFRATECH")
+    # 🔹 साइडबार हेडर आणि थेट क्लोज (✖) बटण
+    col_side_title, col_side_close = st.columns([4, 1])
+    with col_side_title:
+        st.markdown("<h3 style='margin:0; font-size: 20px;'>🏗️ PATIL INFRATECH</h3>", unsafe_allow_html=True)
+    with col_side_close:
+        st.markdown(
+            """
+            <button onclick="
+                const collapseBtn = window.parent.document.querySelector('button[data-testid=\\'stSidebarCollapseButton\\']');
+                if (collapseBtn) { collapseBtn.click(); }
+            " title="Close Sidebar" style="background: rgba(30, 41, 59, 0.6); border: 1px solid #334155; color: #f59e0b; border-radius: 8px; padding: 4px 8px; cursor: pointer; font-size: 14px; font-weight: bold; transition: all 0.2s;">
+                ✖
+            </button>
+            """,
+            unsafe_allow_html=True,
+        )
+
     st.caption("Site Management & Civil Suite")
     st.write("---")
 
