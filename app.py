@@ -693,16 +693,36 @@ is_curr_premium, _ = check_user_premium_status(current_user_name)
 st.markdown(
     """
     <style>
+    /* मेन्यू व फूटर लपवणे पण सायडबार टॉगल चालू ठेवणे */
     #MainMenu { visibility: hidden; }
-    header[data-testid="stHeader"] { visibility: hidden; height: 0%; display: none !important; }
     footer { visibility: hidden; display: none !important; }
-    .stAppHeader { display: none !important; }
-    [data-testid="stToolbar"] { visibility: hidden !important; display: none !important; }
-    [data-testid="stDecoration"] { display: none !important; }
-    [data-testid="stStatusWidget"] { visibility: hidden !important; }
+
+    /* सायडबार उघडण्याचे टॉगल बटण (Arrow) आणि हेडर आयकॉन दिसण्यासाठी */
+    [data-testid="stSidebarCollapsedControl"],
+    button[kind="header"] {
+        display: flex !important;
+        visibility: visible !important;
+        color: #f59e0b !important;
+        z-index: 100001 !important;
+    }
+
+    /* सायडबारची रचना आणि बॅकग्राउंड */
+    [data-testid="stSidebar"] {
+        background-color: #0f172a !important;
+        border-right: 1px solid #334155 !important;
+        visibility: visible !important;
+        display: block !important;
+    }
+
+    [data-testid="stSidebar"] * {
+        color: #f8fafc !important;
+    }
+
+    /* नंबर इनपुट स्टेप बटन्स लपवणे */
     button[title="Increment"], button[title="Decrement"] { display: none !important; }
     div[data-testid="stNumberInputStepUp"], div[data-testid="stNumberInputStepDown"] { display: none !important; }
 
+    /* मुख्य ॲप बॅकग्राउंड */
     html, body, .stApp, [data-testid="stAppViewContainer"] {
         background: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 50%, #020617 100%) !important;
         color: #f8fafc !important;
@@ -825,7 +845,7 @@ st.markdown(
         100% { transform: rotate(360deg) scale(1); }
     }
 
-    /* AutoCAD Portal & Workspace Ribbon Custom Elements */
+    /* AutoCAD DWG Card Elements */
     .autocad-dwg-card {
         background: rgba(15, 23, 42, 0.85);
         border: 1px solid #334155;
@@ -844,7 +864,6 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
-
 # ==========================================
 # 📌 विभाग ९: WHATSAPP रिपोर्ट शेअरिंग कंपोनंट
 # ==========================================
