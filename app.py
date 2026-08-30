@@ -700,35 +700,48 @@ st.markdown(
     button[title="Increment"], button[title="Decrement"] { display: none !important; }
     div[data-testid="stNumberInputStepUp"], div[data-testid="stNumberInputStepDown"] { display: none !important; }
 
-    /* Top Header पारदर्शक ठेवणे व टॉगल बटणासाठी जागा देणे */
+    /* Top Header पारदर्शक ठेवणे जेणेकरून टॉगल बटण समोर दिसेल */
     header[data-testid="stHeader"] {
         background: transparent !important;
-        z-index: 1000 !important;
+        z-index: 99999 !important;
+        display: block !important;
+        visibility: visible !important;
     }
     .stAppHeader {
         background: transparent !important;
+        display: block !important;
     }
 
-    /* Sidebar Collapse / Expand (Open/Close) बटण दाखवणे व डिझाइन करणे */
-    button[data-testid="stSidebarCollapseButton"],
+    /* Sidebar Open (Expand) बटण डाव्या कोपऱ्यात कायम दिसण्यासाठी स्टाईल */
     [data-testid="stSidebarCollapsedControl"],
+    button[data-testid="stSidebarCollapseButton"],
     button[data-testid="baseButton-headerNoPadding"] {
         display: flex !important;
         visibility: visible !important;
+        position: fixed !important;
+        top: 12px !important;
+        left: 12px !important;
+        z-index: 100000 !important;
+        background: #0f172a !important;
+        border: 2px solid #f59e0b !important;
+        border-radius: 10px !important;
+        padding: 6px 10px !important;
         color: #f59e0b !important;
-        background: rgba(15, 23, 42, 0.85) !important;
-        border: 1px solid #334155 !important;
-        border-radius: 8px !important;
-        padding: 4px 8px !important;
-        margin-left: 8px !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+        box-shadow: 0 0 15px rgba(245, 158, 11, 0.4) !important;
+        cursor: pointer !important;
     }
 
-    button[data-testid="stSidebarCollapseButton"]:hover,
-    [data-testid="stSidebarCollapsedControl"]:hover {
-        border-color: #f59e0b !important;
-        color: #ffffff !important;
+    [data-testid="stSidebarCollapsedControl"] svg,
+    button[data-testid="stSidebarCollapseButton"] svg {
+        fill: #f59e0b !important;
+    }
+
+    [data-testid="stSidebarCollapsedControl"]:hover,
+    button[data-testid="stSidebarCollapseButton"]:hover {
         background: #1e293b !important;
+        border-color: #fbbf24 !important;
+        color: #ffffff !important;
+        box-shadow: 0 0 20px rgba(245, 158, 11, 0.6) !important;
     }
 
     /* Main App Background */
@@ -742,6 +755,7 @@ st.markdown(
     section[data-testid="stSidebar"] {
         background-color: #0b0f19 !important;
         border-right: 1px solid #1e293b !important;
+        z-index: 100001 !important;
     }
     section[data-testid="stSidebar"] > div {
         padding-top: 1.5rem !important;
@@ -1798,21 +1812,25 @@ w_rain = site_weather["rain_prob"] if site_weather else 0
 w_city = site_weather["city"] if site_weather else st.session_state.site_location_city
 
 # ==============================================================================
-# ⬅️ १. फिक्स डावा पॅनल (Fixed Left Sidebar - Gemini Style with Close/Open Support)
+# ⬅️ १. फिक्स डावा पॅनल (Fixed Left Sidebar - Gemini Style with Direct Close Button)
 # ==============================================================================
 with st.sidebar:
-    # 🔹 साइडबार हेडर आणि थेट क्लोज (✖) बटण
-    col_side_title, col_side_close = st.columns([4, 1])
+    # 🔹 साइडबार थेट क्लोज करण्यासाठी स्पष्ट बटण
+    col_side_title, col_side_close = st.columns([3.2, 1.8])
     with col_side_title:
-        st.markdown("<h3 style='margin:0; font-size: 20px;'>🏗️ PATIL INFRATECH</h3>", unsafe_allow_html=True)
+        st.markdown("<h3 style='margin:0; font-size: 18px; color: #ffffff;'>🏗️ PATIL INFRA</h3>", unsafe_allow_html=True)
     with col_side_close:
         st.markdown(
             """
             <button onclick="
-                const collapseBtn = window.parent.document.querySelector('button[data-testid=\\'stSidebarCollapseButton\\']');
-                if (collapseBtn) { collapseBtn.click(); }
-            " title="Close Sidebar" style="background: rgba(30, 41, 59, 0.6); border: 1px solid #334155; color: #f59e0b; border-radius: 8px; padding: 4px 8px; cursor: pointer; font-size: 14px; font-weight: bold; transition: all 0.2s;">
-                ✖
+                const collapseBtn = window.parent.document.querySelector('button[data-testid=\\'stSidebarCollapseButton\\']') || 
+                                    window.parent.document.querySelector('[data-testid=\\'stSidebarCollapseButton\\']') ||
+                                    window.parent.document.querySelector('button[aria-label=\\'Close sidebar\\']');
+                if (collapseBtn) { 
+                    collapseBtn.click(); 
+                }
+            " title="Close / Hide Sidebar" style="width: 100%; background: #1e293b; border: 1.5px solid #ef4444; color: #ef4444; border-radius: 8px; padding: 4px 6px; cursor: pointer; font-size: 12px; font-weight: 800; text-align: center; box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);">
+                ❌ Close
             </button>
             """,
             unsafe_allow_html=True,
