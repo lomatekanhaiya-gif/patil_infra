@@ -693,36 +693,51 @@ is_curr_premium, _ = check_user_premium_status(current_user_name)
 st.markdown(
     """
     <style>
-    /* मेन्यू व फूटर लपवणे पण सायडबार टॉगल चालू ठेवणे */
-    #MainMenu { visibility: hidden; }
-    footer { visibility: hidden; display: none !important; }
+    /* १. वरची काळी पट्टी (Top Black Ribbon) आणि Share/Star/GitHub/Toolbar पूर्ण हायड करणे */
+    #MainMenu { visibility: hidden !important; display: none !important; }
+    header[data-testid="stHeader"] { visibility: hidden !important; height: 0% !important; display: none !important; }
+    footer { visibility: hidden !important; display: none !important; }
+    .stAppHeader { display: none !important; height: 0px !important; }
+    [data-testid="stToolbar"] { visibility: hidden !important; display: none !important; }
+    [data-testid="stDecoration"] { display: none !important; }
+    [data-testid="stStatusWidget"] { visibility: hidden !important; }
 
-    /* सायडबार उघडण्याचे टॉगल बटण (Arrow) आणि हेडर आयकॉन दिसण्यासाठी */
-    [data-testid="stSidebarCollapsedControl"],
-    button[kind="header"] {
+    /* २. सायडबार टॉगल (Open/Close Button) स्क्रीनवर डाव्या बाजूला फ्लोटिंग सेट करणे */
+    [data-testid="stSidebarCollapsedControl"] {
         display: flex !important;
         visibility: visible !important;
+        position: fixed !important;
+        top: 15px !important;
+        left: 15px !important;
+        z-index: 999999 !important;
+        background: #1e293b !important;
+        border: 1px solid #f59e0b !important;
+        border-radius: 8px !important;
+        padding: 4px !important;
+        box-shadow: 0 0 10px rgba(245, 158, 11, 0.4) !important;
+    }
+    
+    [data-testid="stSidebarCollapsedControl"] svg {
+        fill: #f59e0b !important;
         color: #f59e0b !important;
-        z-index: 100001 !important;
     }
 
-    /* सायडबारची रचना आणि बॅकग्राउंड */
+    /* ३. सायडबार स्टाइलिंग (Dark Theme) */
     [data-testid="stSidebar"] {
         background-color: #0f172a !important;
         border-right: 1px solid #334155 !important;
-        visibility: visible !important;
-        display: block !important;
+        padding-top: 10px !important;
     }
 
     [data-testid="stSidebar"] * {
         color: #f8fafc !important;
     }
 
-    /* नंबर इनपुट स्टेप बटन्स लपवणे */
+    /* ४. नंबर इनपुट स्टेप बटन्स लपवणे */
     button[title="Increment"], button[title="Decrement"] { display: none !important; }
     div[data-testid="stNumberInputStepUp"], div[data-testid="stNumberInputStepDown"] { display: none !important; }
 
-    /* मुख्य ॲप बॅकग्राउंड */
+    /* ५. मुख्य ॲप बॅकग्राउंड */
     html, body, .stApp, [data-testid="stAppViewContainer"] {
         background: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 50%, #020617 100%) !important;
         color: #f8fafc !important;
@@ -843,22 +858,6 @@ st.markdown(
         0% { transform: rotate(0deg) scale(1); }
         50% { transform: rotate(180deg) scale(1.1); }
         100% { transform: rotate(360deg) scale(1); }
-    }
-
-    /* AutoCAD DWG Card Elements */
-    .autocad-dwg-card {
-        background: rgba(15, 23, 42, 0.85);
-        border: 1px solid #334155;
-        border-left: 4px solid #38bdf8;
-        border-radius: 8px;
-        padding: 10px 14px;
-        margin-bottom: 8px;
-        transition: all 0.2s ease;
-    }
-    .autocad-dwg-card:hover {
-        border-color: #38bdf8;
-        background: rgba(30, 41, 59, 0.95);
-        transform: translateX(4px);
     }
     </style>
     """,
@@ -1850,16 +1849,32 @@ disp_name_inbox = current_user_name if current_user_name else ""
 # 🌟 डाव्या बाजूचा GEMINI STYLE SIDEBAR
 # ------------------------------------------------------------------------------
 with st.sidebar:
-    st.markdown(
-        """
-        <div style="text-align: center; padding: 10px 0 15px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 15px;">
-            <span style="font-size: 26px;">🏗️</span>
-            <h3 style="margin: 4px 0 0 0; font-size: 18px; font-weight: 800; color: #f59e0b;">PATIL INFRATECH</h3>
-            <small style="color: #94a3b8; font-size: 11px;">Site Control Panel</small>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    # सायडबारचे टॉप हेडर आणि बंद करण्याचे (Collapse) बटण
+    col_sb_title, col_sb_close = st.columns([4, 1])
+    with col_sb_title:
+        st.markdown(
+            """
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 22px;">🏗️</span>
+                <div>
+                    <b style="font-size: 15px; color: #f59e0b; letter-spacing: 0.5px;">PATIL INFRATECH</b><br>
+                    <small style="color: #94a3b8; font-size: 10px;">Site Control Panel</small>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with col_sb_close:
+        st.markdown(
+            """
+            <button onclick="const btn = window.parent.document.querySelector('[data-testid=stSidebarCollapseButton] button') || window.parent.document.querySelector('button[kind=header]'); if(btn) btn.click();" 
+                    style="background: #1e293b; border: 1px solid #334155; color: #cbd5e1; border-radius: 6px; padding: 4px 8px; font-size: 13px; cursor: pointer; float: right; margin-top: 2px;"
+                    title="सायडबार बंद करा">✖</button>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    st.markdown("<hr style='border: 0.5px solid rgba(255,255,255,0.08); margin: 12px 0 16px 0;'>", unsafe_allow_html=True)
 
     # १. चालू साईट बॉक्स
     st.markdown(
@@ -1929,7 +1944,7 @@ with st.sidebar:
         )
         st.rerun()
 
-    st.markdown("<hr style='border: 0.5px solid rgba(255,255,255,0.1); margin: 15px 0;'>", unsafe_allow_html=True)
+    st.markdown("<hr style='border: 0.5px solid rgba(255,255,255,0.08); margin: 15px 0;'>", unsafe_allow_html=True)
 
     # ५. नोटीस बॉक्स
     if current_user_data.get("unread_notification") == 1:
