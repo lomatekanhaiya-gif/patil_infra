@@ -700,48 +700,30 @@ st.markdown(
     button[title="Increment"], button[title="Decrement"] { display: none !important; }
     div[data-testid="stNumberInputStepUp"], div[data-testid="stNumberInputStepDown"] { display: none !important; }
 
-    /* Top Header पारदर्शक ठेवणे जेणेकरून टॉगल बटण समोर दिसेल */
+    /* Streamlit चा मूळ हेडर पारदर्शक ठेवणे */
     header[data-testid="stHeader"] {
         background: transparent !important;
-        z-index: 99999 !important;
-        display: block !important;
-        visibility: visible !important;
-    }
-    .stAppHeader {
-        background: transparent !important;
+        z-index: 1000 !important;
         display: block !important;
     }
 
-    /* Sidebar Open (Expand) बटण डाव्या कोपऱ्यात कायम दिसण्यासाठी स्टाईल */
-    [data-testid="stSidebarCollapsedControl"],
-    button[data-testid="stSidebarCollapseButton"],
-    button[data-testid="baseButton-headerNoPadding"] {
+    /* मूळ Sidebar Open बटण कायम ठळक दिसणे */
+    [data-testid="stSidebarCollapsedControl"] {
         display: flex !important;
         visibility: visible !important;
         position: fixed !important;
-        top: 12px !important;
-        left: 12px !important;
-        z-index: 100000 !important;
+        top: 10px !important;
+        left: 10px !important;
+        z-index: 999999 !important;
         background: #0f172a !important;
         border: 2px solid #f59e0b !important;
-        border-radius: 10px !important;
-        padding: 6px 10px !important;
-        color: #f59e0b !important;
-        box-shadow: 0 0 15px rgba(245, 158, 11, 0.4) !important;
-        cursor: pointer !important;
+        border-radius: 8px !important;
+        padding: 5px !important;
     }
-
-    [data-testid="stSidebarCollapsedControl"] svg,
-    button[data-testid="stSidebarCollapseButton"] svg {
+    [data-testid="stSidebarCollapsedControl"] svg {
         fill: #f59e0b !important;
-    }
-
-    [data-testid="stSidebarCollapsedControl"]:hover,
-    button[data-testid="stSidebarCollapseButton"]:hover {
-        background: #1e293b !important;
-        border-color: #fbbf24 !important;
-        color: #ffffff !important;
-        box-shadow: 0 0 20px rgba(245, 158, 11, 0.6) !important;
+        width: 22px !important;
+        height: 22px !important;
     }
 
     /* Main App Background */
@@ -751,17 +733,17 @@ st.markdown(
         font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
     }
 
-    /* Fixed Left Sidebar Styling (Gemini Style) */
+    /* Fixed Left Sidebar Styling */
     section[data-testid="stSidebar"] {
         background-color: #0b0f19 !important;
         border-right: 1px solid #1e293b !important;
-        z-index: 100001 !important;
+        z-index: 99999 !important;
     }
     section[data-testid="stSidebar"] > div {
-        padding-top: 1.5rem !important;
+        padding-top: 1rem !important;
     }
 
-    /* Fixed / Sticky Top Ribbon */
+    /* Fixed Top Ribbon */
     .sticky-top-ribbon {
         position: sticky;
         top: 0;
@@ -790,7 +772,7 @@ st.markdown(
         font-weight: 500 !important;
     }
 
-    /* Primary & Standard Buttons */
+    /* Buttons */
     div.stButton > button[kind="primary"] {
         background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
         color: #000000 !important;
@@ -800,7 +782,6 @@ st.markdown(
         padding: 10px 20px !important;
         box-shadow: 0 4px 15px rgba(245, 158, 11, 0.35) !important;
         text-transform: uppercase;
-        transition: all 0.2s ease-in-out;
     }
 
     div.stButton > button {
@@ -809,7 +790,6 @@ st.markdown(
         border: 1px solid #334155 !important;
         border-radius: 10px !important;
         font-weight: 600 !important;
-        transition: all 0.2s ease;
     }
     div.stButton > button:hover {
         border-color: #f59e0b !important;
@@ -823,7 +803,6 @@ st.markdown(
         padding: 22px 16px;
         text-align: center;
         backdrop-filter: blur(8px);
-        transition: all 0.3s ease;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
     }
     .module-card:hover {
@@ -1812,25 +1791,26 @@ w_rain = site_weather["rain_prob"] if site_weather else 0
 w_city = site_weather["city"] if site_weather else st.session_state.site_location_city
 
 # ==============================================================================
-# ⬅️ १. फिक्स डावा पॅनल (Fixed Left Sidebar - Gemini Style with Direct Close Button)
+# ⬅️ १. फिक्स डावा पॅनल (Fixed Left Sidebar with Direct Close Button)
 # ==============================================================================
 with st.sidebar:
-    # 🔹 साइडबार थेट क्लोज करण्यासाठी स्पष्ट बटण
-    col_side_title, col_side_close = st.columns([3.2, 1.8])
-    with col_side_title:
-        st.markdown("<h3 style='margin:0; font-size: 18px; color: #ffffff;'>🏗️ PATIL INFRA</h3>", unsafe_allow_html=True)
-    with col_side_close:
+    # 🔹 साइडबार बंद करण्यासाठी लाल रंगाचे ठळक बटण
+    c_title, c_close = st.columns([3, 2])
+    with c_title:
+        st.markdown("<h4 style='margin:0; color:#ffffff;'>🏗️ MENU</h4>", unsafe_allow_html=True)
+    with c_close:
         st.markdown(
             """
             <button onclick="
-                const collapseBtn = window.parent.document.querySelector('button[data-testid=\\'stSidebarCollapseButton\\']') || 
-                                    window.parent.document.querySelector('[data-testid=\\'stSidebarCollapseButton\\']') ||
-                                    window.parent.document.querySelector('button[aria-label=\\'Close sidebar\\']');
-                if (collapseBtn) { 
-                    collapseBtn.click(); 
+                const btns = window.parent.document.querySelectorAll('button');
+                for (let b of btns) {
+                    if (b.getAttribute('data-testid') === 'stSidebarCollapseButton' || b.getAttribute('aria-label') === 'Close sidebar') {
+                        b.click();
+                        break;
+                    }
                 }
-            " title="Close / Hide Sidebar" style="width: 100%; background: #1e293b; border: 1.5px solid #ef4444; color: #ef4444; border-radius: 8px; padding: 4px 6px; cursor: pointer; font-size: 12px; font-weight: 800; text-align: center; box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);">
-                ❌ Close
+            " style="width: 100%; background: #ef4444; color: white; border: none; border-radius: 6px; padding: 5px 8px; font-weight: bold; cursor: pointer; font-size: 12px;">
+                ❌ Hide Menu
             </button>
             """,
             unsafe_allow_html=True,
