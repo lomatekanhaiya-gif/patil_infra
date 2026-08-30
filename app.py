@@ -700,38 +700,12 @@ st.markdown(
     button[title="Increment"], button[title="Decrement"] { display: none !important; }
     div[data-testid="stNumberInputStepUp"], div[data-testid="stNumberInputStepDown"] { display: none !important; }
 
-    /* Streamlit चा मूळ हेडर पारदर्शक ठेवणे */
-    header[data-testid="stHeader"] {
-        background: transparent !important;
-        z-index: 1000 !important;
-        display: block !important;
-    }
-
-    /* मूळ Sidebar Open / Un-hide बटण कायम स्क्रीनवर ठळक दिसणे */
+    /* ❌ Hide/Unhide बटण कायमचे लपवणे */
     [data-testid="stSidebarCollapsedControl"],
     div[data-testid="collapsedControl"],
     button[data-testid="stSidebarCollapseButton"] {
-        display: flex !important;
-        visibility: visible !important;
-        position: fixed !important;
-        top: 15px !important;
-        left: 15px !important;
-        z-index: 9999999 !important;
-        background: #0f172a !important;
-        border: 2px solid #f59e0b !important;
-        border-radius: 8px !important;
-        padding: 6px !important;
-        cursor: pointer !important;
-        box-shadow: 0 0 15px rgba(245, 158, 11, 0.4) !important;
-    }
-
-    [data-testid="stSidebarCollapsedControl"] svg,
-    div[data-testid="collapsedControl"] svg,
-    button[data-testid="stSidebarCollapseButton"] svg {
-        fill: #f59e0b !important;
-        color: #f59e0b !important;
-        width: 24px !important;
-        height: 24px !important;
+        display: none !important;
+        visibility: hidden !important;
     }
 
     /* Main App Background */
@@ -745,6 +719,8 @@ st.markdown(
     section[data-testid="stSidebar"] {
         background-color: #0b0f19 !important;
         border-right: 1px solid #1e293b !important;
+        min-width: 320px !important;
+        max-width: 320px !important;
         z-index: 99999 !important;
     }
     section[data-testid="stSidebar"] > div {
@@ -1784,46 +1760,10 @@ if st.session_state.get("is_client_view", False):
     st.stop()
                     
 # ==============================================================================
-# 📌 विभाग १३: मुख्य युझर डॅशबोर्ड (Gemini Style Fixed Sidebar & Top Ribbon)
-# ==============================================================================
-current_user_name = st.session_state.app_user_name
-is_user_premium, status_text_str = check_user_premium_status(current_user_name)
-
-# हवामान डेटा
-if "site_location_city" not in st.session_state:
-    st.session_state.site_location_city = "Pune"
-
-site_weather = get_site_weather_forecast(st.session_state.site_location_city)
-w_temp = site_weather["temp"] if site_weather else "--"
-w_rain = site_weather["rain_prob"] if site_weather else 0
-w_city = site_weather["city"] if site_weather else st.session_state.site_location_city
-
-# ==============================================================================
-# ⬅️ १. फिक्स डावा पॅनल (Fixed Left Sidebar with Direct Close Button)
+# ⬅️ १. फिक्स डावा पॅनल (Fixed Left Sidebar - No Hide Button)
 # ==============================================================================
 with st.sidebar:
-    # 🔹 साइडबार बंद करण्यासाठी लाल रंगाचे ठळक बटण
-    c_title, c_close = st.columns([3, 2])
-    with c_title:
-        st.markdown("<h4 style='margin:0; color:#ffffff;'>🏗️ MENU</h4>", unsafe_allow_html=True)
-    with c_close:
-        st.markdown(
-            """
-            <button onclick="
-                const btns = window.parent.document.querySelectorAll('button');
-                for (let b of btns) {
-                    if (b.getAttribute('data-testid') === 'stSidebarCollapseButton' || b.getAttribute('aria-label') === 'Close sidebar') {
-                        b.click();
-                        break;
-                    }
-                }
-            " style="width: 100%; background: #ef4444; color: white; border: none; border-radius: 6px; padding: 5px 8px; font-weight: bold; cursor: pointer; font-size: 12px;">
-                ❌ Hide Menu
-            </button>
-            """,
-            unsafe_allow_html=True,
-        )
-
+    st.markdown("<h3 style='margin:0; color:#ffffff;'>🏗️ MENU</h3>", unsafe_allow_html=True)
     st.caption("Site Management & Civil Suite")
     st.write("---")
 
