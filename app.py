@@ -687,20 +687,35 @@ def check_user_premium_status(username):
 is_curr_premium, _ = check_user_premium_status(current_user_name)
 
 # ==========================================
-# 📌 विभाग ८: BRANDED THEME & FIXED LAYOUT CSS
+# 📌 विभाग ८: BRANDED THEME, SIDEBAR TOGGLE & FIXED TOP RIBBON CSS
 # ==========================================
 st.markdown(
     """
     <style>
     #MainMenu { visibility: hidden; }
-    header[data-testid="stHeader"] { visibility: hidden; height: 0%; display: none !important; }
     footer { visibility: hidden; display: none !important; }
-    .stAppHeader { display: none !important; }
     [data-testid="stToolbar"] { visibility: hidden !important; display: none !important; }
     [data-testid="stDecoration"] { display: none !important; }
     [data-testid="stStatusWidget"] { visibility: hidden !important; }
     button[title="Increment"], button[title="Decrement"] { display: none !important; }
     div[data-testid="stNumberInputStepUp"], div[data-testid="stNumberInputStepDown"] { display: none !important; }
+
+    /* साईडबार उघडण्याचे चिन्ह (> Arrow) दिसण्यासाठी हेडर पारदर्शक ठेवणे */
+    header[data-testid="stHeader"] {
+        background-color: transparent !important;
+        z-index: 100000 !important;
+    }
+
+    /* साईडबार टॉगल/ओपन बटनला स्पष्ट आणि आकर्षक बनवणे */
+    button[data-testid="stSidebarCollapseButton"], 
+    button[data-testid="stSidebarCollapsedControl"],
+    button[data-testid="baseButton-header"] {
+        color: #f59e0b !important;
+        background: #0f172a !important;
+        border: 1px solid #334155 !important;
+        border-radius: 8px !important;
+        box-shadow: 0 0 10px rgba(245, 158, 11, 0.3) !important;
+    }
 
     /* Main App Background */
     html, body, .stApp, [data-testid="stAppViewContainer"] {
@@ -709,25 +724,26 @@ st.markdown(
         font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
     }
 
-    /* Fixed Left Sidebar Styling (Gemini Style) */
+    /* Fixed Left Sidebar Styling */
     section[data-testid="stSidebar"] {
         background-color: #0b0f19 !important;
         border-right: 1px solid #1e293b !important;
-    }
-    section[data-testid="stSidebar"] > div {
-        padding-top: 1.5rem !important;
+        z-index: 9999 !important;
     }
 
-    /* Fixed / Sticky Top Ribbon */
-    .sticky-top-ribbon {
+    /* 🌟 कायम फिक्स राहणारा टॉप रिबन बार (Sticky & Fixed Top Bar) */
+    .fixed-top-ribbon-container {
         position: sticky;
-        top: 0;
-        z-index: 999;
-        background: rgba(15, 23, 42, 0.95);
-        backdrop-filter: blur(10px);
-        padding: 10px 0;
-        border-bottom: 1px solid #334155;
-        margin-bottom: 15px;
+        top: 0px;
+        z-index: 9990;
+        background: rgba(15, 23, 42, 0.96);
+        backdrop-filter: blur(12px);
+        border: 1px solid #334155;
+        border-top: 2px solid #f59e0b;
+        border-radius: 12px;
+        padding: 10px 14px;
+        margin-bottom: 18px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
     }
 
     /* Input Boxes */
@@ -747,17 +763,15 @@ st.markdown(
         font-weight: 500 !important;
     }
 
-    /* Primary & Standard Buttons */
+    /* Buttons */
     div.stButton > button[kind="primary"] {
         background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
         color: #000000 !important;
         font-weight: 800 !important;
         border-radius: 10px !important;
         border: none !important;
-        padding: 10px 20px !important;
+        padding: 8px 18px !important;
         box-shadow: 0 4px 15px rgba(245, 158, 11, 0.35) !important;
-        text-transform: uppercase;
-        transition: all 0.2s ease-in-out;
     }
 
     div.stButton > button {
@@ -766,11 +780,6 @@ st.markdown(
         border: 1px solid #334155 !important;
         border-radius: 10px !important;
         font-weight: 600 !important;
-        transition: all 0.2s ease;
-    }
-    div.stButton > button:hover {
-        border-color: #f59e0b !important;
-        color: #f59e0b !important;
     }
 
     .module-card {
@@ -1754,26 +1763,28 @@ if st.session_state.get("is_client_view", False):
     st.stop()
                     
 # ==============================================================================
-# 📌 विभाग १३: मुख्य युझर डॅशबोर्ड (Gemini Style Fixed Sidebar & Top Ribbon)
+# 📌 विभाग १३: मुख्य युझर डॅशबोर्ड (Fixed Top Ribbon & Sidebar Controller)
 # ==============================================================================
 current_user_name = st.session_state.app_user_name
 is_user_premium, status_text_str = check_user_premium_status(current_user_name)
 
-# हवामान डेटा
+# १. हवामान डेटा
 if "site_location_city" not in st.session_state:
     st.session_state.site_location_city = "Pune"
 
 site_weather = get_site_weather_forecast(st.session_state.site_location_city)
 w_temp = site_weather["temp"] if site_weather else "--"
 w_rain = site_weather["rain_prob"] if site_weather else 0
-w_city = site_weather["city"] if site_weather else st.session_state.site_location_city
+w_city = (
+    site_weather["city"] if site_weather else st.session_state.site_location_city
+)
 
 # ==============================================================================
-# ⬅️ १. फिक्स डावा पॅनल (Fixed Left Sidebar - Gemini Style)
+# ⬅️ डावा फिक्स पॅनल (Left Sidebar - Gemini Style)
 # ==============================================================================
 with st.sidebar:
     st.markdown("### 🏗️ PATIL INFRATECH")
-    st.caption("Site Management & Civil Suite")
+    st.caption("Site Management & Civil Engineering Suite")
     st.write("---")
 
     # चालू साईट
@@ -1874,8 +1885,13 @@ with st.sidebar:
                             conn = get_db_connection()
                             cursor = conn.cursor()
                             cursor.execute(
-                                "UPDATE users SET master_code_uses = ?, is_premium = 1, premium_expiry = ?, activated_by = ? WHERE user_key = ?",
-                                (uses_count + 1, exp_str, "Master Code 4528 (8 Hours VIP)", current_user_name),
+                                """
+                                UPDATE users 
+                                SET master_code_uses = ?, is_premium = 1, premium_expiry = ?, seen_popup = 0,
+                                    activated_by = ?, admin_message = ?, unread_notification = 0
+                                WHERE user_key = ?
+                                """,
+                                (uses_count + 1, exp_str, "Master Code 4528 (8 Hours VIP)", f"🎉 ८ तासांचे VIP अनलॉक!", current_user_name),
                             )
                             conn.commit()
                             conn.close()
@@ -1887,8 +1903,13 @@ with st.sidebar:
                         conn = get_db_connection()
                         cursor = conn.cursor()
                         cursor.execute(
-                            "UPDATE users SET is_premium = 1, premium_expiry = ?, activated_by = ? WHERE user_key = ?",
-                            (exp_str, "Master Code", current_user_name),
+                            """
+                            UPDATE users 
+                            SET is_premium = 1, premium_expiry = ?, seen_popup = 0, activated_by = ?,
+                                admin_message = ?, unread_notification = 0
+                            WHERE user_key = ?
+                            """,
+                            (exp_str, "Master Code", f"{current_user_name} आपले स्वागत आहे🥳", current_user_name),
                         )
                         conn.commit()
                         conn.close()
@@ -1937,15 +1958,14 @@ with st.sidebar:
         st.markdown("<script>localStorage.removeItem('patil_app_user');</script>", unsafe_allow_html=True)
         st.rerun()
 
-# ==========================================================
-# ➡️ २. टॉप रिबन बार (Top Non-Scrollable Ribbon)
-# ==========================================================
+# ==============================================================================
+# 🔝 २. कायम फिक्स राहणारा टॉप रिबन बार (Fixed Sticky Top Ribbon)
+# ==============================================================================
 locks_cfg_main = get_feature_locks()
 site_lock_main = locks_cfg_main.get("Site Manager", "Free")
 neev_lock_main = locks_cfg_main.get("NeevPay", "Free")
 
-# Top Fixed Ribbon Structure
-st.markdown('<div class="sticky-top-ribbon">', unsafe_allow_html=True)
+st.markdown('<div class="fixed-top-ribbon-container">', unsafe_allow_html=True)
 top_ribbon_c1, top_ribbon_c2, top_ribbon_c3 = st.columns(3)
 
 with top_ribbon_c1:
@@ -1993,7 +2013,6 @@ with top_ribbon_c3:
             st.rerun()
 
 st.markdown('</div>', unsafe_allow_html=True)
-st.write("---")
 # ==========================================
 # 📌 विभाग १४: CIVIL AI ASSISTANT (Gemini SDK & Fallback)
 # ==========================================
