@@ -4407,7 +4407,7 @@ elif st.session_state.selected_module == "Site Manager":
                 urllib.parse.quote(wa_timeline_text), "site_timeline_wa"
             )
 # ==========================================
-# 📌 विभाग १८: NEEVPAY / SITESETU मुख्य मॉड्यूल (OTP-Protected Bill & Two-Way Payment Approval)
+# 📌 विभाग १८: NEEVPAY / SITESETU मुख्य मॉड्यूल (OTP Bill, Two-Way Approval & A4 PDF Invoicing)
 # ==========================================
 elif st.session_state.selected_module == "NeevPay":
     if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_neevpay"):
@@ -4420,7 +4420,7 @@ elif st.session_state.selected_module == "NeevPay":
         "padding: 18px; border-radius: 16px; border: 1px solid #10b981; margin-bottom: 20px;'>"
         "<h2 style='margin: 0; color: #10b981; font-weight: 900;'>🤝 NEEVPAY / SITESETU - SMART ESCROW & CONTRACT PROTECTION</h2>"
         "<p style='margin: 5px 0 0 0; color: #cbd5e1; font-size: 14px;'>"
-        "एकदा ठरलेले बिल बदलण्यासाठी क्लायंटचा ईमेल OTP अनिवार्य • पेमेंट नोंदीसाठी इंजिनिअर व क्लायंट दोघांची डिजिटल संमती."
+        "एकदा ठरलेले बिल बदलण्यासाठी क्लायंटचा ईमेल OTP अनिवार्य • पेमेंट नोंदीसाठी दोघांची संमती • अधिकृत Master Invoice PDF व Email सुविधा."
         "</p></div>"
     )
     st.markdown(neevpay_banner, unsafe_allow_html=True)
@@ -4453,7 +4453,7 @@ elif st.session_state.selected_module == "NeevPay":
     # ==========================================================
     with st.container():
         if not client_email:
-            st.warning("⚠️ NeevPay सुरक्षेसाठी आणि OTP पडताळणीसाठी घरमालकाचा (Client) ईमेल आयडी नोंदवा:")
+            st.warning("⚠️ NeevPay सुरक्षेसाठी, OTP पडताळणी व PDF इनव्हॉइससाठी घरमालकाचा (Client) ईमेल आयडी नोंदवा:")
             c_mail_in = st.text_input(
                 "घरमालकाचा ईमेल पत्ता (Client Email ID):",
                 placeholder="client@gmail.com",
@@ -4476,7 +4476,7 @@ elif st.session_state.selected_module == "NeevPay":
         else:
             c_info_col1, c_info_col2 = st.columns([3.5, 1.5])
             with c_info_col1:
-                st.info(f"📧 **नोंदणीकृत घरमालक ईमेल:** `{client_email}` (सर्व OTP व इनव्हॉइस यावर जातील)")
+                st.info(f"📧 **नोंदणीकृत घरमालक ईमेल:** `{client_email}` (सर्व OTP व अधिकृत इनव्हॉइस यावर जातील)")
             with c_info_col2:
                 with st.popover("✏️ ईमेल बदला"):
                     new_mail_edit = st.text_input("नवीन ईमेल टाका:", value=client_email, key="edit_c_mail")
@@ -4562,10 +4562,252 @@ elif st.session_state.selected_module == "NeevPay":
             else:
                 st.warning("⚠️ कृपया कामाचे नाव टाका!")
 
+    # ==========================================================
+    # भाग ३: NEEVPAY MASTER BILL / ESCROW STATEMENT A4 PDF & EMAIL
+    # ==========================================================
+    if milestones:
+        with st.expander("📑 NeevPay Master Statement & Invoicing (A4 PDF / Print / Email)", expanded=False):
+            st.caption("💡 क्लायंट व इंजिनिअरसाठी अधिकृत डिजिटल A4 Master Statement, PDF इनव्हॉइस आणि थेट ईमेल सुविधा.")
+
+            table_rows_html = ""
+            for idx, m_item in enumerate(milestones, 1):
+                p_val = float(m_item["planned_amount"])
+                d_val = float(m_item["amount_deposited"])
+                bal_val = max(0.0, p_val - d_val)
+                stage_pct = (d_val / p_val * 100) if p_val > 0 else 0.0
+
+                if m_item.get("is_locked") == 1:
+                    st_badge = "<span style='color: #10b981; font-weight:bold;'>FULLY PAID (100%)</span>"
+                elif d_val >= p_val and p_val > 0:
+                    st_badge = "<span style='color: #0284c7; font-weight:bold;'>READY TO LOCK</span>"
+                elif d_val > 0:
+                    st_badge = f"<span style='color: #d97706; font-weight:bold;'>PARTIAL ({stage_pct:.1f}%)</span>"
+                elif p_val > 0:
+                    st_badge = "<span style='color: #ef4444; font-weight:bold;'>UNPAID</span>"
+                else:
+                    st_badge = "<span style='color: #64748b;'>BILL PENDING</span>"
+
+                table_rows_html += f"""
+                <tr>
+                    <td style="text-align:center; font-weight:bold;">{idx}</td>
+                    <td><b>{m_item['stage_name']}</b></td>
+                    <td style="text-align:right;">₹ {p_val:,.2f}</td>
+                    <td style="text-align:right; color:#10b981; font-weight:bold;">₹ {d_val:,.2f}</td>
+                    <td style="text-align:right; color:#ef4444; font-weight:bold;">₹ {bal_val:,.2f}</td>
+                    <td style="text-align:center;">{st_badge}</td>
+                    <td style="text-align:center; font-size:10px;">{m_item.get('completion_date') or '-'}</td>
+                </tr>
+                """
+
+            neevpay_html_doc = f"""<!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <title>NEEVPAY MASTER ESCROW STATEMENT - {st.session_state.current_site_name}</title>
+                <style>
+                    @page {{ size: A4 portrait; margin: 8mm; }}
+                    @media print {{
+                        body {{ background: #ffffff !important; color: #000000 !important; }}
+                        .no-print {{ display: none !important; }}
+                    }}
+                    body {{ background-color: #e2e8f0; font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 10px; color: #0f172a; }}
+                    .a4-page {{ position: relative; background: #ffffff; width: 100%; max-width: 780px; margin: 0 auto 20px auto; padding: 25px 30px; border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); border: 1.5px solid #064e3b; box-sizing: border-box; min-height: 1020px; overflow: hidden; }}
+                    .watermark {{ position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-28deg); font-size: 22px; font-weight: 900; color: rgba(6, 78, 59, 0.08); text-transform: uppercase; letter-spacing: 2.5px; text-align: center; width: 78%; max-width: 500px; line-height: 1.5; pointer-events: none; user-select: none; border: 3px dashed rgba(6, 78, 59, 0.08); padding: 15px 25px; border-radius: 12px; z-index: 999; }}
+                    .content-box {{ position: relative; z-index: 2; }}
+                    .header-title {{ text-align: center; border-bottom: 2px solid #064e3b; padding-bottom: 6px; margin-bottom: 12px; }}
+                    .header-title h1 {{ margin: 0; font-size: 22px; color: #064e3b; font-weight: 900; letter-spacing: 0.5px; }}
+                    .header-title p {{ margin: 2px 0; font-size: 11px; font-weight: bold; color: #10b981; }}
+                    table.info-table {{ width: 100%; margin-bottom: 12px; font-size: 12px; border-collapse: collapse; }}
+                    table.info-table td {{ padding: 3px 0; }}
+                    .section-header {{ background: #064e3b; color: #ffffff; padding: 6px 12px; font-size: 12px; font-weight: bold; border-radius: 4px; margin: 12px 0 8px 0; }}
+                    table.custom-data-table {{ width: 100%; border-collapse: collapse; margin: 8px 0 15px 0; font-size: 11px; }}
+                    table.custom-data-table th, table.custom-data-table td {{ border: 1px solid #cbd5e1; padding: 6px 8px; text-align: left; }}
+                    table.custom-data-table th {{ background-color: rgba(241, 245, 249, 0.95); font-weight: bold; color: #0f172a; }}
+                    table.custom-data-table tr:nth-child(even) {{ background-color: rgba(248, 250, 252, 0.6); }}
+                    .summary-box {{ background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; margin-top: 15px; font-size: 12px; }}
+                    .signature-box {{ margin-top: 40px; width: 100%; font-size: 12px; }}
+                    .footer-stamp {{ text-align: center; margin-top: 25px; font-size: 10px; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 5px; }}
+                </style>
+            </head>
+            <body>
+                <div class="a4-page">
+                    <div class="watermark">NEEVPAY ESCROW<br>PATIL INFRATECH VERIFIED</div>
+                    <div class="content-box">
+                        <div class="header-title">
+                            <h1>PATIL INFRATECH - NEEVPAY ESCROW</h1>
+                            <p>SMART MILESTONE PAYMENT PROTECTION & MASTER INVOICE</p>
+                            <small style="color: #64748b;">(Digital Milestone Escrow & Verification Protocol)</small>
+                        </div>
+
+                        <table class="info-table">
+                            <tr>
+                                <td><b>Project / Site:</b> <span style="color:#064e3b; font-weight:bold;">{st.session_state.current_site_name}</span></td>
+                                <td style="text-align: right;"><b>Statement Date:</b> {get_ist_time().strftime('%d-%m-%Y')}</td>
+                            </tr>
+                            <tr>
+                                <td><b>Engineer:</b> {current_user_name}</td>
+                                <td style="text-align: right;"><b>Client Email:</b> {client_email or 'Not Registered'}</td>
+                            </tr>
+                        </table>
+                        <hr style="border: 0.5px solid #cbd5e1; margin-bottom: 8px;">
+
+                        <div class="section-header">
+                            MILESTONE-WISE PAYMENT & COMPLETION STATEMENT
+                        </div>
+
+                        <table class="custom-data-table">
+                            <thead>
+                                <tr>
+                                    <th style="text-align:center; width:30px;">#</th>
+                                    <th>कामाचा टप्पा (Milestone Stage)</th>
+                                    <th style="text-align:right;">ठरलेले बिल</th>
+                                    <th style="text-align:right;">जमा रक्कम</th>
+                                    <th style="text-align:right;">उर्वरित बाकी</th>
+                                    <th style="text-align:center;">सद्यस्थिती</th>
+                                    <th style="text-align:center;">लॉक दिनांक</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {table_rows_html}
+                            </tbody>
+                        </table>
+
+                        <div class="summary-box">
+                            <table style="width:100%; font-size:12px;">
+                                <tr>
+                                    <td><b>एकूण ठरलेले बजेट:</b> <span style="color:#0284c7; font-weight:bold;">₹ {total_budget:,.2f}</span></td>
+                                    <td><b>क्लायंटकडून प्राप्त:</b> <span style="color:#10b981; font-weight:bold;">₹ {total_received:,.2f}</span></td>
+                                    <td><b>शिल्लक बाकी:</b> <span style="color:#ef4444; font-weight:bold;">₹ {total_pending:,.2f}</span></td>
+                                    <td><b>प्रगती:</b> <span style="color:#00f2fe; font-weight:bold;">{overall_site_pct:.1f}% ({locked_stages}/{len(milestones)} टप्पे)</span></td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <table class="signature-box">
+                            <tr>
+                                <td style="width: 50%;">
+                                    <br><br>
+                                    __________________________<br>
+                                    <b>Site Engineer Signature</b><br>
+                                    <small style="color:#64748b;">Patil Infratech Authorized</small>
+                                </td>
+                                <td style="width: 50%; text-align: right;">
+                                    <br><br>
+                                    __________________________<br>
+                                    <b>Client (Owner) Signature</b><br>
+                                    <small style="color:#64748b;">Verified Approver</small>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <div class="footer-stamp">
+                            System Verified & Secured by: <b>Patil Infratech NeevPay Protocol</b> • Generated on {get_ist_time().strftime('%d-%m-%Y %H:%M:%S')}
+                        </div>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """
+
+            st.components.v1.html(neevpay_html_doc, height=520, scrolling=True)
+
+            st.write("---")
+            np_c1, np_c2, np_c3, np_c4 = st.columns(4)
+
+            with np_c1:
+                st.download_button(
+                    label="📥 Download Master HTML",
+                    data=neevpay_html_doc,
+                    file_name=f"NeevPay_Master_Invoice_{st.session_state.current_site_name.replace(' ', '_')}.html",
+                    mime="text/html",
+                    type="primary",
+                    use_container_width=True,
+                    key="btn_down_neevpay_html"
+                )
+
+            with np_c2:
+                neev_export_data = []
+                for m_item in milestones:
+                    neev_export_data.append({
+                        "Site": st.session_state.current_site_name,
+                        "Client Email": client_email,
+                        "Stage": m_item["stage_name"],
+                        "Planned Bill (Rs)": m_item["planned_amount"],
+                        "Deposited (Rs)": m_item["amount_deposited"],
+                        "Balance (Rs)": max(0.0, m_item["planned_amount"] - m_item["amount_deposited"]),
+                        "Progress %": f"{(m_item['amount_deposited']/m_item['planned_amount']*100):.1f}%" if m_item["planned_amount"] > 0 else "0%",
+                        "Status": m_item["status"],
+                        "Locked": "Yes" if m_item.get("is_locked") == 1 else "No",
+                        "Completion Date": m_item.get("completion_date") or "-"
+                    })
+                neev_csv = pd.DataFrame(neev_export_data).to_csv(index=False).encode('utf-8-sig')
+
+                st.download_button(
+                    label="📊 Export CSV Data",
+                    data=neev_csv,
+                    file_name=f"NeevPay_Escrow_{st.session_state.current_site_name.replace(' ', '_')}.csv",
+                    mime="text/csv",
+                    use_container_width=True,
+                    key="btn_down_neevpay_csv"
+                )
+
+            with np_c3:
+                st.markdown(
+                    """
+                    <button onclick="window.parent.print()" style="width: 100%; background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); color: white; border: none; padding: 10px 14px; border-radius: 8px; font-weight: bold; cursor: pointer; height: 38px; box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4);">
+                        🖨️ Instant Print (A4)
+                    </button>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+            with np_c4:
+                if st.button("📧 Email Invoice to Client", key="btn_send_client_invoice_mail", use_container_width=True):
+                    if client_email:
+                        mail_subj = f"Official Escrow Statement: {st.session_state.current_site_name}"
+                        mail_body = f"""
+नमस्कार,
+
+तुमच्या '{st.session_state.current_site_name}' या साईटचे अद्ययावत NeevPay Escrow पेमेंट स्टेटमेंट खालीलप्रमाणे आहे:
+
+एकूण ठरलेले बजेट: ₹ {total_budget:,.2f}
+आतापर्यंत प्राप्त रक्कम: ₹ {total_received:,.2f}
+शिल्लक उर्वरित बाकी: ₹ {total_pending:,.2f}
+एकूण साईट प्रगती: {overall_site_pct:.1f}% ({locked_stages}/{len(milestones)} टप्पे पूर्ण)
+साईट इंजिनिअर: {current_user_name}
+दिनांक: {get_ist_time().strftime('%d-%m-%Y')}
+
+अधिक माहितीसाठी साईट इंजिनिअरशी संपर्क साधावा.
+
+- Patil Infratech Team
+                        """
+                        ok_mail = send_email_message(client_email, mail_subj, mail_body)
+                        if ok_mail:
+                            st.success(f"✅ अधिकृत इनव्हॉइस '{client_email}' वर पाठवले!")
+                        else:
+                            st.error("❌ ईमेल पाठवण्यात त्रुटी आली. कृपया क्रेडेन्शियल्स तपासा.")
+                    else:
+                        st.warning("⚠️ कृपया आधी वर क्लायंटचा ईमेल आयडी सेव्ह करा.")
+
+            np_wa_text = (
+                f"*PATIL INFRATECH - NEEVPAY MASTER ESCROW STATEMENT*\n"
+                f"*Site:* {st.session_state.current_site_name}\n"
+                f"*Engineer:* {current_user_name}\n"
+                f"*Client Email:* {client_email or 'N/A'}\n"
+                f"*Date:* {get_ist_time().strftime('%d-%m-%Y')}\n\n"
+                f"*Total Planned Bill:* ₹ {total_budget:,.2f}\n"
+                f"*Total Deposited:* ₹ {total_received:,.2f}\n"
+                f"*Pending Balance:* ₹ {total_pending:,.2f}\n"
+                f"*Overall Progress:* {overall_site_pct:.1f}% ({locked_stages}/{len(milestones)} टप्पे पूर्ण)\n\n"
+                f"_Smart Escrow Master Statement Generated._"
+            )
+            st.write(" ")
+            render_whatsapp_feature(urllib.parse.quote(np_wa_text), "neevpay_master_wa")
+
     st.write("---")
 
     # ==========================================================
-    # भाग ३: टप्प्यांची यादी, OTP बिल बदल आणि दोघांची पेमेंट संमती
+    # भाग ४: टप्प्यांची यादी, OTP बिल बदल आणि दोघांची पेमेंट संमती
     # ==========================================================
     if not milestones:
         st.info("ℹ️ या साईटवर अजून कोणतेही कामाचे बिल तयार केलेले नाही. वरील पर्यायातून टप्पा जोडा.")
