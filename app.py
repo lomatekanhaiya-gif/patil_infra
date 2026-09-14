@@ -5046,7 +5046,7 @@ elif st.session_state.selected_module == "NeevPay":
                                 st.warning(f"'{st_name}' टप्पा डिलीट केला!")
                                 st.rerun()
 # ==========================================
-# 📌 विभाग १९: HOUSE ESTIMATOR मुख्य मॉड्यूल (Preliminary Thumb Rule Estimation)
+# 📌 विभाग १९: HOUSE ESTIMATOR मुख्य मॉड्यूल (Preliminary Thumb Rule Estimation & A4 PDF Report)
 # ==========================================
 elif st.session_state.selected_module == "House Estimator":
     if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_house_est"):
@@ -5059,7 +5059,7 @@ elif st.session_state.selected_module == "House Estimator":
         <div style='background: linear-gradient(135deg, #0c4a6e 0%, #0f172a 100%); padding: 18px; border-radius: 16px; border: 1px solid #38bdf8; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(56, 189, 248, 0.2);'>
             <h2 style='margin: 0; color: #38bdf8; font-weight: 900;'>🏠 PATIL INFRATECH - QUICK HOUSE & MULTI-STOREY ESTIMATOR</h2>
             <p style='margin: 5px 0 0 0; color: #cbd5e1; font-size: 14px;'>
-                Ground ते G+10 मजल्यांपर्यंत घराचा/इमारतीचा अंदाज, स्वतःच्या मनाप्रमाणे बांधकामाचा दर्जा आणि दर (Rate/Sq.Ft) टाकण्याची संपूर्ण मुभा.
+                Ground ते G+10 मजल्यांपर्यंत घराचा/इमारतीचा अंदाज, स्वतःच्या मनाप्रमाणे दर (Rate/Sq.Ft) आणि NeevPay सारखा अधिकृत A4 PDF रिपोर्ट जनरेटर.
             </p>
         </div>
         """,
@@ -5079,7 +5079,6 @@ elif st.session_state.selected_module == "House Estimator":
             key="he_builtup_area"
         )
     with h_col2:
-        # G+10 पर्यंत मजले निवडणे (0 = फक्त Ground Floor, 1 = G+1, ..., 10 = G+10)
         upper_floors = st.number_input(
             "वरच्या मजल्यांची संख्या (Upper Floors - G + ?):",
             min_value=0,
@@ -5098,7 +5097,7 @@ elif st.session_state.selected_module == "House Estimator":
     st.markdown(
         f"""
         <div style="background: rgba(15, 23, 42, 0.7); border-left: 4px solid #38bdf8; padding: 10px 16px; border-radius: 8px; margin: 10px 0 18px 0;">
-            <span style="color:#94a3b8; font-size:13px;">एकूण मोजणी:</span> 
+            <span style="color:#94a3b8; font-size:13px;">संरचना प्रकार:</span> 
             <b style="color:#38bdf8; font-size:15px;">{floors_label}</b> | 
             <span style="color:#94a3b8; font-size:13px;">एकूण स्लॅब/बिल्ट-अप क्षेत्रफळ:</span> 
             <b style="color:#10b981; font-size:16px;">{total_calc_area:,.0f} Sq. Ft.</b>
@@ -5111,10 +5110,10 @@ elif st.session_state.selected_module == "House Estimator":
     h_col3, h_col4 = st.columns(2)
     with h_col3:
         quality_custom_name = st.text_input(
-            "बांधकामाचा दर्जा / पॅकेजचे नाव (Custom Quality Name):",
+            "बांधकामाचा दर्जा / पॅकेजचे नाव (Quality / Package Name):",
             value="Standard Quality (मध्यम दर्जा)",
             key="he_quality_name",
-            help="येथे तुझ्या मर्जीनुसार नाव टाक, जसे की: प्रीमियम, बजेट, आलिशान, इ."
+            help="उदा. बजेट होम, स्टँडर्ड क्वालिटी, लक्झरी व्हिला, इ."
         )
     with h_col4:
         unit_cost_sqft = st.number_input(
@@ -5123,7 +5122,7 @@ elif st.session_state.selected_module == "House Estimator":
             value=1650.0,
             step=50.0,
             key="he_custom_sqft_rate",
-            help="तुझ्या मार्केट किंवा बजेटनुसार प्रति स्क्वेअर फूट दर भरा."
+            help="तुझ्या स्थानिक मार्केट किंवा क्लायंट बजेटनुसार प्रति स्क्वेअर फूट दर भरा."
         )
 
     st.write("---")
@@ -5139,17 +5138,22 @@ elif st.session_state.selected_module == "House Estimator":
         with cr_col3:
             h_brick_rate = st.number_input("विटांचा दर (₹/नग):", min_value=2.0, value=8.5, step=0.5, key="he_crate_brick")
 
-    if st.button("📊 GENERATE HOUSE ESTIMATION REPORT", type="primary", use_container_width=True, key="btn_run_house_est"):
-        # सिव्हिल इंजिनिअरिंग थंब-रूल्स (बहुमजली इमारतींसाठी प्रमाण)
+    if st.button("📊 GENERATE ESTIMATION & OFFICIAL A4 PDF", type="primary", use_container_width=True, key="btn_run_house_est"):
+        # सिव्हिल इंजिनिअरिंग थंब-रूल्स
         total_house_cost = total_calc_area * unit_cost_sqft
 
         c_bags_needed = math.ceil(total_calc_area * 0.40)
-        # बहुमजली इमारतीसाठी (G+3 पेक्षा जास्त असल्यास) कॉलम/फुटिंगमध्ये स्टील थोडे जास्त लागते
         steel_factor = 4.2 if upper_floors >= 3 else 3.8
         steel_kg_needed = math.ceil(total_calc_area * steel_factor)
         sand_brass_needed = round(total_calc_area * 0.018, 2)
         agg_brass_needed = round(total_calc_area * 0.0135, 2)
         bricks_needed = math.ceil(total_calc_area * 18.0)
+
+        cost_cement = c_bags_needed * h_cem_rate
+        cost_steel = steel_kg_needed * h_steel_rate
+        cost_sand = sand_brass_needed * h_sand_rate
+        cost_agg = agg_brass_needed * h_agg_rate
+        cost_bricks = bricks_needed * h_brick_rate
 
         cost_materials = total_house_cost * 0.65
         cost_labour = total_house_cost * 0.25
@@ -5169,21 +5173,231 @@ elif st.session_state.selected_module == "House Estimator":
 
         st.write("---")
 
-        house_table_md = f"""
-| साहित्याचे नाव / घटक | प्रमाण (Quantity) | एकक (Unit) | अंदाजित खर्च (₹) |
-| :--- | :--- | :--- | :--- |
-| **सिमेंट (Cement)** | {c_bags_needed} | Bags | ₹ {c_bags_needed * h_cem_rate:,.2f} |
-| **स्टील / सळया (Steel)** | {steel_kg_needed} | Kg | ₹ {steel_kg_needed * h_steel_rate:,.2f} |
-| **वाळू (Crush Sand / M-Sand)** | {sand_brass_needed} | Brass | ₹ {sand_brass_needed * h_sand_rate:,.2f} |
-| **खडी (Aggregate 20mm/10mm)** | {agg_brass_needed} | Brass | ₹ {agg_brass_needed * h_agg_rate:,.2f} |
-| **लाल विटा / ब्लॉक्स (Bricks)** | {bricks_needed} | Nos | ₹ {bricks_needed * h_brick_rate:,.2f} |
-| **मजुरी / लेबर खर्च (Labour 25%)** | - | L.S. | ₹ {cost_labour:,.2f} |
-| **इतर खर्च, फिटिंग, प्लंबिंग व डिझाईन (10%)** | - | L.S. | ₹ {cost_misc:,.2f} |
-| **GRAND TOTAL ESTIMATED COST** | - | - | **₹ {total_house_cost:,.2f}/-** |
-"""
-        st.markdown(house_table_md)
+        # ==========================================================
+        # 📄 A4 PDF / PRINTABLE QUOTATION HTML GENERATOR
+        # ==========================================================
+        house_html_doc = f"""<!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <title>PATIL INFRATECH - House Estimation Report</title>
+            <style>
+                @page {{ size: A4 portrait; margin: 8mm; }}
+                @media print {{
+                    body {{ background: #ffffff !important; color: #000000 !important; }}
+                    .no-print {{ display: none !important; }}
+                }}
+                body {{ background-color: #e2e8f0; font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 10px; color: #0f172a; }}
+                .a4-page {{ position: relative; background: #ffffff; width: 100%; max-width: 780px; margin: 0 auto 20px auto; padding: 25px 30px; border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); border: 1.5px solid #0c4a6e; box-sizing: border-box; min-height: 1020px; overflow: hidden; }}
+                .watermark {{ position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-28deg); font-size: 22px; font-weight: 900; color: rgba(12, 74, 110, 0.08); text-transform: uppercase; letter-spacing: 2.5px; text-align: center; width: 78%; max-width: 500px; line-height: 1.5; pointer-events: none; user-select: none; border: 3px dashed rgba(12, 74, 110, 0.08); padding: 15px 25px; border-radius: 12px; z-index: 999; }}
+                .content-box {{ position: relative; z-index: 2; }}
+                .header-title {{ text-align: center; border-bottom: 2px solid #0c4a6e; padding-bottom: 6px; margin-bottom: 12px; }}
+                .header-title h1 {{ margin: 0; font-size: 22px; color: #0c4a6e; font-weight: 900; letter-spacing: 0.5px; }}
+                .header-title p {{ margin: 2px 0; font-size: 11px; font-weight: bold; color: #0284c7; }}
+                table.info-table {{ width: 100%; margin-bottom: 12px; font-size: 12px; border-collapse: collapse; }}
+                table.info-table td {{ padding: 3px 0; }}
+                .section-header {{ background: #0c4a6e; color: #ffffff; padding: 6px 12px; font-size: 12px; font-weight: bold; border-radius: 4px; margin: 12px 0 8px 0; }}
+                table.custom-data-table {{ width: 100%; border-collapse: collapse; margin: 8px 0 15px 0; font-size: 11px; }}
+                table.custom-data-table th, table.custom-data-table td {{ border: 1px solid #cbd5e1; padding: 6px 8px; text-align: left; }}
+                table.custom-data-table th {{ background-color: rgba(241, 245, 249, 0.95); font-weight: bold; color: #0f172a; }}
+                table.custom-data-table tr:nth-child(even) {{ background-color: rgba(248, 250, 252, 0.6); }}
+                .summary-box {{ background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; margin-top: 15px; font-size: 12px; }}
+                .signature-box {{ margin-top: 40px; width: 100%; font-size: 12px; }}
+                .footer-stamp {{ text-align: center; margin-top: 25px; font-size: 10px; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 5px; }}
+            </style>
+        </head>
+        <body>
+            <div class="a4-page">
+                <div class="watermark">PATIL INFRATECH<br>OFFICIAL HOUSE ESTIMATE</div>
+                <div class="content-box">
+                    <div class="header-title">
+                        <h1>PATIL INFRATECH</h1>
+                        <p>CIVIL ENGINEERS • ARCHITECTURAL PLANNERS • ESTIMATORS</p>
+                        <small style="color: #64748b;">(Preliminary Thumb-Rule Construction Budget & Material Report)</small>
+                    </div>
 
-        # हिस्ट्रीमध्ये सेव्ह करणे
+                    <table class="info-table">
+                        <tr>
+                            <td><b>📍 Project / Site:</b> <span style="color:#0c4a6e; font-weight:bold;">{st.session_state.current_site_name}</span></td>
+                            <td style="text-align: right;"><b>📅 Report Date:</b> {get_ist_time().strftime('%d-%m-%Y')}</td>
+                        </tr>
+                        <tr>
+                            <td><b>👤 Prepared By:</b> {current_user_name}</td>
+                            <td style="text-align: right;"><b>🏢 Structure:</b> {floors_label}</td>
+                        </tr>
+                        <tr>
+                            <td><b>📐 Built-up Area:</b> {total_calc_area:,.0f} Sq. Ft. ({builtup_area} sq.ft × {total_floors_count} floors)</td>
+                            <td style="text-align: right;"><b>🏷️ Unit Rate:</b> ₹ {unit_cost_sqft:,.2f} / sq.ft</td>
+                        </tr>
+                        <tr>
+                            <td><b>⭐ Package / Quality:</b> <span style="color:#0284c7; font-weight:bold;">{quality_custom_name}</span></td>
+                            <td style="text-align: right;"><b>⏱️ Status:</b> Preliminary Estimate</td>
+                        </tr>
+                    </table>
+                    <hr style="border: 0.5px solid #cbd5e1; margin-bottom: 8px;">
+
+                    <div class="section-header">
+                        ESTIMATED MATERIAL & EXPENSE BREAKDOWN
+                    </div>
+
+                    <table class="custom-data-table">
+                        <thead>
+                            <tr>
+                                <th style="text-align:center; width:30px;">#</th>
+                                <th>साहित्याचे नाव व घटक (Description)</th>
+                                <th style="text-align:center;">अंदाजित प्रमाण (Qty)</th>
+                                <th style="text-align:center;">एकक (Unit)</th>
+                                <th style="text-align:right;">बाजार भाव (Rate)</th>
+                                <th style="text-align:right;">अंदाजित रक्कम (Amount ₹)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="text-align:center;">1</td>
+                                <td><b>सिमेंट (Cement - 43/53 Grade PPC)</b></td>
+                                <td style="text-align:center; font-weight:bold;">{c_bags_needed}</td>
+                                <td style="text-align:center;">Bags</td>
+                                <td style="text-align:right;">₹ {h_cem_rate:.2f}</td>
+                                <td style="text-align:right; font-weight:bold; color:#0c4a6e;">₹ {cost_cement:,.2f}</td>
+                            </tr>
+                            <tr>
+                                <td style="text-align:center;">2</td>
+                                <td><b>स्टील / टीएमटी सळया (TMT Steel Fe-500/550)</b></td>
+                                <td style="text-align:center; font-weight:bold;">{steel_kg_needed}</td>
+                                <td style="text-align:center;">Kg</td>
+                                <td style="text-align:right;">₹ {h_steel_rate:.2f}</td>
+                                <td style="text-align:right; font-weight:bold; color:#0c4a6e;">₹ {cost_steel:,.2f}</td>
+                            </tr>
+                            <tr>
+                                <td style="text-align:center;">3</td>
+                                <td><b>वाळू (Crush Sand / M-Sand / Plaster Sand)</b></td>
+                                <td style="text-align:center; font-weight:bold;">{sand_brass_needed}</td>
+                                <td style="text-align:center;">Brass</td>
+                                <td style="text-align:right;">₹ {h_sand_rate:.2f}</td>
+                                <td style="text-align:right; font-weight:bold; color:#0c4a6e;">₹ {cost_sand:,.2f}</td>
+                            </tr>
+                            <tr>
+                                <td style="text-align:center;">4</td>
+                                <td><b>खडी (Aggregate 20mm & 10mm Metal)</b></td>
+                                <td style="text-align:center; font-weight:bold;">{agg_brass_needed}</td>
+                                <td style="text-align:center;">Brass</td>
+                                <td style="text-align:right;">₹ {h_agg_rate:.2f}</td>
+                                <td style="text-align:right; font-weight:bold; color:#0c4a6e;">₹ {cost_agg:,.2f}</td>
+                            </tr>
+                            <tr>
+                                <td style="text-align:center;">5</td>
+                                <td><b>लाल विटा / फ्लाईॲश ब्लॉक्स (Bricks / AAC Blocks)</b></td>
+                                <td style="text-align:center; font-weight:bold;">{bricks_needed}</td>
+                                <td style="text-align:center;">Nos</td>
+                                <td style="text-align:right;">₹ {h_brick_rate:.2f}</td>
+                                <td style="text-align:right; font-weight:bold; color:#0c4a6e;">₹ {cost_bricks:,.2f}</td>
+                            </tr>
+                            <tr>
+                                <td style="text-align:center;">6</td>
+                                <td><b>मजुरी व लेबर खर्च (Wages & Contractors ~25%)</b></td>
+                                <td style="text-align:center;">-</td>
+                                <td style="text-align:center;">L.S.</td>
+                                <td style="text-align:right;">25%</td>
+                                <td style="text-align:right; font-weight:bold;">₹ {cost_labour:,.2f}</td>
+                            </tr>
+                            <tr>
+                                <td style="text-align:center;">7</td>
+                                <td><b>प्लंबिंग, इलेक्ट्रिकल, फिनिशिंग व इतर खर्च (~10%)</b></td>
+                                <td style="text-align:center;">-</td>
+                                <td style="text-align:center;">L.S.</td>
+                                <td style="text-align:right;">10%</td>
+                                <td style="text-align:right; font-weight:bold;">₹ {cost_misc:,.2f}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="summary-box">
+                        <table style="width:100%; font-size:12px;">
+                            <tr>
+                                <td><b>एकूण बांधकाम क्षेत्र:</b> <span style="color:#0284c7; font-weight:bold;">{total_calc_area:,.0f} Sq.Ft.</span></td>
+                                <td><b>ठरलेला प्रति चौरस फूट दर:</b> <span style="color:#0c4a6e; font-weight:bold;">₹ {unit_cost_sqft:,.2f}</span></td>
+                                <td style="text-align:right;"><b>अंदाजित एकूण बजेट:</b> <span style="color:#10b981; font-weight:900; font-size:16px;">₹ {total_house_cost:,.2f}/-</span></td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <table class="signature-box">
+                        <tr>
+                            <td style="width: 50%;">
+                                <br><br>
+                                __________________________<br>
+                                <b>Authorized Estimator / Engineer</b><br>
+                                <small style="color:#64748b;">Patil Infratech Consultancies</small>
+                            </td>
+                            <td style="width: 50%; text-align: right;">
+                                <br><br>
+                                __________________________<br>
+                                <b>Client (Owner) Signature</b><br>
+                                <small style="color:#64748b;">Approval & Acceptance</small>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <div class="footer-stamp">
+                        Certified & Generated by: <b>Patil Infratech Estimating Engine</b> • Concept by Kanhaiya • Date: {get_ist_time().strftime('%d-%m-%Y %H:%M:%S')}
+                    </div>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+
+        # स्क्रीनवर लाईव्ह A4 प्रिव्ह्यू दाखवणे
+        st.markdown("### 📑 Official Printable A4 Estimate Preview")
+        st.components.v1.html(house_html_doc, height=530, scrolling=True)
+
+        # CSV डेटा तयार करणे
+        he_csv_rows = [
+            {"Item": "Cement", "Quantity": f"{c_bags_needed} Bags", "Rate (Rs)": h_cem_rate, "Total (Rs)": cost_cement},
+            {"Item": "Steel", "Quantity": f"{steel_kg_needed} Kg", "Rate (Rs)": h_steel_rate, "Total (Rs)": cost_steel},
+            {"Item": "Sand", "Quantity": f"{sand_brass_needed} Brass", "Rate (Rs)": h_sand_rate, "Total (Rs)": cost_sand},
+            {"Item": "Aggregate", "Quantity": f"{agg_brass_needed} Brass", "Rate (Rs)": h_agg_rate, "Total (Rs)": cost_agg},
+            {"Item": "Bricks", "Quantity": f"{bricks_needed} Nos", "Rate (Rs)": h_brick_rate, "Total (Rs)": cost_bricks},
+            {"Item": "Labour (25%)", "Quantity": "L.S.", "Rate (Rs)": "-", "Total (Rs)": cost_labour},
+            {"Item": "Plumbing & Misc (10%)", "Quantity": "L.S.", "Rate (Rs)": "-", "Total (Rs)": cost_misc},
+            {"Item": "GRAND TOTAL ESTIMATE", "Quantity": f"{total_calc_area} sqft", "Rate (Rs)": unit_cost_sqft, "Total (Rs)": total_house_cost},
+        ]
+        he_csv_bytes = pd.DataFrame(he_csv_rows).to_csv(index=False).encode('utf-8-sig')
+
+        st.write("---")
+        # NeevPay प्रमाणे ४ ॲक्शन बटन्स
+        hb1, hb2, hb3 = st.columns(3)
+
+        with hb1:
+            st.download_button(
+                label="📥 Download Quotation (HTML/PDF)",
+                data=house_html_doc,
+                file_name=f"Patil_Infratech_Estimate_{st.session_state.current_site_name.replace(' ', '_')}.html",
+                mime="text/html",
+                type="primary",
+                use_container_width=True,
+            )
+
+        with hb2:
+            st.download_button(
+                label="📊 Export CSV Data",
+                data=he_csv_bytes,
+                file_name=f"Patil_Infratech_Estimate_{st.session_state.current_site_name.replace(' ', '_')}.csv",
+                mime="text/csv",
+                use_container_width=True,
+            )
+
+        with hb3:
+            st.markdown(
+                """
+                <button onclick="window.parent.print()" style="width: 100%; background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); color: white; border: none; padding: 10px 14px; border-radius: 8px; font-weight: bold; cursor: pointer; height: 38px; box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4);">
+                    🖨️ Instant Print (A4)
+                </button>
+                """,
+                unsafe_allow_html=True,
+            )
+
+        # डेटाबेस हिस्ट्रीमध्ये सेव्ह करणे
         if current_user_name:
             conn = get_db_connection()
             cursor = conn.cursor()
@@ -5194,7 +5408,7 @@ elif st.session_state.selected_module == "House Estimator":
                     current_user_name,
                     now_time_str,
                     f"{quality_custom_name} - {floors_label} ({total_calc_area:,.0f} sqft @ ₹{unit_cost_sqft})",
-                    house_table_md,
+                    f"Total: ₹{total_house_cost:,.2f} | Cement: {c_bags_needed} Bags | Steel: {steel_kg_needed} kg",
                     st.session_state.current_site_name
                 ),
             )
