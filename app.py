@@ -5057,44 +5057,78 @@ elif st.session_state.selected_module == "House Estimator":
     st.markdown(
         f"""
         <div style='background: linear-gradient(135deg, #0c4a6e 0%, #0f172a 100%); padding: 18px; border-radius: 16px; border: 1px solid #38bdf8; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(56, 189, 248, 0.2);'>
-            <h2 style='margin: 0; color: #38bdf8; font-weight: 900;'>🏠 PATIL INFRATECH - QUICK HOUSE ESTIMATOR</h2>
+            <h2 style='margin: 0; color: #38bdf8; font-weight: 900;'>🏠 PATIL INFRATECH - QUICK HOUSE & MULTI-STOREY ESTIMATOR</h2>
             <p style='margin: 5px 0 0 0; color: #cbd5e1; font-size: 14px;'>
-                प्लॉट आणि बिल्ट-अप एरियावरून घराचे अंदाजित बजेट, सिमेंट, स्टील, वाळू, खडी व विटांचे अचूक थंब-रूल प्रमाण आणि WhatsApp रिपोर्ट.
+                Ground ते G+10 मजल्यांपर्यंत घराचा/इमारतीचा अंदाज, स्वतःच्या मनाप्रमाणे बांधकामाचा दर्जा आणि दर (Rate/Sq.Ft) टाकण्याची संपूर्ण मुभा.
             </p>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    st.subheader("📐 घराचा प्राथमिक तपशील भरा")
+    st.subheader("📐 बांधकाम तपशील व स्वतःचे दर भरा")
 
-    h_col1, h_col2, h_col3 = st.columns(3)
+    # १. मजले आणि एरिया इनपुट
+    h_col1, h_col2 = st.columns(2)
     with h_col1:
-        builtup_area = st.number_input("एकूण बांधकाम क्षेत्र (Built-up Area in Sq. Ft.):", min_value=100.0, value=1000.0, step=50.0, key="he_builtup_area")
+        builtup_area = st.number_input(
+            "एका मजल्याचे बांधकाम क्षेत्र (Single Floor Area in Sq. Ft.):",
+            min_value=100.0,
+            value=1000.0,
+            step=50.0,
+            key="he_builtup_area"
+        )
     with h_col2:
-        floors_select = st.selectbox("मजले संख्या (Floors):", ["Ground Floor Only (G)", "G + 1 Floor", "G + 2 Floors"], key="he_floors_select")
-    with h_col3:
-        quality_type = st.selectbox(
-            "बांधकामाचा दर्जा (Construction Quality):",
-            ["Basic / Budget (₹1,400/sq.ft)", "Standard Quality (₹1,750/sq.ft)", "Premium / Luxury (₹2,200/sq.ft)"],
-            index=1,
-            key="he_quality_type"
+        # G+10 पर्यंत मजले निवडणे (0 = फक्त Ground Floor, 1 = G+1, ..., 10 = G+10)
+        upper_floors = st.number_input(
+            "वरच्या मजल्यांची संख्या (Upper Floors - G + ?):",
+            min_value=0,
+            max_value=10,
+            value=1,
+            step=1,
+            help="० निवडल्यास फक्त Ground Floor राहील. १० निवडल्यास G+10 होईल.",
+            key="he_floors_num"
         )
 
-    # मजल्यांनुसार एकूण क्षेत्रफळ
-    floor_multiplier = 1.0 if "Ground Floor Only" in floors_select else (2.0 if "G + 1" in floors_select else 3.0)
-    total_calc_area = builtup_area * floor_multiplier
+    # एकूण मजले आणि एकूण क्षेत्रफळ
+    total_floors_count = 1 + upper_floors
+    floors_label = "Ground Floor Only" if upper_floors == 0 else f"G + {upper_floors} Floors ({total_floors_count} मजले)"
+    total_calc_area = builtup_area * total_floors_count
 
-    rate_dictionary = {
-        "Basic / Budget (₹1,400/sq.ft)": 1400.0,
-        "Standard Quality (₹1,750/sq.ft)": 1750.0,
-        "Premium / Luxury (₹2,200/sq.ft)": 2200.0
-    }
-    unit_cost_sqft = rate_dictionary[quality_type]
+    st.markdown(
+        f"""
+        <div style="background: rgba(15, 23, 42, 0.7); border-left: 4px solid #38bdf8; padding: 10px 16px; border-radius: 8px; margin: 10px 0 18px 0;">
+            <span style="color:#94a3b8; font-size:13px;">एकूण मोजणी:</span> 
+            <b style="color:#38bdf8; font-size:15px;">{floors_label}</b> | 
+            <span style="color:#94a3b8; font-size:13px;">एकूण स्लॅब/बिल्ट-अप क्षेत्रफळ:</span> 
+            <b style="color:#10b981; font-size:16px;">{total_calc_area:,.0f} Sq. Ft.</b>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # २. बांधकामाचा दर्जा आणि मनाप्रमाणे दर
+    h_col3, h_col4 = st.columns(2)
+    with h_col3:
+        quality_custom_name = st.text_input(
+            "बांधकामाचा दर्जा / पॅकेजचे नाव (Custom Quality Name):",
+            value="Standard Quality (मध्यम दर्जा)",
+            key="he_quality_name",
+            help="येथे तुझ्या मर्जीनुसार नाव टाक, जसे की: प्रीमियम, बजेट, आलिशान, इ."
+        )
+    with h_col4:
+        unit_cost_sqft = st.number_input(
+            "बांधकाम दर प्रति चौ. फूट (Rate per Sq. Ft. ₹):",
+            min_value=500.0,
+            value=1650.0,
+            step=50.0,
+            key="he_custom_sqft_rate",
+            help="तुझ्या मार्केट किंवा बजेटनुसार प्रति स्क्वेअर फूट दर भरा."
+        )
 
     st.write("---")
-    st.markdown("#### ⚙️ सानुकूल मार्केट दर (Optional Custom Material Rates)")
-    with st.expander("स्थानिक मार्केटनुसार साहित्याचे दर बदलायचे असल्यास उघडा:"):
+    st.markdown("#### ⚙️ सानुकूल मटेरियल मार्केट दर (Custom Unit Rates)")
+    with st.expander("स्थानिक मार्केटनुसार सिमेंट, स्टील, वाळूचे चालू दर बदलायचे असल्यास उघडा:"):
         cr_col1, cr_col2, cr_col3 = st.columns(3)
         with cr_col1:
             h_cem_rate = st.number_input("सिमेंट दर (₹/Bag):", min_value=100.0, value=400.0, step=10.0, key="he_crate_cem")
@@ -5106,11 +5140,13 @@ elif st.session_state.selected_module == "House Estimator":
             h_brick_rate = st.number_input("विटांचा दर (₹/नग):", min_value=2.0, value=8.5, step=0.5, key="he_crate_brick")
 
     if st.button("📊 GENERATE HOUSE ESTIMATION REPORT", type="primary", use_container_width=True, key="btn_run_house_est"):
-        # सिव्हिल इंजिनिअरिंग थंब-रूल्स
+        # सिव्हिल इंजिनिअरिंग थंब-रूल्स (बहुमजली इमारतींसाठी प्रमाण)
         total_house_cost = total_calc_area * unit_cost_sqft
 
         c_bags_needed = math.ceil(total_calc_area * 0.40)
-        steel_kg_needed = math.ceil(total_calc_area * 3.80)
+        # बहुमजली इमारतीसाठी (G+3 पेक्षा जास्त असल्यास) कॉलम/फुटिंगमध्ये स्टील थोडे जास्त लागते
+        steel_factor = 4.2 if upper_floors >= 3 else 3.8
+        steel_kg_needed = math.ceil(total_calc_area * steel_factor)
         sand_brass_needed = round(total_calc_area * 0.018, 2)
         agg_brass_needed = round(total_calc_area * 0.0135, 2)
         bricks_needed = math.ceil(total_calc_area * 18.0)
@@ -5119,9 +5155,12 @@ elif st.session_state.selected_module == "House Estimator":
         cost_labour = total_house_cost * 0.25
         cost_misc = total_house_cost * 0.10
 
-        st.success(f"🎉 एकूण अंदाजित घर बांधकाम खर्च: ₹ {total_house_cost:,.2f}/- (एकूण क्षेत्रफळ: {total_calc_area:,.0f} sq.ft.)")
+        st.success(
+            f"🎉 एकूण अंदाजित खर्च: ₹ {total_house_cost:,.2f}/- "
+            f"({floors_label} | {total_calc_area:,.0f} Sq.Ft. @ ₹{unit_cost_sqft:,.2f}/sq.ft)"
+        )
 
-        # मेट्रिक्स
+        # मेट्रिक्स कार्ड्स
         mc1, mc2, mc3, mc4 = st.columns(4)
         mc1.metric("अंदाजित एकूण बजेट", f"₹ {total_house_cost:,.2f}")
         mc2.metric("सिमेंट (Cement)", f"{c_bags_needed} Bags")
@@ -5151,18 +5190,26 @@ elif st.session_state.selected_module == "House Estimator":
             now_time_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
             cursor.execute(
                 "INSERT INTO history (user_key, timestamp, user_note, report_data, site_name) VALUES (?, ?, ?, ?, ?)",
-                (current_user_name, now_time_str, f"Quick House Estimate ({total_calc_area} sqft)", house_table_md, st.session_state.current_site_name),
+                (
+                    current_user_name,
+                    now_time_str,
+                    f"{quality_custom_name} - {floors_label} ({total_calc_area:,.0f} sqft @ ₹{unit_cost_sqft})",
+                    house_table_md,
+                    st.session_state.current_site_name
+                ),
             )
             conn.commit()
             conn.close()
 
         # व्हॉट्सॲप शेअरिंग
         he_wa_msg = (
-            f"🏠 *PATIL INFRATECH - QUICK HOUSE ESTIMATION REPORT*\n"
+            f"🏠 *PATIL INFRATECH - BUILDING ESTIMATION REPORT*\n"
             f"📍 *Site:* {st.session_state.current_site_name}\n"
             f"👤 *Engineer:* {current_user_name}\n"
-            f"📐 *Built-up Area:* {builtup_area} sq.ft ({floors_select})\n"
-            f"⭐ *Quality:* {quality_type}\n\n"
+            f"🏢 *Structure:* {floors_label}\n"
+            f"📐 *Total Built-up:* {total_calc_area:,.0f} sq.ft\n"
+            f"⭐ *Quality / Type:* {quality_custom_name}\n"
+            f"🏷️ *Rate:* ₹{unit_cost_sqft:,.2f} / sq.ft\n\n"
             f"💰 *अंदाजित एकूण बजेट:* ₹ {total_house_cost:,.2f}/-\n"
             f"--------------------------------\n"
             f"📋 *अंदाजित साहित्य प्रमाण:*\n"
