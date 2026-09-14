@@ -2178,7 +2178,7 @@ else:
     st.info("🔒 Civil AI Assistant हे प्रिमियम फिचर आहे.")
 
 # ==========================================
-# 📌 विभाग १५: मुख्य मॉड्यूल निवड कार्ड्स (Site Manager vs Estimator Tools vs NeevPay)
+# 📌 विभाग १५: मुख्य मॉड्यूल निवड कार्ड्स (Site Manager vs Estimator Tools vs NeevPay vs House Estimator)
 # ==========================================
 if st.session_state.selected_module is None:
     st.markdown("<h3 style='text-align:center; margin-bottom:20px;'>🚀 कृपया मॉड्यूल निवडा</h3>", unsafe_allow_html=True)
@@ -2187,7 +2187,7 @@ if st.session_state.selected_module is None:
     site_lock = locks_cfg.get("Site Manager", "Free")
     neev_lock = locks_cfg.get("NeevPay", "Free")
 
-    main_col1, main_col2, main_col3 = st.columns(3)
+    main_col1, main_col2, main_col3, main_col4 = st.columns(4)
 
     # १. साईट मॅनेजर कार्ड
     with main_col1:
@@ -2196,7 +2196,7 @@ if st.session_state.selected_module is None:
             f"""
             <div class="module-card">
                 <div style="font-size: 40px; margin-bottom: 8px;">👷‍♂️</div>
-                <h3 style="margin: 0; color: #ffffff; font-weight: 800; font-size: 20px;">Site Manager</h3>
+                <h3 style="margin: 0; color: #ffffff; font-weight: 800; font-size: 18px;">Site Manager</h3>
                 <p style="color: #94a3b8; font-size: 12px; margin: 6px 0 12px 0;">हजेरी, मजुरी, साहित्य ट्रॅकर व दैनिक प्रोग्रेस रिपोर्ट</p>
                 <span style="font-size: 11px; font-weight: bold; color: {'#38bdf8' if site_lock == 'Free' else '#f59e0b'}; background: rgba(0,0,0,0.3); padding: 4px 12px; border-radius: 12px;">[{site_badge}]</span>
             </div>
@@ -2219,7 +2219,7 @@ if st.session_state.selected_module is None:
             """
             <div class="module-card">
                 <div style="font-size: 40px; margin-bottom: 8px;">📐</div>
-                <h3 style="margin: 0; color: #ffffff; font-weight: 800; font-size: 20px;">Estimator Tools</h3>
+                <h3 style="margin: 0; color: #ffffff; font-weight: 800; font-size: 18px;">Estimator Tools</h3>
                 <p style="color: #94a3b8; font-size: 12px; margin: 6px 0 12px 0;">Rate Analysis, BBS Schedule, QS & 3-in-1 Master PDF</p>
                 <span style="font-size: 11px; font-weight: bold; color: #f59e0b; background: rgba(0,0,0,0.3); padding: 4px 12px; border-radius: 12px;">[5 Advanced Tools]</span>
             </div>
@@ -2240,7 +2240,7 @@ if st.session_state.selected_module is None:
             f"""
             <div class="module-card" style="border: 1px solid #10b981; box-shadow: 0 4px 20px rgba(16, 185, 129, 0.25);">
                 <div style="font-size: 40px; margin-bottom: 8px;">🤝</div>
-                <h3 style="margin: 0; color: #10b981; font-weight: 800; font-size: 20px;">NeevPay Escrow</h3>
+                <h3 style="margin: 0; color: #10b981; font-weight: 800; font-size: 18px;">NeevPay Escrow</h3>
                 <p style="color: #94a3b8; font-size: 12px; margin: 6px 0 12px 0;">टप्प्याटप्प्याने पेमेंट, एस्क्रो वॉलेट व डिजिटल संमती</p>
                 <span style="font-size: 11px; font-weight: bold; color: {'#10b981' if neev_lock == 'Free' else '#f59e0b'}; background: rgba(0,0,0,0.3); padding: 4px 12px; border-radius: 12px;">[{neev_badge}]</span>
             </div>
@@ -2255,6 +2255,25 @@ if st.session_state.selected_module is None:
                 st.session_state.selected_module = "NeevPay"
                 trigger_push_state()
                 st.rerun()
+
+    # ४. हाउस एस्टिमेटर कार्ड (New Quick House Estimator Module)
+    with main_col4:
+        st.markdown(
+            """
+            <div class="module-card" style="border: 1px solid #38bdf8; box-shadow: 0 4px 20px rgba(56, 189, 248, 0.25);">
+                <div style="font-size: 40px; margin-bottom: 8px;">🏠</div>
+                <h3 style="margin: 0; color: #38bdf8; font-weight: 800; font-size: 18px;">House Estimator</h3>
+                <p style="color: #94a3b8; font-size: 12px; margin: 6px 0 12px 0;">घराचे प्राथमिक बजेट, सिमेंट-स्टील व मटेरियल प्रमाण</p>
+                <span style="font-size: 11px; font-weight: bold; color: #38bdf8; background: rgba(0,0,0,0.3); padding: 4px 12px; border-radius: 12px;">[Thumb Rule Engine]</span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.write(" ")
+        if st.button("🏠 Open House Estimator", key="btn_open_house_est", use_container_width=True, type="primary"):
+            st.session_state.selected_module = "House Estimator"
+            trigger_push_state()
+            st.rerun()
 
 # ==========================================
 # 📌 विभाग १६: ESTIMATOR TOOLS मुख्य मॉड्यूल (Sub-modules)
@@ -5026,3 +5045,136 @@ elif st.session_state.selected_module == "NeevPay":
                                 conn.close()
                                 st.warning(f"'{st_name}' टप्पा डिलीट केला!")
                                 st.rerun()
+# ==========================================
+# 📌 विभाग १९: HOUSE ESTIMATOR मुख्य मॉड्यूल (Preliminary Thumb Rule Estimation)
+# ==========================================
+elif st.session_state.selected_module == "House Estimator":
+    if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_house_est"):
+        st.session_state.selected_module = None
+        st.rerun()
+
+    st.write("---")
+    st.markdown(
+        f"""
+        <div style='background: linear-gradient(135deg, #0c4a6e 0%, #0f172a 100%); padding: 18px; border-radius: 16px; border: 1px solid #38bdf8; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(56, 189, 248, 0.2);'>
+            <h2 style='margin: 0; color: #38bdf8; font-weight: 900;'>🏠 PATIL INFRATECH - QUICK HOUSE ESTIMATOR</h2>
+            <p style='margin: 5px 0 0 0; color: #cbd5e1; font-size: 14px;'>
+                प्लॉट आणि बिल्ट-अप एरियावरून घराचे अंदाजित बजेट, सिमेंट, स्टील, वाळू, खडी व विटांचे अचूक थंब-रूल प्रमाण आणि WhatsApp रिपोर्ट.
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.subheader("📐 घराचा प्राथमिक तपशील भरा")
+
+    h_col1, h_col2, h_col3 = st.columns(3)
+    with h_col1:
+        builtup_area = st.number_input("एकूण बांधकाम क्षेत्र (Built-up Area in Sq. Ft.):", min_value=100.0, value=1000.0, step=50.0, key="he_builtup_area")
+    with h_col2:
+        floors_select = st.selectbox("मजले संख्या (Floors):", ["Ground Floor Only (G)", "G + 1 Floor", "G + 2 Floors"], key="he_floors_select")
+    with h_col3:
+        quality_type = st.selectbox(
+            "बांधकामाचा दर्जा (Construction Quality):",
+            ["Basic / Budget (₹1,400/sq.ft)", "Standard Quality (₹1,750/sq.ft)", "Premium / Luxury (₹2,200/sq.ft)"],
+            index=1,
+            key="he_quality_type"
+        )
+
+    # मजल्यांनुसार एकूण क्षेत्रफळ
+    floor_multiplier = 1.0 if "Ground Floor Only" in floors_select else (2.0 if "G + 1" in floors_select else 3.0)
+    total_calc_area = builtup_area * floor_multiplier
+
+    rate_dictionary = {
+        "Basic / Budget (₹1,400/sq.ft)": 1400.0,
+        "Standard Quality (₹1,750/sq.ft)": 1750.0,
+        "Premium / Luxury (₹2,200/sq.ft)": 2200.0
+    }
+    unit_cost_sqft = rate_dictionary[quality_type]
+
+    st.write("---")
+    st.markdown("#### ⚙️ सानुकूल मार्केट दर (Optional Custom Material Rates)")
+    with st.expander("स्थानिक मार्केटनुसार साहित्याचे दर बदलायचे असल्यास उघडा:"):
+        cr_col1, cr_col2, cr_col3 = st.columns(3)
+        with cr_col1:
+            h_cem_rate = st.number_input("सिमेंट दर (₹/Bag):", min_value=100.0, value=400.0, step=10.0, key="he_crate_cem")
+            h_sand_rate = st.number_input("वाळू दर (₹/Brass):", min_value=500.0, value=6500.0, step=100.0, key="he_crate_sand")
+        with cr_col2:
+            h_steel_rate = st.number_input("स्टील दर (₹/Kg):", min_value=30.0, value=65.0, step=1.0, key="he_crate_steel")
+            h_agg_rate = st.number_input("खडी दर (₹/Brass):", min_value=500.0, value=3500.0, step=100.0, key="he_crate_agg")
+        with cr_col3:
+            h_brick_rate = st.number_input("विटांचा दर (₹/नग):", min_value=2.0, value=8.5, step=0.5, key="he_crate_brick")
+
+    if st.button("📊 GENERATE HOUSE ESTIMATION REPORT", type="primary", use_container_width=True, key="btn_run_house_est"):
+        # सिव्हिल इंजिनिअरिंग थंब-रूल्स
+        total_house_cost = total_calc_area * unit_cost_sqft
+
+        c_bags_needed = math.ceil(total_calc_area * 0.40)
+        steel_kg_needed = math.ceil(total_calc_area * 3.80)
+        sand_brass_needed = round(total_calc_area * 0.018, 2)
+        agg_brass_needed = round(total_calc_area * 0.0135, 2)
+        bricks_needed = math.ceil(total_calc_area * 18.0)
+
+        cost_materials = total_house_cost * 0.65
+        cost_labour = total_house_cost * 0.25
+        cost_misc = total_house_cost * 0.10
+
+        st.success(f"🎉 एकूण अंदाजित घर बांधकाम खर्च: ₹ {total_house_cost:,.2f}/- (एकूण क्षेत्रफळ: {total_calc_area:,.0f} sq.ft.)")
+
+        # मेट्रिक्स
+        mc1, mc2, mc3, mc4 = st.columns(4)
+        mc1.metric("अंदाजित एकूण बजेट", f"₹ {total_house_cost:,.2f}")
+        mc2.metric("सिमेंट (Cement)", f"{c_bags_needed} Bags")
+        mc3.metric("स्टील (Steel)", f"{steel_kg_needed} kg ({round(steel_kg_needed/1000, 2)} MT)")
+        mc4.metric("विटा (Bricks)", f"{bricks_needed:,} Nos")
+
+        st.write("---")
+
+        house_table_md = f"""
+| साहित्याचे नाव / घटक | प्रमाण (Quantity) | एकक (Unit) | अंदाजित खर्च (₹) |
+| :--- | :--- | :--- | :--- |
+| **सिमेंट (Cement)** | {c_bags_needed} | Bags | ₹ {c_bags_needed * h_cem_rate:,.2f} |
+| **स्टील / सळया (Steel)** | {steel_kg_needed} | Kg | ₹ {steel_kg_needed * h_steel_rate:,.2f} |
+| **वाळू (Crush Sand / M-Sand)** | {sand_brass_needed} | Brass | ₹ {sand_brass_needed * h_sand_rate:,.2f} |
+| **खडी (Aggregate 20mm/10mm)** | {agg_brass_needed} | Brass | ₹ {agg_brass_needed * h_agg_rate:,.2f} |
+| **लाल विटा / ब्लॉक्स (Bricks)** | {bricks_needed} | Nos | ₹ {bricks_needed * h_brick_rate:,.2f} |
+| **मजुरी / लेबर खर्च (Labour 25%)** | - | L.S. | ₹ {cost_labour:,.2f} |
+| **इतर खर्च, फिटिंग, प्लंबिंग व डिझाईन (10%)** | - | L.S. | ₹ {cost_misc:,.2f} |
+| **GRAND TOTAL ESTIMATED COST** | - | - | **₹ {total_house_cost:,.2f}/-** |
+"""
+        st.markdown(house_table_md)
+
+        # हिस्ट्रीमध्ये सेव्ह करणे
+        if current_user_name:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            now_time_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
+            cursor.execute(
+                "INSERT INTO history (user_key, timestamp, user_note, report_data, site_name) VALUES (?, ?, ?, ?, ?)",
+                (current_user_name, now_time_str, f"Quick House Estimate ({total_calc_area} sqft)", house_table_md, st.session_state.current_site_name),
+            )
+            conn.commit()
+            conn.close()
+
+        # व्हॉट्सॲप शेअरिंग
+        he_wa_msg = (
+            f"🏠 *PATIL INFRATECH - QUICK HOUSE ESTIMATION REPORT*\n"
+            f"📍 *Site:* {st.session_state.current_site_name}\n"
+            f"👤 *Engineer:* {current_user_name}\n"
+            f"📐 *Built-up Area:* {builtup_area} sq.ft ({floors_select})\n"
+            f"⭐ *Quality:* {quality_type}\n\n"
+            f"💰 *अंदाजित एकूण बजेट:* ₹ {total_house_cost:,.2f}/-\n"
+            f"--------------------------------\n"
+            f"📋 *अंदाजित साहित्य प्रमाण:*\n"
+            f"• सिमेंट: {c_bags_needed} Bags\n"
+            f"• स्टील: {steel_kg_needed} kg ({round(steel_kg_needed/1000, 2)} MT)\n"
+            f"• वाळू: {sand_brass_needed} Brass\n"
+            f"• खडी: {agg_brass_needed} Brass\n"
+            f"• विटा: {bricks_needed} Nos\n"
+            f"--------------------------------\n"
+            f"💡 _टीप: हा प्राथमिक थंब-रूल अंदाज आहे._\n"
+            f"_Generated by Patil Infratech_"
+        )
+
+        st.write(" ")
+        render_whatsapp_feature(urllib.parse.quote(he_wa_msg), "house_quick_est_wa")
