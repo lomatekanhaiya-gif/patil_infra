@@ -5046,7 +5046,7 @@ elif st.session_state.selected_module == "NeevPay":
                                 st.warning(f"'{st_name}' टप्पा डिलीट केला!")
                                 st.rerun()
 # ==========================================
-# 📌 विभाग १९: HOUSE ESTIMATOR मुख्य मॉड्यूल (Preliminary Thumb Rule Estimation & A4 PDF Report)
+# 📌 विभाग १९: HOUSE ESTIMATOR मुख्य मॉड्यूल (Preliminary Thumb Rule Estimation & On-Demand PDF)
 # ==========================================
 elif st.session_state.selected_module == "House Estimator":
     if st.button("⬅️ मुख्य मेनूवर जा (Back to Main)", key="btn_back_house_est"):
@@ -5059,7 +5059,7 @@ elif st.session_state.selected_module == "House Estimator":
         <div style='background: linear-gradient(135deg, #0c4a6e 0%, #0f172a 100%); padding: 18px; border-radius: 16px; border: 1px solid #38bdf8; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(56, 189, 248, 0.2);'>
             <h2 style='margin: 0; color: #38bdf8; font-weight: 900;'>🏠 PATIL INFRATECH - QUICK HOUSE & MULTI-STOREY ESTIMATOR</h2>
             <p style='margin: 5px 0 0 0; color: #cbd5e1; font-size: 14px;'>
-                Ground ते G+10 मजल्यांपर्यंत घराचा/इमारतीचा अंदाज, स्वतःच्या मनाप्रमाणे दर (Rate/Sq.Ft) आणि NeevPay सारखा अधिकृत A4 PDF रिपोर्ट जनरेटर.
+                Ground ते G+10 मजल्यांपर्यंत घराचा/इमारतीचा अंदाज, स्वतःच्या मनाप्रमाणे दर (Rate/Sq.Ft) आणि ऑन-डिमांड A4 PDF रिपोर्ट.
             </p>
         </div>
         """,
@@ -5099,7 +5099,7 @@ elif st.session_state.selected_module == "House Estimator":
         <div style="background: rgba(15, 23, 42, 0.7); border-left: 4px solid #38bdf8; padding: 10px 16px; border-radius: 8px; margin: 10px 0 18px 0;">
             <span style="color:#94a3b8; font-size:13px;">संरचना प्रकार:</span> 
             <b style="color:#38bdf8; font-size:15px;">{floors_label}</b> | 
-            <span style="color:#94a3b8; font-size:13px;">एकूण स्लॅब/बिल्ट-अप क्षेत्रफळ:</span> 
+            <span style="color:#94a3b8; font-size:13px;">एकूण बिल्ट-अप क्षेत्रफळ:</span> 
             <b style="color:#10b981; font-size:16px;">{total_calc_area:,.0f} Sq. Ft.</b>
         </div>
         """,
@@ -5110,10 +5110,9 @@ elif st.session_state.selected_module == "House Estimator":
     h_col3, h_col4 = st.columns(2)
     with h_col3:
         quality_custom_name = st.text_input(
-            "बांधकामाचा दर्जा / पॅकेजचे नाव (Quality / Package Name):",
+            "बांधकामाचा दर्जा / पॅकेजचे नाव (Quality Name):",
             value="Standard Quality (मध्यम दर्जा)",
-            key="he_quality_name",
-            help="उदा. बजेट होम, स्टँडर्ड क्वालिटी, लक्झरी व्हिला, इ."
+            key="he_quality_name"
         )
     with h_col4:
         unit_cost_sqft = st.number_input(
@@ -5121,8 +5120,7 @@ elif st.session_state.selected_module == "House Estimator":
             min_value=500.0,
             value=1650.0,
             step=50.0,
-            key="he_custom_sqft_rate",
-            help="तुझ्या स्थानिक मार्केट किंवा क्लायंट बजेटनुसार प्रति स्क्वेअर फूट दर भरा."
+            key="he_custom_sqft_rate"
         )
 
     st.write("---")
@@ -5138,8 +5136,11 @@ elif st.session_state.selected_module == "House Estimator":
         with cr_col3:
             h_brick_rate = st.number_input("विटांचा दर (₹/नग):", min_value=2.0, value=8.5, step=0.5, key="he_crate_brick")
 
-    if st.button("📊 GENERATE ESTIMATION & OFFICIAL A4 PDF", type="primary", use_container_width=True, key="btn_run_house_est"):
-        # सिव्हिल इंजिनिअरिंग थंब-रूल्स
+    if st.button("📊 CALCULATE ESTIMATE", type="primary", use_container_width=True, key="btn_run_house_est"):
+        st.session_state["house_est_calculated"] = True
+
+    # कॅल्क्युलेट झाल्यावरच निकाल व ऑन-डिमांड PDF पर्याय दिसणार
+    if st.session_state.get("house_est_calculated", False):
         total_house_cost = total_calc_area * unit_cost_sqft
 
         c_bags_needed = math.ceil(total_calc_area * 0.40)
@@ -5173,9 +5174,7 @@ elif st.session_state.selected_module == "House Estimator":
 
         st.write("---")
 
-        # ==========================================================
-        # 📄 A4 PDF / PRINTABLE QUOTATION HTML GENERATOR
-        # ==========================================================
+        # A4 PDF HTML तयार करणे
         house_html_doc = f"""<!DOCTYPE html>
         <html>
         <head>
@@ -5213,25 +5212,25 @@ elif st.session_state.selected_module == "House Estimator":
                     <div class="header-title">
                         <h1>PATIL INFRATECH</h1>
                         <p>CIVIL ENGINEERS • ARCHITECTURAL PLANNERS • ESTIMATORS</p>
-                        <small style="color: #64748b;">(Preliminary Thumb-Rule Construction Budget & Material Report)</small>
+                        <small style="color: #64748b;">(Preliminary Construction Budget & Material Quotation)</small>
                     </div>
 
                     <table class="info-table">
                         <tr>
                             <td><b>📍 Project / Site:</b> <span style="color:#0c4a6e; font-weight:bold;">{st.session_state.current_site_name}</span></td>
-                            <td style="text-align: right;"><b>📅 Report Date:</b> {get_ist_time().strftime('%d-%m-%Y')}</td>
+                            <td style="text-align: right;"><b>📅 Date:</b> {get_ist_time().strftime('%d-%m-%Y')}</td>
                         </tr>
                         <tr>
                             <td><b>👤 Prepared By:</b> {current_user_name}</td>
                             <td style="text-align: right;"><b>🏢 Structure:</b> {floors_label}</td>
                         </tr>
                         <tr>
-                            <td><b>📐 Built-up Area:</b> {total_calc_area:,.0f} Sq. Ft. ({builtup_area} sq.ft × {total_floors_count} floors)</td>
+                            <td><b>📐 Built-up Area:</b> {total_calc_area:,.0f} Sq. Ft.</td>
                             <td style="text-align: right;"><b>🏷️ Unit Rate:</b> ₹ {unit_cost_sqft:,.2f} / sq.ft</td>
                         </tr>
                         <tr>
-                            <td><b>⭐ Package / Quality:</b> <span style="color:#0284c7; font-weight:bold;">{quality_custom_name}</span></td>
-                            <td style="text-align: right;"><b>⏱️ Status:</b> Preliminary Estimate</td>
+                            <td><b>⭐ Quality / Package:</b> <span style="color:#0284c7; font-weight:bold;">{quality_custom_name}</span></td>
+                            <td style="text-align: right;"><b>⏱️ Status:</b> Official Estimate</td>
                         </tr>
                     </table>
                     <hr style="border: 0.5px solid #cbd5e1; margin-bottom: 8px;">
@@ -5254,7 +5253,7 @@ elif st.session_state.selected_module == "House Estimator":
                         <tbody>
                             <tr>
                                 <td style="text-align:center;">1</td>
-                                <td><b>सिमेंट (Cement - 43/53 Grade PPC)</b></td>
+                                <td><b>सिमेंट (Cement - PPC Bags)</b></td>
                                 <td style="text-align:center; font-weight:bold;">{c_bags_needed}</td>
                                 <td style="text-align:center;">Bags</td>
                                 <td style="text-align:right;">₹ {h_cem_rate:.2f}</td>
@@ -5262,7 +5261,7 @@ elif st.session_state.selected_module == "House Estimator":
                             </tr>
                             <tr>
                                 <td style="text-align:center;">2</td>
-                                <td><b>स्टील / टीएमटी सळया (TMT Steel Fe-500/550)</b></td>
+                                <td><b>स्टील / सळया (TMT Steel Fe-500/550)</b></td>
                                 <td style="text-align:center; font-weight:bold;">{steel_kg_needed}</td>
                                 <td style="text-align:center;">Kg</td>
                                 <td style="text-align:right;">₹ {h_steel_rate:.2f}</td>
@@ -5270,7 +5269,7 @@ elif st.session_state.selected_module == "House Estimator":
                             </tr>
                             <tr>
                                 <td style="text-align:center;">3</td>
-                                <td><b>वाळू (Crush Sand / M-Sand / Plaster Sand)</b></td>
+                                <td><b>वाळू (Crush Sand / M-Sand)</b></td>
                                 <td style="text-align:center; font-weight:bold;">{sand_brass_needed}</td>
                                 <td style="text-align:center;">Brass</td>
                                 <td style="text-align:right;">₹ {h_sand_rate:.2f}</td>
@@ -5278,7 +5277,7 @@ elif st.session_state.selected_module == "House Estimator":
                             </tr>
                             <tr>
                                 <td style="text-align:center;">4</td>
-                                <td><b>खडी (Aggregate 20mm & 10mm Metal)</b></td>
+                                <td><b>खडी (Aggregate 20mm/10mm)</b></td>
                                 <td style="text-align:center; font-weight:bold;">{agg_brass_needed}</td>
                                 <td style="text-align:center;">Brass</td>
                                 <td style="text-align:right;">₹ {h_agg_rate:.2f}</td>
@@ -5286,7 +5285,7 @@ elif st.session_state.selected_module == "House Estimator":
                             </tr>
                             <tr>
                                 <td style="text-align:center;">5</td>
-                                <td><b>लाल विटा / फ्लाईॲश ब्लॉक्स (Bricks / AAC Blocks)</b></td>
+                                <td><b>लाल विटा / ब्लॉक्स (Bricks / AAC Blocks)</b></td>
                                 <td style="text-align:center; font-weight:bold;">{bricks_needed}</td>
                                 <td style="text-align:center;">Nos</td>
                                 <td style="text-align:right;">₹ {h_brick_rate:.2f}</td>
@@ -5294,7 +5293,7 @@ elif st.session_state.selected_module == "House Estimator":
                             </tr>
                             <tr>
                                 <td style="text-align:center;">6</td>
-                                <td><b>मजुरी व लेबर खर्च (Wages & Contractors ~25%)</b></td>
+                                <td><b>मजुरी व लेबर खर्च (Labour Wages ~25%)</b></td>
                                 <td style="text-align:center;">-</td>
                                 <td style="text-align:center;">L.S.</td>
                                 <td style="text-align:right;">25%</td>
@@ -5302,7 +5301,7 @@ elif st.session_state.selected_module == "House Estimator":
                             </tr>
                             <tr>
                                 <td style="text-align:center;">7</td>
-                                <td><b>प्लंबिंग, इलेक्ट्रिकल, फिनिशिंग व इतर खर्च (~10%)</b></td>
+                                <td><b>प्लंबिंग, इलेक्ट्रिकल व इतर फिनिशिंग (~10%)</b></td>
                                 <td style="text-align:center;">-</td>
                                 <td style="text-align:center;">L.S.</td>
                                 <td style="text-align:right;">10%</td>
@@ -5314,9 +5313,9 @@ elif st.session_state.selected_module == "House Estimator":
                     <div class="summary-box">
                         <table style="width:100%; font-size:12px;">
                             <tr>
-                                <td><b>एकूण बांधकाम क्षेत्र:</b> <span style="color:#0284c7; font-weight:bold;">{total_calc_area:,.0f} Sq.Ft.</span></td>
-                                <td><b>ठरलेला प्रति चौरस फूट दर:</b> <span style="color:#0c4a6e; font-weight:bold;">₹ {unit_cost_sqft:,.2f}</span></td>
-                                <td style="text-align:right;"><b>अंदाजित एकूण बजेट:</b> <span style="color:#10b981; font-weight:900; font-size:16px;">₹ {total_house_cost:,.2f}/-</span></td>
+                                <td><b>एकूण क्षेत्रफळ:</b> <span style="color:#0284c7; font-weight:bold;">{total_calc_area:,.0f} Sq.Ft.</span></td>
+                                <td><b>प्रति चौ. फूट दर:</b> <span style="color:#0c4a6e; font-weight:bold;">₹ {unit_cost_sqft:,.2f}</span></td>
+                                <td style="text-align:right;"><b>एकूण बजेट:</b> <span style="color:#10b981; font-weight:900; font-size:16px;">₹ {total_house_cost:,.2f}/-</span></td>
                             </tr>
                         </table>
                     </div>
@@ -5326,8 +5325,8 @@ elif st.session_state.selected_module == "House Estimator":
                             <td style="width: 50%;">
                                 <br><br>
                                 __________________________<br>
-                                <b>Authorized Estimator / Engineer</b><br>
-                                <small style="color:#64748b;">Patil Infratech Consultancies</small>
+                                <b>Site Engineer Signature</b><br>
+                                <small style="color:#64748b;">Patil Infratech Authorized</small>
                             </td>
                             <td style="width: 50%; text-align: right;">
                                 <br><br>
@@ -5339,7 +5338,7 @@ elif st.session_state.selected_module == "House Estimator":
                     </table>
 
                     <div class="footer-stamp">
-                        Certified & Generated by: <b>Patil Infratech Estimating Engine</b> • Concept by Kanhaiya • Date: {get_ist_time().strftime('%d-%m-%Y %H:%M:%S')}
+                        Certified & Generated by: <b>Patil Infratech Estimating Suite</b> • Concept by Kanhaiya
                     </div>
                 </div>
             </div>
@@ -5347,57 +5346,53 @@ elif st.session_state.selected_module == "House Estimator":
         </html>
         """
 
-        # स्क्रीनवर लाईव्ह A4 प्रिव्ह्यू दाखवणे
-        st.markdown("### 📑 Official Printable A4 Estimate Preview")
-        st.components.v1.html(house_html_doc, height=530, scrolling=True)
+        # ऑन-डिमांड प्रिव्ह्यू: तू जेव्हा क्लिक करशील तेव्हाच उघडेल!
+        with st.expander("👁️ A4 कोटेशन प्रिव्ह्यू पाहा (View PDF Preview)", expanded=False):
+            st.components.v1.html(house_html_doc, height=530, scrolling=True)
 
-        # CSV डेटा तयार करणे
-        he_csv_rows = [
-            {"Item": "Cement", "Quantity": f"{c_bags_needed} Bags", "Rate (Rs)": h_cem_rate, "Total (Rs)": cost_cement},
-            {"Item": "Steel", "Quantity": f"{steel_kg_needed} Kg", "Rate (Rs)": h_steel_rate, "Total (Rs)": cost_steel},
-            {"Item": "Sand", "Quantity": f"{sand_brass_needed} Brass", "Rate (Rs)": h_sand_rate, "Total (Rs)": cost_sand},
-            {"Item": "Aggregate", "Quantity": f"{agg_brass_needed} Brass", "Rate (Rs)": h_agg_rate, "Total (Rs)": cost_agg},
-            {"Item": "Bricks", "Quantity": f"{bricks_needed} Nos", "Rate (Rs)": h_brick_rate, "Total (Rs)": cost_bricks},
-            {"Item": "Labour (25%)", "Quantity": "L.S.", "Rate (Rs)": "-", "Total (Rs)": cost_labour},
-            {"Item": "Plumbing & Misc (10%)", "Quantity": "L.S.", "Rate (Rs)": "-", "Total (Rs)": cost_misc},
-            {"Item": "GRAND TOTAL ESTIMATE", "Quantity": f"{total_calc_area} sqft", "Rate (Rs)": unit_cost_sqft, "Total (Rs)": total_house_cost},
-        ]
-        he_csv_bytes = pd.DataFrame(he_csv_rows).to_csv(index=False).encode('utf-8-sig')
+        # ऑन-डिमांड डाऊनलोड आणि प्रिंट बटन्स: तू क्लिक करशील तेव्हाच उघडेल!
+        with st.expander("📥 PDF डाऊनलोड व प्रिंट करा (Download & Print Options)", expanded=False):
+            he_csv_rows = [
+                {"Item": "Cement", "Quantity": f"{c_bags_needed} Bags", "Rate (Rs)": h_cem_rate, "Total (Rs)": cost_cement},
+                {"Item": "Steel", "Quantity": f"{steel_kg_needed} Kg", "Rate (Rs)": h_steel_rate, "Total (Rs)": cost_steel},
+                {"Item": "Sand", "Quantity": f"{sand_brass_needed} Brass", "Rate (Rs)": h_sand_rate, "Total (Rs)": cost_sand},
+                {"Item": "Aggregate", "Quantity": f"{agg_brass_needed} Brass", "Rate (Rs)": h_agg_rate, "Total (Rs)": cost_agg},
+                {"Item": "Bricks", "Quantity": f"{bricks_needed} Nos", "Rate (Rs)": h_brick_rate, "Total (Rs)": cost_bricks},
+                {"Item": "Labour (25%)", "Quantity": "L.S.", "Rate (Rs)": "-", "Total (Rs)": cost_labour},
+                {"Item": "Plumbing & Misc (10%)", "Quantity": "L.S.", "Rate (Rs)": "-", "Total (Rs)": cost_misc},
+                {"Item": "GRAND TOTAL ESTIMATE", "Quantity": f"{total_calc_area} sqft", "Rate (Rs)": unit_cost_sqft, "Total (Rs)": total_house_cost},
+            ]
+            he_csv_bytes = pd.DataFrame(he_csv_rows).to_csv(index=False).encode('utf-8-sig')
 
-        st.write("---")
-        # NeevPay प्रमाणे ४ ॲक्शन बटन्स
-        hb1, hb2, hb3 = st.columns(3)
+            hb1, hb2, hb3 = st.columns(3)
+            with hb1:
+                st.download_button(
+                    label="📥 Download Quotation (HTML/PDF)",
+                    data=house_html_doc,
+                    file_name=f"Patil_Infratech_Estimate_{st.session_state.current_site_name.replace(' ', '_')}.html",
+                    mime="text/html",
+                    type="primary",
+                    use_container_width=True,
+                )
+            with hb2:
+                st.download_button(
+                    label="📊 Export CSV Data",
+                    data=he_csv_bytes,
+                    file_name=f"Patil_Infratech_Estimate_{st.session_state.current_site_name.replace(' ', '_')}.csv",
+                    mime="text/csv",
+                    use_container_width=True,
+                )
+            with hb3:
+                st.markdown(
+                    """
+                    <button onclick="window.parent.print()" style="width: 100%; background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); color: white; border: none; padding: 10px 14px; border-radius: 8px; font-weight: bold; cursor: pointer; height: 38px; box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4);">
+                        🖨️ Instant Print (A4)
+                    </button>
+                    """,
+                    unsafe_allow_html=True,
+                )
 
-        with hb1:
-            st.download_button(
-                label="📥 Download Quotation (HTML/PDF)",
-                data=house_html_doc,
-                file_name=f"Patil_Infratech_Estimate_{st.session_state.current_site_name.replace(' ', '_')}.html",
-                mime="text/html",
-                type="primary",
-                use_container_width=True,
-            )
-
-        with hb2:
-            st.download_button(
-                label="📊 Export CSV Data",
-                data=he_csv_bytes,
-                file_name=f"Patil_Infratech_Estimate_{st.session_state.current_site_name.replace(' ', '_')}.csv",
-                mime="text/csv",
-                use_container_width=True,
-            )
-
-        with hb3:
-            st.markdown(
-                """
-                <button onclick="window.parent.print()" style="width: 100%; background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); color: white; border: none; padding: 10px 14px; border-radius: 8px; font-weight: bold; cursor: pointer; height: 38px; box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4);">
-                    🖨️ Instant Print (A4)
-                </button>
-                """,
-                unsafe_allow_html=True,
-            )
-
-        # डेटाबेस हिस्ट्रीमध्ये सेव्ह करणे
+        # हिस्ट्रीमध्ये नोंद
         if current_user_name:
             conn = get_db_connection()
             cursor = conn.cursor()
@@ -5415,7 +5410,7 @@ elif st.session_state.selected_module == "House Estimator":
             conn.commit()
             conn.close()
 
-        # व्हॉट्सॲप शेअरिंग
+        # व्हॉट्सॲप मेसेज
         he_wa_msg = (
             f"🏠 *PATIL INFRATECH - BUILDING ESTIMATION REPORT*\n"
             f"📍 *Site:* {st.session_state.current_site_name}\n"
@@ -5436,6 +5431,9 @@ elif st.session_state.selected_module == "House Estimator":
             f"💡 _टीप: हा प्राथमिक थंब-रूल अंदाज आहे._\n"
             f"_Generated by Patil Infratech_"
         )
+
+        st.write(" ")
+        render_whatsapp_feature(urllib.parse.quote(he_wa_msg), "house_quick_est_wa")
 
         st.write(" ")
         render_whatsapp_feature(urllib.parse.quote(he_wa_msg), "house_quick_est_wa")
