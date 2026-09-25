@@ -1642,6 +1642,7 @@ if st.session_state.app_user_name is None and not st.session_state.get("is_clien
         "🔍 Client / Owner Live View"
     ])
 
+    # १२.१ Registered Login
     with login_tab:
         with st.form("direct_login_form"):
             login_email = st.text_input("ईमेल किंवा Username:").strip()
@@ -1670,6 +1671,7 @@ if st.session_state.app_user_name is None and not st.session_state.get("is_clien
                 else:
                     st.warning("⚠️ सर्व माहिती भरा.")
 
+    # १२.२ Email Registration & OTP
     with otp_tab:
         st.markdown("##### 📧 Email Verification & Setup")
         email_input = st.text_input("ईमेल आयडी टाका:", key="otp_email_key").strip()
@@ -1683,7 +1685,7 @@ if st.session_state.app_user_name is None and not st.session_state.get("is_clien
 
                     with st.spinner("📧 OTP पाठवत आहे..."):
                         subject = "PATIL INFRATECH - Verification OTP"
-                        body = f"तुमचा पाटील इन्फ्राटेक लॉगिन OTP: {generated_otp}\n\n- Kanhaiya (Founder)"
+                        body = f"तुमचा पाटील इन्फ्राटेक लॉगिन OTP: {generated_otp}\n\n- Patil Infratech Team"
                         if send_email_message(email_input, subject, body):
                             st.success("✅ ईमेलवर OTP पाठवला आहे!")
                         else:
@@ -1759,23 +1761,41 @@ if st.session_state.app_user_name is None and not st.session_state.get("is_clien
                                         st.success("🎉 अकाउंट तयार झाले!")
                                         st.rerun()
 
+    # १२.३ 🔍 Client Read-Only Live Portal (Using Site Code)
     with client_tab:
-        st.markdown("##### 🔍 घरमालक / क्लायंट लाईव्ह पोर्टल")
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute("SELECT DISTINCT site_name FROM site_milestone_payments UNION SELECT DISTINCT site_name FROM site_progress")
-        available_sites = [r["site_name"] for r in cursor.fetchall() if r["site_name"]]
-        conn.close()
+        st.markdown("##### 🔍 Client / Owner Live Site Portal")
+        st.caption("घरमालक इंजिनिअरने दिलेला युनिक साईट कोड टाकून थेट कामाची सद्यस्थिती पाहू शकतात.")
 
-        with st.form("client_read_only_form"):
-            c_site_select = st.selectbox("साईट निवडा:", available_sites) if available_sites else st.text_input("साईटचे नाव टाका:")
-            c_verify_contact = st.text_input("तुमचा ईमेल किंवा फोन (ऐच्छिक):").strip()
-            if st.form_submit_button("🔍 साईट प्रोग्रेस पाहा (Live Status)", type="primary", use_container_width=True):
-                if c_site_select:
-                    st.session_state.is_client_view = True
-                    st.session_state.client_view_site = c_site_select
-                    st.session_state.client_view_contact = c_verify_contact
-                    st.rerun()
+        with st.form("client_code_access_form"):
+            input_client_code = st.text_input(
+                "Enter Site Access Code (साईट कोड टाका):", 
+                placeholder="उदा. S1, P1, L2", 
+                help="इंजिनिअरने तुमच्या साईटसाठी दिलेला कोड टाका."
+            ).strip().upper()
+
+            submit_client_view = st.form_submit_button("🔍 साईट प्रोग्रेस व बिल पाहा (View Live Status)", type="primary", use_container_width=True)
+
+            if submit_client_view:
+                if input_client_code:
+                    conn = get_db_connection()
+                    cursor = conn.cursor()
+                    cursor.execute(
+                        "SELECT site_name, user_key FROM user_sites WHERE site_code = ?",
+                        (input_client_code,)
+                    )
+                    found_site_row = cursor.fetchone()
+                    conn.close()
+
+                    if found_site_row:
+                        st.session_state.is_client_view = True
+                        st.session_state.client_view_site = found_site_row["site_name"]
+                        st.session_state.client_view_code = input_client_code
+                        st.session_state.client_view_engineer = found_site_row["user_key"]
+                        st.rerun()
+                    else:
+                        st.error(f"❌ '{input_client_code}' या कोडची कोणतीही साईट सापडली नाही! अचूक कोड टाका.")
+                else:
+                    st.warning("⚠️ कृपया साईट कोड टाका!")
 
     st.write("---")
     with st.expander("🛡️ Admin Login"):
@@ -1799,33 +1819,44 @@ if st.session_state.app_user_name is None and not st.session_state.get("is_clien
 # ==========================================================
 if st.session_state.get("is_client_view", False):
     c_site = st.session_state.get("client_view_site", "Default Site")
-    
+    c_code = st.session_state.get("client_view_code", "S1")
+    c_eng = st.session_state.get("client_view_engineer", "Site Engineer")
+
     col_c_top, col_c_exit = st.columns([3.5, 1.5])
     with col_c_top:
-        st.markdown(f"<span class='free-user-badge' style='color:#10b981; border-color:#10b981;'>👁️ CLIENT LIVE PORTAL (READ-ONLY)</span>", unsafe_allow_html=True)
+        st.markdown(
+            f"""
+            <div style="background:#111827; border:1px solid #1f2937; border-left:4px solid #10b981; padding:10px 14px; border-radius:8px;">
+                <span style="color:#94a3b8; font-size:11px; text-transform:uppercase;">CLIENT LIVE PORTAL (READ-ONLY)</span><br>
+                <b style="color:#ffffff; font-size:16px;">🏗️ [{c_code}] {c_site}</b>
+                <span style="color:#94a3b8; font-size:12px; margin-left:8px;">(Site Engineer: {c_eng})</span>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
     with col_c_exit:
-        if st.button("🚪 पोर्टल बंद करा", type="primary", use_container_width=True):
+        if st.button("🚪 पोर्टल बंद करा (Exit View)", type="primary", use_container_width=True):
             st.session_state.is_client_view = False
             st.session_state.client_view_site = None
+            st.session_state.client_view_code = None
             st.rerun()
 
-    st.markdown(
-        f"""
-        <div style="background:#111827; border-left:4px solid #10b981; padding:12px 16px; border-radius:8px; margin:12px 0 16px 0;">
-            <span style="color:#94a3b8; font-size:12px;">📍 चालू साईट:</span>
-            <h3 style="color:#10b981; margin:2px 0 0 0;">🏗️ {c_site}</h3>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    st.write("---")
 
     conn = get_db_connection()
     cursor = conn.cursor()
+
+    # पेमेंट डेटा
     cursor.execute("SELECT * FROM site_milestone_payments WHERE site_name = ? ORDER BY id ASC", (c_site,))
     c_milestones = [dict(r) for r in cursor.fetchall()]
 
+    # प्रोग्रेस डेटा
     cursor.execute("SELECT * FROM site_progress WHERE site_name = ? ORDER BY id DESC LIMIT 5", (c_site,))
     c_progress = [dict(r) for r in cursor.fetchall()]
+
+    # मटेरियल इन्व्हेंटरी
+    cursor.execute("SELECT material_name, transaction_type, quantity, unit FROM site_inventory WHERE site_name = ?", (c_site,))
+    inv_rows = cursor.fetchall()
     conn.close()
 
     c_tot_budget = sum(m["planned_amount"] for m in c_milestones)
@@ -1834,44 +1865,77 @@ if st.session_state.get("is_client_view", False):
     c_locked_count = sum(1 for m in c_milestones if m.get("is_locked") == 1)
     c_pct = (c_tot_paid / c_tot_budget * 100) if c_tot_budget > 0 else 0.0
 
-    st.markdown("##### 💰 बिलाचा व पेमेंटचा तपशील")
+    st.markdown("##### 💰 बिलाचा व पेमेंटचा तपशील (Billing & Payment Summary)")
     cb1, cb2, cb3, cb4 = st.columns(4)
-    cb1.metric("एकूण बजेट", f"₹ {c_tot_budget:,.2f}")
-    cb2.metric("जमा रक्कम", f"₹ {c_tot_paid:,.2f}")
+    cb1.metric("एकूण ठरलेले बिल", f"₹ {c_tot_budget:,.2f}")
+    cb2.metric("तुम्ही दिलेली रक्कम", f"₹ {c_tot_paid:,.2f}")
     cb3.metric("शिल्लक बाकी", f"₹ {c_tot_pending:,.2f}")
-    cb4.metric("प्रगती", f"{c_pct:.1f}% ({c_locked_count}/{len(c_milestones)})")
+    cb4.metric("एकूण प्रगती (%)", f"{c_pct:.1f}% ({c_locked_count}/{len(c_milestones)} टप्पे)")
 
-    st.write("---")
-    st.markdown("##### 📋 टप्प्याटप्प्याने बिलाचा तपशील")
-    if c_milestones:
-        m_table_rows = ""
-        for idx, m in enumerate(c_milestones, 1):
-            p = float(m["planned_amount"])
-            d = float(m["amount_deposited"])
-            bal = max(0.0, p - d)
-            st_text = "✅ Paid" if m.get("is_locked") == 1 else ("🟡 Partial" if d > 0 else "🔴 Unpaid")
-            m_table_rows += f"| {idx} | **{m['stage_name']}** | ₹ {p:,.2f} | ₹ {d:,.2f} | ₹ {bal:,.2f} | {st_text} |\n"
+    c_tab1, c_tab2, c_tab3 = st.tabs(["📋 टप्प्याटप्प्याने बिल (Milestones)", "📸 कामाची प्रगती (Progress)", "📦 साहित्याचा हिशोब (Stock)"])
 
-        st.markdown(
-            f"""
+    with c_tab1:
+        if c_milestones:
+            m_table_rows = ""
+            for idx, m in enumerate(c_milestones, 1):
+                p = float(m["planned_amount"])
+                d = float(m["amount_deposited"])
+                bal = max(0.0, p - d)
+                st_text = "✅ 100% Paid" if m.get("is_locked") == 1 else ("🟡 Partially Paid" if d > 0 else "🔴 Unpaid")
+                m_table_rows += f"| {idx} | **{m['stage_name']}** | ₹ {p:,.2f} | ₹ {d:,.2f} | ₹ {bal:,.2f} | {st_text} |\n"
+
+            st.markdown(
+                f"""
 | # | कामाचा टप्पा | ठरलेले बिल | जमा रक्कम | शिल्लक बाकी | स्थिती |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 {m_table_rows}
-            """
-        )
-    else:
-        st.info("ℹ️ या साईटवर अजून बिलाचे टप्पे ठरवलेले नाहीत.")
+                """
+            )
+        else:
+            st.info("ℹ️ या साईटवर अजून बिलाचे टप्पे ठरवलेले नाहीत.")
 
-    st.write("---")
-    st.markdown("##### 📸 कामाची सद्यस्थिती (Progress Updates)")
-    if c_progress:
-        for p in c_progress:
-            st.markdown(f"**📅 {p['date']}** | **{p['stage_name']}** (`{p['progress_percent']}%`)")
-            st.progress(int(p['progress_percent']))
-            if p.get("remark"):
-                st.caption(f"📝 {p['remark']}")
-    else:
-        st.info("ℹ️ सध्या कोणताही प्रोग्रेस रिपोर्ट उपलब्ध नाही.")
+    with c_tab2:
+        if c_progress:
+            for p in c_progress:
+                st.markdown(f"**📅 तारीख:** `{p['date']}` | **🚧 टप्पा:** {p['stage_name']} | **प्रगती:** `{p['progress_percent']}%`")
+                st.progress(int(p['progress_percent']))
+                if p.get("remark"):
+                    st.caption(f"📝 **इंजिनिअर शेरा:** {p['remark']}")
+                st.write("---")
+        else:
+            st.info("ℹ️ सध्या कोणताही नवीन प्रोग्रेस रिपोर्ट उपलब्ध नाही.")
+
+    with c_tab3:
+        c_stock = {}
+        for row in inv_rows:
+            mat = row["material_name"]
+            ttype = row["transaction_type"]
+            qty = float(row["quantity"])
+            unit = row["unit"] or "Units"
+
+            key_label = f"{mat} ({unit})"
+            if key_label not in c_stock:
+                c_stock[key_label] = 0.0
+            if "IN" in ttype:
+                c_stock[key_label] += qty
+            else:
+                c_stock[key_label] -= qty
+
+        if c_stock:
+            st.markdown("###### 📊 साईटवर सद्यस्थितीत शिल्लक असलेले साहित्य:")
+            s_rows = ""
+            for s_name, s_count in c_stock.items():
+                s_rows += f"| {s_name} | **{s_count:.2f}** |\n"
+
+            st.markdown(
+                f"""
+| साहित्याचे नाव | शिल्लक प्रमाण |
+| :--- | :--- |
+{s_rows}
+                """
+            )
+        else:
+            st.info("ℹ️ या साईटवर साहित्याची नोंद उपलब्ध नाही.")
 
     st.stop()
 
