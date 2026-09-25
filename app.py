@@ -1126,109 +1126,112 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
-# ==========================================
-# 📌 विभाग ११: ॲडमीन पॅनल (Admin Command Center)
-# ==========================================
+# ==============================================================================
+# 📌 विभाग ११: ॲडमीन पॅनल (Corporate Executive Command Center)
+# ==============================================================================
 if st.session_state.is_admin_logged:
+    # १. ग्रँड कॉर्पोरेट हेडर व वेलकम बॅनर
     st.markdown(
         """
-        <div style="background: #111827; border: 1px solid #334155; border-left: 5px solid #ec4899; padding: 14px 18px; border-radius: 12px; margin-bottom: 16px;">
-            <h2 style='color: #f472b6; margin: 0; font-size: 20px; font-weight: 800;'>⚡ KANHAIYA'S EXECUTIVE COMMAND CENTER</h2>
-            <p style='color: #94a3b8; margin: 3px 0 0 0; font-size: 13px;'>Patil Infratech Master Control & Hub</p>
+        <div style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #31104b 100%); border: 1px solid #4338ca; border-left: 6px solid #8b5cf6; padding: 20px 24px; border-radius: 14px; margin-bottom: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                <div>
+                    <span style="background:rgba(139,92,246,0.2); color:#c4b5fd; border:1px solid #8b5cf6; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase;">Super Admin Console</span>
+                    <h2 style="color:#ffffff; margin:6px 0 2px 0; font-size:24px; font-weight:900;">👑 Patil Infratech Corporate Headquarters</h2>
+                    <p style="color:#94a3b8; margin:0; font-size:13px;">Welcome back, <b>Master Kanhaiya</b>! You have complete executive authority over databases, licenses & operations.</p>
+                </div>
+                <div style="text-align:right;">
+                    <span style="color:#38bdf8; font-weight:bold; font-size:13px;">⚡ System Status: Active</span><br>
+                    <small style="color:#64748b;">Security: TLS / SQLite Encrypted</small>
+                </div>
+            </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    col_logout, _ = st.columns([1.5, 3.5])
-    with col_logout:
-        if st.button("🔒 Admin Logout", use_container_width=True):
+    # २. टॉप कंट्रोल बार (Logout & Instant Refresh)
+    adm_top_col1, adm_top_col2 = st.columns([1.5, 4.5])
+    with adm_top_col1:
+        if st.button("🔒 Logout Admin Session", use_container_width=True, type="primary"):
             st.session_state.is_admin_logged = False
             st.rerun()
 
     st.write("---")
 
-    # जुन्या ५ वेगळ्या बटणांऐवजी क्लीन व मॉडर्न टॅब्स (Mobile-Friendly)
-    adm_tab_rates, adm_tab_locks, adm_tab_users, adm_tab_ads, adm_tab_bcast = st.tabs([
-        "📈 Master Rates", "⚙️ Feature Locks", "👥 User Database", "📢 Ads & Sponsors", "🔔 Broadcast"
+    # ३. रिअल-टाइम KPI मॅट्रिक्स (Real-Time Overview Metrics)
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) as cnt FROM users WHERE user_key != '9999999999'")
+    total_users_count = cursor.fetchone()["cnt"]
+
+    cursor.execute("SELECT COUNT(*) as cnt FROM users WHERE is_premium = 1 AND user_key != '9999999999'")
+    total_vip_count = cursor.fetchone()["cnt"]
+
+    cursor.execute("SELECT COUNT(DISTINCT site_name) as cnt FROM site_milestone_payments")
+    total_active_sites = cursor.fetchone()["cnt"]
+
+    cursor.execute("SELECT COUNT(*) as cnt FROM premium_codes WHERE used = 0")
+    unused_codes_count = cursor.fetchone()["cnt"]
+    conn.close()
+
+    kpi1, kpi2, kpi3, kpi4 = st.columns(4)
+    kpi1.markdown(
+        f"""
+        <div style="background:#111827; border:1px solid #1f2937; border-top:3px solid #38bdf8; padding:12px; border-radius:10px; text-align:center;">
+            <span style="color:#94a3b8; font-size:12px;">एकूण नोंदणीकृत युझर्स</span>
+            <h3 style="color:#38bdf8; margin:4px 0 0 0;">👥 {total_users_count}</h3>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+    kpi2.markdown(
+        f"""
+        <div style="background:#111827; border:1px solid #1f2937; border-top:3px solid #f59e0b; padding:12px; border-radius:10px; text-align:center;">
+            <span style="color:#94a3b8; font-size:12px;">सक्रिय VIP युझर्स</span>
+            <h3 style="color:#f59e0b; margin:4px 0 0 0;">👑 {total_vip_count}</h3>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+    kpi3.markdown(
+        f"""
+        <div style="background:#111827; border:1px solid #1f2937; border-top:3px solid #10b981; padding:12px; border-radius:10px; text-align:center;">
+            <span style="color:#94a3b8; font-size:12px;">चालू प्रोजेक्ट्स / साईट्स</span>
+            <h3 style="color:#10b981; margin:4px 0 0 0;">🏗️ {total_active_sites}</h3>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+    kpi4.markdown(
+        f"""
+        <div style="background:#111827; border:1px solid #1f2937; border-top:3px solid #a855f7; padding:12px; border-radius:10px; text-align:center;">
+            <span style="color:#94a3b8; font-size:12px;">शिल्लक VIP कोड्स</span>
+            <h3 style="color:#a855f7; margin:4px 0 0 0;">🎟️ {unused_codes_count}</h3>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    st.write("---")
+
+    # ४. सुटसुटीत कॉर्पोरेट कंट्रोल टॅब्स (Corporate Executive Tabs)
+    adm_tab1, adm_tab2, adm_tab3, adm_tab4, adm_tab5, adm_tab6 = st.tabs([
+        "👥 युझर व्यवस्थापन",
+        "🎟️ VIP लायसन्स कोड्स",
+        "📈 मार्केट दर कंट्रोल",
+        "⚙️ फिचर लॉक्स",
+        "📢 जाहिराती व स्पॉन्सर",
+        "💾 डेटाबेस व सिस्टम"
     ])
 
-    with adm_tab_rates:
-        st.markdown("##### 📈 Update Master Market Rates")
-        m_rates = get_market_rates()
-
-        c_r1, c_r2 = st.columns(2)
-        with c_r1:
-            adm_cem = st.number_input("Cement (per bag ₹):", min_value=0.0, value=float(m_rates.get("cement", 400.0)), step=1.0)
-            adm_snd = st.number_input("Sand (per m³ ₹):", min_value=0.0, value=float(m_rates.get("sand", 2500.0)), step=1.0)
-            adm_brk = st.number_input("Brick (per nos ₹):", min_value=0.0, value=float(m_rates.get("bricks", 8.0)), step=0.1)
-        with c_r2:
-            adm_agg = st.number_input("Aggregate (per m³ ₹):", min_value=0.0, value=float(m_rates.get("aggregate", 2200.0)), step=1.0)
-            adm_ste = st.number_input("Steel Rate (per kg ₹):", min_value=0.0, value=float(m_rates.get("steel", 60.0)), step=1.0)
-
-        if st.button("💾 Save Master Market Rates", type="primary", use_container_width=True):
-            conn = get_db_connection()
-            cursor = conn.cursor()
-            updated_rates = {
-                "cement": adm_cem,
-                "sand": adm_snd,
-                "bricks": adm_brk,
-                "aggregate": adm_agg,
-                "steel": adm_ste,
-            }
-            for mat, rat in updated_rates.items():
-                cursor.execute(
-                    "REPLACE INTO market_rates (material, rate) VALUES (?, ?)",
-                    (mat, rat),
-                )
-            conn.commit()
-            conn.close()
-            st.success("✅ मास्टर मार्केट दर डेटाबेसमध्ये सेव्ह झाले!")
-
-    with adm_tab_locks:
-        st.markdown("##### ⚙️ Feature Lock Manager")
-        cur_locks = get_feature_locks()
-
-        l_c1, l_c2 = st.columns(2)
-        with l_c1:
-            fl_calc = st.selectbox("Civil Calculator:", ["Free", "Premium"], index=0 if cur_locks.get("Civil Calculator", "Free") == "Free" else 1)
-            fl_ra = st.selectbox("Rate Analysis Module:", ["Free", "Premium"], index=0 if cur_locks.get("Rate Analysis", "Free") == "Free" else 1)
-            fl_bbs = st.selectbox("BBS Calculator:", ["Free", "Premium"], index=0 if cur_locks.get("BBS", "Free") == "Free" else 1)
-            fl_qs = st.selectbox("Quantity Surveying:", ["Free", "Premium"], index=0 if cur_locks.get("Quantity Surveying", "Free") == "Free" else 1)
-        with l_c2:
-            fl_site = st.selectbox("Site Manager:", ["Free", "Premium"], index=0 if cur_locks.get("Site Manager", "Free") == "Free" else 1)
-            fl_neev = st.selectbox("NeevPay Payment Protection:", ["Free", "Premium"], index=0 if cur_locks.get("NeevPay", "Free") == "Free" else 1)
-            fl_wa = st.selectbox("WhatsApp Full Report Share:", ["Free", "Premium"], index=0 if cur_locks.get("WhatsApp Share", "Free") == "Free" else 1)
-            fl_ai = st.selectbox("Civil AI Assistant:", ["Free", "Premium"], index=0 if cur_locks.get("Civil AI Assistant", "Premium") == "Free" else 1)
-
-        if st.button("💾 Save Feature Lock Settings", type="primary", use_container_width=True):
-            conn = get_db_connection()
-            cursor = conn.cursor()
-            new_locks = {
-                "Civil Calculator": fl_calc,
-                "Rate Analysis": fl_ra,
-                "BBS": fl_bbs,
-                "Quantity Surveying": fl_qs,
-                "Site Manager": fl_site,
-                "NeevPay": fl_neev,
-                "WhatsApp Share": fl_wa,
-                "Civil AI Assistant": fl_ai,
-            }
-            for f_name, f_lvl in new_locks.items():
-                cursor.execute(
-                    "REPLACE INTO feature_locks (feature_name, access_level) VALUES (?, ?)",
-                    (f_name, f_lvl),
-                )
-            conn.commit()
-            conn.close()
-            st.success("✅ फिचर सेटिंग्स यशस्वीरित्या बदलल्या!")
-
-    with adm_tab_users:
-        st.markdown("##### 📋 User Database Master List")
-
+    # ==========================================================
+    # टॅब १: युझर व्यवस्थापन (User Management Hub)
+    # ==========================================================
+    with adm_tab1:
         if st.session_state.admin_view == "user_detail" and st.session_state.admin_selected_user is not None:
             target_user = st.session_state.admin_selected_user
-            if st.button("⬅️ सर्व युझर्स यादीवर परत जा"):
+            if st.button("⬅️ सर्व युझर्सच्या यादीवर परत जा", use_container_width=True):
                 st.session_state.admin_view = "main"
                 st.session_state.admin_selected_user = None
                 st.rerun()
@@ -1245,144 +1248,113 @@ if st.session_state.is_admin_logged:
 
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute(
-                "SELECT * FROM history WHERE user_key = ? ORDER BY id DESC",
-                (target_user,),
-            )
-            u_hist = [dict(r) for r in cursor.fetchall()]
-
-            cursor.execute(
-                "SELECT code FROM premium_codes WHERE assigned_to = ? AND used = 0",
-                (u_name,),
-            )
+            cursor.execute("SELECT code FROM premium_codes WHERE assigned_to = ? AND used = 0", (u_name,))
             c_row = cursor.fetchone()
-            conn.close()
             assigned_code = c_row["code"] if c_row else None
 
-            status_badge = (
-                f"👑 VIP: {u_name.upper()}" if u_prem else ("🚨 CODE REQUESTED!" if is_req else f"🆓 FREE: {u_name.upper()}")
-            )
+            cursor.execute("SELECT timestamp, user_note, report_data FROM history WHERE user_key = ? ORDER BY id DESC", (target_user,))
+            u_hist = [dict(r) for r in cursor.fetchall()]
+            conn.close()
 
+            # प्रोफाइल कार्ड
+            status_color = "#f59e0b" if u_prem else ("#ef4444" if is_req else "#38bdf8")
+            status_text = "VIP MEMBER" if u_prem else ("CODE REQUESTED!" if is_req else "FREE ACCOUNT")
+            
             st.markdown(
                 f"""
-                <div style="background:#111827; border:1px solid #1f2937; padding:14px; border-radius:10px; margin-bottom:12px;">
-                    <p style="margin:2px 0;"><b>स्टेटस:</b> <span class="gold-vip-badge">{status_badge}</span></p>
-                    <p style="margin:4px 0; font-size:14px;"><b>Username/UID:</b> <code>{u_uid}</code> | <b>Password:</b> <code>{u_pin}</code> | <b>Email:</b> <code>{u_email}</code></p>
-                    <p style="margin:4px 0; font-size:14px;"><b>Expiry:</b> <code>{exp_date}</code> | <b>Active Code:</b> <code style="color:#10b981;">{assigned_code if assigned_code else 'काही नाही'}</code></p>
-                    <p style="margin:4px 0; font-size:13px; color:#94a3b8;"><b>कमेंट:</b> {u_comm}</p>
+                <div style="background:#111827; border:1px solid #1f2937; border-left:5px solid {status_color}; padding:16px; border-radius:12px; margin-bottom:15px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <h3 style="margin:0; color:#ffffff;">👤 {u_name.upper()}</h3>
+                        <span style="background:rgba(255,255,255,0.05); color:{status_color}; border:1px solid {status_color}; padding:3px 12px; border-radius:20px; font-weight:bold; font-size:12px;">{status_text}</span>
+                    </div>
+                    <p style="margin:8px 0 0 0; color:#94a3b8; font-size:13px;">
+                        <b>User Key:</b> <code>{target_user}</code> | <b>UID:</b> <code>{u_uid}</code> | <b>Email:</b> <code>{u_email}</code> | <b>Password:</b> <code>{u_pin}</code>
+                    </p>
+                    <p style="margin:4px 0 0 0; color:#94a3b8; font-size:13px;">
+                        <b>मुदत (Expiry):</b> <code style="color:#f59e0b;">{exp_date}</code> | <b>अनयुज्ड कोड:</b> <code style="color:#10b981;">{assigned_code or 'नाही'}</code>
+                    </p>
+                    <p style="margin:4px 0 0 0; color:#64748b; font-size:12px;"><b>शेवटची कमेंट:</b> {u_comm}</p>
                 </div>
                 """,
-                unsafe_allow_html=True,
+                unsafe_allow_html=True
             )
 
-            if assigned_code:
-                st.info(f"💡 {u_name} साठी कोड तयार आहे: `{assigned_code}`")
-            else:
-                if st.button(f"🚀 Generate & Send Code to {u_name}", key=f"win_gen_send_{target_user}", use_container_width=True):
-                    new_c = generate_random_code()
-                    now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
+            # प्रिमियम व कस्टमायझेशन टूल्स
+            col_u_act1, col_u_act2 = st.columns(2)
+            with col_u_act1:
+                st.markdown("###### ⏱️ प्रिमियम कालावधी वाढवा:")
+                t_val = st.number_input("संख्या (Value):", min_value=1, value=28, key=f"t_val_{target_user}")
+                t_unit = st.selectbox("युनिट (Unit):", ["Minutes", "Hours", "Days"], index=2, key=f"t_unit_{target_user}")
+                if st.button("⚡ प्रिमियम वेळ लागू करा", key=f"btn_set_t_{target_user}", type="primary", use_container_width=True):
+                    now = get_ist_time()
+                    if t_unit == "Minutes":
+                        exp_time = now + datetime.timedelta(minutes=t_val)
+                    elif t_unit == "Hours":
+                        exp_time = now + datetime.timedelta(hours=t_val)
+                    else:
+                        exp_time = now + datetime.timedelta(days=t_val)
+
                     conn = get_db_connection()
                     cursor = conn.cursor()
                     cursor.execute(
-                        "INSERT INTO premium_codes (code, assigned_to, used, created_at) VALUES (?, ?, 0, ?)",
-                        (new_c, u_name, now_str),
-                    )
-                    msg = f"तुमचा प्रिमियम कोड: {new_c} (ॲपमध्ये टाकून प्रिमियम अनलॉक करा)"
-                    cursor.execute(
-                        "UPDATE users SET admin_message = ?, requested_code = 0 WHERE user_key = ?",
-                        (msg, target_user),
+                        "UPDATE users SET is_premium = 1, premium_expiry = ?, requested_code = 0, activated_by = ? WHERE user_key = ?",
+                        (exp_time.strftime("%Y-%m-%d %H:%M:%S"), "Master Admin (Console)", target_user)
                     )
                     conn.commit()
                     conn.close()
-                    st.success(f"🎉 कोड पाठवला: `{new_c}`")
+                    st.success(f"✅ {u_name} चे प्रिमियम {t_val} {t_unit} साठी वाढवले!")
                     st.rerun()
 
-            st.write("---")
-            st.markdown("###### ⏱️ प्रिमियम वेळ सेट करा / वाढवा:")
-            t_col1, t_col2 = st.columns(2)
-            with t_col1:
-                time_val = st.number_input("व्हॅल्यू:", min_value=1, value=28, key=f"win_t_val_{target_user}")
-            with t_col2:
-                time_unit = st.selectbox("युनिट:", ["Minutes", "Hours", "Days"], index=2, key=f"win_t_unit_{target_user}")
+                if u_prem:
+                    if st.button("🔻 प्रिमियम रद्द करा (Revoke)", key=f"btn_rev_{target_user}", use_container_width=True):
+                        conn = get_db_connection()
+                        cursor = conn.cursor()
+                        cursor.execute("UPDATE users SET is_premium = 0, premium_expiry = NULL WHERE user_key = ?", (target_user,))
+                        conn.commit()
+                        conn.close()
+                        st.warning(f"❌ {u_name} चे प्रिमियम काढले आहे.")
+                        st.rerun()
 
-            if st.button(f"⚡ Set Time ({time_val} {time_unit})", key=f"win_btn_custom_{target_user}", use_container_width=True):
-                now = get_ist_time()
-                if time_unit == "Minutes":
-                    exp_time = now + datetime.timedelta(minutes=time_val)
-                elif time_unit == "Hours":
-                    exp_time = now + datetime.timedelta(hours=time_val)
-                else:
-                    exp_time = now + datetime.timedelta(days=time_val)
+            with col_u_act2:
+                st.markdown("###### ✉️ युझरच्या इनबॉक्समध्ये मेसेज पाठवा:")
+                u_direct_msg = st.text_area("मेसेज मजकूर:", value=info.get("admin_message", ""), key=f"txt_msg_{target_user}")
+                if st.button("📩 मेसेज पाठवा (Notification Send)", key=f"btn_send_msg_{target_user}", use_container_width=True):
+                    if u_direct_msg.strip():
+                        conn = get_db_connection()
+                        cursor = conn.cursor()
+                        cursor.execute("UPDATE users SET admin_message = ?, unread_notification = 1 WHERE user_key = ?", (u_direct_msg.strip(), target_user))
+                        conn.commit()
+                        conn.close()
+                        st.success("✅ युझरच्या इनबॉक्समध्ये मेसेज पोहोचला!")
+                        st.rerun()
 
-                conn = get_db_connection()
-                cursor = conn.cursor()
-                cursor.execute(
-                    """
-                    UPDATE users 
-                    SET is_premium = 1, premium_expiry = ?, requested_code = 0, seen_popup = 0, activated_by = ?
-                    WHERE user_key = ?
-                    """,
-                    (exp_time.strftime("%Y-%m-%d %H:%M:%S"), "Kanhaiya (Founder)", target_user),
-                )
-                conn.commit()
-                conn.close()
-                st.success(f"✅ {u_name} साठी वेळ सेव्ह केली!")
-                st.rerun()
-
-            if u_prem:
-                if st.button(f"🔻 Revoke Premium: {u_name}", key=f"win_rev_{target_user}", use_container_width=True):
+                if st.button("🗑️ हे युझर अकाउंट डिलीट करा", key=f"btn_del_usr_{target_user}", use_container_width=True):
                     conn = get_db_connection()
                     cursor = conn.cursor()
-                    cursor.execute(
-                        "UPDATE users SET is_premium = 0, premium_expiry = NULL WHERE user_key = ?",
-                        (target_user,),
-                    )
+                    cursor.execute("DELETE FROM users WHERE user_key = ?", (target_user,))
+                    cursor.execute("DELETE FROM history WHERE user_key = ?", (target_user,))
                     conn.commit()
                     conn.close()
-                    st.warning(f"❌ {u_name} चे प्रिमियम काढले.")
+                    st.session_state.admin_view = "main"
+                    st.session_state.admin_selected_user = None
+                    st.error("❌ युझर पूर्णपणे डिलीट केला!")
                     st.rerun()
 
             st.write("---")
-            current_msg = info.get("admin_message", "Admin message...")
-            new_msg = st.text_input(f"✍️ {u_name} साठी इनबॉक्स मेसेज:", value=current_msg, key=f"win_msg_{target_user}")
-            if st.button(f"✉️ मेसेज पाठवा ({u_name})", key=f"win_btn_msg_{target_user}", use_container_width=True):
-                if new_msg.strip():
-                    conn = get_db_connection()
-                    cursor = conn.cursor()
-                    cursor.execute(
-                        "UPDATE users SET admin_message = ?, unread_notification = 1 WHERE user_key = ?",
-                        (new_msg.strip(), target_user),
-                    )
-                    conn.commit()
-                    conn.close()
-                    st.success("✅ मेसेज पाठवला!")
-                    st.rerun()
-
-            if st.button(f"🗑️ Delete User: {u_name}", key=f"win_del_{target_user}", use_container_width=True):
-                conn = get_db_connection()
-                cursor = conn.cursor()
-                cursor.execute("DELETE FROM users WHERE user_key = ?", (target_user,))
-                cursor.execute("DELETE FROM history WHERE user_key = ?", (target_user,))
-                conn.commit()
-                conn.close()
-                st.session_state.admin_view = "main"
-                st.session_state.admin_selected_user = None
-                st.error("❌ युझर डिलीट केला!")
-                st.rerun()
-
-            st.write("---")
-            st.markdown(f"###### 📜 रिपोर्ट्स इतिहास ({len(u_hist)})")
+            st.markdown(f"###### 📜 {u_name} ने तयार केलेले रिपोर्ट्स ({len(u_hist)} एकूण)")
             if u_hist:
-                for idx, hist in enumerate(u_hist, 1):
-                    ts = hist.get("timestamp", "N/A")
-                    with st.expander(f"🗓️ #{idx} | {ts}"):
-                        st.markdown(hist.get("report_data", "डेटा उपलब्ध नाही"))
+                for idx, h in enumerate(u_hist, 1):
+                    with st.expander(f"🗓️ #{idx} रिपोर्ट तारीख: {h['timestamp']}"):
+                        st.markdown(h.get("report_data", "डेटा नाही"))
             else:
-                st.info("ℹ️ या युझरचे रिपोर्ट्स उपलब्ध नाहीत.")
+                st.info("ℹ️ या युझरने अजून एकही रिपोर्ट जनरेट केलेला नाही.")
+
         else:
+            # सर्व युझर्सची यादी
+            st.markdown("##### 👥 सर्व युझर्सची यादी आणि सद्यस्थिती")
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM users WHERE user_key != '9999999999' ORDER BY id ASC")
+            cursor.execute("SELECT * FROM users WHERE user_key != '9999999999' ORDER BY last_active DESC")
             all_users = [dict(r) for r in cursor.fetchall()]
             conn.close()
 
@@ -1405,86 +1377,217 @@ if st.session_state.is_admin_logged:
                         except Exception:
                             pass
 
-                    status_indicator = "🟢 Online" if is_online else "🔴 Offline"
+                    status_dot = "🟢" if is_online else "⚪"
+                    badge_style = "background:rgba(245,158,11,0.15); color:#f59e0b; border:1px solid #f59e0b;" if u_prem else ("background:rgba(239,68,68,0.15); color:#ef4444; border:1px solid #ef4444;" if is_req else "background:rgba(56,189,248,0.1); color:#38bdf8; border:1px solid #0284c7;")
+                    badge_name = "👑 VIP" if u_prem else ("🚨 CODE REQ" if is_req else "FREE")
 
-                    u_row1, u_row2 = st.columns([3.5, 1.5])
+                    u_row1, u_row2 = st.columns([3.8, 1.2])
                     with u_row1:
-                        badge_html = f"<span class='gold-vip-badge'>👑 VIP</span>" if u_prem else (f"<span style='color:#ef4444; font-weight:bold;'>🚨 CODE REQ</span>" if is_req else f"<span class='free-user-badge'>Free</span>")
-                        st.markdown(f"**{u_name}** ({u_uid}) | {badge_html} | <small style='color:#94a3b8;'>{status_indicator}</small>", unsafe_allow_html=True)
+                        st.markdown(
+                            f"""
+                            <div style="background:#111827; border:1px solid #1f2937; padding:10px 14px; border-radius:8px; margin-bottom:6px;">
+                                <span style="font-size:15px; font-weight:bold; color:#ffffff;">{status_dot} {u_name}</span> 
+                                <span style="{badge_style} padding:2px 8px; border-radius:12px; font-size:11px; font-weight:bold; margin-left:6px;">{badge_name}</span>
+                                <br><small style="color:#94a3b8;">UID: <code>{u_uid}</code> | Key: <code>{mob}</code> | Active: {last_active_str or 'कधीच नाही'}</small>
+                            </div>
+                            """,
+                            unsafe_allow_html=True
+                        )
                     with u_row2:
-                        if st.button("👁️ Manage", key=f"open_user_win_{mob}", use_container_width=True):
+                        st.markdown("<div style='margin-top:6px;'></div>", unsafe_allow_html=True)
+                        if st.button("⚙️ Manage", key=f"btn_manage_usr_{mob}", use_container_width=True):
                             st.session_state.admin_view = "user_detail"
                             st.session_state.admin_selected_user = mob
                             trigger_push_state()
                             st.rerun()
-                    st.write("---")
             else:
-                st.info("ℹ️ डेटाबेसमध्ये सध्या कोणताही सामान्य युझर नाही.")
+                st.info("ℹ️ सध्या कोणतीही नोंद नाही.")
 
-    with adm_tab_ads:
-        st.markdown("##### 📢 Ad & Sponsor Manager")
-        with st.form("add_ad_form"):
-            ad_title = st.text_input("Title:")
-            ad_desc = st.text_area("Description:")
-            ad_link = st.text_input("Target URL / WhatsApp Link:")
-            media_type = st.selectbox("Media Type:", ["Photo (PNG/JPG)", "Video Ad"])
-            media_url = st.text_input("Media URL:")
-            position = st.selectbox("Position:", ["Loading Page (Title Sponsor)", "Main App Header (Top Banner)"])
-            is_active = st.checkbox("Active", value=True)
+    # ==========================================================
+    # टॅब २: VIP लायसन्स कोड्स (Premium Codes Generator & Ledger)
+    # ==========================================================
+    with adm_tab2:
+        st.markdown("##### 🎟️ नवीन VIP कोड्स जनरेटर व लेजर")
+        c_gen1, c_gen2 = st.columns([2.5, 2.5])
+        with c_gen1:
+            assign_to_user = st.text_input("हा कोड कोणासाठी आहे? (युझरनेम टाका किंवा रिकामे ठेवा):", placeholder="उदा. rahul_patil", key="assign_code_user")
+            codes_qty = st.number_input("तयार करायच्या कोड्सची संख्या:", min_value=1, max_value=20, value=1, step=1)
+            
+            if st.button("🚀 नवीन VIP कोड्स तयार करा", type="primary", use_container_width=True):
+                conn = get_db_connection()
+                cursor = conn.cursor()
+                now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
+                for _ in range(codes_qty):
+                    new_code = generate_random_code()
+                    cursor.execute(
+                        "INSERT INTO premium_codes (code, assigned_to, used, created_at) VALUES (?, ?, 0, ?)",
+                        (new_code, assign_to_user.strip() if assign_to_user.strip() else "Open Pool", now_str)
+                    )
+                conn.commit()
+                conn.close()
+                st.success(f"🎉 {codes_qty} नवीन VIP कोड्स यशस्वीरित्या तयार केले!")
+                st.rerun()
 
-            if st.form_submit_button("🚀 Publish Ad", type="primary", use_container_width=True):
+        with c_gen2:
+            st.markdown("###### 📋 शिल्लक असलेले कोड्स (Unused Codes Pool):")
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM premium_codes WHERE used = 0 ORDER BY id DESC LIMIT 10")
+            unused_codes = [dict(r) for r in cursor.fetchall()]
+            conn.close()
+
+            if unused_codes:
+                for c in unused_codes:
+                    st.code(f"{c['code']} (Assigned: {c['assigned_to']})")
+            else:
+                st.info("ℹ️ सध्या पूलमध्ये कोणताही मोकळा कोड शिल्लक नाही.")
+
+        st.write("---")
+        st.markdown("###### 📜 सर्व कोड्सचा इतिहास (All Codes History):")
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM premium_codes ORDER BY id DESC LIMIT 50")
+        all_codes_hist = [dict(r) for r in cursor.fetchall()]
+        conn.close()
+        if all_codes_hist:
+            codes_df = pd.DataFrame(all_codes_hist)
+            st.dataframe(codes_df, use_container_width=True, hide_index=True)
+
+    # ==========================================================
+    # टॅब ३: मास्टर मार्केट दर (Market Rates Controller)
+    # ==========================================================
+    with adm_tab3:
+        st.markdown("##### 📈 बांधकाम साहित्य चालू मार्केट दर बदला")
+        st.caption("येथे बदललेले दर पूर्ण ॲपमधील सर्व कॅल्क्युलेटर व Rate Analysis टूल्समध्ये तात्काळ लागू होतील.")
+        m_rates = get_market_rates()
+
+        rc1, rc2 = st.columns(2)
+        with rc1:
+            adm_cem = st.number_input("Cement (per bag ₹):", min_value=0.0, value=float(m_rates.get("cement", 400.0)), step=5.0)
+            adm_snd = st.number_input("Sand (per m³ ₹):", min_value=0.0, value=float(m_rates.get("sand", 2500.0)), step=50.0)
+            adm_brk = st.number_input("Bricks (per nos ₹):", min_value=0.0, value=float(m_rates.get("bricks", 8.0)), step=0.1)
+        with rc2:
+            adm_agg = st.number_input("Aggregate (per m³ ₹):", min_value=0.0, value=float(m_rates.get("aggregate", 2200.0)), step=50.0)
+            adm_ste = st.number_input("Steel TMT (per kg ₹):", min_value=0.0, value=float(m_rates.get("steel", 60.0)), step=1.0)
+
+        if st.button("💾 आजचे मार्केट दर अपडेट करा", type="primary", use_container_width=True):
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            updated_rates = {"cement": adm_cem, "sand": adm_snd, "bricks": adm_brk, "aggregate": adm_agg, "steel": adm_ste}
+            for mat, rat in updated_rates.items():
+                cursor.execute("REPLACE INTO market_rates (material, rate) VALUES (?, ?)", (mat, rat))
+            conn.commit()
+            conn.close()
+            st.success("✅ मार्केट दर यशस्वीरित्या अपडेट झाले!")
+
+    # ==========================================================
+    # टॅब ४: फिचर लॉक्स (Feature Lock System)
+    # ==========================================================
+    with adm_tab4:
+        st.markdown("##### ⚙️ फिचर ॲक्सेस कंट्रोल (Free vs VIP Lock)")
+        cur_locks = get_feature_locks()
+
+        fl_col1, fl_col2 = st.columns(2)
+        with fl_col1:
+            fl_calc = st.selectbox("Civil Calculator:", ["Free", "Premium"], index=0 if cur_locks.get("Civil Calculator", "Free") == "Free" else 1)
+            fl_ra = st.selectbox("Rate Analysis Module:", ["Free", "Premium"], index=0 if cur_locks.get("Rate Analysis", "Free") == "Free" else 1)
+            fl_bbs = st.selectbox("BBS Calculator:", ["Free", "Premium"], index=0 if cur_locks.get("BBS", "Free") == "Free" else 1)
+            fl_qs = st.selectbox("Quantity Surveying:", ["Free", "Premium"], index=0 if cur_locks.get("Quantity Surveying", "Free") == "Free" else 1)
+        with fl_col2:
+            fl_site = st.selectbox("Site Manager:", ["Free", "Premium"], index=0 if cur_locks.get("Site Manager", "Free") == "Free" else 1)
+            fl_neev = st.selectbox("NeevPay Escrow:", ["Free", "Premium"], index=0 if cur_locks.get("NeevPay", "Free") == "Free" else 1)
+            fl_wa = st.selectbox("WhatsApp Sharing:", ["Free", "Premium"], index=0 if cur_locks.get("WhatsApp Share", "Free") == "Free" else 1)
+            fl_ai = st.selectbox("Civil AI Assistant:", ["Free", "Premium"], index=0 if cur_locks.get("Civil AI Assistant", "Premium") == "Free" else 1)
+
+        if st.button("💾 फिचर लॉक्स सेव्ह करा", type="primary", use_container_width=True):
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            new_locks = {
+                "Civil Calculator": fl_calc, "Rate Analysis": fl_ra, "BBS": fl_bbs, "Quantity Surveying": fl_qs,
+                "Site Manager": fl_site, "NeevPay": fl_neev, "WhatsApp Share": fl_wa, "Civil AI Assistant": fl_ai
+            }
+            for f_name, f_lvl in new_locks.items():
+                cursor.execute("REPLACE INTO feature_locks (feature_name, access_level) VALUES (?, ?)", (f_name, f_lvl))
+            conn.commit()
+            conn.close()
+            st.success("✅ फिचर ॲक्सेस सेटिंग्स अपडेट झाल्या!")
+
+    # ==========================================================
+    # टॅब ५: जाहिराती व स्पॉन्सर (Ads & Broadcast)
+    # ==========================================================
+    with adm_tab5:
+        st.markdown("##### 📢 जाहिरात व स्पॉन्सर व्यवस्थापन")
+        with st.form("add_sponsor_form"):
+            ad_title = st.text_input("स्पॉन्सर नाव / टायटल:")
+            ad_desc = st.text_area("ऑफर / विवरण:")
+            ad_link = st.text_input("लिंक (Website / WhatsApp URL):")
+            media_type = st.selectbox("मीडिया प्रकार:", ["Photo (PNG/JPG)", "Video Ad"])
+            media_url = st.text_input("मीडिया इमेज URL:")
+            position = st.selectbox("स्थान:", ["Loading Page (Title Sponsor)", "Main App Header (Top Banner)"])
+            is_active = st.checkbox("सक्रिय ठेवा (Make Active)", value=True)
+
+            if st.form_submit_button("🚀 जाहिरात पब्लिश करा", type="primary", use_container_width=True):
                 if ad_title.strip():
                     conn = get_db_connection()
                     cursor = conn.cursor()
                     cursor.execute(
-                        """
-                        INSERT INTO ads (title, desc, link, media_type, media_url, position, active, date)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                        """,
+                        "INSERT INTO ads (title, desc, link, media_type, media_url, position, active, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                         (ad_title.strip(), ad_desc.strip(), ad_link.strip(), media_type, media_url.strip(), position, 1 if is_active else 0, get_ist_time().strftime("%Y-%m-%d %H:%M:%S")),
                     )
                     conn.commit()
                     conn.close()
-                    st.success("✅ ॲड पब्लिश झाली!")
+                    st.success("✅ जाहिरात यशस्वीरित्या पब्लिश झाली!")
                     st.rerun()
 
         st.write("---")
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM ads ORDER BY id DESC")
-        ads_list = [dict(r) for r in cursor.fetchall()]
-        conn.close()
-
-        if ads_list:
-            for ad in ads_list:
-                ad_id = ad.get("id")
-                st.markdown(f"**#{ad_id} | {ad.get('title')}** ({'🟢 Active' if ad.get('active')==1 else '🔴 Inactive'})")
-                if st.button(f"🗑️ Delete #{ad_id}", key=f"del_ad_{ad_id}"):
-                    conn = get_db_connection()
-                    cursor = conn.cursor()
-                    cursor.execute("DELETE FROM ads WHERE id = ?", (ad_id,))
-                    conn.commit()
-                    conn.close()
-                    st.rerun()
-
-    with adm_tab_bcast:
-        st.markdown("##### 🔔 Broadcast Notification to All Users")
-        with st.form("broadcast_form"):
-            broadcast_msg = st.text_area("मेसेज टाका (Broadcast Message):", placeholder="उदा. नवीन व्हर्जन अपडेट...")
-            if st.form_submit_button("🚀 Send to All Users", type="primary", use_container_width=True):
+        st.markdown("##### 🔔 सर्व युझर्सना तात्काळ ब्रॉडकास्ट नोटीस पाठवा:")
+        with st.form("quick_broadcast_form"):
+            broadcast_msg = st.text_area("ब्रॉडकास्ट संदेश:", placeholder="उदा. नवीन फिचर्स लाइव्ह झाले आहेत...")
+            if st.form_submit_button("📢 ब्रॉडकास्ट पाठवा", type="primary", use_container_width=True):
                 if broadcast_msg.strip():
                     conn = get_db_connection()
                     cursor = conn.cursor()
-                    cursor.execute(
-                        "UPDATE users SET admin_message = ?, unread_notification = 1 WHERE user_key != '9999999999'",
-                        (broadcast_msg.strip(),),
-                    )
+                    cursor.execute("UPDATE users SET admin_message = ?, unread_notification = 1 WHERE user_key != '9999999999'", (broadcast_msg.strip(),))
                     conn.commit()
                     conn.close()
-                    st.success("🎉 सर्व युझर्सना ब्रॉडकास्ट पाठवला!")
+                    st.success("🎉 सर्व युझर्सना नोटीस पाठवली गेली!")
+
+    # ==========================================================
+    # टॅब ६: डेटाबेस व सिस्टम टूल्स (Database Export & Health)
+    # ==========================================================
+    with adm_tab6:
+        st.markdown("##### 💾 डेटाबेस आरोग्य व थेट बॅकअप (System Tools)")
+        st.caption("येथून तुम्ही संपूर्ण SQLite डेटाबेस एका क्लिकवर डाऊनलोड करून सुरक्षित ठेवू शकता.")
+
+        if os.path.exists(DB_FILE):
+            with open(DB_FILE, "rb") as f:
+                db_bytes = f.read()
+
+            st.download_button(
+                label="📥 Download Full Database Backup (.db)",
+                data=db_bytes,
+                file_name=f"Patil_Infratech_Backup_{get_ist_time().strftime('%d_%m_%Y')}.db",
+                mime="application/x-sqlite3",
+                type="primary",
+                use_container_width=True
+            )
+        else:
+            st.error("डेटाबेस फाईल सापडली नाही!")
+
+        st.write("---")
+        st.markdown("###### 🔍 थेट SQL Query रन करा (फक्त ॲडमीन वापरासाठी):")
+        custom_sql = st.text_area("SQL Command:", placeholder="SELECT * FROM users LIMIT 5;")
+        if st.button("⚡ Run SQL Query", use_container_width=True):
+            if custom_sql.strip():
+                try:
+                    conn = get_db_connection()
+                    df = pd.read_sql_query(custom_sql, conn)
+                    conn.close()
+                    st.dataframe(df, use_container_width=True)
+                except Exception as e:
+                    st.error(f"SQL Error: {str(e)}")
 
     st.stop()
-
 
 # ==========================================
 # 📌 विभाग १२: युझर ऑथेंटिकेशन (Login, Register, OTP & Client View)
