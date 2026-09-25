@@ -3649,11 +3649,11 @@ elif st.session_state.selected_module == "Site Manager":
                 conn.close()
                 st.success("✅ आजची हजेरी आणि मजुरी बिल सेव्ह झाले!")
 
-       # ==============================================================================
-        # १७.२ Complete Construction Sequence: Excavation to Slab Casting (IS-Codes)
+     # ==============================================================================
+        # १७.२ Material Stock, Live Inventory Status Box & WhatsApp Share (IS-Codes)
         # ==============================================================================
         elif sub_mod == "Inventory":
-            st.markdown("#### 🏗️ पूर्ण बांधकाम टप्पे (Excavation ते Slab) व ऑटो-मटेरियल ताळमेळ")
+            st.markdown("#### 📦 स्मार्ट साहित्य व्यवस्थापन, ऑटो-वजावट व स्टेज लॉक सिस्टीम")
             st.caption(f"📍 चालू प्रोजेक्ट: **[{st.session_state.active_site_code}] {st.session_state.current_site_name}** | CPWD व IS Code (456, 2212, 2502, 6313) प्रमाणित.")
 
             # --- १. चालू प्रत्यक्ष शिल्लक साठा (Live Stock Balance) मोजणे ---
@@ -3691,22 +3691,6 @@ elif st.session_state.selected_module == "Site Manager":
                         current_stock[matched_key] += qty
                     else:
                         current_stock[matched_key] -= qty
-
-            # शिल्लक साठ्याचा थेट डॅशबोर्ड
-            st.markdown("##### 📊 साईटवरील थेट शिल्लक साठा (Current Stock on Site):")
-            sc1, sc2, sc3, sc4 = st.columns(4)
-            sc1.metric("Cement (सिमेंट)", f"{current_stock['Cement']:.1f} Bags")
-            sc2.metric("Sand (वाळू)", f"{current_stock['Sand']:.2f} Brass")
-            sc3.metric("Aggregate (खडी)", f"{current_stock['Aggregate']:.2f} Brass")
-            sc4.metric("Steel (स्टील)", f"{current_stock['Steel']:.1f} Kg")
-
-            sc5, sc6, sc7, sc8 = st.columns(4)
-            sc5.metric("Bricks (विटा)", f"{current_stock['Bricks']:.0f} Nos")
-            sc6.metric("Rubble (दगड सोलिंग)", f"{current_stock['Rubble/Stone']:.2f} Brass")
-            sc7.metric("Murum (मुरुम भराव)", f"{current_stock['Murum']:.2f} Brass")
-            sc8.metric("Termite Chemical", f"{current_stock['Chemical']:.1f} Ltr")
-
-            st.write("---")
 
             # --- २. सुपरवायझर एन्ट्री: नवीन गाडी / माल आल्यावर स्टॉकमध्ये जमा करणे ---
             with st.expander("📥 नवीन माल आला आहे का? (Material IN (+) Stock Entry)", expanded=False):
@@ -3748,8 +3732,8 @@ elif st.session_state.selected_module == "Site Manager":
 
             st.write("---")
 
-            # --- ३. पाया खोदकाम ते स्लॅब: सर्व १० पायऱ्यांचे अचूक नियोजन ---
-            st.markdown("##### 🎯 बांधकामाचा टप्पा निवडा (Construction Sequence):")
+            # --- ३. कामाचे नियोजन व साहित्य आवश्यकता गणित (IS Codes) ---
+            st.markdown("##### 🎯 पुढील कामाचे नियोजन व परिमाण (Work Planning & Requirement):")
 
             stages_master = [
                 "Stage 1: Site Clearance & Foundation Excavation (पाया खोदकाम)",
@@ -3766,41 +3750,29 @@ elif st.session_state.selected_module == "Site Manager":
 
             w_c1, w_c2, w_c3 = st.columns([2.8, 1.4, 1.4])
             with w_c1:
-                selected_stage = st.selectbox("आज चालू असलेले काम:", stages_master, key="master_stage_sel")
+                selected_stage = st.selectbox("पुढील काम निवडा:", stages_master, key="master_stage_sel")
             with w_c2:
-                # युनिट ठरवणे (Excavation/Concrete = m³, Anti-termite = m²)
                 is_area_stage = "Anti-Termite" in selected_stage
                 vol_unit_tag = "m²" if is_area_stage else "m³"
                 wet_vol_in = st.number_input(f"कामाचे प्रमाण ({vol_unit_tag}):", min_value=0.1, value=1.0, step=0.5, key="master_vol_input")
             with w_c3:
                 waste_in = st.number_input("वेस्टेज (%):", min_value=0.0, max_value=15.0, value=3.0, step=0.5, key="master_waste_input")
 
-            # --- ४. १००% अचूक सिव्हिल इंजिनिअरिंग फॉर्म्युला इंजिन (IS Codes) ---
+            # IS Code गणित
             w_factor = 1.0 + (waste_in / 100.0)
             required_materials = {}
 
-            # १. पाया खोदकाम
             if "Stage 1:" in selected_stage:
-                # खोदकामात मशिनरी/लेबर वापरले जाते, कच्चा माल लागत नाही
-                st.info("ℹ️ पाया खोदकामात थेट कच्चा माल लागत नाही. खोदकाम पूर्ण झाल्यानंतर थेट 'काम पूर्ण करा' बटण दाबा.")
-
-            # २. वाळवी प्रतिबंधक उपचार (IS 6313)
+                pass
             elif "Stage 2:" in selected_stage:
-                # प्रमाणित दर: ५ लिटर केमिकल सोल्यूशन प्रति १०० चौ.मी. (०.०५ लिटर/चौ.मी.)
                 chem_liters = round(wet_vol_in * 0.05 * w_factor, 2)
                 required_materials["Chemical"] = (chem_liters, "Ltr")
-
-            # ३. दगड सोलिंग व मुरुम भराव
             elif "Stage 3:" in selected_stage:
-                # १५० मिमी ते २३० मिमी सोलिंगसाठी: १ m³ = ०.३५३ ब्रास दगड + २०% मुरुम फॅक्टर
                 soling_brass = round((wet_vol_in / 2.8317) * 1.15 * w_factor, 2)
                 murum_brass = round((wet_vol_in / 2.8317) * 0.35 * w_factor, 2)
                 required_materials["Rubble/Stone"] = (soling_brass, "Brass")
                 required_materials["Murum"] = (murum_brass, "Brass")
-
-            # ४. PCC 1:4:8 तळ काँक्रीट (IS 456)
             elif "Stage 4:" in selected_stage:
-                # एकूण भाग = १३, Dry Factor = १.५४, १ m³ सिमेंट = २८.८ बॅग्स
                 dry_vol = wet_vol_in * 1.54 * w_factor
                 c_bags = math.ceil((1.0 / 13.0) * dry_vol * 28.8)
                 s_brass = round((((4.0 / 13.0) * dry_vol) / 2.8317), 2)
@@ -3808,22 +3780,16 @@ elif st.session_state.selected_module == "Site Manager":
                 required_materials["Cement"] = (c_bags, "Bags")
                 required_materials["Sand"] = (s_brass, "Brass")
                 required_materials["Aggregate"] = (a_brass, "Brass")
-
-            # ५. Footing Casting M20 (IS 456 / IS 2502)
             elif "Stage 5:" in selected_stage:
-                # M20 (1:1.5:3) -> एकूण भाग = ५.५. स्टील प्रमाण = ८५ kg/m³
                 dry_vol = wet_vol_in * 1.54 * w_factor
                 c_bags = math.ceil((1.0 / 5.5) * dry_vol * 28.8)
                 s_brass = round((((1.5 / 5.5) * dry_vol) / 2.8317), 2)
                 a_brass = round((((3.0 / 5.5) * dry_vol) / 2.8317), 2)
                 stl_kg = round(wet_vol_in * 85.0 * w_factor, 1)
-
                 required_materials["Cement"] = (c_bags, "Bags")
                 required_materials["Sand"] = (s_brass, "Brass")
                 required_materials["Aggregate"] = (a_brass, "Brass")
                 required_materials["Steel"] = (stl_kg, "Kg")
-
-            # ६. प्लिंथ कॉलम व मुरुम भराव
             elif "Stage 6:" in selected_stage:
                 dry_vol = wet_vol_in * 1.54 * w_factor
                 c_bags = math.ceil((1.0 / 5.5) * dry_vol * 28.8)
@@ -3831,129 +3797,160 @@ elif st.session_state.selected_module == "Site Manager":
                 a_brass = round((((3.0 / 5.5) * dry_vol) / 2.8317), 2)
                 stl_kg = round(wet_vol_in * 140.0 * w_factor, 1)
                 murum_b = round((wet_vol_in * 2.0 / 2.8317) * w_factor, 2)
-
                 required_materials["Cement"] = (c_bags, "Bags")
                 required_materials["Sand"] = (s_brass, "Brass")
                 required_materials["Aggregate"] = (a_brass, "Brass")
                 required_materials["Steel"] = (stl_kg, "Kg")
                 required_materials["Murum"] = (murum_b, "Brass")
-
-            # ७. Plinth Beam Casting & DPC (M20)
             elif "Stage 7:" in selected_stage:
-                # Plinth Beam स्टील = १२५ kg/m³
                 dry_vol = wet_vol_in * 1.54 * w_factor
                 c_bags = math.ceil((1.0 / 5.5) * dry_vol * 28.8)
                 s_brass = round((((1.5 / 5.5) * dry_vol) / 2.8317), 2)
                 a_brass = round((((3.0 / 5.5) * dry_vol) / 2.8317), 2)
                 stl_kg = round(wet_vol_in * 125.0 * w_factor, 1)
-
                 required_materials["Cement"] = (c_bags, "Bags")
                 required_materials["Sand"] = (s_brass, "Brass")
                 required_materials["Aggregate"] = (a_brass, "Brass")
                 required_materials["Steel"] = (stl_kg, "Kg")
-
-            # ८. Ground Floor Columns (M20)
             elif "Stage 8:" in selected_stage:
-                # मुख्य कॉलम स्टील = १६० kg/m³
                 dry_vol = wet_vol_in * 1.54 * w_factor
                 c_bags = math.ceil((1.0 / 5.5) * dry_vol * 28.8)
                 s_brass = round((((1.5 / 5.5) * dry_vol) / 2.8317), 2)
                 a_brass = round((((3.0 / 5.5) * dry_vol) / 2.8317), 2)
                 stl_kg = round(wet_vol_in * 160.0 * w_factor, 1)
-
                 required_materials["Cement"] = (c_bags, "Bags")
                 required_materials["Sand"] = (s_brass, "Brass")
                 required_materials["Aggregate"] = (a_brass, "Brass")
                 required_materials["Steel"] = (stl_kg, "Kg")
-
-            # ९. Superstructure Brickwork 9" (IS 2212)
             elif "Stage 9:" in selected_stage:
-                # विटा = ५०० नग/m³, Mortar 1:6 (३०% Dry Mortar)
                 dry_mortar = wet_vol_in * 0.30 * w_factor
                 bricks_cnt = math.ceil(wet_vol_in * 500.0 * w_factor)
                 c_bags = math.ceil((1.0 / 7.0) * dry_mortar * 28.8)
                 s_brass = round((((6.0 / 7.0) * dry_mortar) / 2.8317), 2)
-
                 required_materials["Bricks"] = (bricks_cnt, "Nos")
                 required_materials["Cement"] = (c_bags, "Bags")
                 required_materials["Sand"] = (s_brass, "Brass")
-
-            # १०. Slab & Beam RCC Casting (M20)
             elif "Stage 10:" in selected_stage:
-                # छताचा स्लॅब + बीम सरासरी स्टील = ९५ kg/m³
                 dry_vol = wet_vol_in * 1.54 * w_factor
                 c_bags = math.ceil((1.0 / 5.5) * dry_vol * 28.8)
                 s_brass = round((((1.5 / 5.5) * dry_vol) / 2.8317), 2)
                 a_brass = round((((3.0 / 5.5) * dry_vol) / 2.8317), 2)
                 stl_kg = round(wet_vol_in * 95.0 * w_factor, 1)
-
                 required_materials["Cement"] = (c_bags, "Bags")
                 required_materials["Sand"] = (s_brass, "Brass")
                 required_materials["Aggregate"] = (a_brass, "Brass")
                 required_materials["Steel"] = (stl_kg, "Kg")
 
-            # --- ५. स्टॉक पडताळणी, ताळमेळ व स्टेज लॉक लॉजिक ---
-            st.markdown("##### 📋 साहित्याचा ताळमेळ व कमी साठ्याची पडताळणी (Stock vs Requirement):")
-            table_rows_md = ""
+            # --- ४. आकर्षक इन्व्हेन्टरी स्टेटस बॉक्स (Special Card Box) ---
+            st.write("---")
+            box_html_rows = ""
             missing_items_list = []
             has_shortage = False
+            wa_stock_details = ""
 
-            if required_materials:
-                for mat_key, (req_qty, unit_str) in required_materials.items():
-                    in_stock_qty = current_stock.get(mat_key, 0.0)
-                    diff_qty = req_qty - in_stock_qty
-                    order_qty = math.ceil(diff_qty) if unit_str in ["Bags", "Nos"] else round(max(0.0, diff_qty), 2)
+            for mat_key in ["Cement", "Sand", "Aggregate", "Steel", "Bricks", "Rubble/Stone", "Murum", "Chemical"]:
+                in_stock_qty = current_stock.get(mat_key, 0.0)
+                req_tuple = required_materials.get(mat_key)
 
-                    if order_qty > 0:
+                if req_tuple:
+                    req_qty = req_tuple[0]
+                    u_str = req_tuple[1]
+                else:
+                    req_qty = 0.0
+                    u_str = "Bags" if mat_key == "Cement" else ("Nos" if mat_key == "Bricks" else ("Kg" if mat_key == "Steel" else ("Ltr" if mat_key == "Chemical" else "Brass")))
+
+                diff_qty = req_qty - in_stock_qty
+                shortage = math.ceil(diff_qty) if u_str in ["Bags", "Nos"] else round(max(0.0, diff_qty), 2)
+
+                if req_qty > 0:
+                    if shortage > 0:
                         has_shortage = True
-                        missing_items_list.append(f"{mat_key}: {order_qty} {unit_str}")
-                        status_str = f"<span style='color:#ef4444; font-weight:bold;'>🔴 कमी (नवीन मागवा: {order_qty} {unit_str})</span>"
+                        missing_items_list.append(f"{mat_key}: {shortage} {u_str}")
+                        status_badge = f"<span style='background:rgba(239,68,68,0.18); color:#ef4444; border:1px solid #ef4444; padding:2px 8px; border-radius:10px; font-weight:bold; font-size:11px;'>🔴 कमी: {shortage} {u_str}</span>"
+                        wa_stock_details += f"• *{mat_key}:* शिल्लक {in_stock_qty:.1f} {u_str} | लागेल {req_qty} {u_str} | ❌ *कमी:* {shortage} {u_str}\n"
                     else:
-                        status_str = f"<span style='color:#10b981; font-weight:bold;'>🟢 उपलब्ध (शिल्लक: {in_stock_qty:.2f} {unit_str})</span>"
+                        surplus = round(abs(in_stock_qty - req_qty), 2)
+                        status_badge = f"<span style='background:rgba(16,185,129,0.18); color:#10b981; border:1px solid #10b981; padding:2px 8px; border-radius:10px; font-weight:bold; font-size:11px;'>🟢 पुरेशी शिल्लक (+{surplus} {u_str})</span>"
+                        wa_stock_details += f"• *{mat_key}:* शिल्लक {in_stock_qty:.1f} {u_str} | लागेल {req_qty} {u_str} | ✅ *उपलब्ध*\n"
+                else:
+                    status_badge = "<span style='color:#64748b; font-size:11px;'>सध्या गरज नाही</span>"
 
-                    table_rows_md += f"| **{mat_key}** | {req_qty} {unit_str} | {in_stock_qty:.2f} {unit_str} | **{order_qty} {unit_str}** | {status_str} |\n"
+                box_html_rows += f"""
+                <tr style='border-bottom: 1px solid #1f2937;'>
+                    <td style='padding: 8px 10px; font-weight: bold; color: #ffffff;'>{mat_key}</td>
+                    <td style='padding: 8px 10px; text-align: center; color: #38bdf8; font-weight: 700;'>{in_stock_qty:.2f} {u_str}</td>
+                    <td style='padding: 8px 10px; text-align: center; color: #f59e0b; font-weight: 700;'>{req_qty} {u_str if req_qty > 0 else '-'}</td>
+                    <td style='padding: 8px 10px; text-align: right;'>{status_badge}</td>
+                </tr>
+                """
 
-                st.markdown(
-                    f"""
-| साहित्याचे नाव | आज कामासाठी लागणारे | साईटवर शिल्लक | **नवीन किती मागवायचे?** | सद्यस्थिती |
-| :--- | :--- | :--- | :--- | :--- |
-{table_rows_md}
-                    """,
-                    unsafe_allow_html=True
-                )
+            # विशेष डिझाइन केलेला स्टेटस बॉक्स (Stylized Box)
+            st.markdown(
+                f"""
+                <div style="background: #0f172a; border: 1.5px solid #334155; border-top: 4px solid #38bdf8; border-radius: 12px; padding: 18px 20px; margin-bottom: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.4);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; margin-bottom: 12px; border-bottom: 1px solid #1e293b; padding-bottom: 8px;">
+                        <div>
+                            <span style="font-size: 11px; color: #38bdf8; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Live Material Inventory Box</span>
+                            <h3 style="margin: 2px 0 0 0; color: #ffffff; font-size: 17px;">📦 साठा ताळमेळ व पुढील कामाची गरज</h3>
+                        </div>
+                        <div>
+                            <span style="background: rgba(56,189,248,0.12); color: #38bdf8; border: 1px solid rgba(56,189,248,0.3); padding: 3px 12px; border-radius: 14px; font-size: 11px; font-weight: bold;">
+                                🚧 {selected_stage.split('(')[0]}
+                            </span>
+                        </div>
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                        <thead>
+                            <tr style="border-bottom: 1.5px solid #334155; color: #94a3b8; text-transform: uppercase;">
+                                <th style="text-align: left; padding: 6px 10px;">साहित्य (Material)</th>
+                                <th style="text-align: center; padding: 6px 10px;">साईटवर चालू शिल्लक</th>
+                                <th style="text-align: center; padding: 6px 10px;">पुढील कामासाठी आवश्यक</th>
+                                <th style="text-align: right; padding: 6px 10px;">सद्यस्थिती / ऑर्डर</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {box_html_rows}
+                        </tbody>
+                    </table>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+            # --- ५. WhatsApp Share Button ---
+            wa_inv_report = (
+                f"📦 *PATIL INFRATECH - LIVE INVENTORY STATUS*\n"
+                f"📍 *Site:* {st.session_state.current_site_name} [{st.session_state.active_site_code}]\n"
+                f"👷 *Site Engineer:* {current_user_name}\n"
+                f"📅 *Date:* {get_ist_time().strftime('%d-%m-%Y %H:%M')}\n"
+                f"🚧 *Next Planned Work:* {selected_stage} ({wet_vol_in} {vol_unit_tag})\n"
+                f"--------------------------------\n"
+                f"{wa_stock_details}"
+                f"--------------------------------\n"
+            )
+            if has_shortage:
+                wa_inv_report += f"🛑 *ALERT:* वरील साहित्याची कमतरता असल्याने काम थांबले आहे. कृपया तात्काळ पाठवावे.\n"
             else:
-                st.success("✅ या कामासाठी थेट कच्चा माल लागत नाही. तुम्ही थेट काम पूर्ण करू शकता.")
+                wa_inv_report += f"✅ *READY:* सर्व साहित्य पुरेशा प्रमाणात उपलब्ध आहे.\n"
+            wa_inv_report += "_Patil Infratech Site Inventory Engine_"
+
+            render_whatsapp_feature(urllib.parse.quote(wa_inv_report), "live_inv_box_wa")
 
             st.write("---")
 
-            # --- ६. कडक स्टेज लॉक आणि ऑटो-वजावट ॲक्शन ---
+            # --- ६. कडक स्टेज लॉक व ऑटोमॅटिक वजावट लॉजिक ---
             if has_shortage:
                 st.error(
                     f"""
                     🛑 **STAGE LOCKED: अपुरा साहित्य साठा!**  
-                    आजचे **'{selected_stage}'** चे काम सुरू करण्यासाठी लागणारा माल साईटवर उपलब्ध नाही.  
-                    जोपर्यंत खालील माल **'Material IN (+)'** द्वारे स्टॉकमध्ये जमा केला जात नाही, तोपर्यंत हे काम सुरू करता येणार नाही!  
+                    आजचे **'{selected_stage}'** चे काम सुरू करण्यासाठी आवश्यक साहित्य साईटवर उपलब्ध नाही.  
+                    जोपर्यंत खालील माल **'Material IN (+)'** द्वारे स्टॉकमध्ये जमा केला जात नाही, तोपर्यंत काम सुरू करता येणार नाही!  
                     
-                    **अपूरा माल (Shortage Indent):** `{', '.join(missing_items_list)}`
+                    **कमी असलेला माल (Shortfall):** `{', '.join(missing_items_list)}`
                     """
                 )
-
-                # व्हॉट्सॲपवर ऑर्डर पाठवणे
-                order_msg = (
-                    f"🚨 *URGENT MATERIAL INDENT - PATIL INFRATECH*\n"
-                    f"📍 *Site:* {st.session_state.current_site_name} [{st.session_state.active_site_code}]\n"
-                    f"👷 *Site Engineer:* {current_user_name}\n"
-                    f"🚧 *Blocked Activity:* {selected_stage} ({wet_vol_in} {vol_unit_tag})\n\n"
-                    f"🚚 *तातडीने पाठवायचा आवश्यक माल:*\n"
-                )
-                for item in missing_items_list:
-                    order_msg += f"• {item}\n"
-                order_msg += "\n_कृपया लवकरात लवकर माल पाठवावा, साईटचे पुढील काम थांबलेले आहे._"
-
-                render_whatsapp_feature(urllib.parse.quote(order_msg), "stage_lock_wa")
-
             else:
-                st.success(f"✅ **STAGE READY:** '{selected_stage}' साठी सर्व साहित्य स्टॉकमध्ये पुरेशा प्रमाणात उपलब्ध आहे!")
+                st.success(f"✅ **STAGE READY:** '{selected_stage}' साठी सर्व साहित्य स्टॉकमध्ये उपलब्ध आहे. तुम्ही काम सुरू करू शकता!")
 
                 if st.button(f"🚀 काम पूर्ण करा व स्टॉकमधून माल वजा करा ({selected_stage})", type="primary", use_container_width=True):
                     now_date_time = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
@@ -3962,13 +3959,14 @@ elif st.session_state.selected_module == "Site Manager":
 
                     # १. स्टॉकमधून आवश्यक माल वजा (-) करणे
                     for mat_key, (req_qty, unit_str) in required_materials.items():
-                        cursor.execute(
-                            """
-                            INSERT INTO site_inventory (user_key, date, material_name, transaction_type, quantity, unit, site_name)
-                            VALUES (?, ?, ?, 'Material OUT (-)', ?, ?, ?)
-                            """,
-                            (current_user_name, now_date_time, mat_key, req_qty, unit_str, st.session_state.current_site_name)
-                        )
+                        if req_qty > 0:
+                            cursor.execute(
+                                """
+                                INSERT INTO site_inventory (user_key, date, material_name, transaction_type, quantity, unit, site_name)
+                                VALUES (?, ?, ?, 'Material OUT (-)', ?, ?, ?)
+                                """,
+                                (current_user_name, now_date_time, mat_key, req_qty, unit_str, st.session_state.current_site_name)
+                            )
 
                     # २. प्रोग्रेस रिपोर्टमध्ये आपोआप नोंद
                     cursor.execute(
@@ -3976,14 +3974,14 @@ elif st.session_state.selected_module == "Site Manager":
                         INSERT INTO site_progress (user_key, date, stage_name, progress_percent, remark, site_name)
                         VALUES (?, ?, ?, 100, ?, ?)
                         """,
-                        (current_user_name, now_date_time[:10], selected_stage, f"{wet_vol_in} {vol_unit_tag} काम यशस्वीरित्या पूर्ण झाले. साहित्य वजा केले.", st.session_state.current_site_name)
+                        (current_user_name, now_date_time[:10], selected_stage, f"{wet_vol_in} {vol_unit_tag} काम पूर्ण झाले. साहित्य वजा केले.", st.session_state.current_site_name)
                     )
 
                     conn.commit()
                     conn.close()
 
                     st.balloons()
-                    st.success(f"🎉 '{selected_stage}' चे साहित्य स्टॉकमधून यशस्वीरित्या वजा झाले! उरलेला सर्व माल पुढील टप्प्यासाठी सुरक्षित शिल्लक ठेवला आहे.")
+                    st.success(f"🎉 '{selected_stage}' चे साहित्य स्टॉकमधून यशस्वीरित्या वजा झाले! उरलेला माल पुढील कामासाठी सुरक्षित शिल्लक आहे.")
                     time.sleep(1.5)
                     st.rerun()
 
