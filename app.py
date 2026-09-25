@@ -371,7 +371,7 @@ def init_db():
         )
     """)
 
-    # ८. साहित्य इन्व्हेंटरी टेबल
+  # ८. साहित्य इन्व्हेंटरी टेबल (Quantity REAL सह)
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS site_inventory (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -379,12 +379,28 @@ def init_db():
             date TEXT,
             material_name TEXT,
             transaction_type TEXT,
-            quantity INTEGER,
+            quantity REAL,
             unit TEXT,
             site_name TEXT DEFAULT 'Default Site'
         )
     """)
 
+    # ८.१ मटेरियल ऑर्डर / इंडेंट टेबल (नवीन)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS site_material_requisitions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_key TEXT,
+            date TEXT,
+            work_type TEXT,
+            work_volume REAL,
+            material_name TEXT,
+            required_qty REAL,
+            stock_qty REAL,
+            order_qty REAL,
+            unit TEXT,
+            site_name TEXT DEFAULT 'Default Site'
+        )
+    """)
     # ९. प्रोग्रेस रिपोर्ट टेबल
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS site_progress (
@@ -3856,85 +3872,284 @@ elif st.session_state.selected_module == "Site Manager":
                 conn.close()
                 st.success("✅ आजची हजेरी आणि मजुरी बिल डेटाबेसमध्ये सेव्ह झाले!")
 
-        # १७.२ Material Stock & Inventory Tracker
+        # १७.२ Material Stock, Work-Based Estimator & Auto-Indent Tracker
         elif sub_mod == "Inventory":
-            st.markdown("#### 📦 साहित्य ट्रॅकर (Material Inventory & Stock Tracker)")
+            st.markdown("#### 📦 स्मार्ट साहित्य व्यवस्थापन व वर्क-बेस्ड इंडेंट ट्रॅकर")
+            st.caption(f"📍 चालू साईट: **{st.session_state.current_site_name}** | आजच्या कामाचे मोजमाप टाकून लागणारे व शिल्लक साहित्याची तुलना करा.")
 
+            # --- १. चालू स्टॉक बॅलन्स मिळवणे ---
             conn = get_db_connection()
             cursor = conn.cursor()
             cursor.execute(
-                "SELECT material_name, transaction_type, quantity FROM site_inventory WHERE user_key = ?",
-                (current_user_name,),
+                """
+                SELECT material_name, transaction_type, quantity, unit 
+                FROM site_inventory 
+                WHERE user_key = ? AND site_name = ?
+                """,
+                (current_user_name, st.session_state.current_site_name),
             )
             inv_rows = cursor.fetchall()
             conn.close()
 
-            stock_dict = {}
+            current_stock = {
+                "Cement": 0.0,
+                "Sand": 0.0,
+                "Aggregate": 0.0,
+                "Steel": 0.0,
+                "Bricks": 0.0
+            }
+            units_map = {
+                "Cement": "Bags",
+                "Sand": "Brass",
+                "Aggregate": "Brass",
+                "Steel": "Kg",
+                "Bricks": "Nos"
+            }
+
             for row in inv_rows:
                 mat = row["material_name"]
                 ttype = row["transaction_type"]
-                qty = row["quantity"]
-
-                if mat not in stock_dict:
-                    stock_dict[mat] = 0
-                if ttype == "Material IN (+)":
-                    stock_dict[mat] += qty
-                else:
-                    stock_dict[mat] -= qty
-
-            st.markdown("##### 📊 Live Cement & Material Stock Balance:")
-            if stock_dict:
-                for item, count in stock_dict.items():
-                    if count <= 10:
-                        st.markdown(
-                            f"""
-                            <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; padding: 12px 16px; border-radius: 12px; margin-bottom: 8px;">
-                                <span style="color: #ef4444; font-weight: bold; font-size: 16px;">⚠️ Warning: {item} Stock Low! Re-order Soon</span><br>
-                                <span style="color: #ffffff; font-size: 14px;">Current Stock: <b>{count} Bags/Units</b></span>
-                            </div>
-                            """,
-                            unsafe_allow_html=True,
-                        )
+                qty = float(row["quantity"])
+                
+                # मॅपिंग
+                matched_key = None
+                for k in current_stock.keys():
+                    if k.lower() in mat.lower():
+                        matched_key = k
+                        break
+                
+                if matched_key:
+                    if "IN" in ttype:
+                        current_stock[matched_key] += qty
                     else:
-                        st.markdown(
-                            f"""
-                            <div style="background: #111827; border: 1px solid #00f2fe; padding: 10px 16px; border-radius: 12px; margin-bottom: 8px;">
-                                <span style="color: #38bdf8; font-weight: bold;">Current {item} Stock:</span> <code style="font-size:16px; color:#10b981;">{count} Bags/Units</code>
-                            </div>
-                            """,
-                            unsafe_allow_html=True,
-                        )
-            else:
-                st.info("ℹ️ सध्या स्टॉकमध्ये कोणतीही एंट्री उपलब्ध नाही. खालील इन-आऊट फॉर्म भरा.")
+                        current_stock[matched_key] -= qty
+
+            # स्टॉक कार्ड्स
+            st.markdown("##### 📊 साईटवरील चालू शिल्लक माल (Current Live Stock):")
+            sc1, sc2, sc3, sc4, sc5 = st.columns(5)
+            sc1.metric("Cement", f"{current_stock['Cement']:.1f} Bags")
+            sc2.metric("Sand", f"{current_stock['Sand']:.2f} Brass")
+            sc3.metric("Aggregate", f"{current_stock['Aggregate']:.2f} Brass")
+            sc4.metric("Steel", f"{current_stock['Steel']:.1f} Kg")
+            sc5.metric("Bricks", f"{current_stock['Bricks']:.0f} Nos")
 
             st.write("---")
-            st.markdown("##### ➕/➖ Material IN-OUT Entry:")
-            mat_name = st.selectbox("साहित्य निवडा (Material):", ["Cement Bags", "Steel (Kg)", "Sand (CFT)", "Bricks (Nos)"], key="inv_mat_type")
-            trans_type = st.radio("इनपुट/आऊटपुट निवडा:", ["Material IN (+)", "Material OUT (-)"], horizontal=True, key="inv_trans_type")
-            entry_qty = st.number_input("बोरी / नग संख्या (Quantity):", min_value=1, value=100, step=1, key="inv_qty_val")
 
-            if st.button("📥 Save Stock Entry", type="primary", key="save_inv_btn"):
-                conn = get_db_connection()
-                cursor = conn.cursor()
-                cursor.execute(
-                    """
-                    INSERT INTO site_inventory (user_key, date, material_name, transaction_type, quantity, unit, site_name)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
-                    """,
-                    (
-                        current_user_name,
-                        str(datetime.date.today()),
-                        mat_name,
-                        trans_type,
-                        entry_qty,
-                        "Bags/Units",
-                        st.session_state.current_site_name,
-                    ),
+            # --- २. आजच्या कामाचे नियोजन व मटेरियल मागणी कॅल्क्युलेटर ---
+            st.markdown("### 🎯 आजच्या कामाचे नियोजन (Daily Work Requirement)")
+            
+            w_col1, w_col2, w_col3 = st.columns([2, 1.5, 1.5])
+            with w_col1:
+                today_work_stage = st.selectbox(
+                    "आज काय काम आहे? (Select Work Activity):",
+                    [
+                        "Footing Casting (फाउंडेशन काँक्रीटिंग - M20)",
+                        "Plinth Beam / Column Casting (आरसीसी - M20)",
+                        "Slab Casting (स्लॅब काँक्रीटिंग - M20)",
+                        "PCC 1:4:8 Bedding (तळ काँक्रीट)",
+                        "Brickwork 9 inch (विटांचे बांधकाम 1:6)",
+                        "Internal / External Plaster (प्लास्टर 12mm 1:4)"
+                    ],
+                    key="inv_work_type_select"
                 )
-                conn.commit()
-                conn.close()
-                st.success("✅ स्टॉक एंट्री सेव्ह झाली!")
-                st.rerun()
+            with w_col2:
+                is_area_base = "Plaster" in today_work_stage
+                vol_unit_txt = "m² (क्षेत्रफळ)" if is_area_base else "m³ (घनफळ)"
+                today_volume = st.number_input(
+                    f"आजचे एकूण प्रमाण ({vol_unit_txt}):",
+                    min_value=0.1,
+                    value=5.0,
+                    step=0.5,
+                    key="inv_work_volume"
+                )
+            with w_col3:
+                wastage_percent = st.number_input(
+                    "वेस्टेज / कटिंग वेस्ट (%):",
+                    min_value=0.0,
+                    max_value=15.0,
+                    value=3.0,
+                    step=0.5,
+                    help="साईटवरील सांडणे (Handling Loss) आणि कटिंग वेस्ट धरण्यासाठी टक्केवारी."
+                )
+
+            # --- ३. थंब-रूल व इंजिनिअरिंग हिशोब ---
+            required_materials = {}
+            w_factor = 1.0 + (wastage_percent / 100.0)
+
+            if "M20" in today_work_stage:
+                dry_vol = today_volume * 1.54 * w_factor
+                # M20 = 1 : 1.5 : 3 (Total = 5.5)
+                c_bags = (1.0 / 5.5) * dry_vol * 28.8
+                sand_m3 = (1.5 / 5.5) * dry_vol
+                agg_m3 = (3.0 / 5.5) * dry_vol
+                
+                # Brass कन्वर्जन (1 Brass = 2.83168 m³)
+                sand_brass = sand_m3 / 2.83168
+                agg_brass = agg_m3 / 2.83168
+
+                # स्टील फॅक्टर (Footing = 80kg/m³, Slab = 90kg/m³, Column/Beam = 130kg/m³)
+                if "Footing" in today_work_stage:
+                    stl_kg = today_volume * 80.0 * w_factor
+                elif "Slab" in today_work_stage:
+                    stl_kg = today_volume * 90.0 * w_factor
+                else:
+                    stl_kg = today_volume * 125.0 * w_factor
+
+                required_materials["Cement"] = (c_bags, "Bags")
+                required_materials["Sand"] = (sand_brass, "Brass")
+                required_materials["Aggregate"] = (agg_brass, "Brass")
+                required_materials["Steel"] = (stl_kg, "Kg")
+
+            elif "PCC" in today_work_stage:
+                dry_vol = today_volume * 1.54 * w_factor
+                c_bags = (1.0 / 13.0) * dry_vol * 28.8
+                sand_brass = ((4.0 / 13.0) * dry_vol) / 2.83168
+                agg_brass = ((8.0 / 13.0) * dry_vol) / 2.83168
+                
+                required_materials["Cement"] = (c_bags, "Bags")
+                required_materials["Sand"] = (sand_brass, "Brass")
+                required_materials["Aggregate"] = (agg_brass, "Brass")
+
+            elif "Brickwork" in today_work_stage:
+                brk_nos = today_volume * 500.0 * w_factor
+                dry_mortar = today_volume * 0.30 * w_factor
+                c_bags = (1.0 / 7.0) * dry_mortar * 28.8
+                sand_brass = ((6.0 / 7.0) * dry_mortar) / 2.83168
+
+                required_materials["Bricks"] = (brk_nos, "Nos")
+                required_materials["Cement"] = (c_bags, "Bags")
+                required_materials["Sand"] = (sand_brass, "Brass")
+
+            elif "Plaster" in today_work_stage:
+                # 12mm जाडी
+                wet_vol = today_volume * 0.012
+                dry_mortar = wet_vol * 1.33 * w_factor
+                c_bags = (1.0 / 5.0) * dry_mortar * 28.8
+                sand_brass = ((4.0 / 5.0) * dry_mortar) / 2.83168
+
+                required_materials["Cement"] = (c_bags, "Bags")
+                required_materials["Sand"] = (sand_brass, "Brass")
+
+            # --- ४. स्टॉक पडताळणी टेबल व काय मागवायचे ते दाखवणे ---
+            st.markdown("##### 📋 साहित्याचा ताळमेळ (Requirement vs Stock vs New Order):")
+            
+            table_rows_md = ""
+            order_summary_list = []
+            
+            for mat_key, (req_val, u_lbl) in required_materials.items():
+                cur_val = current_stock.get(mat_key, 0.0)
+                diff = req_val - cur_val
+                needed_to_order = math.ceil(diff) if u_lbl in ["Bags", "Nos"] else round(max(0.0, diff), 2)
+                
+                if needed_to_order > 0:
+                    status_badge = f"<span style='color:#ef4444; font-weight:bold;'>🔴 कमी आहे (मागवा: {needed_to_order} {u_lbl})</span>"
+                    order_summary_list.append(f"• *{mat_key}:* {needed_to_order} {u_lbl}")
+                else:
+                    status_badge = f"<span style='color:#10b981; font-weight:bold;'>🟢 पुरेशी शिल्लक (+{abs(round(diff,2))} {u_lbl})</span>"
+
+                table_rows_md += f"| **{mat_key}** | {req_val:.2f} {u_lbl} | {cur_val:.2f} {u_lbl} | {needed_to_order:.2f} {u_lbl} | {status_badge} |\n"
+
+            st.markdown(
+                f"""
+| साहित्याचे नाव | आज लागणारे प्रमाण (वेस्टेजसह) | साईटवर शिल्लक | **नवीन किती मागवायचे?** | सद्यस्थिती |
+| :--- | :--- | :--- | :--- | :--- |
+{table_rows_md}
+                """,
+                unsafe_allow_html=True
+            )
+
+            # --- ५. WhatsApp ऑर्डर व डेटाबेस सेव्ह बटणे ---
+            col_save_ord, col_wa_ord = st.columns(2)
+            
+            with col_save_ord:
+                if st.button("💾 हा मटेरियल इंडेंट सेव्ह करा", type="primary", use_container_width=True):
+                    conn = get_db_connection()
+                    cursor = conn.cursor()
+                    now_date = str(datetime.date.today())
+                    
+                    for mat_key, (req_val, u_lbl) in required_materials.items():
+                        cur_val = current_stock.get(mat_key, 0.0)
+                        diff = max(0.0, req_val - cur_val)
+                        cursor.execute(
+                            """
+                            INSERT INTO site_material_requisitions 
+                            (user_key, date, work_type, work_volume, material_name, required_qty, stock_qty, order_qty, unit, site_name)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            """,
+                            (
+                                current_user_name, now_date, today_work_stage, today_volume,
+                                mat_key, round(req_val, 2), round(cur_val, 2), round(diff, 2),
+                                u_lbl, st.session_state.current_site_name
+                            )
+                        )
+                    conn.commit()
+                    conn.close()
+                    st.success("✅ मटेरियल इंडेंट डेटाबेसमध्ये सेव्ह झाला!")
+
+            with col_wa_ord:
+                order_text = (
+                    f"📦 *PATIL INFRATECH - MATERIAL PURCHASE ORDER*\n"
+                    f"📍 *Site:* {st.session_state.current_site_name}\n"
+                    f"👷 *Engineer:* {current_user_name}\n"
+                    f"📅 *Date:* {datetime.date.today().strftime('%d-%m-%Y')}\n"
+                    f"🚧 *Work Planned:* {today_work_stage} ({today_volume} {vol_unit_txt})\n\n"
+                    f"🚚 *नवीन आवश्यक साहित्य (तात्काळ पाठवणे):*\n"
+                )
+                if order_summary_list:
+                    order_text += "\n".join(order_summary_list)
+                else:
+                    order_text += "• सर्व साहित्य पुरेशा प्रमाणात शिल्लक आहे. नवीन ऑर्डरची गरज नाही."
+
+                order_text += "\n\n_Generated via Patil Infratech Material System_"
+                render_whatsapp_feature(urllib.parse.quote(order_text), "inv_order_wa")
+
+            st.write("---")
+
+            # --- ६. मॅन्युअल माल आला/गेला (IN/OUT) नोंद फॉर्म ---
+            with st.expander("📥/📤 साईटवर नवीन माल आला किंवा वापरला (Manual Stock IN-OUT Entry)"):
+                mat_type_in = st.selectbox(
+                    "साहित्य निवडा:",
+                    ["Cement (Bags)", "Sand (Brass)", "Aggregate (Brass)", "Steel (Kg)", "Bricks (Nos)"],
+                    key="manual_mat_select"
+                )
+                trans_type_in = st.radio(
+                    "प्रकार निवडा:",
+                    ["Material IN (+) [नवीन गाडी आली]", "Material OUT (-) [कामावर वापरले/खर्च]"],
+                    horizontal=True,
+                    key="manual_trans_type"
+                )
+                qty_val_in = st.number_input(
+                    "संख्या / प्रमाण (Quantity):",
+                    min_value=0.1,
+                    value=50.0,
+                    step=1.0,
+                    key="manual_qty_val"
+                )
+
+                if st.button("💾 स्टॉक नोंद सेव्ह करा", key="btn_save_manual_stock"):
+                    clean_mat_name = mat_type_in.split(" ")[0]
+                    clean_unit = mat_type_in.split("(")[-1].replace(")", "")
+                    conn = get_db_connection()
+                    cursor = conn.cursor()
+                    cursor.execute(
+                        """
+                        INSERT INTO site_inventory (user_key, date, material_name, transaction_type, quantity, unit, site_name)
+                        VALUES (?, ?, ?, ?, ?, ?, ?)
+                        """,
+                        (
+                            current_user_name,
+                            str(datetime.date.today()),
+                            clean_mat_name,
+                            "Material IN (+)" if "IN" in trans_type_in else "Material OUT (-)",
+                            qty_val_in,
+                            clean_unit,
+                            st.session_state.current_site_name
+                        )
+                    )
+                    conn.commit()
+                    conn.close()
+                    st.success("✅ साहित्याची नोंद अपडेट झाली!")
+                    st.rerun()
 
         # १७.३ Daily Progress Report & Photos
         elif sub_mod == "Progress":
