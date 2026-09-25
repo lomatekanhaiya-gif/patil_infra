@@ -531,6 +531,18 @@ def init_db():
         )
     """)
 
+    # १४. साईट मास्टर आणि कोड्स टेबल (नवीन)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS user_sites (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_key TEXT,
+            site_code TEXT,
+            site_name TEXT,
+            created_at TEXT,
+            UNIQUE(user_key, site_code)
+        )
+    """)
+
     # मास्टर ॲडमीन डिफॉल्ट एंट्री
     cursor.execute("SELECT * FROM users WHERE user_key = ?", ("9999999999",))
     if not cursor.fetchone():
@@ -598,17 +610,6 @@ def init_db():
     conn.close()
 
 init_db()
-# १४. साईट मास्टर आणि कोड्स टेबल (नवीन)
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS user_sites (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_key TEXT,
-            site_code TEXT,
-            site_name TEXT,
-            created_at TEXT,
-            UNIQUE(user_key, site_code)
-        )
-    """)
 
 # ==========================================
 # 📌 विभाग ६: डेटाबेस क्वेरी आणि हेल्पर फंक्शन्स
