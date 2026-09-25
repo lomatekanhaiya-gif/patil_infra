@@ -765,9 +765,8 @@ def check_user_premium_status(username):
 
 is_curr_premium, _ = check_user_premium_status(current_user_name)
 
-
 # ==========================================
-# 📌 विभाग ८: BRANDED CONSTRUCTION THEME CSS (Fully Responsive & Clean)
+# 📌 विभाग ८: BRANDED CONSTRUCTION THEME CSS (Compact & Dedicated Inbox Support)
 # ==========================================
 st.markdown(
     """
@@ -788,55 +787,65 @@ st.markdown(
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
     }
 
-    /* ३. मुख्य ब्रँडेड हेडर (Clean Header with Mobile/Laptop auto-fit) */
+    /* ३. कॉम्पॅक्ट ब्रँडेड हेडर (कमी जागा घेणारा, स्लीक डिझाईन) */
     .brand-header {
         background: #111827;
         border: 1px solid #1f2937;
-        border-left: 5px solid #f59e0b;
-        padding: 16px 20px;
-        border-radius: 12px;
-        text-align: left;
-        margin-bottom: 20px;
+        border-left: 4px solid #f59e0b;
+        padding: 8px 14px;
+        border-radius: 8px;
         display: flex;
-        align-items: center;
         justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
         flex-wrap: wrap;
-        gap: 12px;
+        gap: 8px;
     }
     .brand-title-wrap {
         display: flex;
         align-items: center;
-        gap: 14px;
+        gap: 8px;
     }
     .brand-logo-icon {
-        font-size: 32px;
+        font-size: 22px;
         line-height: 1;
     }
     .brand-title-text h1 {
         margin: 0 !important;
-        font-size: 22px !important;
+        font-size: 16px !important;
         font-weight: 800 !important;
         letter-spacing: 0.5px;
         color: #ffffff !important;
+        display: inline-block;
     }
     .brand-title-text p {
-        margin: 2px 0 0 0 !important;
-        font-size: 12px !important;
+        margin: 0 0 0 8px !important;
+        font-size: 11px !important;
         color: #94a3b8 !important;
         font-weight: 500;
-        text-transform: uppercase;
+        display: inline-block;
     }
     .brand-founder-tag {
         background: rgba(245, 158, 11, 0.1);
         color: #f59e0b;
         border: 1px solid rgba(245, 158, 11, 0.2);
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 12px;
+        padding: 2px 10px;
+        border-radius: 12px;
+        font-size: 11px;
         font-weight: 600;
     }
 
-    /* ४. इनपुट्स, सिलेक्ट व टेक्स्टएरिया */
+    /* ४. इनबॉक्स व ॲडमीन मेसेज अलर्ट कार्ड */
+    .inbox-alert-card {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(17, 24, 39, 0.95) 100%);
+        border: 1px solid #10b981;
+        border-left: 4px solid #10b981;
+        padding: 10px 14px;
+        border-radius: 8px;
+        margin-bottom: 12px;
+    }
+
+    /* ५. इनपुट्स, सिलेक्ट व टेक्स्टएरिया */
     div[data-baseweb="input"], div[data-baseweb="base-input"],
     div[data-testid="stNumberInputContainer"], div[data-testid="stTextInput"] {
         background-color: #111827 !important;
@@ -847,21 +856,21 @@ st.markdown(
         color: #ffffff !important;
         border: 1px solid #1f2937 !important;
         border-radius: 8px !important;
-        font-size: 14px !important;
+        font-size: 13px !important;
     }
     input:focus, textarea:focus {
         border-color: #f59e0b !important;
         box-shadow: 0 0 0 1px #f59e0b !important;
     }
 
-    /* ५. आधुनिक कॉम्पॅक्ट बटन्स */
+    /* ६. आधुनिक कॉम्पॅक्ट बटन्स */
     div.stButton > button {
         background: #1e293b !important;
         color: #f8fafc !important;
         border: 1px solid #334155 !important;
         border-radius: 8px !important;
         font-weight: 600 !important;
-        padding: 8px 16px !important;
+        padding: 6px 14px !important;
         font-size: 13px !important;
         transition: all 0.15s ease-in-out;
     }
@@ -880,12 +889,12 @@ st.markdown(
         color: #000000 !important;
     }
 
-    /* ६. मॉड्युल कार्ड्स (Dashboard Cards) */
+    /* ७. मॉड्युल कार्ड्स */
     .module-card {
         background: #111827;
         border: 1px solid #1f2937;
-        border-radius: 12px;
-        padding: 18px 14px;
+        border-radius: 10px;
+        padding: 14px 10px;
         text-align: center;
         transition: border-color 0.2s ease;
         height: 100%;
@@ -898,50 +907,50 @@ st.markdown(
         border-color: #f59e0b;
     }
 
-    /* ७. स्टेटस बॅजेस */
+    /* ८. स्टेटस बॅजेस */
     .gold-vip-badge {
         background: rgba(245, 158, 11, 0.15);
         color: #f59e0b !important;
         border: 1px solid #f59e0b;
-        padding: 4px 12px;
-        border-radius: 20px;
+        padding: 2px 10px;
+        border-radius: 12px;
         font-weight: 700;
-        font-size: 12px;
+        font-size: 11px;
         display: inline-block;
     }
     .free-user-badge {
         background: rgba(56, 189, 248, 0.1);
         color: #38bdf8 !important;
         border: 1px solid #0284c7;
-        padding: 4px 12px;
-        border-radius: 20px;
+        padding: 2px 10px;
+        border-radius: 12px;
         font-weight: 600;
-        font-size: 12px;
+        font-size: 11px;
         display: inline-block;
     }
 
-    /* ८. लाइटवेट ॲनिमेशन स्पिनर */
+    /* ९. लाइटवेट ॲनिमेशन स्पिनर */
     .clean-loader {
-        width: 44px;
-        height: 44px;
+        width: 36px;
+        height: 36px;
         border: 3px solid rgba(245, 158, 11, 0.2);
         border-top-color: #f59e0b;
         border-radius: 50%;
         animation: clean-spin 0.8s linear infinite;
-        margin: 20px auto;
+        margin: 15px auto;
     }
     @keyframes clean-spin {
         to { transform: rotate(360deg); }
     }
 
-    /* ९. स्पॉन्सर ॲड कार्ड */
+    /* १०. स्पॉन्सर ॲड कार्ड */
     .sponsor-mini-card {
         background: #111827;
-        border: 1px solid rgba(245, 158, 11, 0.4);
-        padding: 10px 14px;
-        border-radius: 10px;
+        border: 1px solid rgba(245, 158, 11, 0.3);
+        padding: 8px 12px;
+        border-radius: 8px;
         text-align: center;
-        margin: 10px auto;
+        margin: 8px auto;
         max-width: 320px;
     }
     </style>
@@ -1856,12 +1865,32 @@ if st.session_state.get("is_client_view", False):
 
 
 # ==============================================================================
-# 📌 विभाग १३: मुख्य युझर डॅशबोर्ड (Top Action Bar, Weather, Site & Notice Box)
+# 📌 विभाग १३: मुख्य युझर डॅशबोर्ड (Compact Header, Action Bar & Dedicated Inbox)
 # ==============================================================================
 current_user_name = st.session_state.app_user_name
 is_user_premium, status_text_str = check_user_premium_status(current_user_name)
+current_user_data = get_user_data(current_user_name) or {}
 
-# १. स्पॉन्सर ॲड्स
+# १. अल्ट्रा-कॉम्पॅक्ट स्लीक हेडर (जागा न खाणारा)
+st.markdown(
+    """
+    <div class="brand-header-compact">
+        <div class="brand-title-compact">
+            <span style="font-size: 20px;">🏗️</span>
+            <h2>PATIL INFRATECH</h2>
+            <span class="brand-subtext">| Civil Suite & Site Manager</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px;">
+            <span style="background:rgba(245,158,11,0.15); color:#f59e0b; border:1px solid rgba(245,158,11,0.3); padding:2px 10px; border-radius:15px; font-size:11px; font-weight:700;">
+                Founder: Kanhaiya
+            </span>
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+# २. स्पॉन्सर जाहिरात (सक्रिय असल्यास कॉम्पॅक्ट पट्टीमध्ये)
 conn = get_db_connection()
 cursor = conn.cursor()
 cursor.execute("SELECT * FROM ads WHERE active = 1 AND position = 'Main App Header (Top Banner)'")
@@ -1871,16 +1900,16 @@ conn.close()
 for ad in ads_list:
     st.markdown(
         f"""
-        <div style="background:#111827; border:1px solid #1f2937; padding:8px 12px; border-radius:8px; text-align:center; margin-bottom:12px;">
-            <small style="color:#f59e0b; font-weight:bold;">📢 SPONSOR</small> 
-            <b style="color:#fff; margin-left:6px;">{ad.get('title')}</b> — <span style="color:#94a3b8; font-size:12px;">{ad.get('desc')}</span>
-            <a href="{ad.get('link')}" target="_blank" style="color:#38bdf8; font-size:12px; margin-left:6px; font-weight:600;">[भेट द्या]</a>
+        <div style="background:#111827; border:1px solid #1f2937; padding:6px 12px; border-radius:8px; text-align:center; margin-bottom:10px; font-size:12px;">
+            <span style="color:#f59e0b; font-weight:bold;">📢 SPONSOR:</span> 
+            <b style="color:#fff; margin-left:4px;">{ad.get('title')}</b> — <span style="color:#94a3b8;">{ad.get('desc')}</span>
+            <a href="{ad.get('link')}" target="_blank" style="color:#38bdf8; margin-left:6px; font-weight:600; text-decoration:none;">[भेट द्या]</a>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-# २. हवामान डेटा
+# ३. हवामान डेटा
 if "site_location_city" not in st.session_state:
     st.session_state.site_location_city = "Pune"
 
@@ -1889,21 +1918,21 @@ w_temp = site_weather["temp"] if site_weather else "--"
 w_rain = site_weather["rain_prob"] if site_weather else 0
 w_city = site_weather["city"] if site_weather else st.session_state.site_location_city
 
-# ३. टॉप ॲक्शन बार (Compact Responsive Layout)
-top_c1, top_c2, top_c3, top_c4 = st.columns([3, 2.2, 1.8, 1.2])
+# ४. कॉम्पॅक्ट ॲक्शन बार (Site, Weather, City & Logout)
+top_c1, top_c2, top_c3, top_c4 = st.columns([3.2, 2.2, 1.8, 1.2])
 
 with top_c1:
     st.markdown(
         f"""
-        <div style="background:#111827; border:1px solid #1f2937; border-left:4px solid #38bdf8; padding:8px 12px; border-radius:8px;">
-            <span style="font-size:11px; color:#94a3b8;">📍 चालू साईट:</span><br>
-            <b style="color:#ffffff; font-size:14px;">🏗️ {st.session_state.current_site_name}</b>
+        <div style="background:#111827; border:1px solid #1f2937; border-left:3px solid #38bdf8; padding:6px 12px; border-radius:8px;">
+            <span style="font-size:10px; color:#94a3b8;">📍 चालू साईट:</span><br>
+            <b style="color:#ffffff; font-size:13px;">🏗️ {st.session_state.current_site_name}</b>
         </div>
         """,
         unsafe_allow_html=True,
     )
     with st.popover("✏️ साईट नाव बदला"):
-        new_site_input = st.text_input("नवीन नाव टाका:", value=st.session_state.current_site_name, key="top_site_edit_input")
+        new_site_input = st.text_input("नवीन साईट नाव:", value=st.session_state.current_site_name, key="top_site_edit_input")
         if st.button("💾 सेव्ह करा", key="btn_save_top_site", type="primary", use_container_width=True):
             if new_site_input.strip():
                 st.session_state.current_site_name = new_site_input.strip()
@@ -1912,9 +1941,9 @@ with top_c1:
 with top_c2:
     st.markdown(
         f"""
-        <div style="background:#111827; border:1px solid #1f2937; padding:8px 12px; border-radius:8px; text-align:center;">
-            <span style="font-size:11px; color:#94a3b8;">🌤️ {w_city}</span><br>
-            <b style="color:#38bdf8; font-size:14px;">{w_temp}°C</b> | <span style="color:{'#ef4444' if w_rain >= 50 else '#10b981'}; font-weight:bold; font-size:13px;">🌧️ {w_rain}%</span>
+        <div style="background:#111827; border:1px solid #1f2937; padding:6px 12px; border-radius:8px; text-align:center;">
+            <span style="font-size:10px; color:#94a3b8;">🌤️ {w_city}</span><br>
+            <b style="color:#38bdf8; font-size:13px;">{w_temp}°C</b> | <span style="color:{'#ef4444' if w_rain >= 50 else '#10b981'}; font-weight:bold; font-size:12px;">🌧️ {w_rain}%</span>
         </div>
         """,
         unsafe_allow_html=True,
@@ -1938,40 +1967,58 @@ with top_c4:
         st.markdown("<script>localStorage.removeItem('patil_app_user');</script>", unsafe_allow_html=True)
         st.rerun()
 
-# ४. नोटीस बॉक्स
-current_user_data = get_user_data(current_user_name) or {}
-disp_name_inbox = current_user_name if current_user_name else ""
+# ------------------------------------------------------------------------------
+# 📥 ५. युझरचा अधिकृत इनबॉक्स व मेसेज सेंटर (Dedicated Admin Message Center)
+# ------------------------------------------------------------------------------
+has_unread = current_user_data.get("unread_notification", 0) == 1
+admin_message_content = current_user_data.get("admin_message", "")
 
-if current_user_data.get("unread_notification") == 1:
-    admin_msg = current_user_data.get("admin_message", "")
+# जर ॲडमीनने काही कोड किंवा मेसेज पाठवला असेल तर तो हायलाइट होऊन दिसेल
+if has_unread:
     st.markdown(
         f"""
-        <div style="background: rgba(16, 185, 129, 0.15); border: 1px solid #10b981; padding: 12px; border-radius: 8px; margin: 12px 0;">
-            <b style="color: #34d399;">🔔 नवीन नोटीस:</b> <span style="color:#fff; margin-left:6px;">{admin_msg}</span>
+        <div class="inbox-alert-card">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <b style="color:#10b981; font-size:14px;">🔔 नवीन ॲडमीन संदेश / कोड आला आहे!</b>
+                <span style="background:#ef4444; color:#fff; font-size:10px; font-weight:bold; padding:2px 8px; border-radius:10px;">NEW</span>
+            </div>
+            <p style="color:#ffffff; font-size:14px; margin:8px 0 6px 0; line-height:1.4;">
+                {admin_message_content}
+            </p>
         </div>
         """,
         unsafe_allow_html=True,
     )
-    if st.button("✅ वाचले आहे (Clear)", type="primary", key="btn_read_notice"):
+    if st.button("✅ मेसेज वाचला आहे (Mark as Read)", type="primary", key="btn_read_notice", use_container_width=True):
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("UPDATE users SET unread_notification = 0 WHERE user_key = ?", (current_user_name,))
         conn.commit()
         conn.close()
         st.rerun()
+else:
+    # युझरसाठी कायम उपलब्ध असणारा इनबॉक्स
+    inbox_label = f"📥 इनबॉक्स व ॲडमीन संदेश ({current_user_name})"
+    with st.expander(inbox_label, expanded=False):
+        if admin_message_content:
+            st.markdown(f"**शेवटचा मेसेज:**\n\n> {admin_message_content}")
+        else:
+            st.info("ℹ️ इनबॉक्समध्ये सध्या कोणताही नवीन संदेश नाही.")
 
-# ५. प्रिमियम अनलॉक बॉक्स (फ्री युझर्ससाठी)
+# ------------------------------------------------------------------------------
+# 🔑 ६. प्रिमियम कोड अनलॉक व ॲक्टिव्हेशन (Free Users Only)
+# ------------------------------------------------------------------------------
 if not is_user_premium:
-    with st.expander("🔑 प्रिमियम कोड अनलॉक करा"):
-        input_code = st.text_input("Enter Code (e.g. PATIL-XXXXX):", key="home_code_input").strip()
+    with st.expander("🔑 प्रिमियम कोड अनलॉक करा (Enter Code)"):
+        input_code = st.text_input("Activation Code:", placeholder="उदा. PATIL-XXXXX किंवा 4528", key="home_code_input").strip()
         c_btn1, c_btn2 = st.columns(2)
         with c_btn1:
-            if st.button("🔓 Activate", key="btn_activate_prem_main", type="primary", use_container_width=True):
+            if st.button("🔓 Activate Premium", key="btn_activate_prem_main", type="primary", use_container_width=True):
                 u_info = get_user_data(current_user_name) or {}
                 if input_code == "4528":
                     uses_count = u_info.get("master_code_uses", 0)
                     if uses_count >= 3:
-                        st.error("❌ मर्यादा संपली आहे!")
+                        st.error("❌ या कोडची मर्यादा संपली आहे!")
                     else:
                         exp_str = (get_ist_time() + datetime.timedelta(hours=8)).strftime("%Y-%m-%d %H:%M:%S")
                         conn = get_db_connection()
@@ -2007,16 +2054,15 @@ if not is_user_premium:
                         conn.close()
                         st.error("❌ अमान्य कोड!")
         with c_btn2:
-            if st.button("📩 Request Code", key="btn_req_code_main", use_container_width=True):
+            if st.button("📩 Request Code from Admin", key="btn_req_code_main", use_container_width=True):
                 conn = get_db_connection()
                 cursor = conn.cursor()
                 cursor.execute("UPDATE users SET requested_code = 1 WHERE user_key = ?", (current_user_name,))
                 conn.commit()
                 conn.close()
-                st.success("✅ रिक्वेस्ट पाठवली!")
+                st.success("✅ ॲडमीनला कोडसाठी रिक्वेस्ट पाठवली!")
 
 st.write("---")
-
 
 # ==========================================
 # 📌 विभाग १४: CIVIL AI ASSISTANT (Gemini SDK & Fallback)
