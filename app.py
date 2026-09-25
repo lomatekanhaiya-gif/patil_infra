@@ -3662,7 +3662,6 @@ elif st.session_state.selected_module == "Site Manager":
                 conn.commit()
                 conn.close()
                 st.success("✅ आजची हजेरी आणि मजुरी बिल सेव्ह झाले!")
-
 # ==============================================================================
         # १७.२ Smart Material ERP: Master Volumes, Taking, Stock & Stage Progression
         # ==============================================================================
@@ -3674,7 +3673,7 @@ elif st.session_state.selected_module == "Site Manager":
             conn = get_db_connection()
             cursor = conn.cursor()
 
-            # टेबल अस्तित्वात असल्याची खात्री करणे
+            # 🛠️ Safe Database Migration: Table aani Columns chi khatri karne
             cursor.execute(
                 """
                 CREATE TABLE IF NOT EXISTS site_master_volumes (
@@ -3690,6 +3689,20 @@ elif st.session_state.selected_module == "Site Manager":
                 )
                 """
             )
+            conn.commit()
+
+            # Junya table schema madhe columns naslyas alter karne
+            existing_cols = [c[1] for c in cursor.execute("PRAGMA table_info(site_master_volumes)").fetchall()]
+            if "brick_9_vol" not in existing_cols:
+                try:
+                    cursor.execute("ALTER TABLE site_master_volumes ADD COLUMN brick_9_vol REAL DEFAULT 15.0")
+                except Exception:
+                    pass
+            if "brick_4_vol" not in existing_cols:
+                try:
+                    cursor.execute("ALTER TABLE site_master_volumes ADD COLUMN brick_4_vol REAL DEFAULT 5.0")
+                except Exception:
+                    pass
             conn.commit()
 
             cursor.execute(
@@ -3721,18 +3734,20 @@ elif st.session_state.selected_module == "Site Manager":
                     else:
                         current_stock[matched_key] -= qty
 
-            # मास्टर व्हॉल्यूम्स लोड करणे
+            # 🛡️ Safe Extraction (IndexError hoou naye mhanun dictionary conversion)
             cursor.execute("SELECT * FROM site_master_volumes WHERE site_name = ?", (st.session_state.current_site_name,))
-            mv_row = cursor.fetchone()
+            mv_raw = cursor.fetchone()
             conn.close()
 
-            v_pcc = float(mv_row["pcc_vol"]) if mv_row else 2.0
-            v_foot = float(mv_row["footing_vol"]) if mv_row else 5.0
-            v_plinth = float(mv_row["plinth_vol"]) if mv_row else 3.0
-            v_col = float(mv_row["column_vol"]) if mv_row else 2.5
-            v_b9 = float(mv_row["brick_9_vol"]) if mv_row else 15.0
-            v_b4 = float(mv_row["brick_4_vol"]) if mv_row else 5.0
-            v_slab = float(mv_row["slab_vol"]) if mv_row else 10.0
+            mv_dict = dict(mv_raw) if mv_raw else {}
+
+            v_pcc = float(mv_dict.get("pcc_vol", 2.0))
+            v_foot = float(mv_dict.get("footing_vol", 5.0))
+            v_plinth = float(mv_dict.get("plinth_vol", 3.0))
+            v_col = float(mv_dict.get("column_vol", 2.5))
+            v_b9 = float(mv_dict.get("brick_9_vol", mv_dict.get("brickwork_vol", 15.0)))
+            v_b4 = float(mv_dict.get("brick_4_vol", 5.0))
+            v_slab = float(mv_dict.get("slab_vol", 10.0))
 
             # --- २. साईटवरील चालू शिल्लक साठा (Live Stock Card Bar) ---
             st.markdown("##### 📊 साईटवर चालू शिल्लक माल (Current Live Stock):")
@@ -3828,14 +3843,13 @@ elif st.session_state.selected_module == "Site Manager":
             
             selected_stage = st.selectbox("आज चालू असलेले काम निवडा:", stages_list, key="sel_active_stage")
 
-            # निवडलेल्या टप्प्यानुसार व्हॉल्यूम व IS Code मोजमाप
             target_vol = 0.0
             stage_req = {}
             wastage_factor = 1.03  # 3% standard site wastage
 
             if "1. PCC" in selected_stage:
                 target_vol = v_pcc
-                dry_vol = target_vol * 1.54 * wastage_factor  # PCC Dry Factor 1.54
+                dry_vol = target_vol * 1.54 * wastage_factor
                 stage_req = {
                     "Cement": (math.ceil((1.0 / 13.0) * dry_vol * 28.8), "Bags"),
                     "Sand": (round((((4.0 / 13.0) * dry_vol) / 2.8317), 2), "Brass"),
@@ -3870,7 +3884,7 @@ elif st.session_state.selected_module == "Site Manager":
                 }
             elif "5. Superstructure Brickwork 9\"" in selected_stage:
                 target_vol = v_b9
-                dry_mortar = target_vol * 0.30 * wastage_factor  # 30% mortar with frog filling
+                dry_mortar = target_vol * 0.30 * wastage_factor
                 stage_req = {
                     "Bricks": (math.ceil(target_vol * 500.0 * wastage_factor), "Nos"),
                     "Cement": (math.ceil((1.0 / 7.0) * dry_mortar * 28.8), "Bags"),
@@ -3926,7 +3940,7 @@ elif st.session_state.selected_module == "Site Manager":
                 """
             )
 
-            # --- ७. स्टेज लॉक व वजावट पर्याय (ऑटो-डिडक्शन किंवा मॅन्युअल एन्ट्री) ---
+            # --- ७. स्टेज लॉक व वजावट पर्याय ---
             st.write(" ")
             if has_stage_shortage:
                 st.error(
@@ -3938,7 +3952,6 @@ elif st.session_state.selected_module == "Site Manager":
                     """
                 )
 
-                # तातडीने व्हॉट्सॲपवर ऑर्डर पाठवणे
                 wa_msg = (
                     f"🚨 *URGENT MATERIAL ORDER - PATIL INFRATECH*\n"
                     f"📍 *Site:* {st.session_state.current_site_name} [{st.session_state.active_site_code}]\n"
@@ -3956,7 +3969,6 @@ elif st.session_state.selected_module == "Site Manager":
 
                 col_exec1, col_exec2 = st.columns(2)
                 
-                # पर्याय १: सिस्टीमने काढलेला माल थेट वजा करणे
                 with col_exec1:
                     if st.button("🚀 काम पूर्ण झाले (ऑटोमॅटिक माल वजा करा)", type="primary", use_container_width=True):
                         now_ts = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
@@ -3977,7 +3989,7 @@ elif st.session_state.selected_module == "Site Manager":
                             INSERT INTO site_progress (user_key, date, stage_name, progress_percent, remark, site_name)
                             VALUES (?, ?, ?, 100, ?, ?)
                             """,
-                            (current_user_name, now_ts[:10], selected_stage, f"{target_vol} m³ काम पूर्ण झाले. माल स्टॉकमधून वजा केला.", st.session_state.current_site_name)
+                            (current_user_name, now_ts[:10], selected_stage, f"{target_vol} m³ काम यशस्वीरित्या पूर्ण झाले. साहित्य वजा केले.", st.session_state.current_site_name)
                         )
 
                         conn.commit()
@@ -3988,7 +4000,6 @@ elif st.session_state.selected_module == "Site Manager":
                         time.sleep(1.2)
                         st.rerun()
 
-                # पर्याय २: साईटवर प्रत्यक्ष किती खर्च झाला ते मॅन्युअली टाकून वजा करणे
                 with col_exec2:
                     with st.popover("✏️ मॅन्युअल खर्च नोंदवून वजा करा"):
                         st.markdown("###### प्रत्यक्ष खर्च झालेला माल भरा:")
@@ -4041,7 +4052,7 @@ elif st.session_state.selected_module == "Site Manager":
 
                     st.markdown(
                         f"""
-| तारीख व वेळ | साहित्य | प्रकार (IN/OUT) | प्रमाण |
+| तारीख व वेळ | साहित्य | प्रकार | प्रमाण |
 | :--- | :--- | :--- | :--- |
 {log_md}
                         """
