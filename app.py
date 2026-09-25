@@ -531,7 +531,7 @@ def init_db():
         )
     """)
 
-    # १४. साईट मास्टर आणि कोड्स टेबल (नवीन)
+    # १४. साईट मास्टर आणि कोड्स टेबल
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS user_sites (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -540,6 +540,20 @@ def init_db():
             site_name TEXT,
             created_at TEXT,
             UNIQUE(user_key, site_code)
+        )
+    """)
+
+    # १५. मास्टर प्रोजेक्ट वॉल्यूम्स टेबल (Auto-Engineered Table)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS site_master_volumes (
+            site_name TEXT PRIMARY KEY,
+            pcc_vol REAL DEFAULT 2.0,
+            footing_vol REAL DEFAULT 5.0,
+            plinth_vol REAL DEFAULT 3.0,
+            column_vol REAL DEFAULT 2.5,
+            brickwork_vol REAL DEFAULT 15.0,
+            slab_vol REAL DEFAULT 10.0,
+            updated_at TEXT
         )
     """)
 
@@ -556,14 +570,14 @@ def init_db():
             """,
             (
                 "9999999999",
-                "kanha",
-                "KANHA_1P",
+                "admin",
+                "ADMIN_1P",
                 "1234",
                 "9999999999",
                 "admin@patilinfratech.com",
                 "patiladmin123",
                 "मास्टर ॲडमीन अकाउंट",
-                "स्वागत आहे मास्टर कन्हैया! आपले पाटील इन्फ्राटेक मध्ये सर्व अधिकार अनलॉक्ड आहेत ⚡",
+                "स्वागत आहे! पाटील इन्फ्राटेक मध्ये आपले सर्व अधिकार अनलॉक्ड आहेत ⚡",
                 0,
                 1,
                 "2099-12-31 23:59:59",
