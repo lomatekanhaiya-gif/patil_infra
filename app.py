@@ -3663,19 +3663,38 @@ elif st.session_state.selected_module == "Site Manager":
                 conn.close()
                 st.success("✅ आजची हजेरी आणि मजुरी बिल सेव्ह झाले!")
 
- # ==============================================================================
-        # १७.२ Simple & Clean Stage Execution, Auto-Taking & Live Stock Engine
+# ==============================================================================
+        # १७.२ Smart Material ERP: Master Volumes, Taking, Stock & Stage Progression
         # ==============================================================================
         elif sub_mod == "Inventory":
-            st.markdown("#### 🏗️ साईट साहित्य व टप्प्याटप्प्याने कामाचे नियोजन")
-            st.caption(f"📍 चालू साईट: **[{st.session_state.active_site_code}] {st.session_state.current_site_name}**")
+            st.markdown("#### 🏗️ साईट साहित्य व्यवस्थापन व स्टेज-बाय-स्टेज प्रोग्रेशन")
+            st.caption(f"📍 चालू प्रोजेक्ट: **[{st.session_state.active_site_code}] {st.session_state.current_site_name}** | IS Code मानकांनुसार अचूक साहित्य ताळमेळ.")
 
-            # --- १. चालू प्रत्यक्ष शिल्लक साठा (Live Stock Balance) ---
+            # --- १. चालू प्रत्यक्ष शिल्लक साठा (Live Stock Balance) डेटाबेसमधून मोजणे ---
             conn = get_db_connection()
             cursor = conn.cursor()
+
+            # टेबल अस्तित्वात असल्याची खात्री करणे
             cursor.execute(
                 """
-                SELECT material_name, transaction_type, quantity 
+                CREATE TABLE IF NOT EXISTS site_master_volumes (
+                    site_name TEXT PRIMARY KEY,
+                    pcc_vol REAL DEFAULT 2.0,
+                    footing_vol REAL DEFAULT 5.0,
+                    plinth_vol REAL DEFAULT 3.0,
+                    column_vol REAL DEFAULT 2.5,
+                    brick_9_vol REAL DEFAULT 15.0,
+                    brick_4_vol REAL DEFAULT 5.0,
+                    slab_vol REAL DEFAULT 10.0,
+                    updated_at TEXT
+                )
+                """
+            )
+            conn.commit()
+
+            cursor.execute(
+                """
+                SELECT material_name, transaction_type, quantity, unit 
                 FROM site_inventory 
                 WHERE site_name = ?
                 """,
@@ -3683,7 +3702,13 @@ elif st.session_state.selected_module == "Site Manager":
             )
             inv_rows = cursor.fetchall()
 
-            current_stock = {"Cement": 0.0, "Sand": 0.0, "Aggregate": 0.0, "Steel": 0.0}
+            current_stock = {
+                "Cement": 0.0,
+                "Sand": 0.0,
+                "Aggregate": 0.0,
+                "Steel": 0.0,
+                "Bricks": 0.0
+            }
 
             for row in inv_rows:
                 mat = str(row["material_name"]).strip()
@@ -3696,79 +3721,44 @@ elif st.session_state.selected_module == "Site Manager":
                     else:
                         current_stock[matched_key] -= qty
 
-            # डेटाबेसमधून व्हॉल्यूम लोड करणे (नसल्यास डिफ़ॉल्ट ०.०)
-            cursor.execute(
-                """
-                CREATE TABLE IF NOT EXISTS site_master_volumes (
-                    site_name TEXT PRIMARY KEY,
-                    pcc_vol REAL DEFAULT 0.0,
-                    footing_vol REAL DEFAULT 0.0,
-                    plinth_vol REAL DEFAULT 0.0,
-                    column_vol REAL DEFAULT 0.0,
-                    slab_vol REAL DEFAULT 0.0,
-                    updated_at TEXT
-                )
-                """
-            )
-            conn.commit()
-
+            # मास्टर व्हॉल्यूम्स लोड करणे
             cursor.execute("SELECT * FROM site_master_volumes WHERE site_name = ?", (st.session_state.current_site_name,))
             mv_row = cursor.fetchone()
             conn.close()
 
-            v_pcc = float(mv_row["pcc_vol"]) if mv_row else 1.0
-            v_foot = float(mv_row["footing_vol"]) if mv_row else 3.0
-            v_plinth = float(mv_row["plinth_vol"]) if mv_row else 2.0
-            v_col = float(mv_row["column_vol"]) if mv_row else 2.0
-            v_slab = float(mv_row["slab_vol"]) if mv_row else 8.0
+            v_pcc = float(mv_row["pcc_vol"]) if mv_row else 2.0
+            v_foot = float(mv_row["footing_vol"]) if mv_row else 5.0
+            v_plinth = float(mv_row["plinth_vol"]) if mv_row else 3.0
+            v_col = float(mv_row["column_vol"]) if mv_row else 2.5
+            v_b9 = float(mv_row["brick_9_vol"]) if mv_row else 15.0
+            v_b4 = float(mv_row["brick_4_vol"]) if mv_row else 5.0
+            v_slab = float(mv_row["slab_vol"]) if mv_row else 10.0
 
-            # साठ्याची साधी व स्वच्छ पट्टी (Zero Fluff Metric Bar)
-            st.markdown("##### 📊 साईटवर चालू शिल्लक माल (Current Stock):")
-            sc1, sc2, sc3, sc4 = st.columns(4)
-            sc1.metric("Cement", f"{current_stock['Cement']:.1f} Bags")
-            sc2.metric("Sand", f"{current_stock['Sand']:.2f} Brass")
-            sc3.metric("Aggregate", f"{current_stock['Aggregate']:.2f} Brass")
-            sc4.metric("Steel", f"{current_stock['Steel']:.1f} Kg")
+            # --- २. साईटवरील चालू शिल्लक साठा (Live Stock Card Bar) ---
+            st.markdown("##### 📊 साईटवर चालू शिल्लक माल (Current Live Stock):")
+            sc1, sc2, sc3, sc4, sc5 = st.columns(5)
+            sc1.metric("Cement (सिमेंट)", f"{current_stock['Cement']:.1f} Bags")
+            sc2.metric("Sand (वाळू)", f"{current_stock['Sand']:.2f} Brass")
+            sc3.metric("Aggregate (खडी)", f"{current_stock['Aggregate']:.2f} Brass")
+            sc4.metric("Steel (स्टील)", f"{current_stock['Steel']:.1f} Kg")
+            sc5.metric("Bricks (विटा)", f"{current_stock['Bricks']:.0f} Nos")
 
             st.write("---")
 
-            # --- २. बॉक्स: PCC पासून Slab पर्यंत सर्व कामांचे Volume भरणे ---
-            with st.expander("📝 कामांचे व्हॉल्यूम भरा / बदला (PCC ते Slab Volume Box)", expanded=False):
-                st.caption("💡 इथे प्रत्येक टप्प्यासाठी लागणारे घनफळ (Volume in m³) भरा. सिस्टीम आपोआप साहित्य मोजेल.")
-                
-                vc1, vc2 = st.columns(2)
-                with vc1:
-                    new_vpcc = st.number_input("१. पाया तळ काँक्रीट - PCC 1:4:8 (m³):", min_value=0.0, value=v_pcc, step=0.5, key="inp_pcc")
-                    new_vfoot = st.number_input("२. पाया काँक्रीट - Footing M20 (m³):", min_value=0.0, value=v_foot, step=0.5, key="inp_foot")
-                    new_vplinth = st.number_input("३. प्लिंथ बीम - Plinth Beam M20 (m³):", min_value=0.0, value=v_plinth, step=0.5, key="inp_plinth")
-                with vc2:
-                    new_vcol = st.number_input("४. आरसीसी कॉलम्स - Column M20 (m³):", min_value=0.0, value=v_col, step=0.5, key="inp_col")
-                    new_vslab = st.number_input("५. स्लॅब व बीम - Slab & Main Beam M20 (m³):", min_value=0.0, value=v_slab, step=0.5, key="inp_slab")
-
-                if st.button("💾 व्हॉल्यूम सेव्ह करा", type="primary", use_container_width=True, key="btn_save_vols"):
-                    conn = get_db_connection()
-                    cursor = conn.cursor()
-                    now_ts = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
-                    cursor.execute(
-                        """
-                        INSERT OR REPLACE INTO site_master_volumes 
-                        (site_name, pcc_vol, footing_vol, plinth_vol, column_vol, slab_vol, updated_at)
-                        VALUES (?, ?, ?, ?, ?, ?, ?)
-                        """,
-                        (st.session_state.current_site_name, new_vpcc, new_vfoot, new_vplinth, new_vcol, new_vslab, now_ts)
-                    )
-                    conn.commit()
-                    conn.close()
-                    st.success("✅ व्हॉल्यूम यशस्वीरित्या सेव्ह झाले!")
-                    st.rerun()
-
-            # --- ३. सुपरवायझर माल स्टॉकमध्ये जमा करणे (Material IN) ---
-            with st.expander("📥 नवीन माल स्टॉकमध्ये जमा करा (Material IN (+))", expanded=False):
-                in_c1, in_c2 = st.columns(2)
+            # --- ३. पायरी १: सुपरवायझर माल स्टॉकमध्ये जमा करणे (Material IN) ---
+            with st.expander("📥 पायरी १: नवीन माल स्टॉकमध्ये जमा करा (Material IN (+))", expanded=False):
+                st.caption("💡 गाडी आल्यावर सुपरवायझरने योग्य युनिट निवडून माल स्टॉकमध्ये ॲड करावा.")
+                in_c1, in_c2, in_c3 = st.columns([2, 1.5, 1.5])
                 with in_c1:
-                    sup_mat = st.selectbox("साहित्य निवडा:", ["Cement (Bags)", "Sand (Brass)", "Aggregate (Brass)", "Steel (Kg)"], key="sup_mat_select")
+                    sup_mat = st.selectbox(
+                        "साहित्य निवडा:",
+                        ["Cement (Bags)", "Sand (Brass)", "Aggregate (Brass)", "Steel (Kg)", "Bricks (Nos)"],
+                        key="sup_mat_select"
+                    )
                 with in_c2:
                     sup_qty = st.number_input("आलेले प्रमाण (Quantity):", min_value=0.1, value=50.0, step=1.0, key="sup_qty_input")
+                with in_c3:
+                    sup_ch = st.text_input("चलन / पावती क्र. (Optional):", placeholder="उदा. CH-201", key="sup_ch_input")
 
                 if st.button("➕ स्टॉकमध्ये जमा करा", type="primary", use_container_width=True, key="btn_add_to_stock"):
                     c_m = sup_mat.split(" ")[0]
@@ -3786,79 +3776,130 @@ elif st.session_state.selected_module == "Site Manager":
                     )
                     conn.commit()
                     conn.close()
-                    st.success(f"✅ {sup_qty} {c_u} {c_m} स्टॉकमध्ये जमा झाले!")
+                    st.success(f"✅ {sup_qty} {c_u} {c_m} स्टॉकमध्ये यशस्वी जमा झाले!")
+                    st.rerun()
+
+            # --- ४. पायरी २: संपूर्ण प्रोजेक्टचे Volumes भरणे (PCC ते Slab पर्यंत) ---
+            with st.expander("📝 पायरी २: प्रोजेक्टचे सर्व व्हॉल्यूम भरा / बदला (PCC to Slab Master Box)", expanded=False):
+                st.caption("💡 इथे प्रत्येक टप्प्यासाठी लागणारे घनफळ (Volume in m³) भरून ठेवा. हे कधीही बदलता येईल.")
+                
+                vc1, vc2 = st.columns(2)
+                with vc1:
+                    new_vpcc = st.number_input("१. पाया तळ काँक्रीट - PCC 1:4:8 (m³):", min_value=0.0, value=v_pcc, step=0.5, key="mv_pcc")
+                    new_vfoot = st.number_input("२. पाया काँक्रीट - Footing M20 (m³):", min_value=0.0, value=v_foot, step=0.5, key="mv_foot")
+                    new_vplinth = st.number_input("३. प्लिंथ बीम - Plinth Beam M20 (m³):", min_value=0.0, value=v_plinth, step=0.5, key="mv_plinth")
+                    new_vcol = st.number_input("४. आरसीसी कॉलम्स - Column M20 (m³):", min_value=0.0, value=v_col, step=0.5, key="mv_col")
+                with vc2:
+                    new_vb9 = st.number_input("५. वीटकाम ९ इंच - 9\" Brickwork (m³):", min_value=0.0, value=v_b9, step=1.0, key="mv_b9")
+                    new_vb4 = st.number_input("६. वीटकाम ४.५ इंच / पार्टीशन (m³):", min_value=0.0, value=v_b4, step=0.5, key="mv_b4")
+                    new_vslab = st.number_input("७. स्लॅब व मुख्य बीम - Slab & Beams M20 (m³):", min_value=0.0, value=v_slab, step=1.0, key="mv_slab")
+
+                if st.button("💾 प्रोजेक्टचे व्हॉल्यूम सेव्ह करा", type="primary", use_container_width=True, key="btn_save_vols"):
+                    conn = get_db_connection()
+                    cursor = conn.cursor()
+                    now_ts = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
+                    cursor.execute(
+                        """
+                        INSERT OR REPLACE INTO site_master_volumes 
+                        (site_name, pcc_vol, footing_vol, plinth_vol, column_vol, brick_9_vol, brick_4_vol, slab_vol, updated_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """,
+                        (st.session_state.current_site_name, new_vpcc, new_vfoot, new_vplinth, new_vcol, new_vb9, new_vb4, new_vslab, now_ts)
+                    )
+                    conn.commit()
+                    conn.close()
+                    st.success("✅ सर्व टप्प्यांचे व्हॉल्यूम डेटाबेसमध्ये सेव्ह झाले!")
                     st.rerun()
 
             st.write("---")
 
-            # --- ४. टप्प्याटप्प्याने काम व ऑटोमॅटिक हिशोब (Stage Work) ---
-            st.markdown("##### 🎯 चालू टप्प्याचे काम (Current Stage Execution):")
+            # --- ५. पायरी ३: आजचे चालू काम निवडणे व साहित्याचे गणित (IS 456 / IS 2212) ---
+            st.markdown("##### 🎯 पायरी ३: चालू कामाचा टप्पा निवडा (Stage Execution Engine):")
             
             stages_list = [
                 "1. PCC 1:4:8 Bedding Work (तळ काँक्रीट)",
                 "2. Footing Casting Work (पाया काँक्रीटिंग)",
                 "3. Plinth Beam Casting (प्लिंथ बीम)",
                 "4. Column Casting (कॉलम्स)",
-                "5. Slab & Main Beam Casting (स्लॅब व मुख्य बीम)"
+                "5. Superstructure Brickwork 9\" (विटांचे बांधकाम ९ इंच)",
+                "6. Partition Brickwork 4.5\" (विटांचे बांधकाम ४.५ इंच)",
+                "7. Slab & Main Beam Casting (छताचा स्लॅब व मुख्य बीम)"
             ]
             
-            selected_stage = st.selectbox("सध्या चालू असलेला टप्पा निवडा:", stages_list, key="sel_active_stage")
+            selected_stage = st.selectbox("आज चालू असलेले काम निवडा:", stages_list, key="sel_active_stage")
 
-            # निवडलेल्या टप्प्यानुसार IS 456 अचूक गणित
-            stage_req = {}
+            # निवडलेल्या टप्प्यानुसार व्हॉल्यूम व IS Code मोजमाप
             target_vol = 0.0
+            stage_req = {}
+            wastage_factor = 1.03  # 3% standard site wastage
 
-            if "PCC" in selected_stage:
+            if "1. PCC" in selected_stage:
                 target_vol = v_pcc
-                dry_vol = target_vol * 1.54 * 1.03  # 1.54 Dry Factor + 3% Wastage
+                dry_vol = target_vol * 1.54 * wastage_factor  # PCC Dry Factor 1.54
                 stage_req = {
                     "Cement": (math.ceil((1.0 / 13.0) * dry_vol * 28.8), "Bags"),
                     "Sand": (round((((4.0 / 13.0) * dry_vol) / 2.8317), 2), "Brass"),
                     "Aggregate": (round((((8.0 / 13.0) * dry_vol) / 2.8317), 2), "Brass")
                 }
-            elif "Footing" in selected_stage:
+            elif "2. Footing" in selected_stage:
                 target_vol = v_foot
-                dry_vol = target_vol * 1.54 * 1.03
+                dry_vol = target_vol * 1.54 * wastage_factor
                 stage_req = {
                     "Cement": (math.ceil((1.0 / 5.5) * dry_vol * 28.8), "Bags"),
                     "Sand": (round((((1.5 / 5.5) * dry_vol) / 2.8317), 2), "Brass"),
                     "Aggregate": (round((((3.0 / 5.5) * dry_vol) / 2.8317), 2), "Brass"),
-                    "Steel": (round(target_vol * 85.0 * 1.03, 1), "Kg")  # 85 kg/m³
+                    "Steel": (round(target_vol * 85.0 * wastage_factor, 1), "Kg")
                 }
-            elif "Plinth" in selected_stage:
+            elif "3. Plinth" in selected_stage:
                 target_vol = v_plinth
-                dry_vol = target_vol * 1.54 * 1.03
+                dry_vol = target_vol * 1.54 * wastage_factor
                 stage_req = {
                     "Cement": (math.ceil((1.0 / 5.5) * dry_vol * 28.8), "Bags"),
                     "Sand": (round((((1.5 / 5.5) * dry_vol) / 2.8317), 2), "Brass"),
                     "Aggregate": (round((((3.0 / 5.5) * dry_vol) / 2.8317), 2), "Brass"),
-                    "Steel": (round(target_vol * 125.0 * 1.03, 1), "Kg")
+                    "Steel": (round(target_vol * 125.0 * wastage_factor, 1), "Kg")
                 }
-            elif "Column" in selected_stage:
+            elif "4. Column" in selected_stage:
                 target_vol = v_col
-                dry_vol = target_vol * 1.54 * 1.03
+                dry_vol = target_vol * 1.54 * wastage_factor
                 stage_req = {
                     "Cement": (math.ceil((1.0 / 5.5) * dry_vol * 28.8), "Bags"),
                     "Sand": (round((((1.5 / 5.5) * dry_vol) / 2.8317), 2), "Brass"),
                     "Aggregate": (round((((3.0 / 5.5) * dry_vol) / 2.8317), 2), "Brass"),
-                    "Steel": (round(target_vol * 160.0 * 1.03, 1), "Kg")
+                    "Steel": (round(target_vol * 160.0 * wastage_factor, 1), "Kg")
                 }
-            else:  # Slab & Main Beam
+            elif "5. Superstructure Brickwork 9\"" in selected_stage:
+                target_vol = v_b9
+                dry_mortar = target_vol * 0.30 * wastage_factor  # 30% mortar with frog filling
+                stage_req = {
+                    "Bricks": (math.ceil(target_vol * 500.0 * wastage_factor), "Nos"),
+                    "Cement": (math.ceil((1.0 / 7.0) * dry_mortar * 28.8), "Bags"),
+                    "Sand": (round((((6.0 / 7.0) * dry_mortar) / 2.8317), 2), "Brass")
+                }
+            elif "6. Partition Brickwork 4.5\"" in selected_stage:
+                target_vol = v_b4
+                dry_mortar = target_vol * 0.25 * wastage_factor
+                stage_req = {
+                    "Bricks": (math.ceil(target_vol * 500.0 * wastage_factor), "Nos"),
+                    "Cement": (math.ceil((1.0 / 5.0) * dry_mortar * 28.8), "Bags"),
+                    "Sand": (round((((4.0 / 5.0) * dry_mortar) / 2.8317), 2), "Brass")
+                }
+            else:  # Slab & Beams
                 target_vol = v_slab
-                dry_vol = target_vol * 1.54 * 1.03
+                dry_vol = target_vol * 1.54 * wastage_factor
                 stage_req = {
                     "Cement": (math.ceil((1.0 / 5.5) * dry_vol * 28.8), "Bags"),
                     "Sand": (round((((1.5 / 5.5) * dry_vol) / 2.8317), 2), "Brass"),
                     "Aggregate": (round((((3.0 / 5.5) * dry_vol) / 2.8317), 2), "Brass"),
-                    "Steel": (round(target_vol * 95.0 * 1.03, 1), "Kg")
+                    "Steel": (round(target_vol * 95.0 * wastage_factor, 1), "Kg")
                 }
 
-            st.info(f"📐 **कामाचे प्रमाण:** `{target_vol} m³` ({selected_stage.split('(')[0]})")
+            st.info(f"📐 **ठरलेले घनफळ:** `{target_vol} m³` | काम: **{selected_stage.split('(')[0]}**")
 
-            # --- ५. ताळमेळ तक्ता (Comparison Table) ---
+            # --- ६. तुलना तक्ता: आज काय लागेल? स्टॉकमध्ये किती आहे? नवीन किती मागवायचे? ---
             req_rows_md = ""
             shortage_list = []
-            has_shortage = False
+            has_stage_shortage = False
             wa_indent_lines = []
 
             for m_key, (req_val, u_lbl) in stage_req.items():
@@ -3867,12 +3908,13 @@ elif st.session_state.selected_module == "Site Manager":
                 needed = math.ceil(diff) if u_lbl in ["Bags", "Nos"] else round(max(0.0, diff), 2)
 
                 if needed > 0:
-                    has_shortage = True
+                    has_stage_shortage = True
                     shortage_list.append(f"{m_key}: {needed} {u_lbl}")
                     st_badge = f"🔴 कमी (मागवा: {needed} {u_lbl})"
                     wa_indent_lines.append(f"• *{m_key}:* {needed} {u_lbl}")
                 else:
-                    st_badge = f"🟢 उपलब्ध (शिल्लक: {cur_val:.1f} {u_lbl})"
+                    surplus = round(abs(cur_val - req_val), 2)
+                    st_badge = f"🟢 उपलब्ध (शिल्लक राहील: {surplus} {u_lbl})"
 
                 req_rows_md += f"| **{m_key}** | {req_val} {u_lbl} | {cur_val:.2f} {u_lbl} | **{needed} {u_lbl}** | {st_badge} |\n"
 
@@ -3884,69 +3926,106 @@ elif st.session_state.selected_module == "Site Manager":
                 """
             )
 
-            # --- ६. कडक स्टेज लॉक आणि ऑटो-वजावट ---
+            # --- ७. स्टेज लॉक व वजावट पर्याय (ऑटो-डिडक्शन किंवा मॅन्युअल एन्ट्री) ---
             st.write(" ")
-            if has_shortage:
+            if has_stage_shortage:
                 st.error(
                     f"""
-                    🛑 **STAGE LOCKED: माल अपुरा आहे!**  
-                    `{selected_stage}` सुरू करण्यासाठी लागणारा माल कमी आहे.  
-                    सुपरवायझरने **'Material IN (+)'** द्वारे माल स्टॉकमध्ये जमा केल्याशिवाय हे काम सुरू करता येणार नाही!  
-                    
-                    **कमी असलेला माल:** `{', '.join(shortage_list)}`
+                    🛑 **STAGE LOCKED: अपुरा साहित्य साठा!**  
+                    `{selected_stage}` चे काम सुरू करण्यासाठी आवश्यक साहित्य कमी आहे.  
+                    सुपरवायझरने **'पायरी १'** मध्ये जाऊन नवीन माल जमा केल्याशिवाय हे काम पूर्ण करता येणार नाही!  
+                    **कमतरता (Shortage):** `{', '.join(shortage_list)}`
                     """
                 )
 
-                # तातडीची व्हॉट्सॲप ऑर्डर
+                # तातडीने व्हॉट्सॲपवर ऑर्डर पाठवणे
                 wa_msg = (
                     f"🚨 *URGENT MATERIAL ORDER - PATIL INFRATECH*\n"
                     f"📍 *Site:* {st.session_state.current_site_name} [{st.session_state.active_site_code}]\n"
                     f"👷 *Site Engineer:* {current_user_name}\n"
-                    f"🚧 *Blocked Work:* {selected_stage} ({target_vol} m³)\n"
+                    f"🚧 *Blocked Activity:* {selected_stage} ({target_vol} m³)\n"
                     f"--------------------------------\n"
-                    f"🚚 *नवीन मागवायचा माल:*\n"
+                    f"🚚 *नवीन मागवायचा आवश्यक माल:*\n"
                 )
                 wa_msg += "\n".join(wa_indent_lines)
-                wa_msg += "\n--------------------------------\n_माल संपल्यामुळे साईटचे काम थांबले आहे, कृपया तात्काळ पाठवावा._"
+                wa_msg += "\n--------------------------------\n_माल संपल्यामुळे साईटचे पुढील काम थांबले आहे, कृपया त्वरित पाठवावा._"
                 render_whatsapp_feature(urllib.parse.quote(wa_msg), "stage_shortage_wa")
 
             else:
-                st.success(f"✅ **STAGE READY:** या कामासाठी सर्व माल उपलब्ध आहे. काम पूर्ण करून माल वजा करा!")
+                st.success(f"✅ **STAGE READY:** या कामासाठी सर्व माल उपलब्ध आहे. काम पूर्ण झाल्यावर खालील बटण दाबा.")
 
-                if st.button(f"🚀 काम पूर्ण झाले (स्टॉकमधून माल वजा करा)", type="primary", use_container_width=True):
-                    now_ts = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
-                    conn = get_db_connection()
-                    cursor = conn.cursor()
+                col_exec1, col_exec2 = st.columns(2)
+                
+                # पर्याय १: सिस्टीमने काढलेला माल थेट वजा करणे
+                with col_exec1:
+                    if st.button("🚀 काम पूर्ण झाले (ऑटोमॅटिक माल वजा करा)", type="primary", use_container_width=True):
+                        now_ts = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
+                        conn = get_db_connection()
+                        cursor = conn.cursor()
 
-                    # १. स्टॉकमधून माल वजा (-) करणे
-                    for m_key, (req_val, u_lbl) in stage_req.items():
+                        for m_key, (req_val, u_lbl) in stage_req.items():
+                            cursor.execute(
+                                """
+                                INSERT INTO site_inventory (user_key, date, material_name, transaction_type, quantity, unit, site_name)
+                                VALUES (?, ?, ?, 'Material OUT (-)', ?, ?, ?)
+                                """,
+                                (current_user_name, now_ts, m_key, req_val, u_lbl, st.session_state.current_site_name)
+                            )
+
                         cursor.execute(
                             """
-                            INSERT INTO site_inventory (user_key, date, material_name, transaction_type, quantity, unit, site_name)
-                            VALUES (?, ?, ?, 'Material OUT (-)', ?, ?, ?)
+                            INSERT INTO site_progress (user_key, date, stage_name, progress_percent, remark, site_name)
+                            VALUES (?, ?, ?, 100, ?, ?)
                             """,
-                            (current_user_name, now_ts, m_key, req_val, u_lbl, st.session_state.current_site_name)
+                            (current_user_name, now_ts[:10], selected_stage, f"{target_vol} m³ काम पूर्ण झाले. माल स्टॉकमधून वजा केला.", st.session_state.current_site_name)
                         )
 
-                    # २. प्रोग्रेस रिपोर्टमध्ये आपोआप १००% पूर्ण नोंद
-                    cursor.execute(
-                        """
-                        INSERT INTO site_progress (user_key, date, stage_name, progress_percent, remark, site_name)
-                        VALUES (?, ?, ?, 100, ?, ?)
-                        """,
-                        (current_user_name, now_ts[:10], selected_stage, f"{target_vol} m³ काम पूर्ण झाले. माल स्टॉकमधून वजा केला.", st.session_state.current_site_name)
-                    )
+                        conn.commit()
+                        conn.close()
 
-                    conn.commit()
-                    conn.close()
+                        st.balloons()
+                        st.success(f"🎉 '{selected_stage}' पूर्ण झाले! माल स्टॉकमधून वजा झाला असून उरलेला माल पुढील कामासाठी शिल्लक आहे.")
+                        time.sleep(1.2)
+                        st.rerun()
 
-                    st.balloons()
-                    st.success(f"🎉 '{selected_stage}' पूर्ण झाले! लागणारा माल वजा झाला असून उरलेला माल पुढील कामासाठी शिल्लक आहे.")
-                    time.sleep(1.2)
-                    st.rerun()
+                # पर्याय २: साईटवर प्रत्यक्ष किती खर्च झाला ते मॅन्युअली टाकून वजा करणे
+                with col_exec2:
+                    with st.popover("✏️ मॅन्युअल खर्च नोंदवून वजा करा"):
+                        st.markdown("###### प्रत्यक्ष खर्च झालेला माल भरा:")
+                        manual_deducts = {}
+                        for m_key, (req_val, u_lbl) in stage_req.items():
+                            manual_deducts[m_key] = (st.number_input(f"{m_key} ({u_lbl}):", value=float(req_val), step=1.0, key=f"man_out_{m_key}"), u_lbl)
 
-            # --- ७. शेवटच्या नोंदींचा कॉम्पॅक्ट ऑडिट लॉग ---
-            with st.expander("📜 साठ्याच्या मागील नोंदी (Recent Logs)", expanded=False):
+                        if st.button("💾 हा मॅन्युअल माल वजा करा", type="primary", key="btn_save_manual_out"):
+                            now_ts = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
+                            conn = get_db_connection()
+                            cursor = conn.cursor()
+
+                            for m_key, (m_val, u_lbl) in manual_deducts.items():
+                                cursor.execute(
+                                    """
+                                    INSERT INTO site_inventory (user_key, date, material_name, transaction_type, quantity, unit, site_name)
+                                    VALUES (?, ?, ?, 'Material OUT (-)', ?, ?, ?)
+                                    """,
+                                    (current_user_name, now_ts, m_key, m_val, u_lbl, st.session_state.current_site_name)
+                                )
+
+                            cursor.execute(
+                                """
+                                INSERT INTO site_progress (user_key, date, stage_name, progress_percent, remark, site_name)
+                                VALUES (?, ?, ?, 100, ?, ?)
+                                """,
+                                (current_user_name, now_ts[:10], selected_stage, f"{target_vol} m³ काम मॅन्युअल साहित्यासह पूर्ण झाले.", st.session_state.current_site_name)
+                            )
+
+                            conn.commit()
+                            conn.close()
+                            st.success("✅ मॅन्युअल माल वजा झाला!")
+                            st.rerun()
+
+            # --- ८. मागील नोंदींची संक्षिप्त यादी ---
+            st.write("---")
+            with st.expander("📜 साठ्याच्या मागील नोंदी (Recent Stock Logs)", expanded=False):
                 conn = get_db_connection()
                 recent_logs = conn.execute(
                     "SELECT date, material_name, transaction_type, quantity, unit FROM site_inventory WHERE site_name = ? ORDER BY id DESC LIMIT 8",
@@ -3962,7 +4041,7 @@ elif st.session_state.selected_module == "Site Manager":
 
                     st.markdown(
                         f"""
-| तारीख | साहित्य | प्रकार | प्रमाण |
+| तारीख व वेळ | साहित्य | प्रकार (IN/OUT) | प्रमाण |
 | :--- | :--- | :--- | :--- |
 {log_md}
                         """
