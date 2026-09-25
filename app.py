@@ -2392,7 +2392,7 @@ if st.session_state.selected_module is None:
             st.rerun()
 
 # ==========================================
-# 📌 विभाग १६: ESTIMATOR TOOLS मुख्य मॉड्यूल (Sub-modules)
+# 📌 विभाग १६: ESTIMATOR TOOLS मुख्य मॉड्यूल (Corporate & 100% IS-Code Compliant)
 # ==========================================
 elif st.session_state.selected_module == "Estimator Tools":
     col_back, _ = st.columns([1.5, 3.5])
@@ -2409,40 +2409,41 @@ elif st.session_state.selected_module == "Estimator Tools":
     bbs_lock = locks_cfg.get("BBS", "Free")
     qs_lock = locks_cfg.get("Quantity Surveying", "Free")
 
-    # १६.० मास्टर ३-इन-१ कंबाइन्ड PDF व Excel रिपोर्ट फंक्शन
+    # ==========================================================================
+    # १६.० मास्टर ३-इन-१ कंबाइन्ड एक्झिक्युटिव्ह PDF / HTML रिपोर्ट
+    # ==========================================================================
     def render_combined_master_report(user_key, site_name):
-        st.markdown(f"#### 📑 Master Project Estimate: `{site_name}`")
-        st.caption("💡 मागील २ दिवसांमधील Rate Analysis, BBS आणि Quantity Survey चा एकत्रित IS-Code फॉरमॅट ३-पेज रिपोर्ट.")
+        st.markdown(f"#### 📑 Executive Master Estimate: `{site_name}`")
+        st.caption("💡 मागील ७ दिवसांमधील Rate Analysis, BBS आणि Quantity Survey चा सर्वसमावेशक IS-Code फॉरमॅट ३-इन-१ रिपोर्ट.")
 
         conn = get_db_connection()
         cursor = conn.cursor()
-        two_days_ago = (get_ist_time() - datetime.timedelta(days=2)).strftime("%Y-%m-%d 00:00:00")
+        seven_days_ago = (get_ist_time() - datetime.timedelta(days=7)).strftime("%Y-%m-%d 00:00:00")
         cursor.execute(
             """
             SELECT timestamp, user_note, report_data FROM history 
             WHERE user_key = ? AND (site_name = ? OR site_name IS NULL) AND timestamp >= ?
             ORDER BY id ASC
             """,
-            (user_key, site_name, two_days_ago),
+            (user_key, site_name, seven_days_ago),
         )
         records = cursor.fetchall()
         conn.close()
 
         if not records:
-            st.warning(f"⚠️ '{site_name}' साठी मागील २ दिवसांत कोणतेही कॅल्क्युलेशन सेव्ह केलेले नाही. कृपया आधी टूल्स वापरून रिपोर्ट तयार करा.")
+            st.warning(f"⚠️ '{site_name}' साठी मागील ७ दिवसांत कोणतेही कॅल्क्युलेशन सेव्ह केलेले नाही. आधी खालील टूल्स वापरून हिशोब तयार करा.")
             return
 
         def markdown_to_html_table(md_text):
             lines = [line.strip() for line in md_text.strip().split("\n") if line.strip().startswith("|")]
             if not lines:
-                return f"<div style='padding:8px; background:rgba(248, 250, 252, 0.85);'>{md_text}</div>"
+                return f"<div style='padding:8px; background:#f8fafc; font-size:12px;'>{md_text}</div>"
             
             html_table = "<table class='custom-data-table'>"
             for i, line in enumerate(lines):
                 cells = [c.strip() for c in line.split("|")[1:-1]]
                 if i == 1 and all(set(c).issubset({'-', ':', ' '}) for c in cells):
                     continue
-                
                 if i == 0:
                     html_table += "<thead><tr>"
                     for c in cells:
@@ -2461,30 +2462,30 @@ elif st.session_state.selected_module == "Estimator Tools":
         <html>
         <head>
             <meta charset="utf-8">
-            <title>PATIL INFRATECH - {site_name} Master Report</title>
+            <title>PATIL INFRATECH - {site_name} Master Estimate</title>
             <style>
-                @page {{ size: A4 portrait; margin: 8mm; }}
+                @page {{ size: A4 portrait; margin: 10mm; }}
                 @media print {{
                     body {{ background: #ffffff !important; color: #000000 !important; }}
                     .no-print {{ display: none !important; }}
                     .page-break {{ page-break-before: always !important; break-before: page !important; }}
                 }}
-                body {{ background-color: #e2e8f0; font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 10px; color: #0f172a; }}
-                .a4-page {{ position: relative; background: #ffffff; width: 100%; max-width: 780px; margin: 0 auto 20px auto; padding: 25px 30px; border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); border: 1.5px solid #0f172a; box-sizing: border-box; min-height: 1020px; overflow: hidden; }}
-                .watermark {{ position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-28deg); font-size: 22px; font-weight: 900; color: rgba(15, 23, 42, 0.09); text-transform: uppercase; letter-spacing: 2.5px; text-align: center; width: 78%; max-width: 500px; line-height: 1.5; pointer-events: none; user-select: none; border: 3px dashed rgba(15, 23, 42, 0.09); padding: 15px 25px; border-radius: 12px; z-index: 999; }}
+                body {{ background-color: #f1f5f9; font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 10px; color: #0f172a; }}
+                .a4-page {{ position: relative; background: #ffffff; width: 100%; max-width: 800px; margin: 0 auto 25px auto; padding: 30px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); border: 1.5px solid #0f172a; box-sizing: border-box; min-height: 1050px; overflow: hidden; }}
+                .watermark {{ position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg); font-size: 24px; font-weight: 900; color: rgba(15, 23, 42, 0.06); text-transform: uppercase; letter-spacing: 3px; text-align: center; width: 85%; pointer-events: none; border: 4px dashed rgba(15, 23, 42, 0.06); padding: 25px; border-radius: 12px; z-index: 1; }}
                 .content-box {{ position: relative; z-index: 2; }}
-                .header-title {{ text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 6px; margin-bottom: 12px; }}
-                .header-title h1 {{ margin: 0; font-size: 22px; color: #0f172a; font-weight: 900; letter-spacing: 0.5px; }}
-                .header-title p {{ margin: 2px 0; font-size: 11px; font-weight: bold; color: #475569; }}
+                .header-title {{ text-align: center; border-bottom: 2.5px solid #0f172a; padding-bottom: 8px; margin-bottom: 14px; }}
+                .header-title h1 {{ margin: 0; font-size: 24px; color: #0f172a; font-weight: 900; }}
+                .header-title p {{ margin: 3px 0; font-size: 11px; font-weight: 700; color: #475569; }}
                 table.info-table {{ width: 100%; margin-bottom: 12px; font-size: 12px; border-collapse: collapse; }}
                 table.info-table td {{ padding: 3px 0; }}
-                .section-header {{ background: #0f172a; color: #ffffff; padding: 6px 12px; font-size: 12px; font-weight: bold; border-radius: 4px; margin: 12px 0 8px 0; }}
-                table.custom-data-table {{ width: 100%; border-collapse: collapse; margin: 8px 0 15px 0; font-size: 11px; }}
+                .section-header {{ background: #0f172a; color: #ffffff; padding: 7px 14px; font-size: 13px; font-weight: bold; border-radius: 4px; margin: 14px 0 10px 0; }}
+                table.custom-data-table {{ width: 100%; border-collapse: collapse; margin: 8px 0 16px 0; font-size: 11px; }}
                 table.custom-data-table th, table.custom-data-table td {{ border: 1px solid #cbd5e1; padding: 6px 8px; text-align: left; }}
-                table.custom-data-table th {{ background-color: rgba(241, 245, 249, 0.85); font-weight: bold; color: #0f172a; }}
-                table.custom-data-table tr:nth-child(even) {{ background-color: rgba(248, 250, 252, 0.6); }}
-                .signature-box {{ margin-top: 35px; width: 100%; font-size: 12px; }}
-                .footer-stamp {{ text-align: center; margin-top: 20px; font-size: 10px; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 5px; }}
+                table.custom-data-table th {{ background-color: #f8fafc; font-weight: bold; color: #0f172a; }}
+                table.custom-data-table tr:nth-child(even) {{ background-color: #fcfdfe; }}
+                .signature-box {{ margin-top: 50px; width: 100%; font-size: 12px; }}
+                .footer-stamp {{ text-align: center; margin-top: 30px; font-size: 10px; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 6px; }}
             </style>
         </head>
         <body>
@@ -2492,17 +2493,16 @@ elif st.session_state.selected_module == "Estimator Tools":
 
         for idx, r in enumerate(records, 1):
             page_break_class = "page-break" if idx > 1 else ""
-            sec_title = "Rate Analysis" if idx == 1 else ("Bar Bending Schedule (BBS)" if idx == 2 else "Quantity Survey")
             table_content_html = markdown_to_html_table(r['report_data'])
 
             full_html_doc += f"""
             <div class="a4-page {page_break_class}">
-                <div class="watermark">KANHAIYA<br>FOUNDER OF PATIL INFRATECH</div>
+                <div class="watermark">PATIL INFRATECH • OFFICIAL MASTER ESTIMATE</div>
                 <div class="content-box">
                     <div class="header-title">
                         <h1>PATIL INFRATECH</h1>
-                        <p>CIVIL ENGINEERS • CONSULTANTS • QUANTITY SURVEYORS</p>
-                        <small style="color: #64748b;">(Compliant with IS 1200 & IS 2502 Standards)</small>
+                        <p>CIVIL ENGINEERS • ARCHITECTURAL CONSULTANTS • QUANTITY SURVEYORS</p>
+                        <small style="color: #64748b;">(Certified Compliant with IS 1200, IS 456, IS 2502 & IS 1077 Standards)</small>
                     </div>
 
                     <table class="info-table">
@@ -2514,11 +2514,14 @@ elif st.session_state.selected_module == "Estimator Tools":
                             <td><b>👤 Site Engineer:</b> {user_key}</td>
                             <td style="text-align: right;"><b>📄 Page:</b> {idx} of {len(records)}</td>
                         </tr>
+                        <tr>
+                            <td colspan="2"><b>📝 Activity / Note:</b> {r['user_note']}</td>
+                        </tr>
                     </table>
                     <hr style="border: 0.5px solid #cbd5e1; margin-bottom: 8px;">
 
                     <div class="section-header">
-                        विभाग #{idx}: {sec_title} (नोंद वेळ: {r['timestamp']})
+                        विभाग #{idx}: {r['user_note']} (नोंद वेळ: {r['timestamp']})
                     </div>
 
                     {table_content_html}
@@ -2528,18 +2531,20 @@ elif st.session_state.selected_module == "Estimator Tools":
                             <td style="width: 50%;">
                                 <br><br>
                                 __________________________<br>
-                                <b>Site Engineer Signature</b>
+                                <b>Site Engineer Signature</b><br>
+                                <small style="color:#64748b;">Patil Infratech Site Office</small>
                             </td>
                             <td style="width: 50%; text-align: right;">
                                 <br><br>
                                 __________________________<br>
-                                <b>Authorized Checker</b>
+                                <b>Project Manager / Checker</b><br>
+                                <small style="color:#64748b;">Quality & Audit Control</small>
                             </td>
                         </tr>
                     </table>
 
                     <div class="footer-stamp">
-                        Certified & Generated by: <b>Kanhaiya (Founder of Patil Infratech)</b>
+                        System Verified & Generated by: <b>Patil Infratech Corporate Engine</b> • Date: {get_ist_time().strftime('%d-%m-%Y %H:%M:%S')}
                     </div>
                 </div>
             </div>
@@ -2550,15 +2555,16 @@ elif st.session_state.selected_module == "Estimator Tools":
         </html>
         """
 
-        st.components.v1.html(full_html_doc, height=520, scrolling=True)
+        st.components.v1.html(full_html_doc, height=540, scrolling=True)
 
         excel_data_list = []
         for r in records:
             excel_data_list.append({
                 "Site Name": site_name,
-                "User": user_key,
+                "Engineer": user_key,
                 "Timestamp": r["timestamp"],
-                "Report Details": r["report_data"].replace("|", " ").strip()
+                "Note": r["user_note"],
+                "Raw Data": r["report_data"].replace("|", " ").strip()
             })
         excel_df = pd.DataFrame(excel_data_list)
         csv_bytes = excel_df.to_csv(index=False).encode('utf-8-sig')
@@ -2567,18 +2573,18 @@ elif st.session_state.selected_module == "Estimator Tools":
         c1, c2, c3 = st.columns(3)
         with c1:
             st.download_button(
-                label="📥 Download Master Report",
+                label="📥 Download Master HTML/PDF",
                 data=full_html_doc,
-                file_name=f"Patil_Infratech_{site_name.replace(' ', '_')}_Report.html",
+                file_name=f"Patil_Infratech_{site_name.replace(' ', '_')}_Master_Report.html",
                 mime="text/html",
                 type="primary",
                 use_container_width=True
             )
         with c2:
             st.download_button(
-                label="📊 Export CSV (.csv)",
+                label="📊 Export Full CSV Data",
                 data=csv_bytes,
-                file_name=f"Patil_Infratech_{site_name.replace(' ', '_')}_Estimate.csv",
+                file_name=f"Patil_Infratech_{site_name.replace(' ', '_')}_Data.csv",
                 mime="text/csv",
                 use_container_width=True
             )
@@ -2593,14 +2599,18 @@ elif st.session_state.selected_module == "Estimator Tools":
             )
 
         wa_text = (
-            f"🏗️ *PATIL INFRATECH - MASTER ESTIMATE REPORT*\n📍 *Site:* {site_name}\n"
-            f"👤 *Engineer:* {user_key}\n📅 *Date:* {get_ist_time().strftime('%d-%m-%Y')}\n\n"
-            f"✅ 3-in-1 Estimation Report Generated.\n_Certified by: Kanhaiya (Founder)_"
+            f"🏗️ *PATIL INFRATECH - EXECUTIVE ESTIMATE REPORT*\n"
+            f"📍 *Site:* {site_name}\n👤 *Engineer:* {user_key}\n"
+            f"📅 *Date:* {get_ist_time().strftime('%d-%m-%Y')}\n\n"
+            f"✅ Complete 3-in-1 Report generated as per IS-Codes.\n"
+            f"_Patil Infratech Authorized Console_"
         )
         st.write(" ")
         render_whatsapp_feature(urllib.parse.quote(wa_text), "master_pdf_wa")
 
-    # सब-मॉड्यूल निवड मेनू (Compact Mobile Grid)
+    # ==========================================================================
+    # सब-मॉड्यूल ग्रिड नेव्हिगेशन
+    # ==========================================================================
     if st.session_state.selected_estimator_sub_module is None:
         st.markdown("<h4 style='margin-bottom:14px;'>📐 Estimator Tools Dashboard</h4>", unsafe_allow_html=True)
 
@@ -2611,6 +2621,7 @@ elif st.session_state.selected_module == "Estimator Tools":
                 <div class="module-card">
                     <div style="font-size: 32px; margin-bottom: 4px;">🧮</div>
                     <b style="color: #f8fafc; font-size: 14px;">Civil Calculator</b>
+                    <p style="font-size: 11px; color: #94a3b8; margin: 2px 0 0 0;">Brass, CFT, m³, गुंठा व एरिया कनव्हर्टर</p>
                     <span class="{'free-user-badge' if calc_lock == 'Free' else 'gold-vip-badge'}" style="margin-top:6px;">[{calc_lock}]</span>
                 </div>
                 """,
@@ -2631,6 +2642,7 @@ elif st.session_state.selected_module == "Estimator Tools":
                 <div class="module-card">
                     <div style="font-size: 32px; margin-bottom: 4px;">📊</div>
                     <b style="color: #f8fafc; font-size: 14px;">Rate Analysis</b>
+                    <p style="font-size: 11px; color: #94a3b8; margin: 2px 0 0 0;">IS 456 काँक्रीट, विटांचे बांधकाम व प्लास्टर दर</p>
                     <span class="{'free-user-badge' if ra_lock == 'Free' else 'gold-vip-badge'}" style="margin-top:6px;">[{ra_lock}]</span>
                 </div>
                 """,
@@ -2653,6 +2665,7 @@ elif st.session_state.selected_module == "Estimator Tools":
                 <div class="module-card">
                     <div style="font-size: 32px; margin-bottom: 4px;">🏗️</div>
                     <b style="color: #f8fafc; font-size: 14px;">BBS Calculator</b>
+                    <p style="font-size: 11px; color: #94a3b8; margin: 2px 0 0 0;">Footing, Column, Beam व Slab स्टील शेड्युल</p>
                     <span class="{'free-user-badge' if bbs_lock == 'Free' else 'gold-vip-badge'}" style="margin-top:6px;">[{bbs_lock}]</span>
                 </div>
                 """,
@@ -2673,6 +2686,7 @@ elif st.session_state.selected_module == "Estimator Tools":
                 <div class="module-card">
                     <div style="font-size: 32px; margin-bottom: 4px;">📈</div>
                     <b style="color: #f8fafc; font-size: 14px;">Quantity Surveying</b>
+                    <p style="font-size: 11px; color: #94a3b8; margin: 2px 0 0 0;">मोजमाप पुस्तिका, Deductions व ॲब्स्ट्रॅक्ट शीट</p>
                     <span class="{'free-user-badge' if qs_lock == 'Free' else 'gold-vip-badge'}" style="margin-top:6px;">[{qs_lock}]</span>
                 </div>
                 """,
@@ -2692,14 +2706,14 @@ elif st.session_state.selected_module == "Estimator Tools":
             """
             <div class="module-card" style="border-color: rgba(245, 158, 11, 0.4);">
                 <div style="font-size: 32px; margin-bottom: 4px;">📑</div>
-                <b style="color: #f59e0b; font-size: 15px;">3-in-1 Master Estimate PDF</b>
-                <p style="font-size: 11px; color: #94a3b8; margin: 2px 0 0 0;">Rate Analysis + BBS + QS कंबाइन्ड रिपोर्ट</p>
+                <b style="color: #f59e0b; font-size: 15px;">3-in-1 Executive Master PDF</b>
+                <p style="font-size: 11px; color: #94a3b8; margin: 2px 0 0 0;">Rate Analysis + BBS + QS कंबाइन्ड व्हॅलिडेटेड रिपोर्ट</p>
             </div>
             """,
             unsafe_allow_html=True,
         )
         st.write(" ")
-        if st.button("📑 Generate Master PDF", key="btn_est_master_pdf", use_container_width=True, type="primary"):
+        if st.button("📑 Generate Master PDF Report", key="btn_est_master_pdf", use_container_width=True, type="primary"):
             st.session_state.selected_estimator_sub_module = "Master PDF"
             trigger_push_state()
             st.rerun()
@@ -2718,7 +2732,9 @@ elif st.session_state.selected_module == "Estimator Tools":
         if est_sub_mod == "Master PDF":
             render_combined_master_report(current_user_name, st.session_state.current_site_name)
 
+        # ======================================================================
         # १६.१ Civil Calculator & Smart Unit Converter
+        # ======================================================================
         elif est_sub_mod == "Calculator":
             st.markdown("#### 🧮 Civil Smart Unit Converter")
             st.caption("💡 एकाच बॉक्समध्ये मूल्य भरा आणि सर्व युनिट्समधील अचूक हिशोब एकाच झटक्यात मिळवा!")
@@ -2827,7 +2843,9 @@ elif st.session_state.selected_module == "Estimator Tools":
                         unsafe_allow_html=True,
                     )
 
-      # १६.२ Rate Analysis Module (Concrete, Brickwork, Plaster - 100% IS Code Compliant)
+        # ======================================================================
+        # १६.२ Rate Analysis Module (100% IS Code & CPWD Standard)
+        # ======================================================================
         elif est_sub_mod == "Rate Analysis":
             master_rates = get_market_rates()
             st.markdown(
@@ -2841,9 +2859,7 @@ elif st.session_state.selected_module == "Estimator Tools":
 
             main_choice = st.radio("कामाचा प्रकार निवडा:", ["Concrete Work (काँक्रीट काम)", "Brickwork (वीटकाम)", "Plaster Work (प्लास्टर काम)"], horizontal=True)
 
-            # ==================================================================
-            # [१] CONCRETE WORK (IS 456 Standards)
-            # ==================================================================
+            # [१] Concrete Work (IS 456)
             if "Concrete Work" in main_choice:
                 st.markdown("##### 🧱 Concrete Work Rate Analysis (IS 456)")
                 col1, col2 = st.columns(2)
@@ -2852,30 +2868,13 @@ elif st.session_state.selected_module == "Estimator Tools":
                 with col2:
                     component = st.selectbox("आरसीसी घटक निवडा:", ["Footing (0.8% Steel)", "Slab (1.0% Steel)", "Beam (2.0% Steel)", "Column (2.5% Steel)", "Plain Concrete (0% Steel)"], index=1)
 
-                if "M10" in grade:
-                    c_r, s_r, a_r = 1.0, 3.0, 6.0
-                elif "M15" in grade:
-                    c_r, s_r, a_r = 1.0, 2.0, 4.0
-                elif "M20" in grade:
-                    c_r, s_r, a_r = 1.0, 1.5, 3.0
-                else:
-                    c_r, s_r, a_r = 1.0, 1.0, 2.0
-
-                if "Footing" in component:
-                    steel_pct = 0.8
-                elif "Slab" in component:
-                    steel_pct = 1.0
-                elif "Beam" in component:
-                    steel_pct = 2.0
-                elif "Column" in component:
-                    steel_pct = 2.5
-                else:
-                    steel_pct = 0.0
+                c_r, s_r, a_r = (1.0, 3.0, 6.0) if "M10" in grade else ((1.0, 2.0, 4.0) if "M15" in grade else ((1.0, 1.5, 3.0) if "M20" in grade else (1.0, 1.0, 2.0)))
+                steel_pct = 0.8 if "Footing" in component else (1.0 if "Slab" in component else (2.0 if "Beam" in component else (2.5 if "Column" in component else 0.0)))
 
                 st.markdown("###### [A] साहित्याचे मोजमाप व दर")
                 v_col1, v_col2 = st.columns(2)
                 with v_col1:
-                    volume = st.number_input("एकूण काँक्रीट घनफळ (Volume in m³):", min_value=0.1, value=1.0, step=0.5, key="cc_vol")
+                    volume = st.number_input("काँक्रीट घनफळ (Volume in m³):", min_value=0.1, value=1.0, step=0.5, key="cc_vol")
                     cement_rate = st.number_input("सिमेंट दर (₹/bag):", min_value=0.0, value=float(master_rates.get("cement", 400.0)), key="cc_cem_r")
                     sand_rate = st.number_input("वाळू दर प्रति m³ (₹/m³):", min_value=0.0, value=float(master_rates.get("sand", 2500.0)), key="cc_snd_r")
                 with v_col2:
@@ -2898,7 +2897,7 @@ elif st.session_state.selected_module == "Estimator Tools":
                 o_col1, o_col2 = st.columns(2)
                 with o_col1:
                     scaffolding_cost = st.number_input("सेंटरिंग / शटरिंग खर्च (₹):", min_value=0.0, value=350.0 if "Plain" not in component else 0.0, step=50.0, key="cc_scaf")
-                    contingency_cost = st.number_input("आकस्मिक खर्च (Contingencies ₹):", min_value=0.0, value=100.0, step=25.0, key="cc_cont")
+                    contingency_cost = st.number_input("आकस्मिक खर्च (₹):", min_value=0.0, value=100.0, step=25.0, key="cc_cont")
                 with o_col2:
                     water_pct = st.number_input("वॉटर चार्ज (%):", min_value=0.0, value=1.0, step=0.5, key="cc_wat_p")
                     profit_pct = st.number_input("कंत्राटदार नफा (%):", min_value=0.0, value=10.0, step=1.0, key="cc_prof_p")
@@ -2966,9 +2965,7 @@ elif st.session_state.selected_module == "Estimator Tools":
                     msg_text = f"🏗️ *PATIL INFRATECH - CONCRETE RATE ANALYSIS*\n👤 *User:* {current_user_name}\n📍 *Site:* {st.session_state.current_site_name}\n🧱 *Grade:* {grade.split(' ')[0]} | *Vol:* {volume} m³\n• Cement: {c_bags} Bags\n• Sand: {s_m3:.2f} m³ ({s_brass:.2f} Brass)\n• Aggregate: {a_m3:.2f} m³ ({a_brass:.2f} Brass)\n💰 *GRAND TOTAL:* ₹{grand_total:,.2f}/-"
                     render_whatsapp_feature(urllib.parse.quote(msg_text), "ra_conc")
 
-            # ==================================================================
-            # [२] BRICKWORK ESTIMATION (IS 2212 Standards)
-            # ==================================================================
+            # [२] Brickwork Estimation (IS 2212)
             elif "Brickwork" in main_choice:
                 st.markdown("##### 🧱 Brickwork Rate Analysis (IS 2212)")
                 mortar_choice = st.selectbox("मॉर्टर मिक्स गुणोत्तर निवडा:", ["1:3 (सिमेंट : वाळू)", "1:4 (सिमेंट : वाळू)", "1:5 (सिमेंट : वाळू)", "1:6 (सिमेंट : वाळू)"], index=3)
@@ -3060,9 +3057,7 @@ elif st.session_state.selected_module == "Estimator Tools":
                     msg_text = f"🏗️ *PATIL INFRATECH - BRICKWORK RATE ANALYSIS*\n👤 *User:* {current_user_name}\n📍 *Site:* {st.session_state.current_site_name}\n🧱 *Ratio:* {mortar_choice.split(' ')[0]} | *Vol:* {volume} m³\n• Bricks: {total_bricks} Nos\n• Cement: {cement_bags} Bags\n• Sand: {sand_m3:.2f} m³ ({sand_brass:.2f} Brass)\n💰 *GRAND TOTAL:* ₹{grand_total:,.2f}/-"
                     render_whatsapp_feature(urllib.parse.quote(msg_text), "ra_bw")
 
-            # ==================================================================
-            # [३] PLASTER WORK ESTIMATION (IS 1661 Standards)
-            # ==================================================================
+            # [३] Plaster Work Estimation (IS 1661)
             else:
                 st.markdown("##### 🎨 Plaster Work Rate Analysis (IS 1661)")
                 thickness_mm = st.number_input("प्लास्टरची जाडी (Thickness in mm):", min_value=6.0, max_value=25.0, value=12.0, step=1.0, key="pl_thick")
@@ -3157,9 +3152,11 @@ elif st.session_state.selected_module == "Estimator Tools":
                     msg_text = f"🏗️ *PATIL INFRATECH - PLASTER RATE ANALYSIS*\n👤 *User:* {current_user_name}\n📍 *Site:* {st.session_state.current_site_name}\n🎨 *Thick:* {thickness_mm}mm | *Area:* {plaster_area} m²\n• Cement: {cement_bags} Bags\n• Sand: {sand_m3:.2f} m³ ({sand_brass:.2f} Brass)\n💰 *GRAND TOTAL:* ₹{grand_total:,.2f}/-"
                     render_whatsapp_feature(urllib.parse.quote(msg_text), "ra_pl")
 
-        # १६.३ Bar Bending Schedule (BBS Calculator)
+        # ======================================================================
+        # १६.३ Bar Bending Schedule (IS 2502 & IS 1786)
+        # ======================================================================
         elif est_sub_mod == "BBS":
-            st.markdown("#### 🏗️ Bar Bending Schedule (BBS Calculator)")
+            st.markdown("#### 🏗️ Bar Bending Schedule (BBS Calculator - IS 2502)")
             default_covers = {"Footing": 50, "Column": 40, "Beam": 25, "Slab": 20}
 
             def update_cover_from_component():
@@ -3337,9 +3334,12 @@ elif st.session_state.selected_module == "Estimator Tools":
                 msg_text = f"🏗️ *PATIL INFRATECH - BBS REPORT*\n👤 *User:* {current_user_name}\n📐 *Component:* {rcc_comp}\n⚖️ *Weight:* {total_weight_kg:.2f} Kg\n💰 *Cost:* ₹{total_cost:,.2f}/-"
                 render_whatsapp_feature(urllib.parse.quote(msg_text), "bbs_main")
 
-        # १६.४ Quantity Surveying & Abstract Sheet Master
+        # ======================================================================
+        # १६.४ Quantity Surveying & Abstract Sheet Master (IS 1200)
+        # ======================================================================
         elif est_sub_mod == "Quantity Surveying":
-            st.markdown("#### 📈 Quantity Surveying & Abstract Sheet Master")
+            st.markdown("#### 📈 Quantity Surveying & Abstract Sheet Master (IS 1200)")
+            st.caption("💡 आयटमचे परिमाण, नग व वजावट (Deduction) भरून नेट प्रमाण व मटेरियल आवश्यकता मिळवा.")
 
             stages = [
                 "Earthwork in Excavation", "P.C.C. Bedding", "Foundation / Footing RCC Work",
@@ -3370,7 +3370,7 @@ elif st.session_state.selected_module == "Estimator Tools":
 
                     bw_ded_vol = 0.0
                     if is_brickwork:
-                        st.caption("🚪 वजावट (Deductions in m³):")
+                        st.caption("🚪 वजावट (Doors/Windows Deduction in m³):")
                         d1, d2, d3 = st.columns(3)
                         with d1:
                             dl = st.number_input("Deduction L (m):", min_value=0.0, value=0.0, key=f"bw_dl_{idx}")
@@ -3382,7 +3382,7 @@ elif st.session_state.selected_module == "Estimator Tools":
 
                     pl_ded_area = 0.0
                     if is_plaster:
-                        st.caption("🚪 प्लास्टर वजावट (Deductions in m²):")
+                        st.caption("🚪 प्लास्टर वजावट (Deduction in m²):")
                         p1, p2, p3 = st.columns(3)
                         with p1:
                             pdl = st.number_input("Ded L (m):", min_value=0.0, value=0.0, key=f"pl_dl_{idx}")
@@ -3432,9 +3432,8 @@ elif st.session_state.selected_module == "Estimator Tools":
                         conn.commit()
                         conn.close()
 
-                    msg_text = f"📊 *PATIL INFRATECH - QUANTITY SURVEY*\n👤 *User:* {current_user_name}\n📍 *Site:* {st.session_state.current_site_name}\nReport generated."
+                    msg_text = f"📊 *PATIL INFRATECH - QUANTITY SURVEY*\n👤 *User:* {current_user_name}\n📍 *Site:* {st.session_state.current_site_name}\nAbstract Report Generated Successfully."
                     render_whatsapp_feature(urllib.parse.quote(msg_text), "qs_main")
-
 # ==========================================
 # 📌 विभाग १७: SITE MANAGER मुख्य मॉड्यूल (Sub-modules)
 # ==========================================
