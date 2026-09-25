@@ -1892,10 +1892,10 @@ cursor.execute(
 )
 user_sites_db = cursor.fetchall()
 
-# जर युझरची एकही साईट नसेल तर डीफॉल्ट साईट P1 कोडसह सेव्ह करणे
+# जर युझरची एकही साईट नसेल तर डीफॉल्ट सामान्य साईट सेव्ह करणे
 if not user_sites_db:
-    default_c = "P1"
-    default_n = "Patil Residency"
+    default_c = "S1"
+    default_n = "Main Project Site"
     now_d = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
     cursor.execute(
         "INSERT OR IGNORE INTO user_sites (user_key, site_code, site_name, created_at) VALUES (?, ?, ?, ?)",
@@ -1920,7 +1920,7 @@ active_site_obj = next((s for s in sites_list if s["site_code"] == st.session_st
 st.session_state.current_site_name = active_site_obj["site_name"]
 active_code_display = active_site_obj["site_code"]
 
-# --- १. अल्ट्रा-कॉम्पॅक्ट स्लीक हेडर (Single Line Banner) ---
+# --- १. अल्ट्रा-कॉम्पॅक्ट स्लीक हेडर ---
 st.markdown(
     """
     <div class="brand-header-compact">
@@ -1958,7 +1958,7 @@ for ad in ads_list:
         unsafe_allow_html=True,
     )
 
-# --- ३. टॉप ॲक्शन बार (Weather काढून फक्त Site व Logout) ---
+# --- ३. टॉप ॲक्शन बार ---
 bar_c1, bar_c2, bar_c3 = st.columns([3.8, 1.8, 1.2])
 
 with bar_c1:
@@ -1973,7 +1973,6 @@ with bar_c1:
     )
 
 with bar_c2:
-    # सर्व साईट्स पाहणे व बदलण्यासाठीचा "View All Sites" पॉपओव्हर
     with st.popover("📂 View All Sites"):
         st.markdown("##### 🏢 Your Projects / Sites")
         st.caption("Select a site to switch, or add a new site in Roman/English script.")
@@ -1991,13 +1990,13 @@ with bar_c2:
             st.rerun()
 
         st.write("---")
-        # २. नवीन साईट ॲड करणे (फक्त इंग्रजी अक्षरे)
+        # २. नवीन साईट ॲड करणे (उदाहरणे काढून फक्त सामान्य सूचना ठेवली आहे)
         st.markdown("###### ➕ Add New Project Site")
-        new_s_name = st.text_input("Site Name (English/Roman only):", placeholder="e.g. Lomate Residency", key="new_s_name_in").strip()
-        new_s_code = st.text_input("Site Code (English only):", placeholder="e.g. L2", key="new_s_code_in").strip().upper()
+        new_s_name = st.text_input("Site Name (English/Roman only):", placeholder="Enter Site Name", key="new_s_name_in").strip()
+        new_s_code = st.text_input("Site Code (English only):", placeholder="Enter Code (e.g. S1)", key="new_s_code_in").strip().upper()
 
         if st.button("💾 Save New Site", key="btn_save_new_site_code", use_container_width=True):
-            # इंग्रजी/रोमन अक्षरांची तपासणी (Regex Validation)
+            # इंग्रजी/रोमन अक्षरांची तपासणी (Devanagari Not Allowed)
             is_valid_name = bool(re.match(r"^[A-Za-z0-9\s\-]+$", new_s_name))
             is_valid_code = bool(re.match(r"^[A-Za-z0-9\-]+$", new_s_code))
 
@@ -2037,7 +2036,7 @@ with bar_c3:
         st.markdown("<script>localStorage.removeItem('patil_app_user');</script>", unsafe_allow_html=True)
         st.rerun()
 
-# --- ४. युझरचा अधिकृत इनबॉक्स व मेसेज सेंटर (Dedicated Message Center) ---
+# --- ४. युझरचा अधिकृत इनबॉक्स व मेसेज सेंटर ---
 has_unread = current_user_data.get("unread_notification", 0) == 1
 admin_message_content = current_user_data.get("admin_message", "")
 
@@ -2074,7 +2073,7 @@ else:
 # --- ५. प्रिमियम कोड अनलॉक व ॲक्टिव्हेशन (Free Users Only) ---
 if not is_user_premium:
     with st.expander("🔑 प्रिमियम कोड अनलॉक करा (Enter Code)"):
-        input_code = st.text_input("Activation Code:", placeholder="उदा. PATIL-XXXXX किंवा 4528", key="home_code_input").strip()
+        input_code = st.text_input("Activation Code:", placeholder="Code टाका", key="home_code_input").strip()
         c_btn1, c_btn2 = st.columns(2)
         with c_btn1:
             if st.button("🔓 Activate Premium", key="btn_activate_prem_main", type="primary", use_container_width=True):
