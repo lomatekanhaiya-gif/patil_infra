@@ -679,7 +679,7 @@ def load_default_tasks_if_empty(user_key, site_name):
 
 
 # ==========================================
-# 📌 विभाग ७: सेशन स्टेट्स आणि प्रिमियम ऑथेंटिकेशन
+# 📌 विभाग ७: सेशन स्टेट्स आणि प्रिमियम ऑथेंटिकेशन (Admin Master Bypass)
 # ==========================================
 if "app_user_name" not in st.session_state:
     st.session_state.app_user_name = None
@@ -701,6 +701,7 @@ for key, default in [
     ("generated_otp", None),
     ("otp_verified", False),
     ("is_admin_logged", False),
+    ("admin_impersonating", False),  # 🌟 Admin user bypass tracking
     ("admin_dashboard_tab", "rates"),
     ("current_comment", "काही नाही"),
     ("selected_module", None),
@@ -708,9 +709,8 @@ for key, default in [
     ("selected_estimator_sub_module", None),
     ("admin_view", "main"),
     ("admin_selected_user", None),
-    ("current_site_name", "पाटील रेसिडेन्सी - साईट १"),
+    ("current_site_name", "Main Project Site"),
     ("all_sites_data", {"Default Site": {"milestones": [], "created_at": "26-08-2026"}}),
-    ("site_location_city", "Pune"),
     ("autocad_site_opened", False),
     ("is_client_view", False),
     ("client_view_site", None),
@@ -733,12 +733,19 @@ if current_user_name:
 
 
 def check_user_premium_status(username):
-    """प्रिमियम वैधता आणि उरलेला कालावधी तपासणे"""
+    """प्रिमियम वैधता तपासणे - ॲडमीन/फाउंडरसाठी सर्व काही १००% मोफत व कायम अनलॉक राहील"""
+    # 🌟 १. फाउंडर व ॲडमीन मास्टर बायपास (सगळे फीचर्स डायरेक्ट मोफत मिळतील):
+    if st.session_state.get("is_admin_logged", False) or st.session_state.get("admin_impersonating", False):
+        return True, "Founder Master VIP (All Features Free)"
+
     if not username:
         return False, "Free"
-    if username.lower() == "kanha" or username == "9999999999":
+    
+    # 🌟 २. मास्टर ॲडमीन की तपासणी:
+    if str(username).lower() in ["admin", "9999999999"]:
         return True, "Master Lifetime VIP"
 
+    # ३. सामान्य युझर प्रिमियम तपासणी:
     u_info = get_user_data(username)
     if u_info and u_info.get("is_premium") == 1:
         exp_date_str = u_info.get("premium_expiry")
@@ -1148,7 +1155,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 # ==============================================================================
-# 📌 विभाग ११: ॲडमीन पॅनल (Admin Command Center)
+# 📌 विभाग ११: ॲडमीन पॅनल (Admin Command Center with Founder Direct Access)
 # ==============================================================================
 if st.session_state.is_admin_logged:
     # १. ग्रँड कॉर्पोरेट वेलकम हेडर
@@ -1157,13 +1164,13 @@ if st.session_state.is_admin_logged:
         <div style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #31104b 100%); border: 1px solid #4338ca; border-left: 6px solid #8b5cf6; padding: 20px 24px; border-radius: 14px; margin-bottom: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
                 <div>
-                    <span style="background:rgba(139,92,246,0.2); color:#c4b5fd; border:1px solid #8b5cf6; padding:3px 12px; border-radius:20px; font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase;">Executive Console</span>
-                    <h2 style="color:#ffffff; margin:6px 0 2px 0; font-size:24px; font-weight:900;">⚡ KANHAIYA'S EXECUTIVE COMMAND CENTER</h2>
-                    <p style="color:#94a3b8; margin:0; font-size:13px;">Patil Infratech Master Control & Hub</p>
+                    <span style="background:rgba(139,92,246,0.2); color:#c4b5fd; border:1px solid #8b5cf6; padding:3px 12px; border-radius:20px; font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase;">Founder & Executive Console</span>
+                    <h2 style="color:#ffffff; margin:6px 0 2px 0; font-size:24px; font-weight:900;">⚡ PATIL INFRATECH EXECUTIVE COMMAND CENTER</h2>
+                    <p style="color:#94a3b8; margin:0; font-size:13px;">Master Control Hub • Full System Authority & Unlimited Access</p>
                 </div>
                 <div style="text-align:right;">
-                    <span style="color:#10b981; font-weight:bold; font-size:13px;">🟢 System Online</span><br>
-                    <small style="color:#64748b;">Master Authority Mode</small>
+                    <span style="color:#10b981; font-weight:bold; font-size:13px;">🟢 Founder Rights: ACTIVE</span><br>
+                    <small style="color:#64748b;">All Premium Gates Bypassed</small>
                 </div>
             </div>
         </div>
@@ -1171,10 +1178,20 @@ if st.session_state.is_admin_logged:
         unsafe_allow_html=True,
     )
 
-    col_logout, _ = st.columns([1.5, 3.5])
-    with col_logout:
-        if st.button("🔒 Admin Logout", use_container_width=True, type="primary"):
+    # 🚀 फाउंडर डायरेक्ट ॲप एंट्री व लॉगआउट बार
+    col_entry, col_logout, _ = st.columns([2.5, 1.5, 2])
+    with col_entry:
+        if st.button("🚀 Enter Main App as Founder (All Unlocked)", type="primary", use_container_width=True):
+            st.session_state.app_user_name = "9999999999"  # Master Admin key
             st.session_state.is_admin_logged = False
+            st.session_state.admin_impersonating = True
+            st.session_state.selected_module = None
+            st.rerun()
+
+    with col_logout:
+        if st.button("🔒 Admin Logout", use_container_width=True):
+            st.session_state.is_admin_logged = False
+            st.session_state.admin_impersonating = False
             st.rerun()
 
     st.write("---")
@@ -1332,6 +1349,16 @@ if st.session_state.is_admin_logged:
                 unsafe_allow_html=True,
             )
 
+            # 🌟 थेट या युझरच्या प्रोफाइलमध्ये शिरण्याचे मास्टर बटण
+            if st.button(f"🎭 Login as {u_name} (Full Free Access Bypass)", type="primary", use_container_width=True):
+                st.session_state.app_user_name = target_user
+                st.session_state.is_admin_logged = False
+                st.session_state.admin_impersonating = True
+                st.session_state.selected_module = None
+                st.rerun()
+
+            st.write("---")
+
             if assigned_code:
                 st.info(f"💡 {u_name} साठी आधीच एक कोड तयार आहे: `{assigned_code}`")
             else:
@@ -1381,7 +1408,7 @@ if st.session_state.is_admin_logged:
                     """,
                     (
                         exp_time.strftime("%Y-%m-%d %H:%M:%S"),
-                        "Kanhaiya (Founder of Patil Infratech)",
+                        "Master Admin",
                         target_user,
                     ),
                 )
@@ -1420,7 +1447,7 @@ if st.session_state.is_admin_logged:
                     )
                     conn.commit()
                     conn.close()
-                    st.success(f"✅ '{u_name}' च्या इनबॉक्समध्ये नवीन मेसेज पाठवला (Notification Sent)!")
+                    st.success(f"✅ '{u_name}' च्या इनबॉक्समध्ये नवीन मेसेज पाठवला!")
                     st.rerun()
 
             if st.button(f"🗑️ Delete User: {u_name}", key=f"win_del_{target_user}", use_container_width=True):
@@ -1490,7 +1517,7 @@ if st.session_state.is_admin_logged:
                     )
                     status_color = "#10b981" if is_online else "#ef4444"
 
-                    u_card_col1, u_card_col2 = st.columns([3.8, 1.2])
+                    u_card_col1, u_card_col2 = st.columns([3.6, 1.4])
                     with u_card_col1:
                         if u_prem:
                             badge_markup = f"<span class='gold-vip-badge'>👑 VIP: {u_name.upper()}</span>"
@@ -1511,8 +1538,8 @@ if st.session_state.is_admin_logged:
                             unsafe_allow_html=True
                         )
                     with u_card_col2:
-                        st.markdown("<div style='margin-top:8px;'></div>", unsafe_allow_html=True)
-                        if st.button("👁️ View / Manage", key=f"open_user_win_{mob}", use_container_width=True):
+                        st.markdown("<div style='margin-top:6px;'></div>", unsafe_allow_html=True)
+                        if st.button("👁️ Manage / Login", key=f"open_user_win_{mob}", use_container_width=True):
                             st.session_state.admin_view = "user_detail"
                             st.session_state.admin_selected_user = mob
                             trigger_push_state()
@@ -1629,7 +1656,6 @@ if st.session_state.is_admin_logged:
                     st.warning("⚠️ कृपया पाठवण्यासाठी काहीतरी मेसेज लिहा!")
 
     st.stop()
-
 # ==========================================
 # 📌 विभाग १२: युझर ऑथेंटिकेशन (Login, Register, OTP & Client View)
 # ==========================================
@@ -1943,6 +1969,25 @@ if st.session_state.get("is_client_view", False):
 # ==============================================================================
 # 📌 विभाग १३: मुख्य युझर डॅशबोर्ड (Compact Header, Site Code Manager & Dedicated Inbox)
 # ==============================================================================
+# 🌟 फाउंडर मोड फ्लोटिंग बॅनर (ॲडमीनला परत पॅनलवर जाण्यासाठी)
+if st.session_state.get("admin_impersonating", False) or st.session_state.get("is_admin_logged", False):
+    ret_c1, ret_c2 = st.columns([4, 1.5])
+    with ret_c1:
+        st.markdown(
+            f"""
+            <div style="background:rgba(139,92,246,0.15); border:1px solid #8b5cf6; padding:8px 14px; border-radius:8px;">
+                <b style="color:#c4b5fd;">👑 FOUNDER MODE ACTIVE:</b> <span style="color:#ffffff;">All VIP Features Unlocked (Full Free Access)</span>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+    with ret_c2:
+        if st.button("🛡️ Return to Admin Panel", type="primary", use_container_width=True):
+            st.session_state.is_admin_logged = True
+            st.session_state.admin_impersonating = False
+            st.rerun()
+    st.write(" ")
+
 current_user_name = st.session_state.app_user_name
 is_user_premium, status_text_str = check_user_premium_status(current_user_name)
 current_user_data = get_user_data(current_user_name) or {}
@@ -2054,13 +2099,12 @@ with bar_c2:
             st.rerun()
 
         st.write("---")
-        # २. नवीन साईट ॲड करणे (उदाहरणे काढून फक्त सामान्य सूचना ठेवली आहे)
+        # २. नवीन साईट ॲड करणे
         st.markdown("###### ➕ Add New Project Site")
         new_s_name = st.text_input("Site Name (English/Roman only):", placeholder="Enter Site Name", key="new_s_name_in").strip()
         new_s_code = st.text_input("Site Code (English only):", placeholder="Enter Code (e.g. S1)", key="new_s_code_in").strip().upper()
 
         if st.button("💾 Save New Site", key="btn_save_new_site_code", use_container_width=True):
-            # इंग्रजी/रोमन अक्षरांची तपासणी (Devanagari Not Allowed)
             is_valid_name = bool(re.match(r"^[A-Za-z0-9\s\-]+$", new_s_name))
             is_valid_code = bool(re.match(r"^[A-Za-z0-9\-]+$", new_s_code))
 
@@ -2094,6 +2138,7 @@ with bar_c3:
     if st.button("🚪 Logout", key="top_logout_btn", use_container_width=True):
         st.session_state.app_user_name = None
         st.session_state.otp_verified = False
+        st.session_state.admin_impersonating = False
         if "saved_user" in st.query_params:
             del st.query_params["saved_user"]
         st.session_state.selected_module = None
@@ -2155,7 +2200,7 @@ if not is_user_premium:
                         conn.close()
                         st.success("🎉 ८ तासांचे प्रिमियम अनलॉक झाले!")
                         st.rerun()
-                elif input_code == "kanha_1p":
+                elif input_code in ["admin_master", "vip_access"]:
                     exp_str = (get_ist_time() + datetime.timedelta(days=1)).strftime("%Y-%m-%d %H:%M:%S")
                     conn = get_db_connection()
                     cursor = conn.cursor()
