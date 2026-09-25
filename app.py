@@ -598,6 +598,17 @@ def init_db():
     conn.close()
 
 init_db()
+# १४. साईट मास्टर आणि कोड्स टेबल (नवीन)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS user_sites (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_key TEXT,
+            site_code TEXT,
+            site_name TEXT,
+            created_at TEXT,
+            UNIQUE(user_key, site_code)
+        )
+    """)
 
 # ==========================================
 # 📌 विभाग ६: डेटाबेस क्वेरी आणि हेल्पर फंक्शन्स
@@ -1865,13 +1876,50 @@ if st.session_state.get("is_client_view", False):
 
 
 # ==============================================================================
-# 📌 विभाग १३: मुख्य युझर डॅशबोर्ड (Compact Header, Action Bar & Dedicated Inbox)
+# 📌 विभाग १३: मुख्य युझर डॅशबोर्ड (Compact Header, Site Code Manager & Dedicated Inbox)
 # ==============================================================================
 current_user_name = st.session_state.app_user_name
 is_user_premium, status_text_str = check_user_premium_status(current_user_name)
 current_user_data = get_user_data(current_user_name) or {}
 
-# १. अल्ट्रा-कॉम्पॅक्ट स्लीक हेडर (जागा न खाणारा)
+# --- डेटाबेसमधून युझरच्या साईट्स लोड करणे ---
+conn = get_db_connection()
+cursor = conn.cursor()
+cursor.execute(
+    "SELECT site_code, site_name FROM user_sites WHERE user_key = ? ORDER BY id ASC",
+    (current_user_name,),
+)
+user_sites_db = cursor.fetchall()
+
+# जर युझरची एकही साईट नसेल तर डीफॉल्ट साईट P1 कोडसह सेव्ह करणे
+if not user_sites_db:
+    default_c = "P1"
+    default_n = "Patil Residency"
+    now_d = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
+    cursor.execute(
+        "INSERT OR IGNORE INTO user_sites (user_key, site_code, site_name, created_at) VALUES (?, ?, ?, ?)",
+        (current_user_name, default_c, default_n, now_d),
+    )
+    conn.commit()
+    cursor.execute(
+        "SELECT site_code, site_name FROM user_sites WHERE user_key = ? ORDER BY id ASC",
+        (current_user_name,),
+    )
+    user_sites_db = cursor.fetchall()
+conn.close()
+
+sites_list = [dict(r) for r in user_sites_db]
+
+# सेशन स्टेटमध्ये चालू साईट कोड सेट करणे
+if "active_site_code" not in st.session_state or not st.session_state.active_site_code:
+    st.session_state.active_site_code = sites_list[0]["site_code"]
+
+# चालू साईटचे नाव मिळवणे
+active_site_obj = next((s for s in sites_list if s["site_code"] == st.session_state.active_site_code), sites_list[0])
+st.session_state.current_site_name = active_site_obj["site_name"]
+active_code_display = active_site_obj["site_code"]
+
+# --- १. अल्ट्रा-कॉम्पॅक्ट स्लीक हेडर (Single Line Banner) ---
 st.markdown(
     """
     <div class="brand-header-compact">
@@ -1880,9 +1928,9 @@ st.markdown(
             <h2>PATIL INFRATECH</h2>
             <span class="brand-subtext">| Civil Suite & Site Manager</span>
         </div>
-        <div style="display:flex; align-items:center; gap:10px;">
-            <span style="background:rgba(245,158,11,0.15); color:#f59e0b; border:1px solid rgba(245,158,11,0.3); padding:2px 10px; border-radius:15px; font-size:11px; font-weight:700;">
-                Founder: Kanhaiya
+        <div>
+            <span style="background:rgba(245,158,11,0.12); color:#f59e0b; border:1px solid rgba(245,158,11,0.25); padding:2px 10px; border-radius:12px; font-size:11px; font-weight:700;">
+                Console Active
             </span>
         </div>
     </div>
@@ -1890,7 +1938,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# २. स्पॉन्सर जाहिरात (सक्रिय असल्यास कॉम्पॅक्ट पट्टीमध्ये)
+# --- २. स्पॉन्सर जाहिरात (असल्यास) ---
 conn = get_db_connection()
 cursor = conn.cursor()
 cursor.execute("SELECT * FROM ads WHERE active = 1 AND position = 'Main App Header (Top Banner)'")
@@ -1909,55 +1957,76 @@ for ad in ads_list:
         unsafe_allow_html=True,
     )
 
-# ३. हवामान डेटा
-if "site_location_city" not in st.session_state:
-    st.session_state.site_location_city = "Pune"
+# --- ३. टॉप ॲक्शन बार (Weather काढून फक्त Site व Logout) ---
+bar_c1, bar_c2, bar_c3 = st.columns([3.8, 1.8, 1.2])
 
-site_weather = get_site_weather_forecast(st.session_state.site_location_city)
-w_temp = site_weather["temp"] if site_weather else "--"
-w_rain = site_weather["rain_prob"] if site_weather else 0
-w_city = site_weather["city"] if site_weather else st.session_state.site_location_city
-
-# ४. कॉम्पॅक्ट ॲक्शन बार (Site, Weather, City & Logout)
-top_c1, top_c2, top_c3, top_c4 = st.columns([3.2, 2.2, 1.8, 1.2])
-
-with top_c1:
+with bar_c1:
     st.markdown(
         f"""
-        <div style="background:#111827; border:1px solid #1f2937; border-left:3px solid #38bdf8; padding:6px 12px; border-radius:8px;">
-            <span style="font-size:10px; color:#94a3b8;">📍 चालू साईट:</span><br>
-            <b style="color:#ffffff; font-size:13px;">🏗️ {st.session_state.current_site_name}</b>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-    with st.popover("✏️ साईट नाव बदला"):
-        new_site_input = st.text_input("नवीन साईट नाव:", value=st.session_state.current_site_name, key="top_site_edit_input")
-        if st.button("💾 सेव्ह करा", key="btn_save_top_site", type="primary", use_container_width=True):
-            if new_site_input.strip():
-                st.session_state.current_site_name = new_site_input.strip()
-                st.rerun()
-
-with top_c2:
-    st.markdown(
-        f"""
-        <div style="background:#111827; border:1px solid #1f2937; padding:6px 12px; border-radius:8px; text-align:center;">
-            <span style="font-size:10px; color:#94a3b8;">🌤️ {w_city}</span><br>
-            <b style="color:#38bdf8; font-size:13px;">{w_temp}°C</b> | <span style="color:{'#ef4444' if w_rain >= 50 else '#10b981'}; font-weight:bold; font-size:12px;">🌧️ {w_rain}%</span>
+        <div style="background:#111827; border:1px solid #1f2937; border-left:4px solid #38bdf8; padding:8px 14px; border-radius:8px;">
+            <span style="font-size:10px; color:#94a3b8; font-weight:600; text-transform:uppercase;">Current Active Project:</span><br>
+            <b style="color:#ffffff; font-size:15px;"><span style="color:#f59e0b; font-weight:800;">[{active_code_display}]</span> {st.session_state.current_site_name}</b>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-with top_c3:
-    with st.popover("📍 शहर बदला"):
-        new_city_input = st.text_input("शहर टाका:", value=st.session_state.site_location_city, key="top_city_edit_input")
-        if st.button("🌦️ अपडेट", key="btn_top_weather_update", type="primary", use_container_width=True):
-            if new_city_input.strip():
-                st.session_state.site_location_city = new_city_input.strip()
-                st.rerun()
+with bar_c2:
+    # सर्व साईट्स पाहणे व बदलण्यासाठीचा "View All Sites" पॉपओव्हर
+    with st.popover("📂 View All Sites"):
+        st.markdown("##### 🏢 Your Projects / Sites")
+        st.caption("Select a site to switch, or add a new site in Roman/English script.")
 
-with top_c4:
+        # १. साईट निवडणे
+        site_options = {f"[{s['site_code']}] {s['site_name']}": s["site_code"] for s in sites_list}
+        selected_display = st.selectbox(
+            "Switch Active Site:",
+            list(site_options.keys()),
+            index=[s["site_code"] for s in sites_list].index(st.session_state.active_site_code),
+            key="sel_switch_site_box"
+        )
+        if st.button("🔄 Switch Site", key="btn_switch_site_action", type="primary", use_container_width=True):
+            st.session_state.active_site_code = site_options[selected_display]
+            st.rerun()
+
+        st.write("---")
+        # २. नवीन साईट ॲड करणे (फक्त इंग्रजी अक्षरे)
+        st.markdown("###### ➕ Add New Project Site")
+        new_s_name = st.text_input("Site Name (English/Roman only):", placeholder="e.g. Lomate Residency", key="new_s_name_in").strip()
+        new_s_code = st.text_input("Site Code (English only):", placeholder="e.g. L2", key="new_s_code_in").strip().upper()
+
+        if st.button("💾 Save New Site", key="btn_save_new_site_code", use_container_width=True):
+            # इंग्रजी/रोमन अक्षरांची तपासणी (Regex Validation)
+            is_valid_name = bool(re.match(r"^[A-Za-z0-9\s\-]+$", new_s_name))
+            is_valid_code = bool(re.match(r"^[A-Za-z0-9\-]+$", new_s_code))
+
+            if not new_s_name or not new_s_code:
+                st.warning("⚠️ Please fill both Site Name and Site Code.")
+            elif not is_valid_name or not is_valid_code:
+                st.error("❌ Devanagari not allowed! Please use only English/Roman characters (A-Z, 0-9).")
+            else:
+                conn = get_db_connection()
+                cursor = conn.cursor()
+                cursor.execute(
+                    "SELECT site_code FROM user_sites WHERE user_key = ? AND site_code = ?",
+                    (current_user_name, new_s_code),
+                )
+                if cursor.fetchone():
+                    conn.close()
+                    st.error(f"❌ Code '{new_s_code}' is already used. Choose another code.")
+                else:
+                    now_str = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
+                    cursor.execute(
+                        "INSERT INTO user_sites (user_key, site_code, site_name, created_at) VALUES (?, ?, ?, ?)",
+                        (current_user_name, new_s_code, new_s_name, now_str),
+                    )
+                    conn.commit()
+                    conn.close()
+                    st.session_state.active_site_code = new_s_code
+                    st.success(f"✅ Site [{new_s_code}] {new_s_name} created successfully!")
+                    st.rerun()
+
+with bar_c3:
     if st.button("🚪 Logout", key="top_logout_btn", use_container_width=True):
         st.session_state.app_user_name = None
         st.session_state.otp_verified = False
@@ -1967,13 +2036,10 @@ with top_c4:
         st.markdown("<script>localStorage.removeItem('patil_app_user');</script>", unsafe_allow_html=True)
         st.rerun()
 
-# ------------------------------------------------------------------------------
-# 📥 ५. युझरचा अधिकृत इनबॉक्स व मेसेज सेंटर (Dedicated Admin Message Center)
-# ------------------------------------------------------------------------------
+# --- ४. युझरचा अधिकृत इनबॉक्स व मेसेज सेंटर (Dedicated Message Center) ---
 has_unread = current_user_data.get("unread_notification", 0) == 1
 admin_message_content = current_user_data.get("admin_message", "")
 
-# जर ॲडमीनने काही कोड किंवा मेसेज पाठवला असेल तर तो हायलाइट होऊन दिसेल
 if has_unread:
     st.markdown(
         f"""
@@ -1997,7 +2063,6 @@ if has_unread:
         conn.close()
         st.rerun()
 else:
-    # युझरसाठी कायम उपलब्ध असणारा इनबॉक्स
     inbox_label = f"📥 इनबॉक्स व ॲडमीन संदेश ({current_user_name})"
     with st.expander(inbox_label, expanded=False):
         if admin_message_content:
@@ -2005,9 +2070,7 @@ else:
         else:
             st.info("ℹ️ इनबॉक्समध्ये सध्या कोणताही नवीन संदेश नाही.")
 
-# ------------------------------------------------------------------------------
-# 🔑 ६. प्रिमियम कोड अनलॉक व ॲक्टिव्हेशन (Free Users Only)
-# ------------------------------------------------------------------------------
+# --- ५. प्रिमियम कोड अनलॉक व ॲक्टिव्हेशन (Free Users Only) ---
 if not is_user_premium:
     with st.expander("🔑 प्रिमियम कोड अनलॉक करा (Enter Code)"):
         input_code = st.text_input("Activation Code:", placeholder="उदा. PATIL-XXXXX किंवा 4528", key="home_code_input").strip()
@@ -2063,7 +2126,6 @@ if not is_user_premium:
                 st.success("✅ ॲडमीनला कोडसाठी रिक्वेस्ट पाठवली!")
 
 st.write("---")
-
 # ==========================================
 # 📌 विभाग १४: CIVIL AI ASSISTANT (Gemini SDK & Fallback)
 # ==========================================
