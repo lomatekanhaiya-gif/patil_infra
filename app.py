@@ -1974,7 +1974,7 @@ if st.session_state.get("admin_impersonating", False) or st.session_state.get("i
     ret_c1, ret_c2 = st.columns([4, 1.5])
     with ret_c1:
         st.markdown(
-            f"""
+            """
             <div style="background:rgba(139,92,246,0.15); border:1px solid #8b5cf6; padding:8px 14px; border-radius:8px;">
                 <b style="color:#c4b5fd;">👑 FOUNDER MODE ACTIVE:</b> <span style="color:#ffffff;">All VIP Features Unlocked (Full Free Access)</span>
             </div>
@@ -2018,11 +2018,12 @@ if not user_sites_db:
     user_sites_db = cursor.fetchall()
 conn.close()
 
-sites_list = [dict(r) for r in user_sites_db]
+sites_list = [dict(r) for r in user_sites_db] if user_sites_db else [{"site_code": "S1", "site_name": "Main Project Site"}]
+available_codes = [s["site_code"] for s in sites_list]
 
-# सेशन स्टेटमध्ये चालू साईट कोड सेट करणे
-if "active_site_code" not in st.session_state or not st.session_state.active_site_code:
-    st.session_state.active_site_code = sites_list[0]["site_code"]
+# 🛡️ सुरक्षित कोड तपासणी (ValueError टाळण्यासाठी)
+if "active_site_code" not in st.session_state or st.session_state.active_site_code not in available_codes:
+    st.session_state.active_site_code = available_codes[0]
 
 # चालू साईटचे नाव मिळवणे
 active_site_obj = next((s for s in sites_list if s["site_code"] == st.session_state.active_site_code), sites_list[0])
@@ -2086,12 +2087,21 @@ with bar_c2:
         st.markdown("##### 🏢 Your Projects / Sites")
         st.caption("Select a site to switch, or add a new site in Roman/English script.")
 
-        # १. साईट निवडणे
+        # १. साईट निवडणे (Safe Index Logic)
         site_options = {f"[{s['site_code']}] {s['site_name']}": s["site_code"] for s in sites_list}
+        site_keys_list = list(site_options.keys())
+
+        # सुरक्षित इंडेक्स कॅल्क्युलेशन
+        current_selection_idx = 0
+        for idx, s in enumerate(sites_list):
+            if s["site_code"] == st.session_state.active_site_code:
+                current_selection_idx = idx
+                break
+
         selected_display = st.selectbox(
             "Switch Active Site:",
-            list(site_options.keys()),
-            index=[s["site_code"] for s in sites_list].index(st.session_state.active_site_code),
+            site_keys_list,
+            index=current_selection_idx,
             key="sel_switch_site_box"
         )
         if st.button("🔄 Switch Site", key="btn_switch_site_action", type="primary", use_container_width=True):
