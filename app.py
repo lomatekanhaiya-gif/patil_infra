@@ -2827,13 +2827,13 @@ elif st.session_state.selected_module == "Estimator Tools":
                         unsafe_allow_html=True,
                     )
 
-        # १६.२ Rate Analysis Module (Concrete, Brickwork, Plaster)
+      # १६.२ Rate Analysis Module (Concrete, Brickwork, Plaster - 100% IS Code Compliant)
         elif est_sub_mod == "Rate Analysis":
             master_rates = get_market_rates()
             st.markdown(
                 f"""
-                <div style="background:#111827; border:1px solid #1f2937; padding:10px 14px; border-radius:8px; margin-bottom:14px; font-size:12px;">
-                    📢 <b>चालू मार्केट दर:</b> Cement: ₹{master_rates.get('cement', 400.0)}/bag | Sand: ₹{master_rates.get('sand', 2500.0)}/m³ | Agg: ₹{master_rates.get('aggregate', 2200.0)}/m³ | Steel: ₹{master_rates.get('steel', 60.0)}/Kg | Brick: ₹{master_rates.get('bricks', 8.0)}/nos
+                <div style="background:#111827; border:1px solid #1f2937; border-left:4px solid #f59e0b; padding:10px 14px; border-radius:8px; margin-bottom:14px; font-size:12px;">
+                    📢 <b>चालू मार्केट दर:</b> Cement: ₹{master_rates.get('cement', 400.0):.2f}/bag | Sand: ₹{master_rates.get('sand', 2500.0):.2f}/m³ | Agg: ₹{master_rates.get('aggregate', 2200.0):.2f}/m³ | Steel: ₹{master_rates.get('steel', 60.0):.2f}/Kg | Brick: ₹{master_rates.get('bricks', 8.0):.2f}/nos
                 </div>
                 """,
                 unsafe_allow_html=True,
@@ -2841,98 +2841,115 @@ elif st.session_state.selected_module == "Estimator Tools":
 
             main_choice = st.radio("कामाचा प्रकार निवडा:", ["Concrete Work (काँक्रीट काम)", "Brickwork (वीटकाम)", "Plaster Work (प्लास्टर काम)"], horizontal=True)
 
+            # ==================================================================
+            # [१] CONCRETE WORK (IS 456 Standards)
+            # ==================================================================
             if "Concrete Work" in main_choice:
+                st.markdown("##### 🧱 Concrete Work Rate Analysis (IS 456)")
                 col1, col2 = st.columns(2)
                 with col1:
-                    grade = st.selectbox("काँक्रीट ग्रेड:", ["M10 (1:3:6)", "M15 (1:2:4)", "M20 (1:1.5:3)", "M25 (1:1:2)"])
+                    grade = st.selectbox("काँक्रीट ग्रेड निवडा:", ["M10 (1:3:6)", "M15 (1:2:4)", "M20 (1:1.5:3)", "M25 (1:1:2)"], index=2)
                 with col2:
-                    component = st.selectbox("घटक:", ["Footing (0.8% Steel)", "Slab (1.0% Steel)", "Beam (2.0% Steel)", "Column (2.5% Steel)", "Plain Concrete (0% Steel)"])
+                    component = st.selectbox("आरसीसी घटक निवडा:", ["Footing (0.8% Steel)", "Slab (1.0% Steel)", "Beam (2.0% Steel)", "Column (2.5% Steel)", "Plain Concrete (0% Steel)"], index=1)
 
                 if "M10" in grade:
-                    cement_ratio, sand_ratio, aggregate_ratio = 1, 3, 6
+                    c_r, s_r, a_r = 1.0, 3.0, 6.0
                 elif "M15" in grade:
-                    cement_ratio, sand_ratio, aggregate_ratio = 1, 2, 4
+                    c_r, s_r, a_r = 1.0, 2.0, 4.0
                 elif "M20" in grade:
-                    cement_ratio, sand_ratio, aggregate_ratio = 1, 1.5, 3
+                    c_r, s_r, a_r = 1.0, 1.5, 3.0
                 else:
-                    cement_ratio, sand_ratio, aggregate_ratio = 1, 1, 2
+                    c_r, s_r, a_r = 1.0, 1.0, 2.0
 
                 if "Footing" in component:
-                    steel_percentage = 0.8
+                    steel_pct = 0.8
                 elif "Slab" in component:
-                    steel_percentage = 1.0
+                    steel_pct = 1.0
                 elif "Beam" in component:
-                    steel_percentage = 2.0
+                    steel_pct = 2.0
                 elif "Column" in component:
-                    steel_percentage = 2.5
+                    steel_pct = 2.5
                 else:
-                    steel_percentage = 0.0
+                    steel_pct = 0.0
 
-                st.markdown("##### [A] साहित्याची माहिती आणि दर")
+                st.markdown("###### [A] साहित्याचे मोजमाप व दर")
                 v_col1, v_col2 = st.columns(2)
                 with v_col1:
-                    volume = st.number_input("घनफळ (m³):", min_value=0.0, value=1.0, key="cc_vol")
+                    volume = st.number_input("एकूण काँक्रीट घनफळ (Volume in m³):", min_value=0.1, value=1.0, step=0.5, key="cc_vol")
                     cement_rate = st.number_input("सिमेंट दर (₹/bag):", min_value=0.0, value=float(master_rates.get("cement", 400.0)), key="cc_cem_r")
-                    sand_rate = st.number_input("वाळू दर (₹/m³):", min_value=0.0, value=float(master_rates.get("sand", 2500.0)), key="cc_snd_r")
+                    sand_rate = st.number_input("वाळू दर प्रति m³ (₹/m³):", min_value=0.0, value=float(master_rates.get("sand", 2500.0)), key="cc_snd_r")
                 with v_col2:
-                    aggregate_rate = st.number_input("खडी दर (₹/m³):", min_value=0.0, value=float(master_rates.get("aggregate", 2200.0)), key="cc_agg_r")
-                    steel_rate = st.number_input("स्टील दर (₹/Kg):", min_value=0.0, value=float(master_rates.get("steel", 60.0)), key="cc_stl_r") if steel_percentage > 0 else 0.0
+                    aggregate_rate = st.number_input("खडी दर प्रति m³ (₹/m³):", min_value=0.0, value=float(master_rates.get("aggregate", 2200.0)), key="cc_agg_r")
+                    steel_rate = st.number_input("स्टील दर (₹/Kg):", min_value=0.0, value=float(master_rates.get("steel", 60.0)), key="cc_stl_r") if steel_pct > 0 else 0.0
 
-                st.markdown("##### [B] लेबर व इतर खर्च")
+                st.markdown("###### [B] मजुरी व लेबर खर्च (नसल्यास ० ठेवा)")
                 l_col1, l_col2, l_col3 = st.columns(3)
                 with l_col1:
-                    mason_qty = st.number_input("मेसन (Days):", min_value=0.0, value=0.0, key="cc_msn_q")
-                    mason_rate = st.number_input("मेसन दर (₹):", min_value=0.0, value=600.0, key="cc_msn_r")
+                    mason_qty = st.number_input("मेसन (Days):", min_value=0.0, value=0.5, step=0.5, key="cc_msn_q")
+                    mason_rate = st.number_input("मेसन दर (₹/Day):", min_value=0.0, value=750.0, key="cc_msn_r")
                 with l_col2:
-                    mazdoor_qty = st.number_input("मजदूर (Days):", min_value=0.0, value=0.0, key="cc_mzd_q")
-                    mazdoor_rate = st.number_input("मजदूर दर (₹):", min_value=0.0, value=400.0, key="cc_mzd_r")
+                    mazdoor_qty = st.number_input("मजदूर (Days):", min_value=0.0, value=2.0, step=0.5, key="cc_mzd_q")
+                    mazdoor_rate = st.number_input("मजदूर दर (₹/Day):", min_value=0.0, value=500.0, key="cc_mzd_r")
                 with l_col3:
-                    bb_qty = st.number_input("बार बेंडर (Days):", min_value=0.0, value=0.0, key="cc_bb_q")
-                    bb_rate = st.number_input("बार बेंडर दर (₹):", min_value=0.0, value=550.0, key="cc_bb_r")
+                    bb_qty = st.number_input("बार बेंडर (Days):", min_value=0.0, value=0.5 if steel_pct > 0 else 0.0, step=0.5, key="cc_bb_q")
+                    bb_rate = st.number_input("बार बेंडर दर (₹/Day):", min_value=0.0, value=700.0, key="cc_bb_r")
 
+                st.markdown("###### [C] अवांतर खर्च व नफा")
                 o_col1, o_col2 = st.columns(2)
                 with o_col1:
-                    scaffolding_cost = st.number_input("सेंटरिंग/स्कॅफोल्डिंग (₹):", min_value=0.0, value=0.0, key="cc_scaf")
-                    contingency_cost = st.number_input("आकस्मिक खर्च (₹):", min_value=0.0, value=0.0, key="cc_cont")
+                    scaffolding_cost = st.number_input("सेंटरिंग / शटरिंग खर्च (₹):", min_value=0.0, value=350.0 if "Plain" not in component else 0.0, step=50.0, key="cc_scaf")
+                    contingency_cost = st.number_input("आकस्मिक खर्च (Contingencies ₹):", min_value=0.0, value=100.0, step=25.0, key="cc_cont")
                 with o_col2:
-                    water_pct = st.number_input("वॉटर चार्ज (%):", min_value=0.0, value=1.0, key="cc_wat_p")
-                    profit_pct = st.number_input("कंत्राटदार नफा (%):", min_value=0.0, value=10.0, key="cc_prof_p")
+                    water_pct = st.number_input("वॉटर चार्ज (%):", min_value=0.0, value=1.0, step=0.5, key="cc_wat_p")
+                    profit_pct = st.number_input("कंत्राटदार नफा (%):", min_value=0.0, value=10.0, step=1.0, key="cc_prof_p")
 
-                user_note = st.text_input("या एस्टिमेशन संदर्भात नोट:", placeholder="उदा. ग्राउंड फ्लोअर काम...", key="cc_note")
+                user_note = st.text_input("या एस्टिमेशनची नोट (Note):", placeholder="उदा. Ground floor slab casting...", key="cc_note")
 
-                if st.button("📊 GENERATE RATE ANALYSIS", type="primary", key="cc_report_btn", use_container_width=True):
+                if st.button("📊 GENERATE RATE ANALYSIS REPORT", type="primary", key="cc_report_btn", use_container_width=True):
                     dry_volume = volume * 1.54
-                    total_parts = cement_ratio + sand_ratio + aggregate_ratio
-                    c_bags = math.ceil(((cement_ratio / total_parts) * dry_volume) * 28.8) if total_parts > 0 else 0
-                    s_m3 = (sand_ratio / total_parts) * dry_volume if total_parts > 0 else 0.0
-                    a_m3 = (aggregate_ratio / total_parts) * dry_volume if total_parts > 0 else 0.0
-                    steel_qty = volume * (steel_percentage / 100) * 7850 if steel_percentage > 0 else 0.0
+                    total_parts = c_r + s_r + a_r
+                    c_bags = math.ceil(((c_r / total_parts) * dry_volume) * 28.8)
+                    s_m3 = (s_r / total_parts) * dry_volume
+                    a_m3 = (a_r / total_parts) * dry_volume
+                    s_brass = s_m3 / 2.83168
+                    a_brass = a_m3 / 2.83168
+                    steel_qty = volume * (steel_pct / 100.0) * 7850.0
 
-                    total_cement_cost = c_bags * cement_rate
-                    total_sand_cost = s_m3 * sand_rate
-                    total_aggregate_cost = a_m3 * aggregate_rate
-                    total_steel_cost = steel_qty * steel_rate
+                    c_cost = c_bags * cement_rate
+                    s_cost = s_m3 * sand_rate
+                    a_cost = a_m3 * aggregate_rate
+                    stl_cost = steel_qty * steel_rate
+                    mat_cost = c_cost + s_cost + a_cost + stl_cost
 
-                    mat_cost = total_cement_cost + total_aggregate_cost + total_sand_cost + total_steel_cost
                     lab_cost = (mason_qty * mason_rate) + (mazdoor_qty * mazdoor_rate) + (bb_qty * bb_rate)
-                    base_total = mat_cost + lab_cost + scaffolding_cost + contingency_cost
-                    w_amt = base_total * (water_pct / 100)
-                    p_amt = base_total * (profit_pct / 100)
+                    extra_cost = scaffolding_cost + contingency_cost
+                    base_total = mat_cost + lab_cost + extra_cost
+                    w_amt = base_total * (water_pct / 100.0)
+                    p_amt = base_total * (profit_pct / 100.0)
                     grand_total = base_total + w_amt + p_amt
 
-                    st.success(f"🎉 एकूण काँक्रीट दर: ₹ {grand_total:,.2f}/-")
+                    st.success(f"🎉 एकूण काँक्रीट दर: ₹ {grand_total:,.2f}/- ({volume} m³ साठी)")
+
+                    steel_row = f"| Steel Reinforcement | {steel_qty:.2f} | Kg | {steel_rate:.2f} | {stl_cost:.2f} |\n" if steel_pct > 0 else ""
 
                     report_table = f"""
-| Description | Quantity | Unit | Rate (₹) | Amount (₹) |
+| तपशील (Item) | प्रमाण (Quantity) | एकक (Unit) | दर (Rate ₹) | एकूण रक्कम (Amount ₹) |
 | :--- | :--- | :--- | :--- | :--- |
-| **Cement** | {c_bags} | Bags | {cement_rate:.2f} | {total_cement_cost:.2f} |
-| **Sand** | {s_m3:.2f} | m³ | {sand_rate:.2f} | {total_sand_cost:.2f} |
-| **Aggregate** | {a_m3:.2f} | m³ | {aggregate_rate:.2f} | {total_aggregate_cost:.2f} |
-| **Steel** | {steel_qty:.2f} | Kg | {steel_rate:.2f} | {total_steel_cost:.2f} |
-| **Labour Cost** | - | L.S. | - | {lab_cost:.2f} |
-| **Scaffolding & Misc** | - | L.S. | - | {scaffolding_cost + contingency_cost:.2f} |
-| **Water & Profit ({water_pct+profit_pct}%)** | - | - | - | {w_amt + p_amt:.2f} |
-| **GRAND TOTAL** | | | | **₹ {grand_total:.2f}/-** |
+| **[A] साहित्याचा खर्च (Material)** | | | | |
+| Cement (IS PPC/OPC) | {c_bags} | Bags | {cement_rate:.2f} | {c_cost:.2f} |
+| Sand (वाळू) | {s_m3:.2f} ({s_brass:.2f} Brass) | m³ | {sand_rate:.2f} | {s_cost:.2f} |
+| Aggregate (खडी) | {a_m3:.2f} ({a_brass:.2f} Brass) | m³ | {aggregate_rate:.2f} | {a_cost:.2f} |
+{steel_row}| **[B] मजुरी व लेबर (Labour)** | | | | |
+| Mason (गवंडी) | {mason_qty} | Days | {mason_rate:.2f} | {mason_qty*mason_rate:.2f} |
+| Mazdoor (मजदूर) | {mazdoor_qty} | Days | {mazdoor_rate:.2f} | {mazdoor_qty*mazdoor_rate:.2f} |
+| Bar Bender (फिटर) | {bb_qty} | Days | {bb_rate:.2f} | {bb_qty*bb_rate:.2f} |
+| **[C] अवांतर खर्च (Overheads)** | | | | |
+| Shuttering / Scaffolding | - | L.S. | - | {scaffolding_cost:.2f} |
+| Contingencies (आकस्मिक) | - | L.S. | - | {contingency_cost:.2f} |
+| **एकूण पायाभूत खर्च (Subtotal A+B+C)** | | | | **₹ {base_total:.2f}** |
+| Water Charges ({water_pct}%) | - | - | - | {w_amt:.2f} |
+| Contractor Profit ({profit_pct}%) | - | - | - | {p_amt:.2f} |
+| **फायनल ग्रँड टोटल (Grand Total)** | | | | **₹ {grand_total:,.2f}/-** |
 """
                     st.markdown(report_table)
 
@@ -2941,59 +2958,92 @@ elif st.session_state.selected_module == "Estimator Tools":
                         cursor = conn.cursor()
                         cursor.execute(
                             "INSERT INTO history (user_key, timestamp, user_note, report_data, site_name) VALUES (?, ?, ?, ?, ?)",
-                            (current_user_name, get_ist_time().strftime("%Y-%m-%d %H:%M:%S"), user_note, report_table, st.session_state.current_site_name),
+                            (current_user_name, get_ist_time().strftime("%Y-%m-%d %H:%M:%S"), f"Concrete {grade.split(' ')[0]} - {user_note}", report_table, st.session_state.current_site_name),
                         )
                         conn.commit()
                         conn.close()
 
-                    msg_text = f"🏗️ *PATIL INFRATECH - RATE ANALYSIS*\n👤 *Engineer:* {current_user_name}\n🧱 *Work:* Concrete ({component.split(' ')[0]})\n💰 *Total:* ₹{grand_total:.2f}/-"
+                    msg_text = f"🏗️ *PATIL INFRATECH - CONCRETE RATE ANALYSIS*\n👤 *User:* {current_user_name}\n📍 *Site:* {st.session_state.current_site_name}\n🧱 *Grade:* {grade.split(' ')[0]} | *Vol:* {volume} m³\n• Cement: {c_bags} Bags\n• Sand: {s_m3:.2f} m³ ({s_brass:.2f} Brass)\n• Aggregate: {a_m3:.2f} m³ ({a_brass:.2f} Brass)\n💰 *GRAND TOTAL:* ₹{grand_total:,.2f}/-"
                     render_whatsapp_feature(urllib.parse.quote(msg_text), "ra_conc")
 
+            # ==================================================================
+            # [२] BRICKWORK ESTIMATION (IS 2212 Standards)
+            # ==================================================================
             elif "Brickwork" in main_choice:
-                mortar_choice = st.selectbox("मॉर्टर मिक्स गुणोत्तर:", ["1:3", "1:4", "1:5", "1:6"])
-                c_part, s_part = 1, int(mortar_choice.split(":")[-1])
+                st.markdown("##### 🧱 Brickwork Rate Analysis (IS 2212)")
+                mortar_choice = st.selectbox("मॉर्टर मिक्स गुणोत्तर निवडा:", ["1:3 (सिमेंट : वाळू)", "1:4 (सिमेंट : वाळू)", "1:5 (सिमेंट : वाळू)", "1:6 (सिमेंट : वाळू)"], index=3)
+                c_part = 1.0
+                s_part = float(mortar_choice.split(":")[1].split(" ")[0])
 
+                st.markdown("###### [A] साहित्याचे मोजमाप व दर")
                 bm_col1, bm_col2 = st.columns(2)
                 with bm_col1:
-                    volume = st.number_input("वीटकाम घनफळ (m³):", min_value=0.0, value=1.0, key="bw_vol")
-                    brick_rate = st.number_input("विटांचा दर (प्रति हजार ₹):", min_value=0.0, value=8000.0, key="bw_br")
+                    volume = st.number_input("वीटकामाचे घनफळ (Volume in m³):", min_value=0.1, value=1.0, step=0.5, key="bw_vol")
+                    brick_rate = st.number_input("विटांचा दर प्रति हजार नग (₹/1000 Bricks):", min_value=0.0, value=8000.0, step=100.0, key="bw_br")
                 with bm_col2:
                     cement_rate = st.number_input("सिमेंट दर (₹/bag):", min_value=0.0, value=float(master_rates.get("cement", 400.0)), key="bw_cr")
-                    sand_rate = st.number_input("वाळू दर (₹/m³):", min_value=0.0, value=float(master_rates.get("sand", 2500.0)), key="bw_sr")
+                    sand_rate = st.number_input("वाळू दर प्रति m³ (₹/m³):", min_value=0.0, value=float(master_rates.get("sand", 2500.0)), key="bw_sr")
 
+                st.markdown("###### [B] मजुरी व लेबर खर्च")
                 bl_col1, bl_col2 = st.columns(2)
                 with bl_col1:
-                    mason_qty = st.number_input("मेसन (Days):", min_value=0.0, value=0.0, key="bw_mq")
-                    mason_rate = st.number_input("मेसन दर (₹):", min_value=0.0, value=650.0, key="bw_mr")
+                    mason_qty = st.number_input("मेसन (Days):", min_value=0.0, value=0.7, step=0.1, key="bw_mq")
+                    mason_rate = st.number_input("मेसन दर (₹/Day):", min_value=0.0, value=750.0, key="bw_mr")
                 with bl_col2:
-                    mazdoor_qty = st.number_input("मजदूर (Days):", min_value=0.0, value=0.0, key="bw_mzq")
-                    mazdoor_rate = st.number_input("मजदूर दर (₹):", min_value=0.0, value=400.0, key="bw_mzr")
+                    mazdoor_qty = st.number_input("मजदूर (Days):", min_value=0.0, value=1.2, step=0.1, key="bw_mzq")
+                    mazdoor_rate = st.number_input("मजदूर दर (₹/Day):", min_value=0.0, value=500.0, key="bw_mzr")
 
-                user_note = st.text_input("या वीटकाम एस्टिमेशनची नोट:", placeholder="उदा. 9 inch wall...", key="bw_note")
+                st.markdown("###### [C] अवांतर खर्च व नफा")
+                bo_col1, bo_col2 = st.columns(2)
+                with bo_col1:
+                    scaffolding_cost = st.number_input("पाळत / स्कॅफोल्डिंग खर्च (₹):", min_value=0.0, value=100.0, step=25.0, key="bw_sc")
+                    contingency_cost = st.number_input("आकस्मिक खर्च (₹):", min_value=0.0, value=50.0, step=25.0, key="bw_cc")
+                with bo_col2:
+                    water_pct = st.number_input("वॉटर चार्ज (%):", min_value=0.0, value=1.0, step=0.5, key="bw_wp")
+                    profit_pct = st.number_input("कंत्राटदार नफा (%):", min_value=0.0, value=10.0, step=1.0, key="bw_pp")
+
+                user_note = st.text_input("या वीटकामाची नोट (Note):", placeholder="उदा. 9 inch external wall...", key="bw_note")
 
                 if st.button("📊 GENERATE BRICKWORK REPORT", type="primary", key="bw_report_btn", use_container_width=True):
                     total_bricks = math.ceil(volume * 500)
                     dry_mortar_vol = volume * 0.30
-                    total_mortar_parts = c_part + s_part
-                    cement_vol = (c_part / total_mortar_parts) * dry_mortar_vol if total_mortar_parts > 0 else 0.0
-                    sand_m3 = (s_part / total_mortar_parts) * dry_mortar_vol if total_mortar_parts > 0 else 0.0
+                    tot_mortar_parts = c_part + s_part
+                    cement_vol = (c_part / tot_mortar_parts) * dry_mortar_vol
+                    sand_m3 = (s_part / tot_mortar_parts) * dry_mortar_vol
+                    sand_brass = sand_m3 / 2.83168
                     cement_bags = math.ceil(cement_vol * 28.8)
 
-                    total_brick_cost = (total_bricks / 1000) * brick_rate
-                    total_cement_cost = cement_bags * cement_rate
-                    total_sand_cost = sand_m3 * sand_rate
-                    lab_cost = (mason_qty * mason_rate) + (mazdoor_qty * mazdoor_rate)
-                    grand_total = total_brick_cost + total_cement_cost + total_sand_cost + lab_cost
+                    b_cost = (total_bricks / 1000.0) * brick_rate
+                    c_cost = cement_bags * cement_rate
+                    s_cost = sand_m3 * sand_rate
+                    mat_cost = b_cost + c_cost + s_cost
 
-                    st.success(f"🎉 एकूण वीटकाम खर्च: ₹ {grand_total:,.2f}/-")
+                    lab_cost = (mason_qty * mason_rate) + (mazdoor_qty * mazdoor_rate)
+                    extra_cost = scaffolding_cost + contingency_cost
+                    base_total = mat_cost + lab_cost + extra_cost
+                    w_amt = base_total * (water_pct / 100.0)
+                    p_amt = base_total * (profit_pct / 100.0)
+                    grand_total = base_total + w_amt + p_amt
+
+                    st.success(f"🎉 एकूण वीटकाम खर्च: ₹ {grand_total:,.2f}/- ({volume} m³ साठी)")
+
                     report_table = f"""
-| Material | Quantity | Amount (₹) |
-| :--- | :--- | :--- |
-| **Bricks** | {total_bricks} Nos | {total_brick_cost:.2f} |
-| **Cement** | {cement_bags} Bags | {total_cement_cost:.2f} |
-| **Sand** | {sand_m3:.2f} m³ | {total_sand_cost:.2f} |
-| **Labour** | - | {lab_cost:.2f} |
-| **GRAND TOTAL** | | **₹ {grand_total:.2f}/-** |
+| तपशील (Item) | प्रमाण (Quantity) | एकक (Unit) | दर (Rate ₹) | एकूण रक्कम (Amount ₹) |
+| :--- | :--- | :--- | :--- | :--- |
+| **[A] साहित्याचा खर्च (Material)** | | | | |
+| Bricks (लाल विटा) | {total_bricks} | Nos | {(brick_rate/1000.0):.2f}/नग | {b_cost:.2f} |
+| Cement (IS PPC) | {cement_bags} | Bags | {cement_rate:.2f} | {c_cost:.2f} |
+| Sand (वाळू) | {sand_m3:.2f} ({sand_brass:.2f} Brass) | m³ | {sand_rate:.2f} | {s_cost:.2f} |
+| **[B] मजुरी व लेबर (Labour)** | | | | |
+| Mason (गवंडी) | {mason_qty} | Days | {mason_rate:.2f} | {mason_qty*mason_rate:.2f} |
+| Mazdoor (मजदूर) | {mazdoor_qty} | Days | {mazdoor_rate:.2f} | {mazdoor_qty*mazdoor_rate:.2f} |
+| **[C] अवांतर खर्च (Overheads)** | | | | |
+| Scaffolding / पाळत | - | L.S. | - | {scaffolding_cost:.2f} |
+| Contingencies | - | L.S. | - | {contingency_cost:.2f} |
+| **एकूण पायाभूत खर्च (Subtotal A+B+C)** | | | | **₹ {base_total:.2f}** |
+| Water Charges ({water_pct}%) | - | - | - | {w_amt:.2f} |
+| Contractor Profit ({profit_pct}%) | - | - | - | {p_amt:.2f} |
+| **फायनल ग्रँड टोटल (Grand Total)** | | | | **₹ {grand_total:,.2f}/-** |
 """
                     st.markdown(report_table)
 
@@ -3002,47 +3052,95 @@ elif st.session_state.selected_module == "Estimator Tools":
                         cursor = conn.cursor()
                         cursor.execute(
                             "INSERT INTO history (user_key, timestamp, user_note, report_data, site_name) VALUES (?, ?, ?, ?, ?)",
-                            (current_user_name, get_ist_time().strftime("%Y-%m-%d %H:%M:%S"), user_note, report_table, st.session_state.current_site_name),
+                            (current_user_name, get_ist_time().strftime("%Y-%m-%d %H:%M:%S"), f"Brickwork {mortar_choice.split(' ')[0]} - {user_note}", report_table, st.session_state.current_site_name),
                         )
                         conn.commit()
                         conn.close()
 
-                    msg_text = f"🏗️ *PATIL INFRATECH - BRICKWORK*\n👤 *User:* {current_user_name}\n🧱 *Bricks:* {total_bricks} Nos | 💰 *Total:* ₹{grand_total:.2f}/-"
+                    msg_text = f"🏗️ *PATIL INFRATECH - BRICKWORK RATE ANALYSIS*\n👤 *User:* {current_user_name}\n📍 *Site:* {st.session_state.current_site_name}\n🧱 *Ratio:* {mortar_choice.split(' ')[0]} | *Vol:* {volume} m³\n• Bricks: {total_bricks} Nos\n• Cement: {cement_bags} Bags\n• Sand: {sand_m3:.2f} m³ ({sand_brass:.2f} Brass)\n💰 *GRAND TOTAL:* ₹{grand_total:,.2f}/-"
                     render_whatsapp_feature(urllib.parse.quote(msg_text), "ra_bw")
 
-            else:  # Plaster Work
-                thickness_mm = st.number_input("प्लास्टर जाडी (mm):", min_value=5.0, max_value=50.0, value=12.0, step=1.0, key="pl_thick")
-                plaster_mortar = st.selectbox("मॉर्टर गुणोत्तर:", ["1:3", "1:4", "1:5", "1:6"])
-                p_c_part, p_s_part = 1, int(plaster_mortar.split(":")[-1])
+            # ==================================================================
+            # [३] PLASTER WORK ESTIMATION (IS 1661 Standards)
+            # ==================================================================
+            else:
+                st.markdown("##### 🎨 Plaster Work Rate Analysis (IS 1661)")
+                thickness_mm = st.number_input("प्लास्टरची जाडी (Thickness in mm):", min_value=6.0, max_value=25.0, value=12.0, step=1.0, key="pl_thick")
+                plaster_mortar = st.selectbox("मॉर्टर मिक्स गुणोत्तर निवडा:", ["1:3 (सिमेंट : वाळू)", "1:4 (सिमेंट : वाळू)", "1:5 (सिमेंट : वाळू)", "1:6 (सिमेंट : वाळू)"], index=1)
+                p_c_part = 1.0
+                p_s_part = float(plaster_mortar.split(":")[1].split(" ")[0])
 
+                st.markdown("###### [A] साहित्याचे मोजमाप व दर")
                 p_col1, p_col2 = st.columns(2)
                 with p_col1:
-                    plaster_area = st.number_input("क्षेत्रफळ (m²):", min_value=0.0, value=10.0, key="pl_area")
+                    plaster_area = st.number_input("प्लास्टर क्षेत्रफळ (Area in m²):", min_value=1.0, value=100.0, step=10.0, key="pl_area")
                     cement_rate = st.number_input("सिमेंट दर (₹/bag):", min_value=0.0, value=float(master_rates.get("cement", 400.0)), key="pl_cem_r")
+                    use_wp = st.checkbox("💧 वॉटरप्रूफिंग कंपाउंड जोडा (1 Kg per Bag)", value=False)
                 with p_col2:
-                    sand_rate = st.number_input("वाळू दर (₹/m³):", min_value=0.0, value=float(master_rates.get("sand", 2500.0)), key="pl_snd_r")
+                    sand_rate = st.number_input("वाळू दर प्रति m³ (₹/m³):", min_value=0.0, value=float(master_rates.get("sand", 2500.0)), key="pl_snd_r")
+                    wp_rate = st.number_input("वॉटरप्रूफिंग दर (₹/Kg):", min_value=0.0, value=140.0, step=10.0, key="pl_wp_r") if use_wp else 0.0
 
-                user_note = st.text_input("प्लास्टर कामाची नोट:", placeholder="उदा. आतील भिंत...", key="pl_note")
+                st.markdown("###### [B] मजुरी व लेबर खर्च")
+                pl_l1, pl_l2 = st.columns(2)
+                with pl_l1:
+                    pl_mason_qty = st.number_input("मेसन (Days):", min_value=0.0, value=2.0, step=0.5, key="pl_mq")
+                    pl_mason_rate = st.number_input("मेसन दर (₹/Day):", min_value=0.0, value=750.0, key="pl_mr")
+                with pl_l2:
+                    pl_mazdoor_qty = st.number_input("मजदूर (Days):", min_value=0.0, value=3.0, step=0.5, key="pl_mzq")
+                    pl_mazdoor_rate = st.number_input("मजदूर दर (₹/Day):", min_value=0.0, value=500.0, key="pl_mzr")
+
+                st.markdown("###### [C] अवांतर खर्च व नफा")
+                po_c1, po_c2 = st.columns(2)
+                with po_c1:
+                    scaffolding_cost = st.number_input("पाळत / घोडी खर्च (₹):", min_value=0.0, value=200.0, step=50.0, key="pl_sc")
+                    contingency_cost = st.number_input("आकस्मिक खर्च (₹):", min_value=0.0, value=100.0, step=25.0, key="pl_cc")
+                with po_c2:
+                    water_pct = st.number_input("वॉटर चार्ज (%):", min_value=0.0, value=1.0, step=0.5, key="pl_wp")
+                    profit_pct = st.number_input("कंत्राटदार नफा (%):", min_value=0.0, value=10.0, step=1.0, key="pl_pp")
+
+                user_note = st.text_input("प्लास्टर कामाची नोट (Note):", placeholder="उदा. External double coat plaster...", key="pl_note")
 
                 if st.button("📊 GENERATE PLASTER REPORT", type="primary", key="pl_report_btn", use_container_width=True):
-                    wet_volume = plaster_area * (thickness_mm / 1000.0)
-                    dry_volume = wet_volume * 1.33
-                    total_parts = p_c_part + p_s_part
-                    cement_vol = (p_c_part / total_parts) * dry_volume if total_parts > 0 else 0.0
-                    sand_m3 = (p_s_part / total_parts) * dry_volume if total_parts > 0 else 0.0
+                    wet_vol = plaster_area * (thickness_mm / 1000.0)
+                    dry_vol = wet_vol * 1.33
+                    tot_mortar_parts = p_c_part + p_s_part
+                    cement_vol = (p_c_part / tot_mortar_parts) * dry_vol
+                    sand_m3 = (p_s_part / tot_mortar_parts) * dry_vol
+                    sand_brass = sand_m3 / 2.83168
                     cement_bags = math.ceil(cement_vol * 28.8)
 
-                    total_cement_cost = cement_bags * cement_rate
-                    total_sand_cost = sand_m3 * sand_rate
-                    grand_total = total_cement_cost + total_sand_cost
+                    c_cost = cement_bags * cement_rate
+                    s_cost = sand_m3 * sand_rate
+                    wp_cost = (cement_bags * 1.0 * wp_rate) if use_wp else 0.0
+                    mat_cost = c_cost + s_cost + wp_cost
 
-                    st.success(f"🎉 एकूण प्लास्टर खर्च: ₹ {grand_total:,.2f}/-")
+                    lab_cost = (pl_mason_qty * pl_mason_rate) + (pl_mazdoor_qty * pl_mazdoor_rate)
+                    extra_cost = scaffolding_cost + contingency_cost
+                    base_total = mat_cost + lab_cost + extra_cost
+                    w_amt = base_total * (water_pct / 100.0)
+                    p_amt = base_total * (profit_pct / 100.0)
+                    grand_total = base_total + w_amt + p_amt
+
+                    st.success(f"🎉 एकूण प्लास्टर खर्च: ₹ {grand_total:,.2f}/- ({plaster_area} m² साठी)")
+
+                    wp_row = f"| Waterproofing Compound | {cement_bags} | Kg | {wp_rate:.2f} | {wp_cost:.2f} |\n" if use_wp else ""
+
                     report_table = f"""
-| Item | Quantity | Amount (₹) |
-| :--- | :--- | :--- |
-| **Cement** | {cement_bags} Bags | {total_cement_cost:.2f} |
-| **Sand** | {sand_m3:.2f} m³ | {total_sand_cost:.2f} |
-| **GRAND TOTAL** | | **₹ {grand_total:.2f}/-** |
+| तपशील (Item) | प्रमाण (Quantity) | एकक (Unit) | दर (Rate ₹) | एकूण रक्कम (Amount ₹) |
+| :--- | :--- | :--- | :--- | :--- |
+| **[A] साहित्याचा खर्च (Material)** | | | | |
+| Cement (IS PPC) | {cement_bags} | Bags | {cement_rate:.2f} | {c_cost:.2f} |
+| Sand (वाळू) | {sand_m3:.2f} ({sand_brass:.2f} Brass) | m³ | {sand_rate:.2f} | {s_cost:.2f} |
+{wp_row}| **[B] मजुरी व लेबर (Labour)** | | | | |
+| Mason (गवंडी) | {pl_mason_qty} | Days | {pl_mason_rate:.2f} | {pl_mason_qty*pl_mason_rate:.2f} |
+| Mazdoor (मजदूर) | {pl_mazdoor_qty} | Days | {pl_mazdoor_rate:.2f} | {pl_mazdoor_qty*pl_mazdoor_rate:.2f} |
+| **[C] अवांतर खर्च (Overheads)** | | | | |
+| Scaffolding / पाळत | - | L.S. | - | {scaffolding_cost:.2f} |
+| Contingencies | - | L.S. | - | {contingency_cost:.2f} |
+| **एकूण पायाभूत खर्च (Subtotal A+B+C)** | | | | **₹ {base_total:.2f}** |
+| Water Charges ({water_pct}%) | - | - | - | {w_amt:.2f} |
+| Contractor Profit ({profit_pct}%) | - | - | - | {p_amt:.2f} |
+| **फायनल ग्रँड टोटल (Grand Total)** | | | | **₹ {grand_total:,.2f}/-** |
 """
                     st.markdown(report_table)
 
@@ -3051,12 +3149,12 @@ elif st.session_state.selected_module == "Estimator Tools":
                         cursor = conn.cursor()
                         cursor.execute(
                             "INSERT INTO history (user_key, timestamp, user_note, report_data, site_name) VALUES (?, ?, ?, ?, ?)",
-                            (current_user_name, get_ist_time().strftime("%Y-%m-%d %H:%M:%S"), user_note, report_table, st.session_state.current_site_name),
+                            (current_user_name, get_ist_time().strftime("%Y-%m-%d %H:%M:%S"), f"Plaster {thickness_mm}mm - {user_note}", report_table, st.session_state.current_site_name),
                         )
                         conn.commit()
                         conn.close()
 
-                    msg_text = f"🏗️ *PATIL INFRATECH - PLASTER*\n👤 *User:* {current_user_name}\n🎨 *Area:* {plaster_area} m² | 💰 *Total:* ₹{grand_total:.2f}/-"
+                    msg_text = f"🏗️ *PATIL INFRATECH - PLASTER RATE ANALYSIS*\n👤 *User:* {current_user_name}\n📍 *Site:* {st.session_state.current_site_name}\n🎨 *Thick:* {thickness_mm}mm | *Area:* {plaster_area} m²\n• Cement: {cement_bags} Bags\n• Sand: {sand_m3:.2f} m³ ({sand_brass:.2f} Brass)\n💰 *GRAND TOTAL:* ₹{grand_total:,.2f}/-"
                     render_whatsapp_feature(urllib.parse.quote(msg_text), "ra_pl")
 
         # १६.३ Bar Bending Schedule (BBS Calculator)
