@@ -457,8 +457,11 @@ def fmt_qty(x, max_dec=4):
 
 
 def smart_bags(exact_bags, volume):
-    """1 m³ पेक्षा लहान कामासाठी दशांश बॅग; मोठ्या कामासाठी वर गोल (ceil)."""
-    return round(exact_bags, 3) if volume < 1 else math.ceil(exact_bags)
+    """प्रॅक्टिकल सिमेंट बॅग: 1 m³ पेक्षा लहान कामासाठी अर्धी बॅग (0.5) च्या पटीत वर गोल
+    (उदा. 0.43 -> 0.5, 0.62 -> 1.0, 1.2 -> 1.5); मोठ्या कामासाठी पूर्ण बॅगपर्यंत वर गोल (ceil)."""
+    if volume < 1:
+        return max(0.5, math.ceil(round(exact_bags, 6) * 2) / 2)
+    return math.ceil(exact_bags)
 
 
 def generate_random_code():
