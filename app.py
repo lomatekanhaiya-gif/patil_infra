@@ -1243,29 +1243,38 @@ st.markdown(
 # 📄 सिंगल A4 PDF ENGINE (सर्व मॉड्यूलसाठी एकच PDF डाउनलोड)
 # ==========================================
 A4_REPORT_CSS = """
-.a4-page{position:relative;background:#fff;width:794px;margin:0 auto;padding:34px 36px;box-sizing:border-box;min-height:1070px;border:1.5px solid #0f172a;overflow:hidden;color:#0f172a;font-family:'Segoe UI','Noto Sans Devanagari','Mangal',Arial,sans-serif;font-size:12px;line-height:1.35;}
+.a4-page{position:relative;background:#fff;width:794px;margin:0 auto;padding:30px 36px 40px;box-sizing:border-box;min-height:1122px;border:2px solid #0f172a;overflow:hidden;color:#0f172a;font-family:'Segoe UI','Noto Sans Devanagari','Mangal',Arial,sans-serif;font-size:12px;line-height:1.4;}
 .a4-page *{box-sizing:border-box;}
-.page-break{page-break-before:always;break-before:page;}
-.watermark{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);font-size:24px;font-weight:900;color:rgba(15,23,42,.06);text-transform:uppercase;letter-spacing:3px;text-align:center;width:85%;border:4px dashed rgba(15,23,42,.06);padding:25px;border-radius:12px;z-index:1;}
-.content-box{position:relative;z-index:2;}
-.header-title{text-align:center;border-bottom:2.5px solid #0f172a;padding-bottom:8px;margin-bottom:14px;}
-.header-title h1{margin:0;font-size:26px;font-weight:900;color:#0f172a;}
+.wm{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);width:92%;text-align:center;z-index:1;pointer-events:none;border:4px dashed rgba(30,64,175,.13);border-radius:14px;padding:22px 10px;}
+.wm .w1{font-size:34px;font-weight:900;letter-spacing:4px;color:rgba(15,23,42,.09);}
+.wm .w2{font-size:17px;font-weight:800;letter-spacing:2px;color:rgba(30,64,175,.14);margin-top:6px;text-transform:uppercase;}
+.content-box{position:relative;z-index:2;display:flex;flex-direction:column;min-height:1048px;}
+.content-box > *{flex-shrink:0;}
+.header-title{text-align:center;border-bottom:3px solid #0f172a;padding-bottom:8px;margin-bottom:12px;}
+.header-title h1{margin:0;font-size:28px;font-weight:900;letter-spacing:1px;color:#0f172a;}
 .header-title p{margin:3px 0;font-size:11px;font-weight:700;color:#475569;}
-table.info-table{width:100%;margin-bottom:12px;font-size:12px;border-collapse:collapse;}
+.header-title .apps{font-size:10px;font-weight:600;color:#0369a1;}
+table.info-table{width:100%;margin-bottom:10px;font-size:12px;border-collapse:collapse;}
 table.info-table td{padding:3px 0;}
-.section-header{background:#0f172a;color:#fff;padding:7px 14px;font-size:13px;font-weight:bold;border-radius:4px;margin:14px 0 10px 0;}
-table.custom-data-table{width:100%;border-collapse:collapse;margin:8px 0 16px 0;font-size:11px;}
+.section-header{background:#0f172a;color:#fff;padding:7px 14px;font-size:13px;font-weight:bold;border-radius:4px;margin:12px 0 10px 0;}
+table.custom-data-table{width:100%;border-collapse:collapse;margin:8px 0 14px 0;font-size:11px;}
 table.custom-data-table th,table.custom-data-table td{border:1px solid #cbd5e1;padding:6px 8px;text-align:left;}
 table.custom-data-table th{background:#f1f5f9;font-weight:bold;color:#0f172a;}
 table.custom-data-table tr:nth-child(even){background:#fcfdfe;}
 .sum-box{background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;padding:10px;margin:10px 0;font-size:12px;}
-.signature-box{margin-top:50px;width:100%;font-size:12px;border-collapse:collapse;}
-.footer-stamp{text-align:center;margin-top:30px;font-size:10px;color:#64748b;border-top:1px solid #e2e8f0;padding-top:6px;}
+.signature-box{margin-top:auto;padding-top:40px;width:100%;font-size:12px;border-collapse:collapse;}
+.footer-stamp{text-align:center;margin-top:26px;font-size:10px;color:#64748b;border-top:1px solid #e2e8f0;padding-top:6px;}
+.seal{position:absolute;left:50%;margin-left:-78px;bottom:78px;width:156px;height:156px;border:4px double #1e40af;border-radius:50%;color:#1e40af;
+ display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;transform:rotate(-14deg);opacity:.9;z-index:3;font-weight:900;background:rgba(30,64,175,.05);}
+.seal .s1{font-size:9px;letter-spacing:1.5px;}
+.seal .s2{font-size:16px;letter-spacing:2px;margin:4px 0;padding:3px 8px;border-top:2px solid #1e40af;border-bottom:2px solid #1e40af;}
+.seal .s3{font-size:9px;line-height:1.3;letter-spacing:.8px;}
 """
  
 PDF_COMPONENT_TEMPLATE = """<!DOCTYPE html>
 <html><head><meta charset="utf-8">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 __CSS__
 body{margin:0;background:transparent;font-family:'Segoe UI','Noto Sans Devanagari',Arial,sans-serif;}
@@ -1276,22 +1285,51 @@ body{margin:0;background:transparent;font-family:'Segoe UI','Noto Sans Devanagar
 </style></head>
 <body>
 <button id="pdfbtn"></button><span id="pdfst"></span>
-<div style="position:absolute;left:-12000px;top:0;width:794px;"><div id="rep" style="width:794px;background:#fff;">__PAGES__</div></div>
+<div id="stage" style="position:absolute;left:-14000px;top:0;width:794px;background:#fff;">__PAGES__</div>
 <script>
 const FILE = __FILE__, LABEL = __LABEL__, SCALE = __SCALE__;
 const btn = document.getElementById('pdfbtn'), st = document.getElementById('pdfst');
 btn.textContent = LABEL;
+ 
 btn.addEventListener('click', async function () {
-  if (typeof html2pdf === 'undefined') { st.textContent = '⚠️ PDF लायब्ररी लोड झाली नाही (इंटरनेट तपासा) व पेज रिफ्रेश करा.'; return; }
+  if (typeof html2canvas === 'undefined' || !window.jspdf) {
+    st.textContent = '⚠️ PDF लायब्ररी लोड झाली नाही (इंटरनेट तपासा) व पेज रिफ्रेश करा.'; return;
+  }
   btn.disabled = true; btn.textContent = '⏳ PDF तयार होत आहे...'; st.textContent = '';
   try {
-    await html2pdf().set({
-      margin: 0, filename: FILE,
-      image: { type: 'jpeg', quality: 0.97 },
-      html2canvas: { scale: SCALE, useCORS: true, backgroundColor: '#ffffff', scrollX: 0, scrollY: 0, windowWidth: 800 },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-      pagebreak: { mode: ['css', 'legacy'], before: '.page-break', avoid: ['tr'] }
-    }).from(document.getElementById('rep')).save();
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait', compress: true });
+    const pages = Array.from(document.querySelectorAll('#stage .a4-page'));
+    let first = true;
+    for (let i = 0; i < pages.length; i++) {
+      st.textContent = 'पान ' + (i + 1) + ' / ' + pages.length + ' तयार होत आहे...';
+      const el = pages[i];
+      const h = Math.ceil(el.scrollHeight);
+      const canvas = await html2canvas(el, {
+        scale: SCALE, useCORS: true, backgroundColor: '#ffffff', logging: false,
+        width: 794, height: h, windowWidth: 794, windowHeight: Math.max(h + 50, 1200),
+        scrollX: 0, scrollY: 0,
+        onclone: function (doc) {
+          const stg = doc.getElementById('stage');
+          if (stg) { stg.style.left = '0px'; stg.style.top = '0px'; }
+        }
+      });
+      // A4 गुणोत्तरानुसार स्लाईस (मोठा रिपोर्ट असेल तर पुढच्या पानावर)
+      const sliceH = Math.round(canvas.width * 297 / 210);
+      const n = Math.max(1, Math.ceil((canvas.height - 2) / sliceH));
+      for (let k = 0; k < n; k++) {
+        const part = document.createElement('canvas');
+        part.width = canvas.width; part.height = sliceH;
+        const ctx = part.getContext('2d');
+        ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, part.width, part.height);
+        const sh = Math.min(sliceH, canvas.height - k * sliceH);
+        ctx.drawImage(canvas, 0, k * sliceH, canvas.width, sh, 0, 0, canvas.width, sh);
+        if (!first) pdf.addPage('a4', 'portrait');
+        pdf.addImage(part.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, 210, 297);
+        first = false;
+      }
+    }
+    pdf.save(FILE);
     st.textContent = '✅ PDF डाउनलोड झाली';
   } catch (e) { st.textContent = '⚠️ PDF तयार करताना त्रुटी: ' + e; }
   btn.disabled = false; btn.textContent = LABEL;
@@ -1327,18 +1365,27 @@ def df_to_html_table(df):
  
  
 def build_a4_page(site_name, user_key, note, body_html, page_no=1, total_pages=1, doc_title="ESTIMATE", section=None):
-    """एक A4 पान - जुन्या PDF मधील पूर्ण तपशील (हेडर, साईट, इंजिनिअर, तारीख, सही, स्टॅम्प)."""
+    """एक A4 पान: ॲपची माहिती, साईट/इंजिनिअर तपशील, सही, फूटर आणि 'VERIFIED BY KANHAIYA' स्टॅम्प + वॉटरमार्क."""
     esc = html_lib.escape
     now = get_ist_time()
-    pb = " page-break" if page_no > 1 else ""
     sec = f"<div class='section-header'>{esc(str(section))}</div>" if section else ""
+    report_id = f"PI-{now.strftime('%y%m%d%H%M')}-{random.randint(100, 999)}"
     return f"""
-    <div class="a4-page{pb}">
-        <div class="watermark">PATIL INFRATECH • OFFICIAL {esc(str(doc_title))}</div>
+    <div class="a4-page">
+        <div class="wm">
+            <div class="w1">PATIL INFRATECH</div>
+            <div class="w2">VERIFIED BY KANHAIYA • FOUNDER OF PATIL INFRA</div>
+        </div>
+        <div class="seal">
+            <div class="s1">PATIL INFRATECH</div>
+            <div class="s2">VERIFIED</div>
+            <div class="s3">BY KANHAIYA<br>FOUNDER OF<br>PATIL INFRA</div>
+        </div>
         <div class="content-box">
             <div class="header-title">
                 <h1>PATIL INFRATECH</h1>
                 <p>CIVIL ENGINEERS • ARCHITECTURAL CONSULTANTS • QUANTITY SURVEYORS</p>
+                <p class="apps">Civil Engineering Suite • Rate Analysis • BBS • Quantity Survey • Site Management • NeevPay Escrow</p>
                 <small style="color:#64748b;">(Certified Compliant with IS 1200, IS 456, IS 2502 &amp; IS 1077 Standards)</small>
             </div>
             <table class="info-table">
@@ -1348,9 +1395,11 @@ def build_a4_page(site_name, user_key, note, body_html, page_no=1, total_pages=1
                 </tr>
                 <tr>
                     <td><b>👤 Site Engineer:</b> {esc(str(user_key))}</td>
-                    <td style="text-align:right;"><b>📄 Page:</b> {page_no} of {total_pages}</td>
+                    <td style="text-align:right;"><b>🧾 Report ID:</b> {report_id}</td>
                 </tr>
-                <tr><td colspan="2"><b>📝 Activity / Note:</b> {esc(str(note)) if note else '-'}</td></tr>
+                <tr>
+                    <td colspan="2"><b>📝 Activity / Note:</b> {esc(str(note)) if note else '-'}</td>
+                </tr>
             </table>
             <hr style="border:0.5px solid #cbd5e1;margin-bottom:8px;">
             {sec}
@@ -1361,7 +1410,7 @@ def build_a4_page(site_name, user_key, note, body_html, page_no=1, total_pages=1
                     <td style="width:50%;text-align:right;"><br><br>__________________________<br><b>Project Manager / Checker</b><br><small style="color:#64748b;">Quality &amp; Audit Control</small></td>
                 </tr>
             </table>
-            <div class="footer-stamp">System Verified &amp; Generated by: <b>Patil Infratech Corporate Engine</b> • Date: {now.strftime('%d-%m-%Y %H:%M:%S')}</div>
+            <div class="footer-stamp">System Verified &amp; Generated by: <b>Patil Infratech Corporate Engine</b> • Concept &amp; Logic: Kanhaiya (Founder) • {now.strftime('%d-%m-%Y %H:%M:%S')}</div>
         </div>
     </div>
     """
@@ -1377,9 +1426,8 @@ def a4_preview_doc(pages_html):
  
  
 def render_pdf_download(pages_html, file_name, label="📄 PDF डाउनलोड करा (A4)"):
-    """सर्व मॉड्यूलमधील एकमेव PDF डाउनलोड बटण - खरी A4 PDF फाईल सेव्ह होते."""
-    n = len(pages_html)
-    scale = 2 if n <= 2 else (1.5 if n <= 5 else 1.2)
+    """सर्व मॉड्यूलमधील एकमेव PDF बटण - प्रत्येक रिपोर्ट एक A4 पान (खरी PDF फाईल)."""
+    scale = 2 if len(pages_html) <= 6 else 1.5
     doc = (
         PDF_COMPONENT_TEMPLATE.replace("__CSS__", A4_REPORT_CSS)
         .replace("__PAGES__", "".join(pages_html))
@@ -1387,7 +1435,7 @@ def render_pdf_download(pages_html, file_name, label="📄 PDF डाउनल�
         .replace("__LABEL__", json.dumps(label))
         .replace("__SCALE__", str(scale))
     )
-    st.components.v1.html(doc, height=88)
+    st.components.v1.html(doc, height=90)
  
  
 def pdf_report(body_html, site_name, user_key, note, doc_title, file_stub, section=None):
