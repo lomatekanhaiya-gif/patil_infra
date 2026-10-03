@@ -1086,56 +1086,150 @@ st.markdown(
  
  
 # ==========================================
-# 🎨 PREMIUM UI THEME v2 (जुन्या CSS वर ओव्हरराईड - काहीही काढलेले नाही)
+# 🎨 CORPORATE DESIGN SYSTEM v3 (Navy + Amber, Glass Cards, Enterprise Look)
 # ==========================================
 st.markdown(
     """
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap');
-    :root { --bg:#080c14; --card:#0f1623; --card2:#131c2e; --line:#1e293b; --amber:#f59e0b; --amber2:#fbbf24; --green:#10b981; --sky:#38bdf8; --muted:#94a3b8; }
-    html, body, .stApp, [data-testid="stAppViewContainer"] {
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap');
+    :root {
+        --bg:#060a12; --surface:#0d1422; --surface2:#121b2e; --line:#1c2740; --line2:#27365a;
+        --amber:#f59e0b; --amber2:#fbbf24; --green:#10b981; --sky:#38bdf8; --red:#ef4444;
+        --text:#f1f5f9; --muted:#8fa0bd; --radius:14px;
+    }
+    html, body, .stApp, [data-testid="stAppViewContainer"], button, input, textarea, select {
         font-family:'Inter','Noto Sans Devanagari',sans-serif !important;
-        background: radial-gradient(900px 400px at 8% -10%, rgba(245,158,11,.09), transparent 60%),
-                    radial-gradient(700px 400px at 100% 0%, rgba(56,189,248,.07), transparent 60%), var(--bg) !important;
     }
-    .block-container { padding-top:1rem !important; max-width:1180px !important; }
+    .stApp {
+        background:
+            radial-gradient(1000px 500px at 5% -10%, rgba(245,158,11,.10), transparent 60%),
+            radial-gradient(800px 500px at 100% 0%, rgba(56,189,248,.08), transparent 60%),
+            linear-gradient(180deg, #060a12 0%, #080d18 100%) !important;
+    }
+    .block-container { padding-top:1rem !important; padding-bottom:3rem !important; max-width:1180px !important; }
+    h1,h2,h3,h4,h5 { letter-spacing:-.2px; }
+    h4 { font-weight:800 !important; }
+ 
+    /* ---------- Brand header ---------- */
     .brand-header, .brand-header-compact {
-        display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;
-        background:linear-gradient(135deg,#111a2c 0%,#0f1623 100%);
+        display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;
+        background:linear-gradient(120deg,#101a30 0%,#0d1422 55%,#14213d 100%);
         border:1px solid var(--line); border-left:4px solid var(--amber);
-        padding:10px 16px; border-radius:12px; margin-bottom:12px; box-shadow:0 6px 20px rgba(0,0,0,.35);
+        padding:12px 18px; border-radius:var(--radius); margin-bottom:14px;
+        box-shadow:0 10px 30px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.04);
     }
-    .brand-title-compact { display:flex; align-items:center; gap:8px; }
-    .brand-title-compact h2 { margin:0 !important; font-size:17px !important; font-weight:800 !important; letter-spacing:.6px; }
-    .brand-subtext { color:var(--muted); font-size:12px; }
+    .brand-title-text h1 { font-size:18px !important; font-weight:900 !important; letter-spacing:1px !important; }
+    .brand-title-text p  { color:var(--muted) !important; }
+    .brand-founder-tag { background:rgba(245,158,11,.12) !important; border:1px solid rgba(245,158,11,.35) !important; }
+ 
+    /* ---------- Hero (login) ---------- */
+    .hero {
+        position:relative; overflow:hidden; text-align:center;
+        background:linear-gradient(135deg,#0f1a33 0%,#0d1422 50%,#1b1630 100%);
+        border:1px solid var(--line2); border-radius:20px; padding:30px 20px 24px; margin:6px 0 18px;
+        box-shadow:0 20px 50px rgba(0,0,0,.55);
+    }
+    .hero:before { content:""; position:absolute; inset:-40% -10% auto auto; width:360px; height:360px;
+        background:radial-gradient(circle, rgba(245,158,11,.22), transparent 65%); }
+    .hero:after { content:""; position:absolute; inset:auto auto -45% -10%; width:340px; height:340px;
+        background:radial-gradient(circle, rgba(56,189,248,.16), transparent 65%); }
+    .hero > * { position:relative; z-index:1; }
+    .hero-logo { font-size:44px; line-height:1; margin-bottom:6px; filter:drop-shadow(0 6px 14px rgba(245,158,11,.45)); }
+    .hero h1 { margin:0 !important; font-size:30px !important; font-weight:900 !important; letter-spacing:2px;
+        background:linear-gradient(90deg,#fff,#fbbf24); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .hero p.sub { margin:6px 0 14px; color:var(--muted); font-size:14px; }
+    .chips { display:flex; justify-content:center; gap:8px; flex-wrap:wrap; }
+    .chip { background:rgba(255,255,255,.05); border:1px solid var(--line2); color:#dbe5f7;
+        padding:6px 13px; border-radius:999px; font-size:12px; font-weight:600; backdrop-filter:blur(6px); }
+    .hero-stats { display:flex; justify-content:center; gap:26px; flex-wrap:wrap; margin-top:18px; }
+    .hero-stats div b { display:block; color:var(--amber2); font-size:20px; font-weight:900; }
+    .hero-stats div span { color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.8px; }
+ 
+    /* ---------- Greeting strip & KPI ---------- */
+    .greet {
+        display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;
+        background:linear-gradient(120deg,#12203b,#0d1422); border:1px solid var(--line2);
+        border-radius:var(--radius); padding:14px 18px; margin-bottom:12px;
+        box-shadow:0 8px 24px rgba(0,0,0,.4);
+    }
+    .greet h3 { margin:0 !important; font-size:18px !important; font-weight:800 !important; }
+    .greet small { color:var(--muted); }
+    .kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin:6px 0 16px; }
+    .kpi { background:linear-gradient(160deg,var(--surface2),var(--surface)); border:1px solid var(--line);
+        border-radius:var(--radius); padding:12px 14px; position:relative; overflow:hidden; animation:fadeUp .45s ease both; }
+    .kpi:before { content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--accent,var(--amber)); }
+    .kpi span { color:var(--muted); font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.6px; }
+    .kpi b { display:block; margin-top:4px; font-size:19px; font-weight:800; color:#fff; }
+    @media (max-width:760px){ .kpi-grid{ grid-template-columns:repeat(2,1fr);} }
+ 
+    /* ---------- Module cards ---------- */
     .module-card {
-        background:linear-gradient(160deg,var(--card2),var(--card)); border:1px solid var(--line);
-        border-radius:14px; padding:16px 12px; transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;
+        position:relative; overflow:hidden; text-align:center;
+        background:linear-gradient(160deg,var(--surface2),var(--surface));
+        border:1px solid var(--line); border-radius:16px; padding:18px 12px;
+        transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease;
+        animation:fadeUp .45s ease both;
     }
-    .module-card:hover { transform:translateY(-3px); border-color:var(--amber); box-shadow:0 10px 26px rgba(245,158,11,.15); }
-    div.stButton > button { border-radius:10px !important; transition:all .15s ease !important; }
-    div.stButton > button[kind="primary"] {
-        background:linear-gradient(135deg,var(--amber2),var(--amber)) !important; color:#111 !important;
-        box-shadow:0 4px 14px rgba(245,158,11,.30);
+    .module-card:before { content:""; position:absolute; left:0; right:0; top:0; height:3px;
+        background:linear-gradient(90deg,transparent,var(--amber),transparent); opacity:.0; transition:opacity .2s; }
+    .module-card:hover { transform:translateY(-4px); border-color:var(--amber); box-shadow:0 16px 34px rgba(245,158,11,.16); }
+    .module-card:hover:before { opacity:1; }
+    .module-card > div:first-child {
+        width:56px; height:56px; margin:0 auto 10px !important; display:flex; align-items:center; justify-content:center;
+        background:rgba(245,158,11,.10); border:1px solid rgba(245,158,11,.25); border-radius:16px;
     }
-    div.stButton > button[kind="primary"]:hover { transform:translateY(-1px); filter:brightness(1.06); }
-    [data-testid="stMetric"] { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:10px 14px; }
+    @keyframes fadeUp { from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:none;} }
+ 
+    /* ---------- Inputs ---------- */
+    div[data-baseweb="input"], div[data-baseweb="base-input"], div[data-baseweb="select"] > div,
+    div[data-baseweb="textarea"] { background:var(--surface) !important; border-radius:10px !important; border-color:var(--line2) !important; }
+    div[data-baseweb="input"]:focus-within, div[data-baseweb="select"] > div:focus-within {
+        border-color:var(--amber) !important; box-shadow:0 0 0 3px rgba(245,158,11,.15) !important; }
+    label, .stRadio label, .stCheckbox label { color:#cdd8ec !important; font-weight:500; }
+    label[data-baseweb="radio"] { background:var(--surface); border:1px solid var(--line); padding:5px 12px; border-radius:999px; margin-right:6px; }
+ 
+    /* ---------- Buttons ---------- */
+    div.stButton > button, div.stDownloadButton > button, div[data-testid="stFormSubmitButton"] > button {
+        border-radius:11px !important; font-weight:700 !important; letter-spacing:.2px;
+        background:linear-gradient(180deg,#1b2740,#141e33) !important; border:1px solid var(--line2) !important; color:#eaf0fb !important;
+        transition:all .16s ease !important; min-height:42px;
+    }
+    div.stButton > button:hover, div.stDownloadButton > button:hover { border-color:var(--amber) !important; color:var(--amber2) !important; transform:translateY(-1px); }
+    div.stButton > button[kind="primary"], div[data-testid="stFormSubmitButton"] > button[kind="primary"], div.stDownloadButton > button[kind="primary"] {
+        background:linear-gradient(135deg,#fcd34d,#f59e0b 60%,#d97706) !important; color:#1a1203 !important; border:none !important;
+        box-shadow:0 6px 18px rgba(245,158,11,.32); }
+    div.stButton > button[kind="primary"]:hover { filter:brightness(1.07); color:#1a1203 !important; box-shadow:0 10px 24px rgba(245,158,11,.42); }
+ 
+    /* ---------- Metrics, tabs, expanders, tables, alerts ---------- */
+    [data-testid="stMetric"] { background:linear-gradient(160deg,var(--surface2),var(--surface)); border:1px solid var(--line); border-radius:12px; padding:10px 14px; }
     [data-testid="stMetricValue"] { color:var(--amber2) !important; font-weight:800 !important; }
     [data-testid="stMetricLabel"] { color:var(--muted) !important; }
-    button[data-baseweb="tab"] { font-weight:600 !important; }
-    button[data-baseweb="tab"][aria-selected="true"] { color:var(--amber) !important; }
-    div[data-baseweb="tab-highlight"] { background-color:var(--amber) !important; }
-    div[data-testid="stExpander"] { background:var(--card); border:1px solid var(--line) !important; border-radius:12px !important; }
+    div[data-baseweb="tab-list"] { gap:6px; background:var(--surface); padding:5px; border-radius:12px; border:1px solid var(--line); }
+    button[data-baseweb="tab"] { border-radius:9px !important; font-weight:600 !important; padding:8px 14px !important; }
+    button[data-baseweb="tab"][aria-selected="true"] { background:rgba(245,158,11,.14) !important; color:var(--amber2) !important; }
+    div[data-baseweb="tab-highlight"], div[data-baseweb="tab-border"] { display:none !important; }
+    div[data-testid="stExpander"] { background:var(--surface); border:1px solid var(--line) !important; border-radius:13px !important; }
     div[data-testid="stExpander"] summary { font-weight:600; }
-    div[data-testid="stMarkdownContainer"] table { border-collapse:collapse; width:100%; }
-    div[data-testid="stMarkdownContainer"] th { background:#16213a !important; color:var(--amber2) !important; }
-    div[data-testid="stMarkdownContainer"] td, div[data-testid="stMarkdownContainer"] th { border:1px solid var(--line) !important; padding:6px 10px !important; }
+    div[data-testid="stAlert"] { border-radius:12px; border:1px solid var(--line2); }
+    div[data-testid="stDataFrame"] { border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+    div[data-testid="stMarkdownContainer"] table { border-collapse:separate; border-spacing:0; width:100%; border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+    div[data-testid="stMarkdownContainer"] th { background:#16233f !important; color:var(--amber2) !important; font-size:12px; text-transform:uppercase; letter-spacing:.4px; }
+    div[data-testid="stMarkdownContainer"] td, div[data-testid="stMarkdownContainer"] th { border:0 !important; border-bottom:1px solid var(--line) !important; padding:9px 12px !important; }
     div[data-testid="stMarkdownContainer"] tr:nth-child(even) td { background:rgba(255,255,255,.02); }
-    ::-webkit-scrollbar { width:8px; height:8px; } ::-webkit-scrollbar-thumb { background:#334155; border-radius:8px; }
+    div[data-testid="stProgress"] > div > div > div > div { background:linear-gradient(90deg,#f59e0b,#fbbf24) !important; }
+    hr { border-color:var(--line) !important; }
+    ::-webkit-scrollbar { width:8px; height:8px; } ::-webkit-scrollbar-thumb { background:#2a3a5e; border-radius:8px; }
+ 
+    /* ---------- Footer ---------- */
+    .app-footer { text-align:center; color:#5f7194; font-size:12px; margin-top:34px; padding:16px 0 4px; border-top:1px solid var(--line); }
+    .app-footer b { color:var(--amber2); }
+ 
     @media (max-width:640px) {
         .block-container { padding-left:.6rem !important; padding-right:.6rem !important; }
-        .brand-subtext { display:none; }
-        [data-testid="stMetricValue"] { font-size:1.1rem !important; }
+        .brand-title-text p { display:none !important; }
+        .hero h1 { font-size:23px !important; }
+        .hero-stats { gap:16px; }
+        [data-testid="stMetricValue"] { font-size:1.05rem !important; }
     }
     </style>
     """,
@@ -1824,7 +1918,28 @@ if st.session_state.is_admin_logged:
 # 📌 विभाग १२: युझर ऑथेंटिकेशन (Login, Register, OTP & Client View)
 # ==========================================
 if st.session_state.app_user_name is None and not st.session_state.get("is_client_view", False):
-    st.markdown("### 🏗️ PATIL INFRATECH - SECURE ACCESS")
+    st.markdown(
+        """
+        <div class="hero">
+            <div class="hero-logo">🏗️</div>
+            <h1>PATIL INFRATECH</h1>
+            <p class="sub">मिस्त्री ते इंजिनिअर ते घरमालक - एकाच ॲपमध्ये संपूर्ण बांधकाम व्यवस्थापन</p>
+            <div class="chips">
+                <span class="chip">👷 साईट मॅनेजर</span>
+                <span class="chip">📐 एस्टिमेटर टूल्स</span>
+                <span class="chip">🤝 NeevPay एस्क्रो</span>
+                <span class="chip">🧪 क्यूब टेस्ट</span>
+                <span class="chip">🤖 Civil AI</span>
+            </div>
+            <div class="hero-stats">
+                <div><b>IS Code</b><span>456 • 1200 • 2502</span></div>
+                <div><b>2-Way</b><span>पेमेंट संमती</span></div>
+                <div><b>Live</b><span>क्लायंट पोर्टल</span></div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     if st.session_state.get("_clear_ls", False):
         st.components.v1.html(
             "<script>try{window.parent.localStorage.removeItem('patil_app_token');}catch(e){}</script>", height=0
@@ -2205,20 +2320,20 @@ active_site_obj = next((s for s in sites_list if s["site_code"] == st.session_st
 st.session_state.current_site_name = active_site_obj["site_name"]
 active_code_display = active_site_obj["site_code"]
  
-# --- १. अल्ट्रा-कॉम्पॅक्ट स्लीक हेडर ---
+# --- १. स्वागत पट्टी (Greeting Strip) ---
+_hr = get_ist_time().hour
+_greet_txt = "शुभ प्रभात" if _hr < 12 else ("शुभ दुपार" if _hr < 17 else "शुभ संध्याकाळ")
+_disp_name = str(current_user_data.get("id", current_user_name) or current_user_name)
+_badge_cls = "gold-vip-badge" if is_user_premium else "free-user-badge"
+_badge_txt = f"👑 VIP • {status_text_str}" if is_user_premium else "🆓 Free Plan"
 st.markdown(
-    """
-    <div class="brand-header-compact">
-        <div class="brand-title-compact">
-            <span style="font-size: 20px;">🏗️</span>
-            <h2>PATIL INFRATECH</h2>
-            <span class="brand-subtext">| Civil Suite & Site Manager</span>
-        </div>
+    f"""
+    <div class="greet">
         <div>
-            <span style="background:rgba(245,158,11,0.12); color:#f59e0b; border:1px solid rgba(245,158,11,0.25); padding:2px 10px; border-radius:12px; font-size:11px; font-weight:700;">
-                Console Active
-            </span>
+            <h3>👋 {_greet_txt}, {_disp_name}!</h3>
+            <small>📅 {get_ist_time().strftime('%d %b %Y')} • आजचे काम व्यवस्थित सुरू करूया</small>
         </div>
+        <div><span class="{_badge_cls}">{_badge_txt}</span></div>
     </div>
     """,
     unsafe_allow_html=True,
@@ -2472,7 +2587,26 @@ else:
 # 📌 विभाग १५: मुख्य मॉड्यूल निवड कार्ड्स (Responsive Dashboard Grid)
 # ==========================================
 if st.session_state.selected_module is None:
-    st.markdown("<h4 style='text-align:center; margin-bottom:16px;'>🚀 कृपया मॉड्यूल निवडा</h4>", unsafe_allow_html=True)
+    # --- चालू साईटचे लाईव्ह KPI ---
+    _kc = get_db_connection()
+    _site = st.session_state.current_site_name
+    _k_exp = _kc.execute("SELECT COALESCE(SUM(amount),0) FROM site_expenses WHERE user_key=? AND site_name=?", (current_user_name, _site)).fetchone()[0]
+    _k_wage = _kc.execute("SELECT COALESCE(SUM(total_cost),0) FROM site_attendance WHERE user_key=? AND site_name=?", (current_user_name, _site)).fetchone()[0]
+    _k_rec = _kc.execute("SELECT COALESCE(SUM(amount_deposited),0), COALESCE(SUM(planned_amount),0) FROM site_milestone_payments WHERE user_key=? AND site_name=?", (current_user_name, _site)).fetchone()
+    _k_prog = _kc.execute("SELECT progress_percent FROM site_progress WHERE user_key=? AND site_name=? ORDER BY id DESC LIMIT 1", (current_user_name, _site)).fetchone()
+    _kc.close()
+    st.markdown(
+        f"""
+        <div class="kpi-grid">
+            <div class="kpi" style="--accent:#f59e0b;"><span>💸 साईट खर्च</span><b>₹ {float(_k_exp):,.0f}</b></div>
+            <div class="kpi" style="--accent:#38bdf8;"><span>👷 मजुरी खर्च</span><b>₹ {float(_k_wage):,.0f}</b></div>
+            <div class="kpi" style="--accent:#10b981;"><span>🤝 क्लायंटकडून जमा</span><b>₹ {float(_k_rec[0]):,.0f}</b></div>
+            <div class="kpi" style="--accent:#a855f7;"><span>📸 ताजी प्रगती</span><b>{int(_k_prog[0]) if _k_prog else 0}%</b></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.markdown("<h4 style='text-align:center; margin:6px 0 14px;'>🚀 कृपया मॉड्यूल निवडा</h4>", unsafe_allow_html=True)
  
     calc_lock = locks_cfg.get("Civil Calculator", "Free")
     site_lock = locks_cfg.get("Site Manager", "Free")
@@ -5431,3 +5565,18 @@ elif st.session_state.selected_module == "House Estimator":
             f"• विटा: {bricks_needed} Nos\n"
         )
         render_whatsapp_feature(urllib.parse.quote(he_wa_msg), "house_single_wa_key")
+ 
+ 
+# ==========================================
+# 🏁 FOOTER (सर्व स्क्रीनवर)
+# ==========================================
+st.markdown(
+    """
+    <div class="app-footer">
+        © 2026 <b>PATIL INFRATECH</b> • Civil Engineering Suite & Site Management<br>
+        Concept & Logic by Kanhaiya (Founder)
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+ 
