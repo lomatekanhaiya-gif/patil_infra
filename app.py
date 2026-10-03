@@ -1506,9 +1506,9 @@ st.markdown(
 A4_REPORT_CSS = """
 .a4-page{position:relative;background:#fff;width:794px;margin:0 auto;padding:26px 34px 22px;box-sizing:border-box;min-height:1122px;border:2px solid #0f172a;overflow:hidden;color:#0f172a;font-family:'Segoe UI','Noto Sans Devanagari','Mangal',Arial,sans-serif;font-size:12px;line-height:1.4;}
 .a4-page *{box-sizing:border-box;}
-.wm{position:absolute;top:50%;left:0;right:0;transform:translateY(-50%) rotate(-30deg);text-align:center;z-index:1;pointer-events:none;white-space:nowrap;}
-.wm .w1{font-size:44px;font-weight:900;letter-spacing:4px;color:rgba(15,23,42,.10);}
-.wm .w2{font-size:17px;font-weight:800;letter-spacing:1.5px;color:rgba(30,64,175,.20);margin-top:8px;}
+.wm{position:absolute;top:50%;left:0;right:0;transform:translateY(-50%) rotate(-30deg);text-align:center;z-index:5;pointer-events:none;white-space:nowrap;}
+.wm .w1{font-size:46px;font-weight:900;letter-spacing:5px;color:rgba(15,23,42,.11);}
+.wm .w2{font-size:18px;font-weight:800;letter-spacing:2px;color:rgba(30,64,175,.22);margin-top:8px;}
 .content-box{position:relative;z-index:2;display:flex;flex-direction:column;min-height:1070px;}
 .content-box > *{flex-shrink:0;}
 .header-title{text-align:center;border-bottom:3px solid #0f172a;padding-bottom:8px;margin-bottom:12px;}
