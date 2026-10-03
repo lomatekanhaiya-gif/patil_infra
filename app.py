@@ -1493,12 +1493,12 @@ st.markdown(
 # 📄 सिंगल A4 PDF ENGINE (सर्व मॉड्यूलसाठी एकच PDF डाउनलोड)
 # ==========================================
 A4_REPORT_CSS = """
-.a4-page{position:relative;background:#fff;width:794px;margin:0 auto;padding:30px 36px 40px;box-sizing:border-box;min-height:1122px;border:2px solid #0f172a;overflow:hidden;color:#0f172a;font-family:'Segoe UI','Noto Sans Devanagari','Mangal',Arial,sans-serif;font-size:12px;line-height:1.4;}
+.a4-page{position:relative;background:#fff;width:794px;margin:0 auto;padding:26px 34px 22px;box-sizing:border-box;min-height:1122px;border:2px solid #0f172a;overflow:hidden;color:#0f172a;font-family:'Segoe UI','Noto Sans Devanagari','Mangal',Arial,sans-serif;font-size:12px;line-height:1.4;}
 .a4-page *{box-sizing:border-box;}
-.wm{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);width:92%;text-align:center;z-index:1;pointer-events:none;border:4px dashed rgba(30,64,175,.13);border-radius:14px;padding:22px 10px;}
+.wm{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);width:92%;text-align:center;z-index:1;pointer-events:none;padding:22px 10px;}
 .wm .w1{font-size:34px;font-weight:900;letter-spacing:4px;color:rgba(15,23,42,.09);}
 .wm .w2{font-size:17px;font-weight:800;letter-spacing:2px;color:rgba(30,64,175,.14);margin-top:6px;text-transform:uppercase;}
-.content-box{position:relative;z-index:2;display:flex;flex-direction:column;min-height:1048px;}
+.content-box{position:relative;z-index:2;display:flex;flex-direction:column;min-height:1070px;}
 .content-box > *{flex-shrink:0;}
 .header-title{text-align:center;border-bottom:3px solid #0f172a;padding-bottom:8px;margin-bottom:12px;}
 .header-title h1{margin:0;font-size:28px;font-weight:900;letter-spacing:1px;color:#0f172a;}
@@ -1512,13 +1512,8 @@ table.custom-data-table th,table.custom-data-table td{border:1px solid #cbd5e1;p
 table.custom-data-table th{background:#f1f5f9;font-weight:bold;color:#0f172a;}
 table.custom-data-table tr:nth-child(even){background:#fcfdfe;}
 .sum-box{background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;padding:10px;margin:10px 0;font-size:12px;}
-.signature-box{margin-top:auto;padding-top:40px;width:100%;font-size:12px;border-collapse:collapse;}
-.footer-stamp{text-align:center;margin-top:26px;font-size:10px;color:#64748b;border-top:1px solid #e2e8f0;padding-top:6px;}
-.seal{position:absolute;left:50%;margin-left:-78px;bottom:78px;width:156px;height:156px;border:4px double #1e40af;border-radius:50%;color:#1e40af;
- display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;transform:rotate(-14deg);opacity:.9;z-index:3;font-weight:900;background:rgba(30,64,175,.05);}
-.seal .s1{font-size:9px;letter-spacing:1.5px;}
-.seal .s2{font-size:16px;letter-spacing:2px;margin:4px 0;padding:3px 8px;border-top:2px solid #1e40af;border-bottom:2px solid #1e40af;}
-.seal .s3{font-size:9px;line-height:1.3;letter-spacing:.8px;}
+.signature-box{margin-top:auto;padding-top:14px;width:100%;font-size:12px;border-collapse:collapse;}
+.footer-stamp{text-align:center;margin-top:10px;font-size:10px;color:#64748b;border-top:1px solid #e2e8f0;padding-top:6px;}
 """
 
 PDF_COMPONENT_TEMPLATE = """<!DOCTYPE html>
@@ -1564,23 +1559,45 @@ btn.addEventListener('click', async function () {
           if (stg) { stg.style.left = '0px'; stg.style.top = '0px'; }
         }
       });
-      // A4 गुणोत्तरानुसार स्लाईस (मोठा रिपोर्ट असेल तर पुढच्या पानावर)
+      // थोडेसे जास्त असेल तर संपूर्ण रिपोर्ट एकाच A4 पानावर बसवा; खूप मोठा असेल तरच पुढच्या पानावर
       const sliceH = Math.round(canvas.width * 297 / 210);
-      const n = Math.max(1, Math.ceil((canvas.height - 2) / sliceH));
-      for (let k = 0; k < n; k++) {
-        const part = document.createElement('canvas');
-        part.width = canvas.width; part.height = sliceH;
-        const ctx = part.getContext('2d');
-        ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, part.width, part.height);
-        const sh = Math.min(sliceH, canvas.height - k * sliceH);
-        ctx.drawImage(canvas, 0, k * sliceH, canvas.width, sh, 0, 0, canvas.width, sh);
+      if (canvas.height <= sliceH * 1.45) {
+        let w = 210, hh = 210 * canvas.height / canvas.width;
+        if (hh > 297) { w = w * 297 / hh; hh = 297; }
         if (!first) pdf.addPage('a4', 'portrait');
-        pdf.addImage(part.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, 210, 297);
+        pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', (210 - w) / 2, 0, w, hh);
         first = false;
+      } else {
+        const n = Math.ceil((canvas.height - 2) / sliceH);
+        for (let k = 0; k < n; k++) {
+          const part = document.createElement('canvas');
+          part.width = canvas.width; part.height = sliceH;
+          const ctx = part.getContext('2d');
+          ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, part.width, part.height);
+          const sh = Math.min(sliceH, canvas.height - k * sliceH);
+          ctx.drawImage(canvas, 0, k * sliceH, canvas.width, sh, 0, 0, canvas.width, sh);
+          if (!first) pdf.addPage('a4', 'portrait');
+          pdf.addImage(part.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, 210, 297);
+          first = false;
+        }
       }
     }
-    pdf.save(FILE);
-    st.textContent = '✅ PDF डाउनलोड झाली';
+    // खरी PDF फाईल (application/pdf) म्हणून सेव्ह
+    const blob = new Blob([pdf.output('arraybuffer')], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    let ok = false;
+    try {
+      const PD = window.parent.document;
+      const a = PD.createElement('a');
+      a.href = url; a.download = FILE; a.style.display = 'none';
+      PD.body.appendChild(a); a.click();
+      setTimeout(function () { try { PD.body.removeChild(a); } catch (e) {} }, 2000);
+      ok = true;
+    } catch (e) {}
+    if (!ok) {
+      try { const a2 = document.createElement('a'); a2.href = url; a2.download = FILE; document.body.appendChild(a2); a2.click(); ok = true; } catch (e) {}
+    }
+    st.innerHTML = '✅ PDF तयार झाली. डाउनलोड सुरू झाले नसेल तर: <a href="' + url + '" download="' + FILE + '" target="_blank" style="color:#38bdf8;font-weight:700;">इथे क्लिक करा</a>';
   } catch (e) { st.textContent = '⚠️ PDF तयार करताना त्रुटी: ' + e; }
   btn.disabled = false; btn.textContent = LABEL;
 });
@@ -1615,7 +1632,7 @@ def df_to_html_table(df):
 
 
 def build_a4_page(site_name, user_key, note, body_html, page_no=1, total_pages=1, doc_title="ESTIMATE", section=None):
-    """एक A4 पान: ॲपची माहिती, साईट/इंजिनिअर तपशील, सही, फूटर आणि 'VERIFIED BY KANHAIYA' स्टॅम्प + वॉटरमार्क."""
+    """एक A4 पान: ॲपची माहिती, साईट/इंजिनिअर तपशील, सही, फूटर आणि वॉटरमार्क."""
     esc = html_lib.escape
     now = get_ist_time()
     sec = f"<div class='section-header'>{esc(str(section))}</div>" if section else ""
@@ -1624,12 +1641,6 @@ def build_a4_page(site_name, user_key, note, body_html, page_no=1, total_pages=1
     <div class="a4-page">
         <div class="wm">
             <div class="w1">PATIL INFRATECH</div>
-            <div class="w2">VERIFIED BY KANHAIYA • FOUNDER OF PATIL INFRA</div>
-        </div>
-        <div class="seal">
-            <div class="s1">PATIL INFRATECH</div>
-            <div class="s2">VERIFIED</div>
-            <div class="s3">BY KANHAIYA<br>FOUNDER OF<br>PATIL INFRA</div>
         </div>
         <div class="content-box">
             <div class="header-title">
