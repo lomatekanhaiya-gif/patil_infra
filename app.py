@@ -36,7 +36,10 @@
 # ==========================================
 # 📌 विभाग १: आवश्यक लायब्ररी आणि पॅकेजेस इम्पोर्ट
 # ==========================================
+import base64
 import datetime
+import html as html_lib
+import json
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import math
@@ -1235,6 +1238,168 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+ 
+# ==========================================
+# 📄 सिंगल A4 PDF ENGINE (सर्व मॉड्यूलसाठी एकच PDF डाउनलोड)
+# ==========================================
+A4_REPORT_CSS = """
+.a4-page{position:relative;background:#fff;width:794px;margin:0 auto;padding:34px 36px;box-sizing:border-box;min-height:1070px;border:1.5px solid #0f172a;overflow:hidden;color:#0f172a;font-family:'Segoe UI','Noto Sans Devanagari','Mangal',Arial,sans-serif;font-size:12px;line-height:1.35;}
+.a4-page *{box-sizing:border-box;}
+.page-break{page-break-before:always;break-before:page;}
+.watermark{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);font-size:24px;font-weight:900;color:rgba(15,23,42,.06);text-transform:uppercase;letter-spacing:3px;text-align:center;width:85%;border:4px dashed rgba(15,23,42,.06);padding:25px;border-radius:12px;z-index:1;}
+.content-box{position:relative;z-index:2;}
+.header-title{text-align:center;border-bottom:2.5px solid #0f172a;padding-bottom:8px;margin-bottom:14px;}
+.header-title h1{margin:0;font-size:26px;font-weight:900;color:#0f172a;}
+.header-title p{margin:3px 0;font-size:11px;font-weight:700;color:#475569;}
+table.info-table{width:100%;margin-bottom:12px;font-size:12px;border-collapse:collapse;}
+table.info-table td{padding:3px 0;}
+.section-header{background:#0f172a;color:#fff;padding:7px 14px;font-size:13px;font-weight:bold;border-radius:4px;margin:14px 0 10px 0;}
+table.custom-data-table{width:100%;border-collapse:collapse;margin:8px 0 16px 0;font-size:11px;}
+table.custom-data-table th,table.custom-data-table td{border:1px solid #cbd5e1;padding:6px 8px;text-align:left;}
+table.custom-data-table th{background:#f1f5f9;font-weight:bold;color:#0f172a;}
+table.custom-data-table tr:nth-child(even){background:#fcfdfe;}
+.sum-box{background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;padding:10px;margin:10px 0;font-size:12px;}
+.signature-box{margin-top:50px;width:100%;font-size:12px;border-collapse:collapse;}
+.footer-stamp{text-align:center;margin-top:30px;font-size:10px;color:#64748b;border-top:1px solid #e2e8f0;padding-top:6px;}
+"""
+ 
+PDF_COMPONENT_TEMPLATE = """<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+__CSS__
+body{margin:0;background:transparent;font-family:'Segoe UI','Noto Sans Devanagari',Arial,sans-serif;}
+#pdfbtn{width:100%;height:46px;border:none;border-radius:11px;cursor:pointer;font-size:15px;font-weight:800;color:#1a1203;
+ background:linear-gradient(135deg,#fcd34d,#f59e0b 60%,#d97706);box-shadow:0 6px 18px rgba(245,158,11,.32);}
+#pdfbtn:disabled{opacity:.7;cursor:wait;}
+#pdfst{display:block;margin-top:6px;font-size:12px;color:#94a3b8;text-align:center;}
+</style></head>
+<body>
+<button id="pdfbtn"></button><span id="pdfst"></span>
+<div style="position:absolute;left:-12000px;top:0;width:794px;"><div id="rep" style="width:794px;background:#fff;">__PAGES__</div></div>
+<script>
+const FILE = __FILE__, LABEL = __LABEL__, SCALE = __SCALE__;
+const btn = document.getElementById('pdfbtn'), st = document.getElementById('pdfst');
+btn.textContent = LABEL;
+btn.addEventListener('click', async function () {
+  if (typeof html2pdf === 'undefined') { st.textContent = '⚠️ PDF लायब्ररी लोड झाली नाही (इंटरनेट तपासा) व पेज रिफ्रेश करा.'; return; }
+  btn.disabled = true; btn.textContent = '⏳ PDF तयार होत आहे...'; st.textContent = '';
+  try {
+    await html2pdf().set({
+      margin: 0, filename: FILE,
+      image: { type: 'jpeg', quality: 0.97 },
+      html2canvas: { scale: SCALE, useCORS: true, backgroundColor: '#ffffff', scrollX: 0, scrollY: 0, windowWidth: 800 },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      pagebreak: { mode: ['css', 'legacy'], before: '.page-break', avoid: ['tr'] }
+    }).from(document.getElementById('rep')).save();
+    st.textContent = '✅ PDF डाउनलोड झाली';
+  } catch (e) { st.textContent = '⚠️ PDF तयार करताना त्रुटी: ' + e; }
+  btn.disabled = false; btn.textContent = LABEL;
+});
+</script></body></html>"""
+ 
+ 
+def safe_fn(text):
+    return re.sub(r"[^A-Za-z0-9_\-]+", "_", str(text)).strip("_") or "Report"
+ 
+ 
+def md_table_to_html(md_text):
+    """मार्कडाऊन टेबल -> A4 रिपोर्टसाठी HTML टेबल."""
+    lines = [ln.strip() for ln in str(md_text).strip().split("\n") if ln.strip().startswith("|")]
+    if not lines:
+        return f"<div class='sum-box'>{html_lib.escape(str(md_text))}</div>"
+    out = "<table class='custom-data-table'>"
+    for i, ln in enumerate(lines):
+        cells = [c.strip() for c in ln.split("|")[1:-1]]
+        if i == 1 and all(set(c).issubset({"-", ":", " "}) for c in cells):
+            continue
+        if i == 0:
+            out += "<thead><tr>" + "".join(f"<th>{c}</th>" for c in cells) + "</tr></thead><tbody>"
+        else:
+            out += "<tr>" + "".join("<td>" + re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", c) + "</td>" for c in cells) + "</tr>"
+    return out + "</tbody></table>"
+ 
+ 
+def df_to_html_table(df):
+    if df is None or len(df) == 0:
+        return "<div class='sum-box'>नोंदी उपलब्ध नाहीत.</div>"
+    return df.to_html(index=False, classes="custom-data-table", border=0, escape=True)
+ 
+ 
+def build_a4_page(site_name, user_key, note, body_html, page_no=1, total_pages=1, doc_title="ESTIMATE", section=None):
+    """एक A4 पान - जुन्या PDF मधील पूर्ण तपशील (हेडर, साईट, इंजिनिअर, तारीख, सही, स्टॅम्प)."""
+    esc = html_lib.escape
+    now = get_ist_time()
+    pb = " page-break" if page_no > 1 else ""
+    sec = f"<div class='section-header'>{esc(str(section))}</div>" if section else ""
+    return f"""
+    <div class="a4-page{pb}">
+        <div class="watermark">PATIL INFRATECH • OFFICIAL {esc(str(doc_title))}</div>
+        <div class="content-box">
+            <div class="header-title">
+                <h1>PATIL INFRATECH</h1>
+                <p>CIVIL ENGINEERS • ARCHITECTURAL CONSULTANTS • QUANTITY SURVEYORS</p>
+                <small style="color:#64748b;">(Certified Compliant with IS 1200, IS 456, IS 2502 &amp; IS 1077 Standards)</small>
+            </div>
+            <table class="info-table">
+                <tr>
+                    <td><b>📍 Project / Site:</b> <span style="color:#d97706;font-weight:bold;">{esc(str(site_name))}</span></td>
+                    <td style="text-align:right;"><b>📅 Report Date:</b> {now.strftime('%d-%m-%Y')}</td>
+                </tr>
+                <tr>
+                    <td><b>👤 Site Engineer:</b> {esc(str(user_key))}</td>
+                    <td style="text-align:right;"><b>📄 Page:</b> {page_no} of {total_pages}</td>
+                </tr>
+                <tr><td colspan="2"><b>📝 Activity / Note:</b> {esc(str(note)) if note else '-'}</td></tr>
+            </table>
+            <hr style="border:0.5px solid #cbd5e1;margin-bottom:8px;">
+            {sec}
+            {body_html}
+            <table class="signature-box">
+                <tr>
+                    <td style="width:50%;"><br><br>__________________________<br><b>Site Engineer Signature</b><br><small style="color:#64748b;">Patil Infratech Site Office</small></td>
+                    <td style="width:50%;text-align:right;"><br><br>__________________________<br><b>Project Manager / Checker</b><br><small style="color:#64748b;">Quality &amp; Audit Control</small></td>
+                </tr>
+            </table>
+            <div class="footer-stamp">System Verified &amp; Generated by: <b>Patil Infratech Corporate Engine</b> • Date: {now.strftime('%d-%m-%Y %H:%M:%S')}</div>
+        </div>
+    </div>
+    """
+ 
+ 
+def a4_preview_doc(pages_html):
+    return (
+        "<!DOCTYPE html><html><head><meta charset='utf-8'><style>"
+        + A4_REPORT_CSS
+        + "body{background:#e2e8f0;margin:0;padding:10px;} .a4-page{width:100%;max-width:794px;margin:0 auto 18px auto;box-shadow:0 4px 20px rgba(0,0,0,.12);border-radius:6px;}"
+        + "</style></head><body>" + "".join(pages_html) + "</body></html>"
+    )
+ 
+ 
+def render_pdf_download(pages_html, file_name, label="📄 PDF डाउनलोड करा (A4)"):
+    """सर्व मॉड्यूलमधील एकमेव PDF डाउनलोड बटण - खरी A4 PDF फाईल सेव्ह होते."""
+    n = len(pages_html)
+    scale = 2 if n <= 2 else (1.5 if n <= 5 else 1.2)
+    doc = (
+        PDF_COMPONENT_TEMPLATE.replace("__CSS__", A4_REPORT_CSS)
+        .replace("__PAGES__", "".join(pages_html))
+        .replace("__FILE__", json.dumps(file_name))
+        .replace("__LABEL__", json.dumps(label))
+        .replace("__SCALE__", str(scale))
+    )
+    st.components.v1.html(doc, height=88)
+ 
+ 
+def pdf_report(body_html, site_name, user_key, note, doc_title, file_stub, section=None):
+    """एका पानाचा रिपोर्ट + एकच PDF बटण."""
+    page = build_a4_page(site_name, user_key, note, body_html, 1, 1, doc_title, section)
+    fname = f"Patil_Infratech_{safe_fn(file_stub)}_{safe_fn(site_name)}_{get_ist_time().strftime('%d%m%Y_%H%M')}.pdf"
+    render_pdf_download([page], fname)
+ 
+ 
+def pdf_from_markdown(md_text, site_name, user_key, note, doc_title, file_stub, section=None):
+    pdf_report(md_table_to_html(md_text), site_name, user_key, note, doc_title, file_stub, section)
+ 
  
 # ==========================================
 # 📌 विभाग ९: WHATSAPP रिपोर्ट शेअरिंग कंपोनंट
@@ -2646,7 +2811,7 @@ if st.session_state.selected_module is None:
             <div class="module-card">
                 <div style="font-size: 34px; margin-bottom: 6px;">📐</div>
                 <h4 style="margin: 0; color: #ffffff; font-weight: 700;">Estimator Tools</h4>
-                <p style="color: #94a3b8; font-size: 12px; margin: 4px 0 10px 0;">Rate Analysis, BBS Schedule, QS & 3-in-1 PDF</p>
+                <p style="color: #94a3b8; font-size: 12px; margin: 4px 0 10px 0;">Rate Analysis, BBS Schedule, QS & 3-in-1 Report</p>
                 <span class="gold-vip-badge">[5 Advanced Tools]</span>
             </div>
             """,
@@ -2745,128 +2910,16 @@ elif st.session_state.selected_module == "Estimator Tools":
             st.warning(f"⚠️ '{site_name}' साठी मागील ७ दिवसांत कोणतेही कॅल्क्युलेशन सेव्ह केलेले नाही. आधी खालील टूल्स वापरून हिशोब तयार करा.")
             return
  
-        def markdown_to_html_table(md_text):
-            lines = [line.strip() for line in md_text.strip().split("\n") if line.strip().startswith("|")]
-            if not lines:
-                return f"<div style='padding:8px; background:#f8fafc; font-size:12px;'>{md_text}</div>"
-            
-            html_table = "<table class='custom-data-table'>"
-            for i, line in enumerate(lines):
-                cells = [c.strip() for c in line.split("|")[1:-1]]
-                if i == 1 and all(set(c).issubset({'-', ':', ' '}) for c in cells):
-                    continue
-                if i == 0:
-                    html_table += "<thead><tr>"
-                    for c in cells:
-                        html_table += f"<th>{c}</th>"
-                    html_table += "</tr></thead><tbody>"
-                else:
-                    html_table += "<tr>"
-                    for c in cells:
-                        bold_formatted = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", c)
-                        html_table += f"<td>{bold_formatted}</td>"
-                    html_table += "</tr>"
-            html_table += "</tbody></table>"
-            return html_table
- 
-        full_html_doc = f"""<!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="utf-8">
-            <title>PATIL INFRATECH - {site_name} Master Estimate</title>
-            <style>
-                @page {{ size: A4 portrait; margin: 10mm; }}
-                @media print {{
-                    body {{ background: #ffffff !important; color: #000000 !important; }}
-                    .no-print {{ display: none !important; }}
-                    .page-break {{ page-break-before: always !important; break-before: page !important; }}
-                }}
-                body {{ background-color: #f1f5f9; font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 10px; color: #0f172a; }}
-                .a4-page {{ position: relative; background: #ffffff; width: 100%; max-width: 800px; margin: 0 auto 25px auto; padding: 30px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); border: 1.5px solid #0f172a; box-sizing: border-box; min-height: 1050px; overflow: hidden; }}
-                .watermark {{ position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg); font-size: 24px; font-weight: 900; color: rgba(15, 23, 42, 0.06); text-transform: uppercase; letter-spacing: 3px; text-align: center; width: 85%; pointer-events: none; border: 4px dashed rgba(15, 23, 42, 0.06); padding: 25px; border-radius: 12px; z-index: 1; }}
-                .content-box {{ position: relative; z-index: 2; }}
-                .header-title {{ text-align: center; border-bottom: 2.5px solid #0f172a; padding-bottom: 8px; margin-bottom: 14px; }}
-                .header-title h1 {{ margin: 0; font-size: 24px; color: #0f172a; font-weight: 900; }}
-                .header-title p {{ margin: 3px 0; font-size: 11px; font-weight: 700; color: #475569; }}
-                table.info-table {{ width: 100%; margin-bottom: 12px; font-size: 12px; border-collapse: collapse; }}
-                table.info-table td {{ padding: 3px 0; }}
-                .section-header {{ background: #0f172a; color: #ffffff; padding: 7px 14px; font-size: 13px; font-weight: bold; border-radius: 4px; margin: 14px 0 10px 0; }}
-                table.custom-data-table {{ width: 100%; border-collapse: collapse; margin: 8px 0 16px 0; font-size: 11px; }}
-                table.custom-data-table th, table.custom-data-table td {{ border: 1px solid #cbd5e1; padding: 6px 8px; text-align: left; }}
-                table.custom-data-table th {{ background-color: #f8fafc; font-weight: bold; color: #0f172a; }}
-                table.custom-data-table tr:nth-child(even) {{ background-color: #fcfdfe; }}
-                .signature-box {{ margin-top: 50px; width: 100%; font-size: 12px; }}
-                .footer-stamp {{ text-align: center; margin-top: 30px; font-size: 10px; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 6px; }}
-            </style>
-        </head>
-        <body>
-        """
- 
+        master_pages = []
         for idx, r in enumerate(records, 1):
-            page_break_class = "page-break" if idx > 1 else ""
-            table_content_html = markdown_to_html_table(r['report_data'])
- 
-            full_html_doc += f"""
-            <div class="a4-page {page_break_class}">
-                <div class="watermark">PATIL INFRATECH • OFFICIAL MASTER ESTIMATE</div>
-                <div class="content-box">
-                    <div class="header-title">
-                        <h1>PATIL INFRATECH</h1>
-                        <p>CIVIL ENGINEERS • ARCHITECTURAL CONSULTANTS • QUANTITY SURVEYORS</p>
-                        <small style="color: #64748b;">(Certified Compliant with IS 1200, IS 456, IS 2502 & IS 1077 Standards)</small>
-                    </div>
- 
-                    <table class="info-table">
-                        <tr>
-                            <td><b>📍 Project / Site:</b> <span style="color:#d97706; font-weight:bold;">{site_name}</span></td>
-                            <td style="text-align: right;"><b>📅 Report Date:</b> {get_ist_time().strftime('%d-%m-%Y')}</td>
-                        </tr>
-                        <tr>
-                            <td><b>👤 Site Engineer:</b> {user_key}</td>
-                            <td style="text-align: right;"><b>📄 Page:</b> {idx} of {len(records)}</td>
-                        </tr>
-                        <tr>
-                            <td colspan="2"><b>📝 Activity / Note:</b> {r['user_note']}</td>
-                        </tr>
-                    </table>
-                    <hr style="border: 0.5px solid #cbd5e1; margin-bottom: 8px;">
- 
-                    <div class="section-header">
-                        विभाग #{idx}: {r['user_note']} (नोंद वेळ: {r['timestamp']})
-                    </div>
- 
-                    {table_content_html}
- 
-                    <table class="signature-box">
-                        <tr>
-                            <td style="width: 50%;">
-                                <br><br>
-                                __________________________<br>
-                                <b>Site Engineer Signature</b><br>
-                                <small style="color:#64748b;">Patil Infratech Site Office</small>
-                            </td>
-                            <td style="width: 50%; text-align: right;">
-                                <br><br>
-                                __________________________<br>
-                                <b>Project Manager / Checker</b><br>
-                                <small style="color:#64748b;">Quality & Audit Control</small>
-                            </td>
-                        </tr>
-                    </table>
- 
-                    <div class="footer-stamp">
-                        System Verified & Generated by: <b>Patil Infratech Corporate Engine</b> • Date: {get_ist_time().strftime('%d-%m-%Y %H:%M:%S')}
-                    </div>
-                </div>
-            </div>
-            """
- 
-        full_html_doc += """
-        </body>
-        </html>
-        """
- 
-        st.components.v1.html(full_html_doc, height=540, scrolling=True)
+            master_pages.append(
+                build_a4_page(
+                    site_name, user_key, r["user_note"], md_table_to_html(r["report_data"]),
+                    idx, len(records), "MASTER ESTIMATE",
+                    f"विभाग #{idx}: {r['user_note']} (नोंद वेळ: {r['timestamp']})",
+                )
+            )
+        st.components.v1.html(a4_preview_doc(master_pages), height=540, scrolling=True)
  
         excel_data_list = []
         for r in records:
@@ -2881,15 +2934,11 @@ elif st.session_state.selected_module == "Estimator Tools":
         csv_bytes = excel_df.to_csv(index=False).encode('utf-8-sig')
  
         st.write("---")
-        c1, c2, c3 = st.columns(3)
+        c1, c2 = st.columns(2)
         with c1:
-            st.download_button(
-                label="📥 Download Master HTML/PDF",
-                data=full_html_doc,
-                file_name=f"Patil_Infratech_{site_name.replace(' ', '_')}_Master_Report.html",
-                mime="text/html",
-                type="primary",
-                use_container_width=True
+            render_pdf_download(
+                master_pages,
+                f"Patil_Infratech_{safe_fn(site_name)}_Master_Report_{get_ist_time().strftime('%d%m%Y_%H%M')}.pdf",
             )
         with c2:
             st.download_button(
@@ -2897,16 +2946,7 @@ elif st.session_state.selected_module == "Estimator Tools":
                 data=csv_bytes,
                 file_name=f"Patil_Infratech_{site_name.replace(' ', '_')}_Data.csv",
                 mime="text/csv",
-                use_container_width=True
-            )
-        with c3:
-            st.markdown(
-                """
-                <button onclick="window.parent.print()" style="width: 100%; background: #0284c7; color: white; border: none; padding: 9px 14px; border-radius: 8px; font-weight: 700; cursor: pointer; height: 38px;">
-                    🖨️ Instant Print (A4)
-                </button>
-                """,
-                unsafe_allow_html=True,
+                use_container_width=True,
             )
  
         wa_text = (
@@ -3017,14 +3057,14 @@ elif st.session_state.selected_module == "Estimator Tools":
             """
             <div class="module-card" style="border-color: rgba(245, 158, 11, 0.4);">
                 <div style="font-size: 32px; margin-bottom: 4px;">📑</div>
-                <b style="color: #f59e0b; font-size: 15px;">3-in-1 Executive Master PDF</b>
+                <b style="color: #f59e0b; font-size: 15px;">3-in-1 Executive Master Report</b>
                 <p style="font-size: 11px; color: #94a3b8; margin: 2px 0 0 0;">Rate Analysis + BBS + QS कंबाइन्ड व्हॅलिडेटेड रिपोर्ट</p>
             </div>
             """,
             unsafe_allow_html=True,
         )
         st.write(" ")
-        if st.button("📑 Generate Master PDF Report", key="btn_est_master_pdf", use_container_width=True, type="primary"):
+        if st.button("📑 Generate Master Report", key="btn_est_master_pdf", use_container_width=True, type="primary"):
             st.session_state.selected_estimator_sub_module = "Master PDF"
             trigger_push_state()
             st.rerun()
@@ -3275,6 +3315,8 @@ elif st.session_state.selected_module == "Estimator Tools":
                         conn.close()
  
                     msg_text = f"🏗️ *PATIL INFRATECH - CONCRETE RATE ANALYSIS*\n👤 *User:* {current_user_name}\n📍 *Site:* {st.session_state.current_site_name}\n🧱 *Grade:* {grade.split(' ')[0]} | *Vol:* {volume} m³\n• Cement: {c_bags} Bags\n• Sand: {s_m3:.2f} m³ ({s_brass:.2f} Brass)\n• Aggregate: {a_m3:.2f} m³ ({a_brass:.2f} Brass)\n💰 *GRAND TOTAL:* ₹{grand_total:,.2f}/-"
+                    pdf_from_markdown(report_table, st.session_state.current_site_name, current_user_name, f"Concrete {grade.split(' ')[0]} - {user_note}", "RATE ANALYSIS", "RateAnalysis_Concrete", f"Concrete Work Rate Analysis (IS 456) - {fmt_qty(volume)} m³")
+ 
                     render_whatsapp_feature(urllib.parse.quote(msg_text), "ra_conc")
  
             # [२] Brickwork Estimation (IS 2212)
@@ -3368,6 +3410,8 @@ elif st.session_state.selected_module == "Estimator Tools":
                         conn.close()
  
                     msg_text = f"🏗️ *PATIL INFRATECH - BRICKWORK RATE ANALYSIS*\n👤 *User:* {current_user_name}\n📍 *Site:* {st.session_state.current_site_name}\n🧱 *Ratio:* {mortar_choice.split(' ')[0]} | *Vol:* {volume} m³\n• Bricks: {total_bricks} Nos\n• Cement: {cement_bags} Bags\n• Sand: {sand_m3:.2f} m³ ({sand_brass:.2f} Brass)\n💰 *GRAND TOTAL:* ₹{grand_total:,.2f}/-"
+                    pdf_from_markdown(report_table, st.session_state.current_site_name, current_user_name, f"Brickwork {mortar_choice.split(' ')[0]} - {user_note}", "RATE ANALYSIS", "RateAnalysis_Brickwork", f"Brickwork Rate Analysis (IS 2212) - {fmt_qty(volume)} m³")
+ 
                     render_whatsapp_feature(urllib.parse.quote(msg_text), "ra_bw")
  
             # [३] Plaster Work Estimation (IS 1661)
@@ -3464,6 +3508,8 @@ elif st.session_state.selected_module == "Estimator Tools":
                         conn.close()
  
                     msg_text = f"🏗️ *PATIL INFRATECH - PLASTER RATE ANALYSIS*\n👤 *User:* {current_user_name}\n📍 *Site:* {st.session_state.current_site_name}\n🎨 *Thick:* {thickness_mm}mm | *Area:* {plaster_area} m²\n• Cement: {cement_bags} Bags\n• Sand: {sand_m3:.2f} m³ ({sand_brass:.2f} Brass)\n💰 *GRAND TOTAL:* ₹{grand_total:,.2f}/-"
+                    pdf_from_markdown(report_table, st.session_state.current_site_name, current_user_name, f"Plaster {thickness_mm}mm - {user_note}", "RATE ANALYSIS", "RateAnalysis_Plaster", f"Plaster Rate Analysis (IS 1661) - {fmt_qty(plaster_area)} m²")
+ 
                     render_whatsapp_feature(urllib.parse.quote(msg_text), "ra_pl")
  
         # ======================================================================
@@ -3646,6 +3692,8 @@ elif st.session_state.selected_module == "Estimator Tools":
                     conn.close()
  
                 msg_text = f"🏗️ *PATIL INFRATECH - BBS REPORT*\n👤 *User:* {current_user_name}\n📐 *Component:* {rcc_comp}\n⚖️ *Weight:* {total_weight_kg:.2f} Kg\n💰 *Cost:* ₹{total_cost:,.2f}/-"
+                pdf_from_markdown(report_table, st.session_state.current_site_name, current_user_name, f"BBS {rcc_comp}", "BBS SCHEDULE", "BBS_Schedule", f"Bar Bending Schedule (IS 2502) - {rcc_comp}")
+ 
                 render_whatsapp_feature(urllib.parse.quote(msg_text), "bbs_main")
  
         # ======================================================================
@@ -3747,6 +3795,8 @@ elif st.session_state.selected_module == "Estimator Tools":
                         conn.close()
  
                     msg_text = f"📊 *PATIL INFRATECH - QUANTITY SURVEY*\n👤 *User:* {current_user_name}\n📍 *Site:* {st.session_state.current_site_name}\nAbstract Report Generated Successfully."
+                    pdf_from_markdown(report_table, st.session_state.current_site_name, current_user_name, "Abstract Sheet", "QUANTITY SURVEY", "QuantitySurvey", "Quantity Surveying & Abstract Sheet (IS 1200)")
+ 
                     render_whatsapp_feature(urllib.parse.quote(msg_text), "qs_main")
 # ==========================================
 # 📌 विभाग १७: SITE MANAGER मुख्य मॉड्यूल (Sub-modules)
@@ -3996,6 +4046,25 @@ elif st.session_state.selected_module == "Site Manager":
                 """,
                 unsafe_allow_html=True,
             )
+ 
+            _att_tr = ""
+            for _wid, _wname, _dq, _dr in labor_types:
+                _wq, _wr = w_data[_wid]["qty"], w_data[_wid]["rate"]
+                if _wq > 0:
+                    _att_tr += (f"<tr><td>{html_lib.escape(_wname)}</td><td style='text-align:right'>{_wq}</td>"
+                                f"<td style='text-align:right'>₹ {_wr:,.2f}</td><td style='text-align:right'>₹ {_wq * _wr:,.2f}</td></tr>")
+            if _att_tr:
+                _att_body = (
+                    f"<div class='sum-box'><b>तारीख:</b> {att_date.strftime('%d-%m-%Y')} &nbsp;|&nbsp; <b>आजची एकूण मजुरी:</b> ₹ {total_labor_cost:,.2f}</div>"
+                    "<table class='custom-data-table'><thead><tr><th>कामगार प्रकार</th><th>संख्या</th><th>रोजंदारी दर</th><th>रक्कम</th></tr></thead>"
+                    f"<tbody>{_att_tr}<tr><td colspan='3'><b>एकूण मजुरी</b></td><td style='text-align:right'><b>₹ {total_labor_cost:,.2f}</b></td></tr></tbody></table>"
+                )
+                pdf_report(_att_body, st.session_state.current_site_name, current_user_name,
+                           f"Daily Attendance & Wages - {att_date.strftime('%d-%m-%Y')}", "ATTENDANCE & WAGES", "Attendance", "दैनिक हजेरी व मजुरी बिल")
+                render_whatsapp_feature(
+                    urllib.parse.quote(f"👷 *PATIL INFRATECH - हजेरी*\n📍 *Site:* {st.session_state.current_site_name}\n📅 *तारीख:* {att_date.strftime('%d-%m-%Y')}\n💰 *आजची मजुरी:* ₹ {total_labor_cost:,.2f}"),
+                    "site_att_wa",
+                )
  
             if st.button("💾 हजेरी डेटाबेसमध्ये सेव्ह करा", type="primary", key="save_att_btn", use_container_width=True):
                 conn = get_db_connection()
@@ -4311,6 +4380,13 @@ elif st.session_state.selected_module == "Site Manager":
                 """
             )
  
+            _inv_md = ("| साहित्य | या कामासाठी लागणारे | स्टॉकमध्ये शिल्लक | नवीन किती मागवायचे? | सद्यस्थिती |\n"
+                       "| :--- | :--- | :--- | :--- | :--- |\n" + req_rows_md)
+            _inv_body = (f"<div class='sum-box'><b>चालू काम:</b> {html_lib.escape(selected_stage)} &nbsp;|&nbsp; "
+                         f"<b>ठरलेले घनफळ:</b> {fmt_qty(target_vol)} m³</div>" + md_table_to_html(_inv_md))
+            pdf_report(_inv_body, st.session_state.current_site_name, current_user_name,
+                       f"Material Requirement - {selected_stage}", "MATERIAL INDENT", "Material_Indent", "साहित्य मागणी व स्टॉक तुलना (Material Indent)")
+ 
             # --- ७. स्टेज लॉक व वजावट पर्याय ---
             st.write(" ")
             if has_stage_shortage:
@@ -4461,6 +4537,21 @@ elif st.session_state.selected_module == "Site Manager":
                     f"🚧 *Stage:* {work_stage} ({work_percent}%)\n📝 *Remark:* {site_remark}\n"
                 )
                 st.success("🎉 Daily Progress Report सेव्ह झाला!")
+                _pr_img = ""
+                if site_photo:
+                    _pr_img = ("<div style='margin-top:10px;text-align:center;'><img style='max-width:100%;max-height:420px;border:1px solid #cbd5e1;' "
+                               f"src='data:{site_photo.type};base64,{base64.b64encode(site_photo.getvalue()).decode()}'/></div>")
+                _pr_body = (
+                    "<table class='custom-data-table'><tbody>"
+                    f"<tr><th style='width:160px'>तारीख</th><td>{datetime.date.today().strftime('%d-%m-%Y')}</td></tr>"
+                    f"<tr><th>कामाचा टप्पा</th><td>{html_lib.escape(work_stage)}</td></tr>"
+                    f"<tr><th>पूर्णता</th><td><b>{work_percent}%</b></td></tr>"
+                    f"<tr><th>रिमार्क / शेरा</th><td>{html_lib.escape(site_remark) if site_remark else '-'}</td></tr>"
+                    "</tbody></table>" + _pr_img
+                )
+                pdf_report(_pr_body, st.session_state.current_site_name, current_user_name,
+                           f"Daily Progress - {work_stage}", "PROGRESS REPORT", "Progress_Report", "दैनिक प्रोग्रेस रिपोर्ट")
+ 
                 render_whatsapp_feature(urllib.parse.quote(report_summary), "site_prog_wa")
  
         # १७.४ Pre-Concreting Digital Checklist
@@ -4612,6 +4703,14 @@ elif st.session_state.selected_module == "Site Manager":
                 else:
                     st.info("ℹ️ प्रोग्रेस रिपोर्ट उपलब्ध नाही.")
  
+            _wk_body = (
+                "<div class='section-header'>👷 मजुरी खर्च (Wages)</div>" + df_to_html_table(att_df.drop(columns=["id"]))
+                + "<div class='section-header'>📦 मटेरियल ट्रॅकर (IN/OUT)</div>" + df_to_html_table(inv_df.drop(columns=["id"]))
+                + "<div class='section-header'>📸 कामाची प्रगती (Progress)</div>" + df_to_html_table(prog_df.drop(columns=["id"]))
+            )
+            pdf_report(_wk_body, st.session_state.current_site_name, current_user_name,
+                       f"Weekly Report {str_week_ago} to {str_today}", "WEEKLY SITE REPORT", "Weekly_Report", "मागील ७ दिवसांचा साईट रिपोर्ट")
+ 
         # १७.६ Project Timeline & Delay Analysis
         elif sub_mod == "Timeline":
             st.markdown("#### ⏳ प्रोजेक्ट टाईमलाईन व डिले ट्रॅकर")
@@ -4679,6 +4778,20 @@ elif st.session_state.selected_module == "Site Manager":
                 conn.close()
                 st.success("✅ प्रोजेक्ट टाईमलाईन अपडेट झाली!")
                 st.rerun()
+ 
+            _tl_tr = "".join(
+                f"<tr><td>{_t['stage_order']}</td><td>{html_lib.escape(_t['task_name'])}</td><td style='text-align:right'>{_t['planned_duration']}</td>"
+                f"<td style='text-align:right'>{_t['delay_days']}</td><td>{_t['status']}</td><td>{'Yes' if _t['is_critical'] else 'No'}</td></tr>"
+                for _t in tasks
+            )
+            _tl_body = (
+                f"<div class='sum-box'><b>सुरू तारीख:</b> {proj_start_date.strftime('%d-%m-%Y')} &nbsp;|&nbsp; <b>नियोजित:</b> {total_planned_days} दिवस "
+                f"&nbsp;|&nbsp; <b>उशीर:</b> +{total_critical_delay} दिवस &nbsp;|&nbsp; <b>ताबा तारीख:</b> {new_projected_finish_date.strftime('%d-%m-%Y')}</div>"
+                "<table class='custom-data-table'><thead><tr><th>#</th><th>कामाचा टप्पा</th><th>नियोजित दिवस</th><th>उशीर</th><th>स्थिती</th><th>Critical</th></tr></thead>"
+                f"<tbody>{_tl_tr}</tbody></table>"
+            )
+            pdf_report(_tl_body, st.session_state.current_site_name, current_user_name, "Project Timeline & Delay Analysis",
+                       "TIMELINE REPORT", "Timeline", "प्रोजेक्ट टाईमलाईन व डिले रिपोर्ट")
  
             wa_timeline_text = (
                 f"🏗️ *PATIL INFRATECH - TIMELINE REPORT*\n"
@@ -4762,6 +4875,12 @@ elif st.session_state.selected_module == "Site Manager":
                     file_name=f"Expenses_{ex_site.replace(' ', '_')}.csv",
                     mime="text/csv", use_container_width=True,
                 )
+                pdf_report(
+                    f"<div class='sum-box'><b>एकूण खर्च:</b> ₹ {ex_df['Amount'].sum():,.2f} &nbsp;|&nbsp; <b>नोंदी:</b> {len(ex_df)}</div>"
+                    + df_to_html_table(ex_df.drop(columns=["id"]).assign(Amount=lambda d: d["Amount"].map(lambda v: f"{v:,.2f}"))),
+                    ex_site, current_user_name, "Site Expense Register", "EXPENSE REPORT", "Expense_Report", "साईट खर्च वही",
+                )
+ 
                 render_whatsapp_feature(
                     urllib.parse.quote(f"💸 *PATIL INFRATECH - खर्च रिपोर्ट*\n📍 *Site:* {ex_site}\n💰 *एकूण खर्च:* ₹ {ex_df['Amount'].sum():,.2f}\n📝 *नोंदी:* {len(ex_df)}"),
                     "site_exp_wa",
@@ -4821,6 +4940,16 @@ elif st.session_state.selected_module == "Site Manager":
                 q2.metric("PASS", len(cb_df) - cb_fails)
                 q3.metric("FAIL", cb_fails)
                 st.dataframe(cb_df.drop(columns=["id"]), use_container_width=True, hide_index=True)
+                pdf_report(
+                    f"<div class='sum-box'><b>एकूण टेस्ट:</b> {len(cb_df)} &nbsp;|&nbsp; <b>PASS:</b> {len(cb_df) - cb_fails} &nbsp;|&nbsp; <b>FAIL:</b> {cb_fails}"
+                    "<br><small>Cube 150x150 mm • Strength = Load(kN)x1000/22500 • IS 456: 7 दिवस ≥ 65% fck, 28 दिवस ≥ fck</small></div>"
+                    + df_to_html_table(cb_df.drop(columns=["id"])),
+                    cb_site, current_user_name, "Concrete Cube Test Register", "CUBE TEST REPORT", "Cube_Test_Register", "Concrete Cube Test Register (IS 456 / IS 516)",
+                )
+                render_whatsapp_feature(
+                    urllib.parse.quote(f"🧪 *PATIL INFRATECH - CUBE TEST*\n📍 *Site:* {cb_site}\n✅ *PASS:* {len(cb_df) - cb_fails} | ❌ *FAIL:* {cb_fails}\n📊 *एकूण टेस्ट:* {len(cb_df)}"),
+                    "site_cube_wa",
+                )
                 cbd1, cbd2 = st.columns([3, 1])
                 with cbd1:
                     cb_del = st.selectbox(
@@ -4895,6 +5024,17 @@ elif st.session_state.selected_module == "Site Manager":
                     })
                 st.markdown("##### 💰 प्रत्येकाचा हिशोब (बाकी = कमावलेले - आगाऊ - दिलेले)")
                 st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+                _lg_sum_df = pd.DataFrame(rows)
+                pdf_report(
+                    "<div class='section-header'>प्रत्येकाचा हिशोब (बाकी = कमावलेले - आगाऊ - दिलेले)</div>" + df_to_html_table(_lg_sum_df)
+                    + "<div class='section-header'>सर्व नोंदी</div>" + df_to_html_table(lg_df.drop(columns=["id"])),
+                    lg_site, current_user_name, "Labour Ledger Statement", "LABOUR LEDGER", "Labour_Ledger", "मजूर खातेवही (Labour Ledger)",
+                )
+                _lg_wa = "\n".join(f"• {r['Worker']}: बाकी ₹ {r['Balance (बाकी)']:,.0f}" for r in rows)
+                render_whatsapp_feature(
+                    urllib.parse.quote(f"📒 *PATIL INFRATECH - मजूर हिशोब*\n📍 *Site:* {lg_site}\n{_lg_wa}"),
+                    "site_ledger_wa",
+                )
                 with st.expander("📜 सर्व नोंदी"):
                     st.dataframe(lg_df.drop(columns=["id"]), use_container_width=True, hide_index=True)
                     ld1, ld2 = st.columns([3, 1])
@@ -5205,68 +5345,26 @@ elif st.session_state.selected_module == "NeevPay":
                 </tr>
                 """
  
-            neevpay_html_doc = f"""<!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="utf-8">
-                <title>NEEVPAY MASTER ESCROW - {st.session_state.current_site_name}</title>
-                <style>
-                    @page {{ size: A4 portrait; margin: 8mm; }}
-                    body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; margin: 0; padding: 15px; color: #0f172a; background: #ffffff; }}
-                    .header-title {{ text-align: center; border-bottom: 2px solid #064e3b; padding-bottom: 6px; margin-bottom: 12px; }}
-                    .header-title h1 {{ margin: 0; font-size: 20px; color: #064e3b; font-weight: 800; }}
-                    table.info-table {{ width: 100%; font-size: 12px; margin-bottom: 10px; }}
-                    table.custom-data-table {{ width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px; }}
-                    table.custom-data-table th, table.custom-data-table td {{ border: 1px solid #cbd5e1; padding: 6px 8px; text-align: left; }}
-                    table.custom-data-table th {{ background-color: #f1f5f9; font-weight: bold; }}
-                    .summary-box {{ background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 10px; margin-top: 14px; font-size: 12px; }}
-                </style>
-            </head>
-            <body>
-                <div class="header-title">
-                    <h1>PATIL INFRATECH - NEEVPAY ESCROW</h1>
-                    <p style="margin:2px 0; color:#10b981; font-weight:bold; font-size:12px;">SMART MILESTONE PAYMENT PROTECTION & MASTER INVOICE</p>
-                </div>
-                <table class="info-table">
-                    <tr><td><b>Site:</b> {st.session_state.current_site_name}</td><td style="text-align:right;"><b>Date:</b> {get_ist_time().strftime('%d-%m-%Y')}</td></tr>
-                    <tr><td><b>Engineer:</b> {current_user_name}</td><td style="text-align:right;"><b>Client:</b> {client_email or 'N/A'}</td></tr>
-                </table>
-                <table class="custom-data-table">
-                    <thead>
-                        <tr><th style="width:25px;">#</th><th>कामाचा टप्पा</th><th>ठरलेले बिल</th><th>जमा</th><th>शिल्लक</th><th>स्थिती</th></tr>
-                    </thead>
-                    <tbody>{table_rows_html}</tbody>
-                </table>
-                <div class="summary-box">
-                    <b>एकूण बजेट:</b> ₹ {total_budget:,.2f} | <b>जमा:</b> ₹ {total_received:,.2f} | <b>शिल्लक बाकी:</b> ₹ {total_pending:,.2f} | <b>प्रगती:</b> {overall_site_pct:.1f}%
-                </div>
-            </body>
-            </html>
-            """
+            _np_body = (
+                f"<div class='sum-box'><b>एकूण बजेट:</b> ₹ {total_budget:,.2f} &nbsp;|&nbsp; <b>जमा:</b> ₹ {total_received:,.2f} "
+                f"&nbsp;|&nbsp; <b>शिल्लक बाकी:</b> ₹ {total_pending:,.2f} &nbsp;|&nbsp; <b>प्रगती:</b> {overall_site_pct:.1f}%</div>"
+                "<table class='custom-data-table'><thead><tr><th style='width:28px;'>#</th><th>कामाचा टप्पा</th>"
+                "<th>ठरलेले बिल</th><th>जमा</th><th>शिल्लक</th><th>स्थिती</th></tr></thead>"
+                f"<tbody>{table_rows_html}</tbody></table>"
+            )
+            _np_pages = [build_a4_page(
+                st.session_state.current_site_name, current_user_name,
+                f"NeevPay Milestone Statement - Client: {client_email or 'N/A'}", _np_body, 1, 1,
+                "NEEVPAY ESCROW STATEMENT", "NEEVPAY - SMART MILESTONE PAYMENT PROTECTION & MASTER INVOICE")]
+            st.components.v1.html(a4_preview_doc(_np_pages), height=420, scrolling=True)
  
-            st.components.v1.html(neevpay_html_doc, height=360, scrolling=True)
- 
-            np_c1, np_c2, np_c3 = st.columns(3)
+            np_c1, np_c2 = st.columns(2)
             with np_c1:
-                st.download_button(
-                    label="📥 Download HTML",
-                    data=neevpay_html_doc,
-                    file_name=f"NeevPay_Statement_{st.session_state.current_site_name.replace(' ', '_')}.html",
-                    mime="text/html",
-                    type="primary",
-                    use_container_width=True,
-                    key="btn_down_neevpay_html"
+                render_pdf_download(
+                    _np_pages,
+                    f"NeevPay_Statement_{safe_fn(st.session_state.current_site_name)}_{get_ist_time().strftime('%d%m%Y_%H%M')}.pdf",
                 )
             with np_c2:
-                st.markdown(
-                    """
-                    <button onclick="window.parent.print()" style="width: 100%; background: #0284c7; color: white; border: none; padding: 9px; border-radius: 8px; font-weight: bold; cursor: pointer; height: 38px;">
-                        🖨️ Instant Print
-                    </button>
-                    """,
-                    unsafe_allow_html=True,
-                )
-            with np_c3:
                 if st.button("📧 Email to Client", key="btn_send_client_invoice_mail", use_container_width=True):
                     if client_email:
                         mail_subj = f"Official Escrow Statement: {st.session_state.current_site_name}"
@@ -5469,72 +5567,38 @@ elif st.session_state.selected_module == "House Estimator":
  
         st.write("---")
  
-        house_html_doc = f"""<!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="utf-8">
-            <title>PATIL INFRATECH - House Estimate</title>
-            <style>
-                @page {{ size: A4 portrait; margin: 8mm; }}
-                body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; margin: 0; padding: 15px; color: #0f172a; background: #ffffff; }}
-                .header-title {{ text-align: center; border-bottom: 2px solid #0c4a6e; padding-bottom: 6px; margin-bottom: 12px; }}
-                .header-title h1 {{ margin: 0; font-size: 20px; color: #0c4a6e; }}
-                table.info-table {{ width: 100%; font-size: 12px; margin-bottom: 10px; }}
-                table.custom-data-table {{ width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px; }}
-                table.custom-data-table th, table.custom-data-table td {{ border: 1px solid #cbd5e1; padding: 6px 8px; text-align: left; }}
-                table.custom-data-table th {{ background-color: #f1f5f9; font-weight: bold; }}
-            </style>
-        </head>
-        <body>
-            <div class="header-title">
-                <h1>PATIL INFRATECH</h1>
-                <p style="margin:2px 0; color:#0284c7; font-weight:bold; font-size:12px;">PRELIMINARY HOUSE CONSTRUCTION ESTIMATE</p>
-            </div>
-            <table class="info-table">
-                <tr><td><b>Site:</b> {st.session_state.current_site_name}</td><td style="text-align:right;"><b>Date:</b> {get_ist_time().strftime('%d-%m-%Y')}</td></tr>
-                <tr><td><b>Structure:</b> {floors_label} ({total_calc_area:,.0f} sq.ft)</td><td style="text-align:right;"><b>Rate:</b> ₹ {unit_cost_sqft:,.2f} / sq.ft</td></tr>
-            </table>
-            <table class="custom-data-table">
-                <thead>
-                    <tr><th>#</th><th>घटक</th><th>प्रमाण</th><th>युनिट</th><th>दर</th><th>रक्कम (₹)</th></tr>
-                </thead>
-                <tbody>
-                    <tr><td>1</td><td>सिमेंट (Cement)</td><td>{c_bags_needed}</td><td>Bags</td><td>₹ {h_cem_rate:.2f}</td><td>₹ {cost_cement:,.2f}</td></tr>
-                    <tr><td>2</td><td>स्टील (TMT Steel)</td><td>{steel_kg_needed}</td><td>Kg</td><td>₹ {h_steel_rate:.2f}</td><td>₹ {cost_steel:,.2f}</td></tr>
-                    <tr><td>3</td><td>वाळू (Sand)</td><td>{sand_brass_needed}</td><td>Brass</td><td>₹ {h_sand_rate:.2f}</td><td>₹ {cost_sand:,.2f}</td></tr>
-                    <tr><td>4</td><td>खडी (Aggregate)</td><td>{agg_brass_needed}</td><td>Brass</td><td>₹ {h_agg_rate:.2f}</td><td>₹ {cost_agg:,.2f}</td></tr>
-                    <tr><td>5</td><td>विटा (Bricks)</td><td>{bricks_needed}</td><td>Nos</td><td>₹ {h_brick_rate:.2f}</td><td>₹ {cost_bricks:,.2f}</td></tr>
-                    <tr><td>6</td><td>मजुरी (Labour ~25%)</td><td>-</td><td>L.S.</td><td>-</td><td>₹ {cost_labour:,.2f}</td></tr>
-                    <tr><td>7</td><td>प्लंबिंग व इतर (~10%)</td><td>-</td><td>L.S.</td><td>-</td><td>₹ {cost_misc:,.2f}</td></tr>
-                </tbody>
-            </table>
-            <h3 style="text-align:right; margin-top:14px; color:#0c4a6e;">अंदाजित एकूण बजेट: ₹ {total_house_cost:,.2f}/-</h3>
-        </body>
-        </html>
-        """
- 
-        with st.expander("👁️ A4 कोटेशन प्रिव्ह्यू व डाऊनलोड", expanded=False):
-            st.components.v1.html(house_html_doc, height=360, scrolling=True)
- 
-            hb1, hb2 = st.columns(2)
-            with hb1:
-                st.download_button(
-                    label="📥 Download HTML Quotation",
-                    data=house_html_doc,
-                    file_name=f"Patil_Infratech_Estimate_{st.session_state.current_site_name.replace(' ', '_')}.html",
-                    mime="text/html",
-                    type="primary",
-                    use_container_width=True,
-                )
-            with hb2:
-                st.markdown(
-                    """
-                    <button onclick="window.parent.print()" style="width: 100%; background: #0284c7; color: white; border: none; padding: 9px; border-radius: 8px; font-weight: bold; cursor: pointer; height: 38px;">
-                        🖨️ Instant Print
-                    </button>
-                    """,
-                    unsafe_allow_html=True,
-                )
+        _he_items = [
+            ("सिमेंट (Cement)", c_bags_needed, "Bags", h_cem_rate, cost_cement),
+            ("स्टील (TMT Steel)", steel_kg_needed, "Kg", h_steel_rate, cost_steel),
+            ("वाळू (Sand)", sand_brass_needed, "Brass", h_sand_rate, cost_sand),
+            ("खडी (Aggregate)", agg_brass_needed, "Brass", h_agg_rate, cost_agg),
+            ("विटा (Bricks)", bricks_needed, "Nos", h_brick_rate, cost_bricks),
+            ("मजुरी (Labour ~25%)", "-", "L.S.", None, cost_labour),
+            ("प्लंबिंग व इतर (~10%)", "-", "L.S.", None, cost_misc),
+        ]
+        _he_tr = "".join(
+            f"<tr><td>{i}</td><td>{nm}</td><td style='text-align:right'>{q}</td><td>{u}</td>"
+            f"<td style='text-align:right'>{('₹ ' + format(rt, ',.2f')) if rt is not None else '-'}</td>"
+            f"<td style='text-align:right'>₹ {am:,.2f}</td></tr>"
+            for i, (nm, q, u, rt, am) in enumerate(_he_items, 1)
+        )
+        _he_body = (
+            f"<div class='sum-box'><b>Structure:</b> {html_lib.escape(floors_label)} ({total_calc_area:,.0f} sq.ft) &nbsp;|&nbsp; "
+            f"<b>Package:</b> {html_lib.escape(quality_custom_name)} &nbsp;|&nbsp; <b>Rate:</b> ₹ {unit_cost_sqft:,.2f} / sq.ft</div>"
+            "<table class='custom-data-table'><thead><tr><th>#</th><th>घटक</th><th>प्रमाण</th><th>युनिट</th><th>दर</th><th>रक्कम (₹)</th></tr></thead>"
+            f"<tbody>{_he_tr}</tbody></table>"
+            f"<h3 style='text-align:right;margin-top:14px;color:#0c4a6e;'>अंदाजित एकूण बजेट: ₹ {total_house_cost:,.2f}/-</h3>"
+        )
+        _he_pages = [build_a4_page(
+            st.session_state.current_site_name, current_user_name,
+            f"Preliminary House Estimate - {floors_label}", _he_body, 1, 1,
+            "HOUSE ESTIMATE", "PRELIMINARY HOUSE CONSTRUCTION ESTIMATE")]
+        with st.expander("👁️ A4 कोटेशन प्रिव्ह्यू", expanded=False):
+            st.components.v1.html(a4_preview_doc(_he_pages), height=420, scrolling=True)
+        render_pdf_download(
+            _he_pages,
+            f"Patil_Infratech_HouseEstimate_{safe_fn(st.session_state.current_site_name)}_{get_ist_time().strftime('%d%m%Y_%H%M')}.pdf",
+        )
  
         if current_user_name:
             conn = get_db_connection()
