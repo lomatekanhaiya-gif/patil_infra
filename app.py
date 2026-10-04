@@ -3675,16 +3675,14 @@ elif st.session_state.selected_module == "Estimator Tools":
                     disp = html_lib.escape(expr) if expr else "0"
                     fs = 44 if len(disp) <= 10 else (32 if len(disp) <= 18 else 22)
                     mode_tag = f"<div style='color:#64748b; font-size:12px; text-align:left;'>{ss.sci_mode}</div>" if sci_on else ""
-                    st.markdown(
-                        f"""
-                        <div class="calc-disp">
-                            {mode_tag}
-                            <div style="color:#f8fafc; font-size:{fs}px; font-weight:700; word-break:break-all; line-height:1.15;">{disp}</div>
-                            <div style="color:#94a3b8; font-size:22px; min-height:30px; word-break:break-all;">{preview}</div>
-                        </div>
-                        """,
-                        unsafe_allow_html=True,
+                    disp_html = (
+                        '<div class="calc-disp">'
+                        + mode_tag
+                        + f'<div style="color:#f8fafc; font-size:{fs}px; font-weight:700; word-break:break-all; line-height:1.15;">{disp}</div>'
+                        + f'<div style="color:#94a3b8; font-size:22px; min-height:30px; word-break:break-all;">{preview}</div>'
+                        + '</div>'
                     )
+                    st.markdown(disp_html, unsafe_allow_html=True)
 
                     def _keyrow(items, cls):
                         cols_ = st.columns(len(items))
