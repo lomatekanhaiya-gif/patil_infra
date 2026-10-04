@@ -389,6 +389,73 @@ def fmt_sci(v):
     return format(v, ",.12g")
 
 
+# ---- मोबाईल-स्टाईल कीपॅडचे कॉलबॅक ----
+_SCI_OPS = ("+", "−", "×", "÷", "^", "%", "!", "^2")
+
+
+def sci_press(tok):
+    ss = st.session_state
+    e = ss.get("sci_expr", "")
+    if ss.get("sci_just_eq") and tok not in _SCI_OPS:
+        e = ""
+    ss.sci_just_eq = False
+    ss.sci_msg = ""
+    if tok == ".":
+        seg = re.search(r"[\d.]*$", e).group(0)
+        if "." in seg:
+            return
+        tok = "." if seg else "0."
+    if not e and tok in ("+", "×", "÷", "^", "%", "!", "^2"):
+        return
+    if tok in ("+", "−", "×", "÷", "^") and e and e[-1] in "+−×÷^":
+        if tok == "−" and e[-1] in "×÷^":
+            pass
+        else:
+            e = e[:-1]
+    ss.sci_expr = e + tok
+
+
+def sci_backspace():
+    ss = st.session_state
+    ss.sci_msg = ""
+    ss.sci_just_eq = False
+    ss.sci_expr = re.sub(r"(sin\(|cos\(|tan\(|log\(|ln\(|abs\(|√\(|ans|.)$", "", ss.get("sci_expr", ""), flags=re.S)
+
+
+def sci_clear():
+    ss = st.session_state
+    ss.sci_expr, ss.sci_msg, ss.sci_just_eq = "", "", False
+
+
+def sci_paren():
+    e = st.session_state.get("sci_expr", "")
+    opn = e.count("(") - e.count(")")
+    last = e[-1] if e else ""
+    close = opn > 0 and (last.isdigit() or last in ")π.%!e" or e.endswith("ans"))
+    sci_press(")" if close else "(")
+
+
+def sci_toggle_mode():
+    st.session_state.sci_mode = "RAD" if st.session_state.get("sci_mode", "DEG") == "DEG" else "DEG"
+
+
+def sci_equals():
+    ss = st.session_state
+    e = ss.get("sci_expr", "")
+    if not e.strip():
+        return
+    v, err = sci_eval(e, deg=(ss.get("sci_mode", "DEG") == "DEG"), ans=ss.get("sci_ans", 0.0))
+    if err:
+        ss.sci_msg = err
+        return
+    shown = fmt_sci(v)
+    ss.sci_hist = ([(e, shown)] + ss.get("sci_hist", []))[:10]
+    ss.sci_ans = float(v)
+    ss.sci_expr = shown.replace(",", "")
+    ss.sci_just_eq = True
+    ss.sci_msg = ""
+
+
 # ==========================================
 # 🎨 लोगो लोडर + फोकस रिंग + अनावश्यक घटक लपवणे
 # ==========================================
@@ -423,6 +490,36 @@ st.markdown(
         z-index: 999999; pointer-events: none;
     }
     .brand-logo-icon img { width: 30px; height: 30px; display: block; }
+    /* ---- कॅल्क्युलेटर कीपॅड / युनिट रो / नेव्ह रो: मोबाईलवरही आडव्या रांगेत ---- */
+    div[data-testid="stElementContainer"]:has(.ckr):not(:has(div[data-testid="stHorizontalBlock"])),
+    div[data-testid="stElementContainer"]:has(.ucr):not(:has(div[data-testid="stHorizontalBlock"])),
+    div[data-testid="stElementContainer"]:has(.navrow):not(:has(div[data-testid="stHorizontalBlock"])) { display: none !important; }
+    div[data-testid="stHorizontalBlock"]:has(.ckr),
+    div[data-testid="stHorizontalBlock"]:has(.ucr),
+    div[data-testid="stHorizontalBlock"]:has(.navrow) { flex-direction: row !important; flex-wrap: nowrap !important; gap: 0.5rem !important; }
+    div[data-testid="stHorizontalBlock"]:has(.ckr) > div,
+    div[data-testid="stHorizontalBlock"]:has(.ucr) > div,
+    div[data-testid="stHorizontalBlock"]:has(.navrow) > div { min-width: 0 !important; flex: 1 1 0 !important; width: 0 !important; }
+    div[data-testid="stHorizontalBlock"]:has(.ckr) { margin-bottom: -0.45rem; }
+    div[data-testid="stHorizontalBlock"]:has(.ckr) button { height: 62px; border-radius: 18px; border: none; background: #1f2937; color: #f1f5f9; }
+    div[data-testid="stHorizontalBlock"]:has(.ckr) button, div[data-testid="stHorizontalBlock"]:has(.ckr) button p { font-size: 24px; font-weight: 600; }
+    div[data-testid="stHorizontalBlock"]:has(.ckr) > div:nth-child(4) button { color: #f59e0b; }
+    div[data-testid="stHorizontalBlock"]:has(.ckr.top) button { color: #f59e0b; }
+    div[data-testid="stHorizontalBlock"]:has(.ckr.sci) button { height: 46px; border-radius: 14px; color: #7dd3fc; }
+    div[data-testid="stHorizontalBlock"]:has(.ckr.sci) button, div[data-testid="stHorizontalBlock"]:has(.ckr.sci) button p { font-size: 16px; }
+    div[data-testid="stHorizontalBlock"]:has(.ckr) button[kind="primary"],
+    div[data-testid="stHorizontalBlock"]:has(.ckr) button[data-testid="stBaseButton-primary"] { background: #f59e0b !important; color: #111827 !important; }
+    div[data-testid="stHorizontalBlock"]:has(.navrow) button { font-size: 12px; padding: 0.25rem 0.35rem; min-height: 2.4rem; }
+    div[data-testid="stHorizontalBlock"]:has(.navrow) button p { font-size: 12px; white-space: normal; line-height: 1.2; }
+    div[data-testid="stHorizontalBlock"]:has(.ucr) [data-testid="stNumberInput"] input { font-size: 26px !important; font-weight: 800 !important; height: 56px !important; }
+    div[data-testid="stHorizontalBlock"]:has(.ucr) [data-testid="stNumberInputStepUp"],
+    div[data-testid="stHorizontalBlock"]:has(.ucr) [data-testid="stNumberInputStepDown"] { display: none !important; }
+    .uc-res { height: 56px; display: flex; align-items: center; padding: 0 14px; font-size: 26px; font-weight: 800;
+              background: #111827; border: 1px solid #1f2937; border-radius: 8px; overflow-x: auto; white-space: nowrap; color: #f8fafc; }
+    @media (max-width: 640px) { .uc-res { font-size: 20px; padding: 0 10px; } }
+    .calc-disp { background: #000; border: 1px solid #1f2937; border-radius: 18px; padding: 12px 18px; min-height: 150px;
+                 display: flex; flex-direction: column; justify-content: flex-end; text-align: right; margin-bottom: 14px; }
+
     </style>
     """.replace("__LOGO__", LOGO_URI),
     unsafe_allow_html=True,
@@ -546,6 +643,27 @@ function(W){
       var o = btns(/Open |Generate Master Report/);
       if (o[n]) { e.preventDefault(); o[n].click(); }
     }
+  }, true);
+
+
+  // कॅल्क्युलेटर: कीबोर्डवरून आकडे/चिन्हे टाइप करा (कीपॅड दिसत असताना)
+  function byLabel(lab){
+    return Array.prototype.slice.call(D.querySelectorAll('button')).filter(vis)
+      .filter(function(b){ return (b.innerText || '').trim() === lab; })[0];
+  }
+  D.addEventListener('keydown', function(e){
+    if (!D.querySelector('.ckr')) return;
+    if (e.ctrlKey || e.altKey || e.metaKey) return;
+    if (help && help.style.display !== 'none') return;
+    var t = e.target;
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
+    var k = e.key;
+    var map = {'/':'÷','*':'×','x':'×','X':'×','-':'−','Enter':'=','=':'=','Backspace':'⌫','Escape':'C','Delete':'C'};
+    var lab = map[k] || (/^[0-9.+%^!]$/.test(k) ? k : null);
+    if (k === '(' || k === ')') lab = k;
+    if (!lab) return;
+    var b = byLabel(lab) || ((k === '(' || k === ')') ? byLabel('( )') : null);
+    if (b) { e.preventDefault(); e.stopPropagation(); b.click(); }
   }, true);
 
   // पान बदलल्यावर पहिल्या रिकाम्या बॉक्समध्ये आपोआप कर्सर (फक्त कीबोर्ड/माऊस असलेल्या डिव्हाइसवर)
@@ -3315,6 +3433,122 @@ if st.session_state.selected_module is None:
 # 📌 विभाग १६: ESTIMATOR TOOLS मुख्य मॉड्यूल (Corporate & 100% IS-Code Compliant)
 # ==========================================
 elif st.session_state.selected_module == "Estimator Tools":
+    _nav_sub = st.session_state.selected_estimator_sub_module
+    _nav_tool = st.session_state.get("calc_tool") if _nav_sub == "Calculator" else None
+    nav_cols = st.columns(3)
+    with nav_cols[0]:
+        st.markdown('<span class="navrow"></span>', unsafe_allow_html=True)
+        if st.button("⬅️ मुख्य मेनूवर जा", key="btn_back_estimator", use_container_width=True):
+            st.session_state.selected_module = None
+            st.session_state.selected_estimator_sub_module = None
+            st.session_state.calc_tool = None
+            st.rerun()
+    if _nav_sub:
+        with nav_cols[1]:
+            if st.button("⬅️ Estimator वर जा", key="btn_back_estimator_menu", use_container_width=True):
+                st.session_state.selected_estimator_sub_module = None
+                st.session_state.calc_tool = None
+                st.rerun()
+    if _nav_tool:
+        with nav_cols[2]:
+            if st.button("⬅️ Calculator वर जा", key="btn_back_calc_menu", use_container_width=True):
+                st.session_state.calc_tool = None
+                st.rerun()
+
+    st.write("---")
+
+    calc_lock = locks_cfg.get("Civil Calculator", "Free")
+    site_lock = locks_cfg.get("Site Manager", "Free")
+    neev_lock = locks_cfg.get("NeevPay", "Free")
+
+    # डेस्कटॉपवर ४ कॉलम्स आणि मोबाईलवर २x२ आपोआप ॲडजस्ट होणारे कॉलम्स
+    main_col1, main_col2 = st.columns(2)
+    main_col3, main_col4 = st.columns(2)
+
+    # १. साईट मॅनेजर
+    with main_col1:
+        st.markdown(
+            f"""
+            <div class="module-card">
+                <div style="font-size: 34px; margin-bottom: 6px;">👷‍♂️</div>
+                <h4 style="margin: 0; color: #ffffff; font-weight: 700;">Site Manager</h4>
+                <p style="color: #94a3b8; font-size: 12px; margin: 4px 0 10px 0;">हजेरी, मजुरी, इन्व्हेंटरी व दैनिक प्रोग्रेस</p>
+                <span class="{'free-user-badge' if site_lock == 'Free' else 'gold-vip-badge'}">[{'Free' if site_lock == 'Free' else 'VIP'}]</span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        pass
+        if st.button("👷‍♂️ Open Site Manager", key="btn_open_site", use_container_width=True, type="primary"):
+            st.toast("🚧 Coming Soon!")
+            st.markdown(
+                """
+                <div style="background:rgba(245,158,11,.10); border:1px dashed #f59e0b; border-radius:10px; padding:12px 14px; text-align:center; margin-top:8px;">
+                    <b style="color:#fbbf24; font-size:16px;">🚧 Coming Soon</b><br>
+                    <span style="color:#cbd5e1; font-size:13px;">साईट मॅनेजर लवकरच येत आहे. थोडी वाट पहा!</span>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+    # २. एस्टिमेटर टूल्स
+    with main_col2:
+        st.markdown(
+            """
+            <div class="module-card">
+                <div style="font-size: 34px; margin-bottom: 6px;">📐</div>
+                <h4 style="margin: 0; color: #ffffff; font-weight: 700;">Estimator Tools</h4>
+                <p style="color: #94a3b8; font-size: 12px; margin: 4px 0 10px 0;">Rate Analysis, BBS Schedule, QS & 3-in-1 Report</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        pass
+        if st.button("📐 Open Estimator Tools", key="btn_open_estimator", use_container_width=True, type="primary"):
+            st.session_state.selected_module = "Estimator Tools"
+            st.session_state.selected_estimator_sub_module = None
+            trigger_push_state()
+            st.rerun()
+
+    pass
+
+    # ३. NeevPay
+    with main_col3:
+        st.markdown(
+            f"""
+            <div class="module-card" style="border-color: rgba(16, 185, 129, 0.4);">
+                <div style="font-size: 34px; margin-bottom: 6px;">🤝</div>
+                <h4 style="margin: 0; color: #10b981; font-weight: 700;">NeevPay Escrow</h4>
+                <p style="color: #94a3b8; font-size: 12px; margin: 4px 0 10px 0;">टप्प्याटप्प्याने पेमेंट, एस्क्रो व डिजिटल संमती</p>
+                <span class="{'free-user-badge' if neev_lock == 'Free' else 'gold-vip-badge'}">[{'Free' if neev_lock == 'Free' else 'VIP'}]</span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        pass
+        if st.button("🤝 Open NeevPay", key="btn_open_neevpay", use_container_width=True, type="primary"):
+            coming_soon("NeevPay")
+
+    # ४. हाउस एस्टिमेटर
+    with main_col4:
+        st.markdown(
+            """
+            <div class="module-card" style="border-color: rgba(56, 189, 248, 0.4);">
+                <div style="font-size: 34px; margin-bottom: 6px;">🏠</div>
+                <h4 style="margin: 0; color: #38bdf8; font-weight: 700;">House Estimator</h4>
+                <p style="color: #94a3b8; font-size: 12px; margin: 4px 0 10px 0;">घराचे बजेट, सिमेंट-स्टील थंब रूल कोटेशन</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        pass
+        if st.button("🏠 Open House Estimator", key="btn_open_house_est", use_container_width=True, type="primary"):
+            coming_soon("House Estimator")
+
+# ==========================================
+# 📌 विभाग १६: ESTIMATOR TOOLS मुख्य मॉड्यूल (Corporate & 100% IS-Code Compliant)
+# ==========================================
+elif st.session_state.selected_module == "Estimator Tools":
     col_back, _ = st.columns([1.5, 3.5])
     with col_back:
         if st.button("⬅️ मुख्य मेनूवर जा", key="btn_back_estimator", use_container_width=True):
@@ -3426,14 +3660,6 @@ elif st.session_state.selected_module == "Estimator Tools":
             coming_soon("Master Report")
 
     else:
-        col_b_menu, _ = st.columns([1.5, 3.5])
-        with col_b_menu:
-            if st.button("⬅️ Estimator Menu वर जा", key="btn_back_estimator_menu", use_container_width=True):
-                st.session_state.selected_estimator_sub_module = None
-                st.session_state.calc_tool = None
-                st.rerun()
-
-        st.write("---")
         est_sub_mod = st.session_state.selected_estimator_sub_module
 
         # ======================================================================
@@ -3477,16 +3703,13 @@ elif st.session_state.selected_module == "Estimator Tools":
                         st.rerun()
 
             else:
-                col_bc, _ = st.columns([1.5, 3.5])
-                with col_bc:
-                    if st.button("⬅️ Calculator Menu वर जा", key="btn_back_calc_menu", use_container_width=True):
-                        st.session_state.calc_tool = None
-                        st.rerun()
-
-                # ---------------- युनिट कन्व्हर्जन ----------------
+                # ---------------- युनिट कन्व्हर्जन (Google सारखे) ----------------
                 if calc_tool == "unit":
-                    st.markdown("#### 🔄 Unit Conversion")
-                    cat = st.selectbox("प्रकार निवडा:", list(UNIT_DEFS.keys()), key="uc_cat")
+                    st.markdown("#### 🔄 Convert units")
+                    h1, _h2 = st.columns(2)
+                    with h1:
+                        st.markdown('<span class="ucr"></span>', unsafe_allow_html=True)
+                        cat = st.selectbox("प्रकार", list(UNIT_DEFS.keys()), key="uc_cat", label_visibility="collapsed")
                     d = UNIT_DEFS[cat]
                     labels = [u[0] for u in d["units"]]
                     facs = {u[0]: u[1] for u in d["units"]}
@@ -3494,28 +3717,24 @@ elif st.session_state.selected_module == "Estimator Tools":
                     kf, kt = f"uc_from_{cat}", f"uc_to_{cat}"
 
                     def _uc_swap(kf=kf, kt=kt):
-                        a, b = st.session_state.get(kf), st.session_state.get(kt)
-                        st.session_state[kf], st.session_state[kt] = b, a
+                        a_, b_ = st.session_state.get(kf), st.session_state.get(kt)
+                        st.session_state[kf], st.session_state[kt] = b_, a_
 
-                    u1, u2, u3 = st.columns([1.1, 1.5, 1.5])
-                    with u1:
-                        val = num_input("किंमत:", fb="default", value=1.0, step=1.0, key="uc_val", format="%g")
-                    with u2:
-                        from_u = st.selectbox("या युनिटमधून:", labels, index=d["def"][0], key=kf)
-                    with u3:
-                        to_u = st.selectbox("या युनिटमध्ये:", labels, index=d["def"][1], key=kt)
-                    st.button("⇄ उलट-सुलट करा", key="btn_uc_swap", on_click=_uc_swap)
-
+                    row_vals = st.columns(2)
+                    row_units = st.columns(2)
+                    with row_units[0]:
+                        st.markdown('<span class="ucr"></span>', unsafe_allow_html=True)
+                        from_u = st.selectbox("From", labels, index=d["def"][0], key=kf, label_visibility="collapsed")
+                    with row_units[1]:
+                        to_u = st.selectbox("To", labels, index=d["def"][1], key=kt, label_visibility="collapsed")
+                    with row_vals[0]:
+                        st.markdown('<span class="ucr"></span>', unsafe_allow_html=True)
+                        val = num_input("किंमत", fb="default", value=1.0, step=1.0, key="uc_val", format="%g", label_visibility="collapsed")
                     res = uc_convert(val, facs[from_u], facs[to_u], inv)
-                    st.markdown(
-                        f"""
-                        <div style="background:#111827; border:1px solid #1f2937; border-left:4px solid #f59e0b; border-radius:10px; padding:16px; margin-top:10px;">
-                            <div style="color:#94a3b8; font-size:13px;">{fmt_conv(val)} {_short(from_u)} =</div>
-                            <div style="color:#f59e0b; font-size:30px; font-weight:800; word-break:break-all;">{fmt_conv(res)} <span style="font-size:16px; color:#e2e8f0;">{_short(to_u)}</span></div>
-                        </div>
-                        """,
-                        unsafe_allow_html=True,
-                    )
+                    with row_vals[1]:
+                        st.markdown(f'<div class="uc-res">{fmt_conv(res)}</div>', unsafe_allow_html=True)
+
+                    st.button("⇄ उलट-सुलट करा", key="btn_uc_swap", on_click=_uc_swap)
 
                     with st.expander("📋 सर्व युनिट्समध्ये पहा"):
                         rows = "".join(
@@ -3537,58 +3756,69 @@ elif st.session_state.selected_module == "Estimator Tools":
                                 f"**{fmt_conv(tot_m)} मीटर** &nbsp;|&nbsp; {fmt_conv(tot_m * 1000)} मिमी &nbsp;|&nbsp; {fmt_conv(tot_m * 100)} सेमी &nbsp;|&nbsp; {fmt_conv(tot_m / 0.3048)} फूट (दशांश)"
                             )
 
-                # ---------------- सायंटिफिक कॅल्क्युलेटर ----------------
+                # ---------------- कॅल्क्युलेटर (मोबाईल कीपॅड) ----------------
                 else:
-                    st.markdown("#### 🧮 Scientific Calculator")
-                    if "sci_hist" not in st.session_state:
-                        st.session_state.sci_hist = []
-                    if "sci_ans" not in st.session_state:
-                        st.session_state.sci_ans = 0.0
+                    ss = st.session_state
+                    for k_, v_ in (("sci_expr", ""), ("sci_just_eq", False), ("sci_msg", ""), ("sci_mode", "DEG"),
+                                   ("sci_hist", []), ("sci_ans", 0.0)):
+                        if k_ not in ss:
+                            ss[k_] = v_
 
-                    sc_mode = st.radio("कोन (Angle) मोड:", ["DEG (अंश)", "RAD (रेडियन)"], horizontal=True, key="sci_mode")
-                    expr = st.text_input(
-                        "🧮 हिशोब लिहा व Enter दाबा:",
-                        key="sci_expr",
-                        placeholder="उदा.  2*(3+4)^2   |   sin(30)   |   sqrt(144)   |   12.5*ans",
+                    sci_on = st.checkbox("🔬 Scientific", key="sci_on")
+                    expr = ss.sci_expr
+                    preview = ""
+                    if ss.sci_msg:
+                        preview = f"<span style='color:#fbbf24; font-size:15px;'>{ss.sci_msg}</span>"
+                    elif expr and not ss.sci_just_eq and not re.fullmatch(r"[\d.]+", expr):
+                        pv, pe = sci_eval(expr, deg=(ss.sci_mode == "DEG"), ans=ss.sci_ans)
+                        if not pe:
+                            preview = f"= {fmt_sci(pv)}"
+                    disp = html_lib.escape(expr) if expr else "0"
+                    fs = 44 if len(disp) <= 10 else (32 if len(disp) <= 18 else 22)
+                    mode_tag = f"<div style='color:#64748b; font-size:12px; text-align:left;'>{ss.sci_mode}</div>" if sci_on else ""
+                    st.markdown(
+                        f"""
+                        <div class="calc-disp">
+                            {mode_tag}
+                            <div style="color:#f8fafc; font-size:{fs}px; font-weight:700; word-break:break-all; line-height:1.15;">{disp}</div>
+                            <div style="color:#94a3b8; font-size:22px; min-height:30px; word-break:break-all;">{preview}</div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
                     )
 
-                    if expr.strip():
-                        val_s, err_s = sci_eval(expr, deg=sc_mode.startswith("DEG"), ans=st.session_state.sci_ans)
-                        if err_s:
-                            st.warning(err_s)
-                        else:
-                            shown = fmt_sci(val_s)
-                            st.markdown(
-                                f"""
-                                <div style="background:#111827; border:1px solid #1f2937; border-left:4px solid #f59e0b; border-radius:10px; padding:16px; margin-top:6px;">
-                                    <div style="color:#94a3b8; font-size:13px; word-break:break-all;">{html_lib.escape(expr.strip())} =</div>
-                                    <div style="color:#f59e0b; font-size:30px; font-weight:800; word-break:break-all;">{shown}</div>
-                                </div>
-                                """,
-                                unsafe_allow_html=True,
-                            )
-                            if not st.session_state.sci_hist or st.session_state.sci_hist[0][0] != expr.strip():
-                                st.session_state.sci_hist.insert(0, (expr.strip(), shown))
-                                st.session_state.sci_hist = st.session_state.sci_hist[:8]
-                            st.session_state.sci_ans = float(val_s)
+                    def _keyrow(items, cls):
+                        cols_ = st.columns(len(items))
+                        for i_, (lab_, kk_, cb_, args_, prim_) in enumerate(items):
+                            with cols_[i_]:
+                                if i_ == 0:
+                                    st.markdown(f'<span class="ckr {cls}"></span>', unsafe_allow_html=True)
+                                st.button(lab_, key=kk_, on_click=cb_, args=args_, use_container_width=True,
+                                          type="primary" if prim_ else "secondary")
 
-                    if st.session_state.sci_hist:
-                        with st.expander("📜 मागील हिशोब (ans = शेवटचे उत्तर)"):
-                            for h_e, h_r in st.session_state.sci_hist:
+                    def _t(lab, tok=None):
+                        return (lab, f"ck_{lab}_{tok or lab}", sci_press, (tok or lab,), False)
+
+                    if sci_on:
+                        _keyrow([_t("sin", "sin("), _t("cos", "cos("), _t("tan", "tan("), _t("π")], "sci")
+                        _keyrow([_t("√", "√("), _t("x²", "^2"), _t("^"), _t("!")], "sci")
+                        _keyrow([_t("(", "("), _t(")", ")"), _t("ln", "ln("), _t("log", "log(")], "sci")
+                        _keyrow([_t("e"), _t("ans"), _t("abs", "abs("), (ss.sci_mode, "ck_mode", sci_toggle_mode, (), False)], "sci")
+
+                    _keyrow([("C", "ck_C", sci_clear, (), False), ("⌫", "ck_bs", sci_backspace, (), False), _t("%"), _t("÷")], "top")
+                    _keyrow([_t("7"), _t("8"), _t("9"), _t("×")], "num")
+                    _keyrow([_t("4"), _t("5"), _t("6"), _t("−")], "num")
+                    _keyrow([_t("1"), _t("2"), _t("3"), _t("+")], "num")
+                    _keyrow([("( )", "ck_par", sci_paren, (), False), _t("0"), _t("."), ("=", "ck_eq", sci_equals, (), True)], "num")
+
+                    if ss.sci_hist:
+                        with st.expander("📜 मागील हिशोब"):
+                            for h_e, h_r in ss.sci_hist:
                                 st.markdown(f"`{h_e}` = **{h_r}**")
                             if st.button("🗑️ इतिहास पुसा", key="btn_sci_clear"):
-                                st.session_state.sci_hist = []
-                                st.session_state.sci_ans = 0.0
+                                ss.sci_hist = []
+                                ss.sci_ans = 0.0
                                 st.rerun()
-
-                    with st.expander("ℹ️ वापरता येणारी चिन्हे व फंक्शन्स"):
-                        st.markdown(
-                            "- **चिन्हे:** `+  -  *  /  ^  %  !  ( )`  — उदा. `2(3+4)`, `50%`, `5!`\n"
-                            "- **त्रिकोणमिती:** `sin cos tan asin acos atan` (DEG/RAD मोडनुसार)\n"
-                            "- **इतर:** `sqrt  cbrt  log  ln  log2  exp  abs  floor  ceil  round  min  max`\n"
-                            "- **स्थिरांक:** `pi  e  ans` (मागील उत्तर)\n"
-                            "- उदा. स्लॅब वजन: `0.15*25*4.5*3.2` | कर्ण: `sqrt(3^2+4^2)`"
-                        )
 
         # ======================================================================
         # १६.२ Rate Analysis Module (100% IS Code & CPWD Standard)
