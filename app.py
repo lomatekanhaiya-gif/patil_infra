@@ -235,6 +235,161 @@ def coming_soon(name=""):
 
 
 # ==========================================
+# 🧮 CIVIL CALCULATOR: युनिट कन्व्हर्जन टेबल + सायंटिफिक कॅल्क्युलेटर इंजिन
+# ==========================================
+import ast as _ast
+
+# (लेबल, base-युनिटमधील किंमत). inverse=True म्हणजे "दर" (₹ प्रति युनिट) - उलट गुणोत्तर
+_SQFT = 0.09290304
+_CFT = 0.028316846592
+UNIT_DEFS = {
+    "📏 लांबी (Length)": {"base": "Meter", "def": (5, 2), "units": [
+        ("Millimeter (मिमी)", 0.001), ("Centimeter (सेमी)", 0.01), ("Meter (मीटर)", 1.0),
+        ("Kilometer (किमी)", 1000.0), ("Inch (इंच)", 0.0254), ("Feet (फूट)", 0.3048),
+        ("Yard (यार्ड)", 0.9144), ("Mile (मैल)", 1609.344)]},
+    "⬜ क्षेत्रफळ (Area)": {"base": "Sq Meter", "def": (5, 2), "units": [
+        ("Sq Millimeter (चौ.मिमी)", 1e-6), ("Sq Centimeter (चौ.सेमी)", 1e-4), ("Sq Meter (चौ.मी)", 1.0),
+        ("Sq Inch (चौ.इंच)", 0.00064516), ("Sq Feet (चौ.फूट)", _SQFT), ("Sq Yard (चौ.यार्ड)", 9 * _SQFT),
+        ("Guntha (गुंठा)", 1089 * _SQFT), ("Acre (एकर)", 43560 * _SQFT),
+        ("Hectare (हेक्टर)", 10000.0), ("Sq Kilometer (चौ.किमी)", 1e6)]},
+    "🧊 आकारमान (Volume)": {"base": "m³", "def": (2, 0), "units": [
+        ("Brass (ब्रास = 100 CFT)", 100 * _CFT), ("CFT (घनफूट)", _CFT), ("m³ (घनमीटर)", 1.0),
+        ("Litre (लिटर)", 0.001), ("cm³ (घन सेमी / ml)", 1e-6), ("Cubic Inch (घन इंच)", 1.6387064e-5),
+        ("Cubic Yard (घन यार्ड)", 0.764554857984)]},
+    "⚖️ वजन (Weight)": {"base": "Kg", "def": (3, 1), "units": [
+        ("Gram (ग्रॅम)", 0.001), ("Kilogram (किलो)", 1.0), ("Quintal (क्विंटल)", 100.0),
+        ("Tonne (टन)", 1000.0), ("Pound (पौंड)", 0.45359237)]},
+    "💪 बल (Force)": {"base": "N", "def": (1, 2), "units": [
+        ("Newton (N)", 1.0), ("Kilonewton (kN)", 1000.0), ("Meganewton (MN)", 1e6),
+        ("Kgf (किलो-फोर्स)", 9.80665), ("Tonne-force (टन-फोर्स)", 9806.65), ("Pound-force (lbf)", 4.4482216152605)]},
+    "🧱 दाब / ताण (Stress)": {"base": "Pa", "def": (2, 3), "units": [
+        ("Pascal (Pa)", 1.0), ("kPa = kN/m²", 1e3), ("MPa = N/mm²", 1e6),
+        ("kg/cm² (Kgf/cm²)", 98066.5), ("Bar", 1e5), ("PSI", 6894.757293168)]},
+    "🏋️ घनता (Density)": {"base": "kg/m³", "def": (0, 1), "units": [
+        ("kg/m³", 1.0), ("g/cm³ = Tonne/m³", 1000.0), ("kN/m³", 1000 / 9.80665), ("lb/ft³", 16.01846337)]},
+    "💰 दर: आकारमान (₹ प्रति ब्रास/m³/CFT)": {"base": "₹/m³", "inverse": True, "def": (0, 1), "units": [
+        ("₹ प्रति Brass", 100 * _CFT), ("₹ प्रति m³", 1.0), ("₹ प्रति CFT", _CFT)]},
+    "💰 दर: क्षेत्रफळ (₹ प्रति चौ.फूट/चौ.मी)": {"base": "₹/m²", "inverse": True, "def": (0, 1), "units": [
+        ("₹ प्रति Sq Feet", _SQFT), ("₹ प्रति Sq Meter", 1.0), ("₹ प्रति Sq Yard", 9 * _SQFT)]},
+}
+
+
+def uc_convert(val, f_from, f_to, inverse=False):
+    if inverse:
+        return val / f_from * f_to
+    return val * f_from / f_to
+
+
+def fmt_conv(x):
+    """Google सारखे स्वच्छ आकडे (अनावश्यक शून्य नाहीत)."""
+    if x == 0 or abs(x) < 1e-12:
+        return "0"
+    ax = abs(x)
+    if ax >= 1e15 or ax < 1e-6:
+        return f"{x:.6e}"
+    if ax >= 1000:
+        t = f"{x:,.4f}"
+    elif ax >= 1:
+        t = f"{x:,.6f}"
+    else:
+        t = f"{x:.8f}"
+    return t.rstrip("0").rstrip(".")
+
+
+def _short(label):
+    return label.split(" (")[0]
+
+
+def _fact(n):
+    if n < 0 or abs(n - round(n)) > 1e-9 or n > 170:
+        raise ValueError("fact")
+    return float(math.factorial(int(round(n))))
+
+
+def sci_eval(expr, deg=True, ans=0.0):
+    """सुरक्षित सायंटिफिक इव्हॅल्युएटर (eval वापरत नाही)."""
+    t = expr.strip()
+    t = (t.replace("×", "*").replace("÷", "/").replace("^", "**").replace("π", "pi")
+          .replace("√", "sqrt").replace("−", "-").replace(",", ""))
+    t = re.sub(r"(\d+(?:\.\d+)?)\s*%", r"(\1/100)", t)
+    t = re.sub(r"(\d+(?:\.\d+)?)\s*!", r"fact(\1)", t)
+
+    def _imp(m):
+        rest = m.string[m.end():]
+        if re.match(r"e[+-]?\d", rest):
+            return m.group(0)
+        return m.group(1) + "*"
+    t = re.sub(r"(?<![\w.])(\d+(?:\.\d+)?)(?=\s*[a-zA-Z_(])", _imp, t)
+    t = re.sub(r"\)(?=\s*[\w(])", ")*", t)
+
+    d2r = math.radians if deg else (lambda x: x)
+    r2d = math.degrees if deg else (lambda x: x)
+    funcs = {
+        "sin": lambda x: math.sin(d2r(x)), "cos": lambda x: math.cos(d2r(x)), "tan": lambda x: math.tan(d2r(x)),
+        "asin": lambda x: r2d(math.asin(x)), "acos": lambda x: r2d(math.acos(x)), "atan": lambda x: r2d(math.atan(x)),
+        "sinh": math.sinh, "cosh": math.cosh, "tanh": math.tanh,
+        "sqrt": math.sqrt, "cbrt": lambda x: math.copysign(abs(x) ** (1 / 3), x),
+        "log": math.log10, "log10": math.log10, "log2": math.log2, "ln": math.log, "exp": math.exp,
+        "abs": abs, "fact": _fact, "floor": math.floor, "ceil": math.ceil, "round": round,
+        "min": min, "max": max, "radians": math.radians, "degrees": math.degrees,
+    }
+    consts = {"pi": math.pi, "e": math.e, "tau": math.tau, "ans": ans}
+    bin_ops = {
+        _ast.Add: lambda a, b: a + b, _ast.Sub: lambda a, b: a - b, _ast.Mult: lambda a, b: a * b,
+        _ast.Div: lambda a, b: a / b, _ast.Mod: lambda a, b: a % b, _ast.FloorDiv: lambda a, b: a // b,
+        _ast.Pow: lambda a, b: a ** b,
+    }
+
+    def ev(n):
+        if isinstance(n, _ast.Expression):
+            return ev(n.body)
+        if isinstance(n, _ast.Constant) and isinstance(n.value, (int, float)) and not isinstance(n.value, bool):
+            return n.value
+        if isinstance(n, _ast.Name):
+            if n.id in consts:
+                return consts[n.id]
+            raise NameError(n.id)
+        if isinstance(n, _ast.UnaryOp) and isinstance(n.op, (_ast.USub, _ast.UAdd)):
+            v = ev(n.operand)
+            return -v if isinstance(n.op, _ast.USub) else v
+        if isinstance(n, _ast.BinOp) and type(n.op) in bin_ops:
+            a, b = ev(n.left), ev(n.right)
+            if isinstance(n.op, _ast.Pow) and abs(b) > 1000:
+                raise OverflowError("pow")
+            return bin_ops[type(n.op)](a, b)
+        if isinstance(n, _ast.Call) and isinstance(n.func, _ast.Name) and n.func.id in funcs and not n.keywords:
+            return funcs[n.func.id](*[ev(a) for a in n.args])
+        raise SyntaxError("bad")
+
+    try:
+        v = ev(_ast.parse(t, mode="eval"))
+        if isinstance(v, complex):
+            raise ValueError("complex")
+        return v, None
+    except ZeroDivisionError:
+        return None, "⚠️ शून्याने भागता येत नाही"
+    except NameError as ex:
+        return None, f"⚠️ '{ex}' समजले नाही"
+    except (OverflowError,):
+        return None, "⚠️ आकडा खूप मोठा आहे"
+    except (ValueError, TypeError):
+        return None, "⚠️ या आकड्यांसाठी हे शक्य नाही"
+    except Exception:
+        return None, "⚠️ सूत्र चुकीचे आहे - कंसाकडे/चिन्हांकडे पहा"
+
+
+def fmt_sci(v):
+    if isinstance(v, int) and abs(v) < 10 ** 15:
+        return f"{v:,}"
+    v = float(v)
+    if abs(v) < 1e-12:
+        return "0"
+    if v.is_integer() and abs(v) < 1e15:
+        return f"{int(v):,}"
+    return format(v, ",.12g")
+
+
+# ==========================================
 # 🎨 लोगो लोडर + फोकस रिंग + अनावश्यक घटक लपवणे
 # ==========================================
 st.markdown(
@@ -301,6 +456,10 @@ function(W){
     var t = e.target;
     if (!t || t.tagName !== 'INPUT' || /^(checkbox|radio|button|submit)$/.test(t.type)) return;
     if (t.getAttribute('role') === 'combobox' || t.closest('[data-baseweb="select"]')) return;
+    if ((t.getAttribute('aria-label') || '').indexOf('🧮') === 0) {
+      setTimeout(function(){ try { t.focus(); t.select(); } catch(e){} }, 400);
+      return;
+    }
     var form = t.closest('form');
     var list = ctrls(form || undefined).filter(function(x){ return x.tagName !== 'BUTTON'; });
     var i = list.indexOf(t);
@@ -332,7 +491,7 @@ function(W){
       '<tr><td><b>Enter</b></td><td>पुढच्या बॉक्सवर जा / बटन दाबा</td></tr>' +
       '<tr><td><b>Ctrl + Enter</b></td><td>मुख्य (पिवळे) बटन दाबा</td></tr>' +
       '<tr><td><b>Alt + 1…9</b></td><td>मेनूमधील 1ल्या…9व्या कार्डचे "Open"</td></tr>' +
-      '<tr><td><b>Alt + B</b></td><td>एक पाऊल मागे (सब-मेनू)</td></tr>' +
+      '<tr><td><b>Alt + B</b></td><td>एक पाऊल मागे</td></tr>' +
       '<tr><td><b>Alt + H</b></td><td>मुख्य मेनूवर जा</td></tr>' +
       '<tr><td><b>Alt + F</b></td><td>पहिल्या बॉक्सवर कर्सर</td></tr>' +
       '<tr><td><b>↑ ↓ / ← →</b></td><td>रेडिओ / ड्रॉपडाऊन / नंबर बदला</td></tr>' +
@@ -376,7 +535,8 @@ function(W){
       if (h) { e.preventDefault(); h.click(); }
     } else if (code === 'KeyB') {
       var all = btns(/वर जा|Back/);
-      var sub = all.filter(function(b){ return !/मुख्य/.test(b.innerText); })[0] || all[0];
+      var subs = all.filter(function(b){ return !/मुख्य/.test(b.innerText); });
+      var sub = subs.length ? subs[subs.length - 1] : all[0];
       if (sub) { e.preventDefault(); sub.click(); }
     } else if (code === 'KeyF') {
       var f = ctrls().filter(function(x){ return x.tagName !== 'BUTTON'; })[0];
@@ -3179,7 +3339,7 @@ elif st.session_state.selected_module == "Estimator Tools":
                 <div class="module-card">
                     <div style="font-size: 32px; margin-bottom: 4px;">🧮</div>
                     <b style="color: #f8fafc; font-size: 14px;">Civil Calculator</b>
-                    <p style="font-size: 11px; color: #94a3b8; margin: 2px 0 0 0;">Brass, CFT, m³, गुंठा व एरिया कनव्हर्टर</p>
+                    <p style="font-size: 11px; color: #94a3b8; margin: 2px 0 0 0;">युनिट कन्व्हर्जन + सायंटिफिक कॅल्क्युलेटर</p>
                     <span class="{'free-user-badge' if calc_lock == 'Free' else 'gold-vip-badge'}" style="margin-top:6px;">[{calc_lock}]</span>
                 </div>
                 """,
@@ -3187,7 +3347,13 @@ elif st.session_state.selected_module == "Estimator Tools":
             )
             pass
             if st.button("Open Calculator", key="btn_est_calc", use_container_width=True):
-                coming_soon("Calculator")
+                if calc_lock == "Premium" and not is_user_premium:
+                    st.error("🔒 हे प्रिमियम फीचर आहे!")
+                else:
+                    st.session_state.selected_estimator_sub_module = "Calculator"
+                    st.session_state.calc_tool = None
+                    trigger_push_state()
+                    st.rerun()
 
         with e_col2:
             st.markdown(
@@ -3264,15 +3430,170 @@ elif st.session_state.selected_module == "Estimator Tools":
         with col_b_menu:
             if st.button("⬅️ Estimator Menu वर जा", key="btn_back_estimator_menu", use_container_width=True):
                 st.session_state.selected_estimator_sub_module = None
+                st.session_state.calc_tool = None
                 st.rerun()
 
         st.write("---")
         est_sub_mod = st.session_state.selected_estimator_sub_module
 
         # ======================================================================
+        # Civil Calculator: Unit Conversion + Scientific Calculator
+        # ======================================================================
+        if est_sub_mod == "Calculator":
+            if "calc_tool" not in st.session_state:
+                st.session_state.calc_tool = None
+            calc_tool = st.session_state.calc_tool
+
+            if calc_tool is None:
+                st.markdown("<h4 style='margin-bottom:14px;'>🧮 Civil Calculator</h4>", unsafe_allow_html=True)
+                cc1, cc2 = st.columns(2)
+                with cc1:
+                    st.markdown(
+                        """
+                        <div class="module-card">
+                            <div style="font-size: 32px; margin-bottom: 4px;">🔄</div>
+                            <b style="color: #f8fafc; font-size: 14px;">Unit Conversion</b>
+                            <p style="font-size: 11px; color: #94a3b8; margin: 2px 0 0 0;">मिमी, फूट, ब्रास, गुंठा, kN, MPa...</p>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+                    if st.button("Open Unit Conversion", key="btn_calc_unit", use_container_width=True):
+                        st.session_state.calc_tool = "unit"
+                        st.rerun()
+                with cc2:
+                    st.markdown(
+                        """
+                        <div class="module-card">
+                            <div style="font-size: 32px; margin-bottom: 4px;">🧮</div>
+                            <b style="color: #f8fafc; font-size: 14px;">Scientific Calculator</b>
+                            <p style="font-size: 11px; color: #94a3b8; margin: 2px 0 0 0;">sin, cos, √, log, कंस, % व बरेच काही</p>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+                    if st.button("Open Scientific Calculator", key="btn_calc_sci", use_container_width=True):
+                        st.session_state.calc_tool = "sci"
+                        st.rerun()
+
+            else:
+                col_bc, _ = st.columns([1.5, 3.5])
+                with col_bc:
+                    if st.button("⬅️ Calculator Menu वर जा", key="btn_back_calc_menu", use_container_width=True):
+                        st.session_state.calc_tool = None
+                        st.rerun()
+
+                # ---------------- युनिट कन्व्हर्जन ----------------
+                if calc_tool == "unit":
+                    st.markdown("#### 🔄 Unit Conversion")
+                    cat = st.selectbox("प्रकार निवडा:", list(UNIT_DEFS.keys()), key="uc_cat")
+                    d = UNIT_DEFS[cat]
+                    labels = [u[0] for u in d["units"]]
+                    facs = {u[0]: u[1] for u in d["units"]}
+                    inv = d.get("inverse", False)
+                    kf, kt = f"uc_from_{cat}", f"uc_to_{cat}"
+
+                    def _uc_swap(kf=kf, kt=kt):
+                        a, b = st.session_state.get(kf), st.session_state.get(kt)
+                        st.session_state[kf], st.session_state[kt] = b, a
+
+                    u1, u2, u3 = st.columns([1.1, 1.5, 1.5])
+                    with u1:
+                        val = num_input("किंमत:", fb="default", value=1.0, step=1.0, key="uc_val", format="%g")
+                    with u2:
+                        from_u = st.selectbox("या युनिटमधून:", labels, index=d["def"][0], key=kf)
+                    with u3:
+                        to_u = st.selectbox("या युनिटमध्ये:", labels, index=d["def"][1], key=kt)
+                    st.button("⇄ उलट-सुलट करा", key="btn_uc_swap", on_click=_uc_swap)
+
+                    res = uc_convert(val, facs[from_u], facs[to_u], inv)
+                    st.markdown(
+                        f"""
+                        <div style="background:#111827; border:1px solid #1f2937; border-left:4px solid #f59e0b; border-radius:10px; padding:16px; margin-top:10px;">
+                            <div style="color:#94a3b8; font-size:13px;">{fmt_conv(val)} {_short(from_u)} =</div>
+                            <div style="color:#f59e0b; font-size:30px; font-weight:800; word-break:break-all;">{fmt_conv(res)} <span style="font-size:16px; color:#e2e8f0;">{_short(to_u)}</span></div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+
+                    with st.expander("📋 सर्व युनिट्समध्ये पहा"):
+                        rows = "".join(
+                            f"<tr><td style='padding:5px 8px; border-bottom:1px solid #1f2937;'>{lb}</td>"
+                            f"<td style='padding:5px 8px; border-bottom:1px solid #1f2937; text-align:right; color:#fbbf24; font-weight:700;'>{fmt_conv(uc_convert(val, facs[from_u], facs[lb], inv))}</td></tr>"
+                            for lb in labels
+                        )
+                        st.markdown(f"<table style='width:100%; font-size:13px; border-collapse:collapse;'>{rows}</table>", unsafe_allow_html=True)
+
+                    if cat.startswith("📏"):
+                        with st.expander("📐 फूट + इंच ➜ मीटर / मिमी (उदा. 12 फूट 6 इंच)"):
+                            fi1, fi2 = st.columns(2)
+                            with fi1:
+                                fi_ft = num_input("फूट:", min_value=0.0, value=0.0, step=1.0, key="fi_ft")
+                            with fi2:
+                                fi_in = num_input("इंच:", min_value=0.0, value=0.0, step=1.0, key="fi_in")
+                            tot_m = (fi_ft * 12 + fi_in) * 0.0254
+                            st.markdown(
+                                f"**{fmt_conv(tot_m)} मीटर** &nbsp;|&nbsp; {fmt_conv(tot_m * 1000)} मिमी &nbsp;|&nbsp; {fmt_conv(tot_m * 100)} सेमी &nbsp;|&nbsp; {fmt_conv(tot_m / 0.3048)} फूट (दशांश)"
+                            )
+
+                # ---------------- सायंटिफिक कॅल्क्युलेटर ----------------
+                else:
+                    st.markdown("#### 🧮 Scientific Calculator")
+                    if "sci_hist" not in st.session_state:
+                        st.session_state.sci_hist = []
+                    if "sci_ans" not in st.session_state:
+                        st.session_state.sci_ans = 0.0
+
+                    sc_mode = st.radio("कोन (Angle) मोड:", ["DEG (अंश)", "RAD (रेडियन)"], horizontal=True, key="sci_mode")
+                    expr = st.text_input(
+                        "🧮 हिशोब लिहा व Enter दाबा:",
+                        key="sci_expr",
+                        placeholder="उदा.  2*(3+4)^2   |   sin(30)   |   sqrt(144)   |   12.5*ans",
+                    )
+
+                    if expr.strip():
+                        val_s, err_s = sci_eval(expr, deg=sc_mode.startswith("DEG"), ans=st.session_state.sci_ans)
+                        if err_s:
+                            st.warning(err_s)
+                        else:
+                            shown = fmt_sci(val_s)
+                            st.markdown(
+                                f"""
+                                <div style="background:#111827; border:1px solid #1f2937; border-left:4px solid #f59e0b; border-radius:10px; padding:16px; margin-top:6px;">
+                                    <div style="color:#94a3b8; font-size:13px; word-break:break-all;">{html_lib.escape(expr.strip())} =</div>
+                                    <div style="color:#f59e0b; font-size:30px; font-weight:800; word-break:break-all;">{shown}</div>
+                                </div>
+                                """,
+                                unsafe_allow_html=True,
+                            )
+                            if not st.session_state.sci_hist or st.session_state.sci_hist[0][0] != expr.strip():
+                                st.session_state.sci_hist.insert(0, (expr.strip(), shown))
+                                st.session_state.sci_hist = st.session_state.sci_hist[:8]
+                            st.session_state.sci_ans = float(val_s)
+
+                    if st.session_state.sci_hist:
+                        with st.expander("📜 मागील हिशोब (ans = शेवटचे उत्तर)"):
+                            for h_e, h_r in st.session_state.sci_hist:
+                                st.markdown(f"`{h_e}` = **{h_r}**")
+                            if st.button("🗑️ इतिहास पुसा", key="btn_sci_clear"):
+                                st.session_state.sci_hist = []
+                                st.session_state.sci_ans = 0.0
+                                st.rerun()
+
+                    with st.expander("ℹ️ वापरता येणारी चिन्हे व फंक्शन्स"):
+                        st.markdown(
+                            "- **चिन्हे:** `+  -  *  /  ^  %  !  ( )`  — उदा. `2(3+4)`, `50%`, `5!`\n"
+                            "- **त्रिकोणमिती:** `sin cos tan asin acos atan` (DEG/RAD मोडनुसार)\n"
+                            "- **इतर:** `sqrt  cbrt  log  ln  log2  exp  abs  floor  ceil  round  min  max`\n"
+                            "- **स्थिरांक:** `pi  e  ans` (मागील उत्तर)\n"
+                            "- उदा. स्लॅब वजन: `0.15*25*4.5*3.2` | कर्ण: `sqrt(3^2+4^2)`"
+                        )
+
+        # ======================================================================
         # १६.२ Rate Analysis Module (100% IS Code & CPWD Standard)
         # ======================================================================
-        if est_sub_mod == "Rate Analysis":
+        elif est_sub_mod == "Rate Analysis":
             master_rates = get_market_rates()
             st.markdown(
                 f"""
